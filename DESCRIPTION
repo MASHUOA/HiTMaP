@@ -1,0 +1,67 @@
+Package: Metwork
+Type: Package
+Title: A collection of tools for imaging MS data processing
+Version: 1.6.0
+Date: 
+Depends: R (>= 3.5.0), lattice, methods, pls, data.table
+Authors@R: c(person("George", "GUO", email = "George.GUO@auckland.ac.nz", role = "aut"))
+Author: George GUO [aut, cre]
+Maintainer: George GUO <George.GUO@auckland.ac.nz>
+Description: 
+License: GPL-2
+LazyLoad: yes
+NeedsCompilation: no
+Encoding: UTF-8
+Packaged: 
+BugReports:
+Imports: 
+    pryr,
+    pacman,
+    purrr,
+    RColorBrewer,
+    magick,
+    ggplot2,
+    reticulate,
+    dplyr,
+    stringr,
+    data.table,
+    doParallel,
+    iterators,
+    foreach,
+    protViz,
+    cleaver,
+    MALDIquant,
+    Biostrings,
+    XVector,
+    IRanges,
+    Cardinal,
+    ProtGenerics,
+    S4Vectors,
+    tcltk,
+    stats4,
+    EBImage,
+    BiocParallel,
+    BiocGenerics,
+    parallel,
+    stats,
+    graphics,
+    grDevices,
+    utils,
+    datasets,
+    methods,
+    Rdisop,
+    Rcpp,
+    rlang,
+    pacman,
+    devtools,
+    fs,
+    processx
+VignetteBuilder: knitr
+Suggests: 
+    knitr,
+    rmarkdown,
+    devtools,
+    testthat,
+    plotly,
+    bitops,
+RoxygenNote: 6.1.1
