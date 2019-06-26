@@ -16,6 +16,7 @@ Packaged:
 BugReports:
 Imports: 
     pryr,
+    CAMERA,
     pacman,
     purrr,
     RColorBrewer,
