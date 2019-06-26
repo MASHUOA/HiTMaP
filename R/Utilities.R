@@ -103,7 +103,7 @@ initialization<-function(){
                          "reticulate","dplyr","stringr","data.table","iterators","foreach",
                          "protViz","cleaver","MALDIquant","Biostrings","XVector","IRanges","Cardinal","ProtGenerics",
                          "S4Vectors","EBImage","BiocParallel","BiocGenerics",
-                         "Rdisop","Rcpp"),lib = "~/R/win-library/peptidegidest353")
+                         "Rdisop","Rcpp"))
   p_load(purrr,fs,processx,RColorBrewer,RCurl,bitops,magick,ggplot2,Rdisop,Rcpp)
   p_load(reticulate,dplyr,stringr,tcltk,data.table,doParallel,iterators,foreach)
   p_load(protViz,cleaver,MALDIquant,Biostrings,XVector,IRanges,Cardinal,ProtGenerics)
@@ -143,22 +143,43 @@ cluster_image_cardinal_allinone<-function(clusterID,
     return(stringX)
     
   }
+  Sys.setenv("PATH" = paste(paste(unique(str_split(Sys.getenv("PATH"),.Platform$path.sep)[[1]]), sep = .Platform$path.sep,collapse = .Platform$path.sep), "C:/ProgramData/Anaconda3/orca_app", sep = .Platform$path.sep))
+  library(grid)
   library(plotly)
   #rotate the image
   #imdata@pixelData@data<-rotatetmp
   if(rotate_image){
   rotatetmp<-imdata@pixelData@data
-  rotatenew<-rotatetmp
-  rotatenew$x<-rotatetmp$y
-  rotatenew$y<-rotatetmp$x
+  
+  rotatenew<-affine(rotatetmp[,c("x","y")])
+  rownames(rotatenew)<-paste0("x = ",rotatenew$x,", ","y = ",rotatenew$y,", ","z = ",rotatenew$z)
+  rotatenew$z=rotatetmp$z
+  rotatenew$sample=rotatetmp$sample
   timdatapositionArray<-data.frame(imdata@imageData@positionArray,stringsAsFactors = F)
-  ttimdatapositionArray<-t(t(timdatapositionArray))
+  class(timdatapositionArray)
+  new_timdatapositionArray=data.frame(row.names = 1:max(rotatenew$y))
+  
+  new_timdatapositionArray=1
   imdata@pixelData@data<-rotatenew
   imdata@imageData@positionArray<-ttimdatapositionArray
   imdata@imageData@coord<-rotatenew
+  rownames(imdata@imageData@coord)<-paste0("x = ",rotatenew$x,", ","y = ",rotatenew$y,", ","z = ",rotatenew$z)
   imdata@imageData@dimnames[[2]]=paste0("x = ",rotatenew$x,", ","y = ",rotatenew$y,", ","z = ",rotatenew$z) 
   
   image_rotate(image, degrees)
+  plot(1:10, rnorm(10))
+  
+  library(gridGraphics)
+  
+  grab_grob <- function(){
+    grid.echo()
+    grid.grab()
+  }
+  
+  g <- grab_grob()
+  grid.newpage()
+  pushViewport(viewport(width=0.7,angle=30))
+  grid.draw(g)
   }
   
   SMPLIST=as.data.frame(SMPLIST)
@@ -300,7 +321,28 @@ cluster_image_cardinal_allinone<-function(clusterID,
           no.readonly = TRUE,ann=FALSE)  
     }
     
-    
+    image_rotate<-function(...){
+      library(gridGraphics)
+      library(magick)
+      temp.png=tempfile(pattern = "file", tmpdir = tempdir(), fileext = ".png")
+      png(temp.png,width = 5,height = 5, bg = "black",units = "in",res = 300)
+      image(...)
+      dev.off()
+      image_read(temp.png)
+      
+      
+      grab_grob <- function(...){
+        grid.echo()
+        grid.grab()
+      }
+      
+      g <- grab_grob()
+      grid.newpage()
+      pushViewport(viewport(width=0.7,angle=30))
+      
+      grid.draw(g)
+      
+    }
     
     
     image(imdata, mz=candidateunique, 
@@ -310,15 +352,20 @@ cluster_image_cardinal_allinone<-function(clusterID,
           superpose=TRUE,normalize.image="linear",
           plusminus=ppm)
     
+
     for (i in 1:length(candidateunique)){
       #image(imdata, mz=candidateunique[i], col=mycol[i], superpose=F,normalize.image="linear")
       col.regions <- gradient.colors(100, start="black", end=levels(mycol)[i])
       image(imdata, mz=candidateunique[i], 
             contrast.enhance=contrast.enhance,
-            smooth.image = smooth.image ,
-            col.regions=intensity.colors_customize(),
-            normalize.image="linear",
-            plusminus=ppm)
+            smooth.image = smooth.image,#smooth.image ,
+            col.regions=intensity.colors_customize1(),
+            normalize.image="none",
+            plusminus=ppm,
+            key=F,
+            xlab=NULL,
+            ylab=NULL,
+            )
       componentname=unique(candidate[[componentID_colname]][candidate$mz==as.numeric(candidateunique[i])])
       for (component in componentname){
         text(cex=30/ifelse(nchar(component)>30,nchar(component),30),labels=paste0(component),x=1,y=1+(which(componentname==component)-1)*3,adj=0,pos=4,offset=1,col = "white")
@@ -398,4 +445,30 @@ orca_initial<-function(){
 Sys.setenv("PATH" = paste(paste(unique(str_split(Sys.getenv("PATH"),.Platform$path.sep)[[1]]), sep = .Platform$path.sep,collapse = .Platform$path.sep), "C:/ProgramData/Anaconda3/orca_app", sep = .Platform$path.sep))
   
   
+}
+
+affine <- function(x, translate=c(0,0), rotate=180,
+                   angle=c("degrees", "radians"), grid=TRUE)
+{
+  x=x[,c("x","y")]
+  angle <- match.arg(angle)
+  theta <- -rotate
+  if ( angle == "degrees" ) theta <- theta * pi / 180
+  # translate center of mass to be near origin
+  tt <- sapply(x, function(xs) mean(xs))
+  new.x <- t(as.matrix(x)) - tt
+  # rotate around origin
+  A <- matrix(c(cos(theta), sin(theta), -sin(theta), cos(theta)), nrow=2)
+  new.x <- A %*% new.x
+  # translate back and do requested translation
+  new.x <- t(new.x + tt + translate)
+  # remove negative coordinates and round to integers
+  if ( grid ) {
+    new.x <- round(new.x)
+    new.x[new.x < 1] <- 1
+  }
+  # return data.frame of new coordinates
+  new.x <- as.data.frame(new.x)
+  names(new.x) <- names(x)
+  new.x
 }

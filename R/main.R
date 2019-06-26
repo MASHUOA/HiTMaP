@@ -713,6 +713,14 @@ intensity.colors_customize <- function(n = 100, alpha = 1) {
                                                                       c(as.list(f(i)), maxColorValue=255, alpha=alpha)))
   col1
 }
+intensity.colors_customize1 <- function(n = 100, alpha = 1) {
+  col2 <- rainbow(3*n, alpha=alpha)[(2*n):1]
+  f <- colorRamp(colors=c("black","darkorchid4", "blue", "darkseagreen1", "greenyellow"))
+  alpha <- col2rgb(col2, alpha=TRUE)[[4]]
+  col1 <- sapply(seq(from=0, to=1, length.out=n), function(i) do.call(rgb,
+                                                                      c(as.list(f(i)), maxColorValue=255, alpha=alpha)))
+  col1
+}
 
 Pathway_overview_graphite<-function(){
   p_load(graphite,graph )

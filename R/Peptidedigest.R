@@ -11,7 +11,7 @@ RUN_imagine_workflow<-function(){
   #Spatial_Quant(ppm=15,adducts=c("M-H","M+Cl"),Quant_list="lipid candidates.csv",cal.mz=T)
   #Spatial_Quant(ppm=15,adducts=c("M-H","M+Cl"),Quant_list="lipid candidates.csv",cal.mz=T,Spectrum_feature_summary = T,Region_feature_summary = T,PMF_analysis = F)
 
-imagine_identification(
+imaging_identification(
 #==============Choose the imzml raw data file(s) to process
                datafile=tk_choose.files(filter =  matrix(c( "imzml file", ".imzML",
                                                                       "Text", ".txt", "All files", "*"),
@@ -65,7 +65,7 @@ imaging_default_parameter<-function(){
   plot_cluster_image=T
 }
 
-#' imagine_identification
+#' imaging_identification
 #'
 #' This is a peptide mass fingerprint search function for maldi imaging data analysis
 #'
@@ -85,11 +85,11 @@ imaging_default_parameter<-function(){
 #' @param spatialKMeans set true to enable a \code{"spatialKMeans"}  method for the automatic virtual segmentation. If a region rank file was supplied, you can disable this to perform a mannual segmentation.
 #' @param Smooth_range \code{"spatialKMeans"} pixel smooth range 
 #' @param Virtual_segmentation set \code{"TRUE"} if you want to overide the automaitic segmentation
-#' @param Virtual_segmentation_rankfile a region rank file contains region information for manully region segmentation
+#' @param Virtual_segmentation_rankfile specify a region rank file contains region information for manualy region segmentation
 #' @return None
 #'
 #' @examples
-#' imagine_identification(threshold=0.05, ppm=5,Digestion_site="[G]",
+#' imaging_identification(threshold=0.05, ppm=5,Digestion_site="[G]",
 #'                        missedCleavages=0:1,Fastadatabase="murine_matrisome.fasta",
 #'                        adducts=c("M+H","M+NH4","M+Na"),PMF_analysis=TRUE,
 #'                        Protein_feature_summary=TRUE,plot_cluster_image=TRUE,
@@ -99,31 +99,22 @@ imaging_default_parameter<-function(){
 #'
 #' @export
 #' 
-imagine_identification<-function(
+imaging_identification<-function(
 #==============Choose the imzml raw data file(s) to process  make sure the fasta file in the same folder
-               datafile=tk_choose.files(filter = matrix(c( "imzml file", ".imzML",
-                                                                      "Text", ".txt", "All files", "*"),
-                                                                   3, 2, byrow = TRUE),caption  = "Choose single or multiple file(s) for analysis"),
+               datafile=tk_choose.files(filter = matrix(c( "imzml file", ".imzML","Text", ".txt", "All files", "*"),3, 2, byrow = TRUE),
+                                        caption  = "Choose single or multiple file(s) for analysis"),
                threshold=0.05, 
                ppm=5,
                Digestion_site="[G]",
                missedCleavages=0:1,
                Fastadatabase="murine_matrisome.fasta",
                adducts=c("M+H","M+NH4","M+Na"),
-#==============TRUE if you want to plot protein PMF result
                PMF_analysis=TRUE,
-#==============TRUE if you want to generate protein summary in the Summary folder
                Protein_feature_summary=TRUE,
-#==============TRUE if you want to generate protein cluster image in the Summary folder
                plot_cluster_image=TRUE,
-#==============TRUE if you want to generate peptide summary in the Summary folder
                Peptide_feature_summary=TRUE,
-               #PLOT_PMF_Protein=FALSE,
-#==============TRUE if you want to plot peptide in the Ion images folder, make sure there's imzml file in the folder
                plot_ion_image=FALSE,
-#==============Set a number if you want a parallel processing
                parallel=detectCores(),
-#==============Set a number (1 to maximum pixels in the data file) if you want to dig more peaks in the raw data
                spectra_segments_per_file=5,
                spatialKMeans=TRUE,
                Smooth_range=1,
@@ -230,7 +221,7 @@ imagine_identification<-function(
 
 
 #read the candidate list file and generate quantification result
-imagine_Spatial_Quant<-function(
+imaging_Spatial_Quant<-function(
   #==============Choose the imzml raw data file(s) to process  make sure the fasta file in the same folder
   datafile=tk_choose.files(filter =  matrix(c( "imzml file", ".imzML",
                                                          "Text", ".txt", "All files", "*"),
@@ -238,18 +229,18 @@ imagine_Spatial_Quant<-function(
   threshold=0.00, 
   ppm=5,
   #Fastadatabase="murine_matrisome.fasta",
-  Quant_list="lipid candidates.csv",
+  Quant_list="lipid candidates manual.csv",
   adducts=c("M-H","M+Cl"),
   cal.mz=T,
   mzlist_bypass=F,
   #==============TRUE if you want to plot protein PMF result
   PMF_analysis=TRUE,
   #==============TRUE if you want to generate protein summary in the Summary folder
-  Protein_feature_summary=F,
+  Protein_feature_summary=T,
   #==============TRUE if you want to generate protein cluster image in the Summary folder
   plot_cluster_image=T,
   plot_style="fleximaging",
-  Peptide_feature_summary=F,
+  Peptide_feature_summary=T,
   #PLOT_PMF_Protein=FALSE,
   #==============TRUE if you want to plot peptide in the Ion images folder, make sure there's imzml file in the folder
   plot_ion_image=FALSE,
@@ -259,19 +250,19 @@ imagine_Spatial_Quant<-function(
   spectra_segments_per_file=5,
   spatialKMeans=F,
   Smooth_range=1,
-  Virtual_segmentation=F,
-  Virtual_segmentation_rankfile=tk_choose.files(caption  = "Choose Virtual segmentation rank info file"),
-  Spectrum_feature_summary=F,
-  Region_feature_summary=F,
-  Region_feature_analysis=F,
-  plot_each_metabolites=F,
+  Virtual_segmentation=T,
+  Virtual_segmentation_rankfile=tk_choose.files(default = "Z:/George skyline results/maldiimaging/Maldi_imaging - Copy/radius_rank.csv",caption  = "Choose Virtual segmentation rank info file"),
+  Spectrum_feature_summary=T,
+  Region_feature_summary=T,
+  Region_feature_analysis=T,
+  plot_each_metabolites=T,
   Cluster_level="High",
-  Region_feature_analysis_bar_plot=F,
+  Region_feature_analysis_bar_plot=T,
   norm_datafiles=T,
   norm_Type="Median",
   ...
 ){
-  
+  library(pacman)
   p_load(RColorBrewer,RCurl,bitops,magick,ggplot2,reticulate,dplyr,stringr,tcltk,data.table,doParallel,
          iterators,foreach,protViz,cleaver,MALDIquant,Biostrings,XVector,IRanges,Cardinal,Rdisop,
          ProtGenerics,S4Vectors,stats4,EBImage,
@@ -778,9 +769,9 @@ imagine_Spatial_Quant<-function(
   }
   #Plot cluster images across the datafiles
   if(plot_cluster_image){
-    Protein_feature_list=fread(paste(workdir,"/Summary folder/Protein_feature_summary_sl_s.csv",sep=""))
+    Protein_feature_list=fread(paste(workdir,"/Summary folder/Protein_feature_summary_sl.csv",sep=""))
     for (i in 1:length(datafile)){
-    imdata=Load_Cardinal_imaging(datafile[i],preprocessing = F,resolution = ppm)
+    imdata=Load_Cardinal_imaging(datafile[i],preprocessing = F,resolution = ppm/2)
     currentdir<-paste0(datafile[i] ," ID")
     if (dir.exists(paste(currentdir,"/cluster Ion images",sep=""))==FALSE){dir.create(paste(currentdir,"/cluster Ion images",sep=""))}
     setwd(paste(currentdir,"/cluster Ion images",sep=""))
@@ -809,7 +800,7 @@ imagine_Spatial_Quant<-function(
              Component_plot_threshold=1,
              export_Header_table=T)
       
-      currentdir<-paste0(datafile[1] ," ID")
+      currentdir<-paste0(datafile[6] ," ID")
       pngfiles=dir(paste(currentdir,"/cluster Ion images",sep=""),pattern = "_flex.png")
     for (pngfile in pngfiles){
       Pngcluster=NULL
@@ -1143,6 +1134,8 @@ Meta_feature_list_fun<-function(workdir=workdir,
       
     peplist_mass<-peplist$Formula %>% lapply(getMonomass) 
     peplist$mass<-as.numeric(unlist(peplist_mass))
+    
+    
       
     }
 
