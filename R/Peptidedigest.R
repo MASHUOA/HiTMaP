@@ -1,71 +1,16 @@
+#initiallization
 
 require("pacman")
 library(tcltk)
-#.libPaths("~/R/win-library/peptidegidest353")
+
 Filters <- matrix(c( "imzml file", ".imzML",
                      "Text", ".txt", "All files", "*"),
                   3, 2, byrow = TRUE)
 
 
 
-RUN_imagine_workflow<-function(){
-  #Spatial_Quant(ppm=15,adducts=c("M-H","M+Cl"),Quant_list="lipid candidates.csv",cal.mz=T)
-  #Spatial_Quant(ppm=15,adducts=c("M-H","M+Cl"),Quant_list="lipid candidates.csv",cal.mz=T,Spectrum_feature_summary = T,Region_feature_summary = T,PMF_analysis = F)
 
-imaging_identification(
-#==============Choose the imzml raw data file(s) to process
-               datafile=tk_choose.files(filter =  matrix(c( "imzml file", ".imzML",
-                                                                      "Text", ".txt", "All files", "*"),
-                                                                   3, 2, byrow = TRUE),caption  = "Choose single or multiple file(s) for analysis"),
-               threshold=0.05, 
-               ppm=20,
-               Digestion_site="[G]",
-               missedCleavages=0:2,
-               Fastadatabase="murine_matrisome.fasta",
-               adducts=c("M+H","M+NH4","M+Na"),
-#==============TRUE if you want to perform PMF analysis
-               PMF_analysis=T,
-#==============TRUE if you want to generate peptide summary in the Summary folder
-               Protein_feature_summary=T,
-               Peptide_feature_summary=T,
-#==============TRUE if you want to plot peptide in the Ion images folder, make sure there's imzml file in the folder
-               plot_ion_image=F,
-#==============Set a number if you want a parallel processing
-               parallel=8,
-#==============Set a number (1 to maximum pixels in the data file) if you want to dig more peaks in the raw data
-               spectra_segments_per_file=5,
-#==============True if you want the mean spectrum generated based on spatial spectrum profile
-               spatialKMeans=T,
-               Smooth_range=1
-)
-}
 			   
-imaging_default_parameter<-function(){
-  datafile=tk_choose.files(filter = matrix(c( "imzml file", ".imzML",
-                                                        "Text", ".txt", "All files", "*"),
-                                                     3, 2, byrow = TRUE),caption  = "Choose single or multiple file(s) for analysis")
-  
-  threshold=0.05
-  ppm=10
-  Digestion_site="[G]"
-  missedCleavages=0:2
-  Fastadatabase="murine_matrisome.fasta"
-  adducts=c("M+H","M+NH4","M+Na")
-  #==============TRUE if you want to perform PMF analysis
-  PMF_analysis=T
-  #==============TRUE if you want to generate peptide summary in the Summary folder
-  Protein_feature_summary=T
-  Peptide_feature_summary=T
-  #==============TRUE if you want to plot peptide in the Ion images folder, make sure there's imzml file in the folder
-  plot_ion_image=T
-  #==============Set a number if you want a parallel processing
-  parallel=8
-  #==============Set a number (1 to maximum pixels in the data file) if you want to dig more peaks in the raw data
-  spectra_segments_per_file=5
-  spatialKMeans=T
-  plot_cluster_image=T
-}
-
 #' imaging_identification
 #'
 #' This is a peptide mass fingerprint search function for maldi imaging data analysis
@@ -229,11 +174,11 @@ imaging_identification<-function(
 #' @param ppm the mz tolerance (in ppm) for peak integration
 #' @param Quant_list the quantifiaction candidate list, spatial quantification will go through every datafile and collect the ion intensities for each listed component
 #' @param adducts  the adducts list to be used for generating the PMF search candidates
-#' @param cal.mz=T If set with TRUE, the function will recalculate the mz value according to the column named "formular" in the \code{Quant_list}
-#' @param mzlist_bypass=F 
-#' @param PMF_analysis Set \code{"true"} if you want to have a PMF search, set \code{"false"} if you want to bypass it
+#' @param cal.mz If set with \code{"true"}, the function will recalculate the mz value according to the column named "formular" in the \code{Quant_list} and the specified adducts.
+#' @param mzlist_bypass  Set \code{"true"} if you want to bypass the mzlist generating process
 #' @param Protein_feature_summary  \code{"PMF_analysis"} follow-up process that will collect all the identified peptide information and associate them with possible proteins 
 #' @param plot_cluster_image  \code{"Protein_feature_summary"} follow-up process that will plot the protein cluster image 
+#' 
 #' @param Peptide_feature_summarya \code{"PMF_analysis"} follow-up process that will summarize all datafiles identified peptides and generats a \code{"peptide shortlist"} in the result summary folder
 #' @param plot_ion_image  \code{"Peptide_feature_summarya"} follow-up process that will plot every connponents in the \code{"peptide shortlist"}
 #' @param parallel the number of threads will be used in the PMF search, this option now only works for windows OS
@@ -245,7 +190,7 @@ imaging_identification<-function(
 #' @return None
 #'
 #' @examples
-#' imaging_identification(threshold=0.05, ppm=5,Digestion_site="[G]",
+#' imaging_Spatial_Quant(threshold=0.05, ppm=5,Digestion_site="[G]",
 #'                        missedCleavages=0:1,Fastadatabase="murine_matrisome.fasta",
 #'                        adducts=c("M+H","M+NH4","M+Na"),PMF_analysis=TRUE,
 #'                        Protein_feature_summary=TRUE,plot_cluster_image=TRUE,
@@ -953,347 +898,13 @@ imaging_Spatial_Quant<-function(
   }
 }
 
-run_spatial_quant_workflow<-function(){
-  imagine_Spatial_Quant(datafile=tk_choose.files(filter =  matrix(c( "imzml file", ".imzML",
-                                                                               "Text", ".txt", "All files", "*"),
-                                                                            3, 2, byrow = TRUE),caption  = "Choose single or multiple file(s) for analysis"),
-                threshold=0.00, 
-                ppm=5,
-                #Fastadatabase="murine_matrisome.fasta",
-                Quant_list="Metabolites of Interest.csv",
-                adducts=c("M-H","M+Cl"),
-                cal.mz=F,
-                mzlist_bypass=T,
-                #==============TRUE if you want to plot protein PMF result
-                PMF_analysis=TRUE,
-                #==============TRUE if you want to generate peptide summary in the Summary folder
-                Protein_feature_summary=F,
-                Peptide_feature_summary=F,
-                #PLOT_PMF_Protein=FALSE,
-                #==============TRUE if you want to plot peptide in the Ion images folder, make sure there's imzml file in the folder
-                plot_ion_image=FALSE,
-                #==============Set a number if you want a parallel processing
-                parallel=detectCores()/2,
-                #==============Set a number (1 to maximum pixels in the data file) if you want to dig more peaks in the raw data
-                spectra_segments_per_file=4,
-                spatialKMeans=F,
-                Smooth_range=1,
-                Virtual_segmentation=T,
-                Virtual_segmentation_rankfile="Z:\\George skyline results\\maldiimaging\\Maldi_imaging - Copy\\radius_rank_bovin.csv",
-                Spectrum_feature_summary=F,
-                Region_feature_summary=F,
-                Region_feature_analysis=F,
-                Cluster_level=="Low")
-  
-  
-  #workflow for aged human lens
-  imagine_Spatial_Quant(
-    #==============Choose the imzml raw data file(s) to process  make sure the fasta file in the same folder
-    datafile=tk_choose.files(filter =  matrix(c( "imzml file", ".imzML",
-                                                           "Text", ".txt", "All files", "*"),
-                                                        3, 2, byrow = TRUE),caption  = "Choose single or multiple file(s) for analysis"),
-    threshold=0.00, 
-    ppm=20,
-    #Fastadatabase="murine_matrisome.fasta",
-    Quant_list="lipid candidates.csv",
-    adducts=c("M-H","M+Cl"),
-    cal.mz=T,
-    mzlist_bypass=F,
-    #==============TRUE if you want to plot protein PMF result
-    PMF_analysis=TRUE,
-    #==============TRUE if you want to generate protein summary in the Summary folder
-    Protein_feature_summary=T,
-    #==============TRUE if you want to generate protein cluster image in the Summary folder
-    plot_cluster_image=T,
-    Peptide_feature_summary=T,
-    #PLOT_PMF_Protein=FALSE,
-    #==============TRUE if you want to plot peptide in the Ion images folder, make sure there's imzml file in the folder
-    plot_ion_image=FALSE,
-    #==============Set a number if you want a parallel processing
-    parallel=detectCores(),
-    #==============Set a number (1 to maximum pixels in the data file) if you want to dig more peaks in the raw data
-    spectra_segments_per_file=5,
-    spatialKMeans=F,
-    Smooth_range=1,
-    Virtual_segmentation=T,
-    Virtual_segmentation_rankfile="Z:\\George skyline results\\maldiimaging\\Maldi_imaging - Copy\\radius_rank.csv",
-    Spectrum_feature_summary=T,
-    Region_feature_summary=T,
-    Region_feature_analysis=T,
-    plot_each_metabolites=F,
-    Cluster_level="High",
-    Region_feature_analysis_bar_plot=F,
-    norm_datafiles=T,
-    norm_Type="Median"
-  )
-  
-  imagine_Spatial_Quant(
-    #==============Choose the imzml raw data file(s) to process  make sure the fasta file in the same folder
-    datafile=tk_choose.files(filter =  matrix(c( "imzml file", ".imzML",
-                                                           "Text", ".txt", "All files", "*"),
-                                                        3, 2, byrow = TRUE),caption  = "Choose single or multiple file(s) for analysis"),
-    threshold=0.00, 
-    ppm=25,
-    #Fastadatabase="murine_matrisome.fasta",
-    Quant_list="lipid blast candidates.csv",
-    adducts=c("M-H","M+Cl"),
-    cal.mz=F,
-    mzlist_bypass=F,
-    #==============TRUE if you want to plot protein PMF result
-    PMF_analysis=TRUE,
-    #==============TRUE if you want to generate protein summary in the Summary folder
-    Protein_feature_summary=T,
-    #==============TRUE if you want to generate protein cluster image in the Summary folder
-    plot_cluster_image=T,
-    Peptide_feature_summary=T,
-    #PLOT_PMF_Protein=FALSE,
-    #==============TRUE if you want to plot peptide in the Ion images folder, make sure there's imzml file in the folder
-    plot_ion_image=FALSE,
-    #==============Set a number if you want a parallel processing
-    parallel=detectCores(),
-    #==============Set a number (1 to maximum pixels in the data file) if you want to dig more peaks in the raw data
-    spectra_segments_per_file=5,
-    spatialKMeans=F,
-    Smooth_range=1,
-    Virtual_segmentation=T,
-    Virtual_segmentation_rankfile="Z:\\George skyline results\\maldiimaging\\Maldi_imaging - Copy\\radius_rank.csv",
-    Spectrum_feature_summary=T,
-    Region_feature_summary=T,
-    Region_feature_analysis=T,
-    plot_each_metabolites=F,
-    Cluster_level="High",
-    Region_feature_analysis_bar_plot=F,
-    norm_datafiles=T
-  )
-}
 
-plotly_for_region_with_ClusterID_barchart<-function(moleculeNames,data){
-  library(dplyr)
-  library(plyr)
-  library(plotly)
-  library(stringr)
-  library(ggplot2)
-  if (!require("processx")) install.packages("processx")
- 
-  plot_data=data[data$moleculeNames==moleculeNames,data["Class",]!=""]
-  colnames(plot_data)=as.character(t(data["Class",data["Class",]!=""]))
-  
-  rownames(plot_data)=data[data$moleculeNames==moleculeNames,"RegionName"]
-  
-  
-  stderr <- function(x, na.rm=FALSE) {
-      if (na.rm) x <- na.omit(x)
-      sqrt(var(x)/length(x))
-    }
-  plot_data=mutate_all(plot_data, function(x) as.numeric(as.character(x)))
-  for (row in rownames(plot_data)){
-    plot_data[row,"mean"]=mean(as.numeric(plot_data[row,as.character(t(data["Class",data["Class",]!=""]))]))
-    plot_data[row,"se"]=stderr(as.numeric(plot_data[row,as.character(t(data["Class",data["Class",]!=""]))]))
-  }
-  rownames(plot_data)=data[data$moleculeNames==moleculeNames,"RegionName"]
-  plot_data$mz=data[data$moleculeNames==moleculeNames,"mz"]
-  plot_data$RegionRank=as.numeric(as.character(data[data$moleculeNames==moleculeNames,"RegionRank"]))
-  plot_data=plot_data[order(-plot_data$RegionRank),]
-  plot_data$region= as.factor(as.character(rownames(plot_data)))
-  if (sum(plot_data$region==c("OC" ,  "IC" ,  "Core"))==length(plot_data$region)){plot_data$region=factor(plot_data$region,levels = c("OC" ,  "IC" ,  "Core"))}
-  #data[data$mz==plot_data$mz[1],"moleculeNames"]
-  p <- plot_ly(data = plot_data, x = ~region, y = ~mean, type = 'bar', name = moleculeNames,
-               error_y = ~list(array = se,
-                               color = '#000000')) %>%
-       layout(title = paste(plot_data$mz[1]),
-           xaxis = list(title = "Region"),
-           yaxis = list (title = "Relative Conc.",ticksuffix = "%"),
-           showlegend = F)
-  #%>%
-  #  add_trace(data = data[which(data$supp == 'VC'),], name = 'VC')
-  
- 
-  
-  
-  windows_filename<- function(stringX){
-    stringX<-stringr::str_remove_all(stringX,"[><*?:\\/\\\\]")
-    stringX<-gsub("\"", "", stringX)
-    return(stringX)}
-  #moleculeNames=colnames(data)
-  #fit3 <- lm(as.numeric(as.character( data[which(data$Class!=""),moleculeNames[i]]))~poly(as.numeric(as.character(data$Class[which(data$Class!="")])),3) )
-  
-  
-  
-  htmlwidgets::saveWidget(as_widget(p), windows_filename(paste0(moleculeNames,".html")), selfcontained = F, libdir = "lib")
-  
-  #plotly::orca(p, windows_filename(paste0(data["moleculeNames",i], data["adducts",i]," in ",data["RegionName",i],".png")))
-  windows_filename(paste0(moleculeNames,".html"))
-}
 
-Spatial_Quant_summary<-function(
-  #==============Choose the imzml raw data file(s) to process  make sure the fasta file in the same folder
-  datafile=tk_choose.files(filter =  matrix(c( "imzml file", ".imzML",
-                                                         "Text", ".txt", "All files", "*"),
-                                                      3, 2, byrow = TRUE),caption  = "Choose single or multiple file(s) for analysis"),
-  threshold=0.01, 
-  ppm=5,
-  #Fastadatabase="murine_matrisome.fasta",
-  Quant_list="lipid blast candidates.csv",
-  adducts=c("M-H","M+Cl"),
-  #==============TRUE if you want to plot protein PMF result
-  PMF_analysis=TRUE,
-  #==============TRUE if you want to generate peptide summary in the Summary folder
-  #Protein_feature_summary=TRUE,
-  #Peptide_feature_summary=TRUE,
-  #PLOT_PMF_Protein=FALSE,
-  #==============TRUE if you want to plot peptide in the Ion images folder, make sure there's imzml file in the folder
-  plot_ion_image=FALSE,
-  #==============Set a number if you want a parallel processing
-  parallel=detectCores(),
-  #==============Set a number (1 to maximum pixels in the data file) if you want to dig more peaks in the raw data
-  spectra_segments_per_file=5,
-  spatialKMeans=F,
-  Smooth_range=1,
-  Virtual_segmentation=T,
-  Feature_summary=F,
-  Spectrum_summary=T,...
-){
-  
-  p_load(RColorBrewer,RCurl,bitops,magick,ggplot2,reticulate,dplyr,stringr,tcltk,data.table,doParallel,
-         iterators,foreach,protViz,cleaver,MALDIquant,Biostrings,XVector,IRanges,Cardinal,Rdisop,
-         ProtGenerics,S4Vectors,stats4,EBImage,
-         BiocParallel,BiocGenerics,parallel,stats,graphics,grDevices,utils,datasets,methods)
-  
-  datafile<-gsub(".imzML", "", datafile)
-  workdir<-base::dirname(datafile[1])
-  setwd(workdir)
-  cl <- autoStopCluster(makeCluster(parallel))
-  
-  setwd(workdir)
-  if(Feature_summary){
-    print("Feature_summary")
-    if (dir.exists(paste(workdir,"/Summary folder",sep=""))==FALSE){dir.create(paste(workdir,"/Summary folder",sep=""))}
-    Feature_summary_all_files(datafile,workdir,threshold = threshold)}  
-  
-  if(Spectrum_feature_summary){
-    Spectrum_summary<-NULL
-    for (i in 1:length(datafile)){
-      datafilename<-gsub(paste(workdir,"/",sep=""),"",gsub(".imzML", "", datafile[i]))
-      currentdir<-paste0(datafile[i] ," ID")
-      setwd(currentdir)
-      name <-gsub(base::dirname(datafile[i]),"",datafile[i])
-      message("Spectrum_summary")
 
-      if (dir.exists(paste(workdir,"/Summary folder",sep=""))==FALSE){dir.create(paste(workdir,"/Summary folder",sep=""))}
-      #Feature_summary_all_files(datafile,workdir,threshold = threshold)
-      match_pattern <- "Spectrum....csv"
-      
-      for (spectrum_file in dir()[str_detect(dir(), match_pattern)]){
-        spectrum_file_table=fread(spectrum_file) 
-        colnames(spectrum_file_table)=c("mz",paste(name,spectrum_file))
-        if (is.null(Spectrum_summary)){
-          Spectrum_summary=spectrum_file_table
-        }else{
-                  Spectrum_summary=base::merge(Spectrum_summary,spectrum_file_table,by="mz",all=TRUE)
-        }
-      }
-    }
-    write.csv(Spectrum_summary,file = paste(workdir,"/Summary folder/Spectrum_summary",sep=""),row.names = F)
-    }
-  
-}
 
-Meta_feature_list_fun<-function(workdir=workdir,
-                      Quant_list=Quant_list,
-                      adducts=adducts,
-                      cl=autoStopCluster(makeCluster(parallel)),
-                      cal.mz=F,
-                      bypass=F){
-  library("Rcpp")
-  library(dplyr)
-  library(Rdisop)
-  
-   
-    adductslist<-Build_adduct_list()
-    peplist<-read.csv(paste0(workdir,"/",Quant_list),as.is = TRUE)
-    if (bypass){Meta_Summary=peplist[is.na(peplist$mz)!=T,]}else{
-      peplist$mass=0
-    if (cal.mz==F){
-      
-      if (sum(peplist$adducts!=0)>0){
-            peplist$adducts_mass=0
-    peplist$adducts_mass=unlist(parallel::parLapply(cl,1:nrow(peplist),function(i,adducts,adductslist,adducts_mass){
-    adducts_mass[i]<-adductslist[adductslist$Name==adducts[i],"Mass"]*abs(as.numeric(as.character(adductslist[adductslist$Name==adducts[i],"Charge"])))
-     },peplist$adducts,adductslist,peplist$adducts_mass))
-    
-    peplist$mass<-peplist$mz-peplist$adducts_mass
-        
-        
-        
-      }else{
-        
-        peplist$mass<-peplist$mz
-        
-      }
 
-      
-    }else{
-      
-    peplist_mass<-peplist$Formula %>% lapply(getMonomass) 
-    peplist$mass<-as.numeric(unlist(peplist_mass))
-    
-    
-      
-    }
 
-  #x=1:nrow(peplist)
-  #x=split(x, sort(x%%round(nrow(peplist)/500)))
-  
-  #for (batch in names(x)[1:10]){
-  #  peplist$diff=0
-  #peplist_mass<-peplist$Formula[unlist(x[batch])] %>% lapply(getMonomass) 
-  #peplist$mass[unlist(x[batch])]<-as.numeric(unlist(peplist_mass))
-  #peplist$diff[unlist(x[batch])]=peplist$mass[unlist(x[batch])]-peplist$mz[unlist(x[batch])]
-  #batch
-  #}
 
-  #peplist_mass<- parLapply(cl=cl,peplist$Formula, getMonomass)
-  #OrgMassSpecR::MonoisotopicMass(peplist$Formula[1])
-  #peplist_mass<- parallel::parLapply(cl=cl,1, getMonomass,peplist$Formula)
-  #Rdisop::getMolecule(peplist$Formula[1])
-  #for (i in 1:nrow(peplist)){
-    #peplist$mass[i]=Rdisop::getMass(peplist$Formula[i])$exactmass
-   # i
-    
-  #}
-  #getMonomass(peplist$Formula[1])
-  
-  peplist<-peplist[duplicated(names(peplist))==FALSE]
-  
-  
-  
-  #pimlist<-parentIonMasslist(peplist,Index_of_protein_sequence)
-  
-  #peplist<-peplist[names(peplist) %in% names(pimlist) ==TRUE] 
-  
-  #tempdf<-parLapply(cl=cl,  1: length(names(peplist)), Peptide_Summary_para,peplist)
-  
-  #tempdf <- do.call("rbind", tempdf)
-  #colnames(tempdf)<-c("Protein","Peptide")
-  #tempdf<-as.data.frame(tempdf)
-  #tempdf$Protein<-as.character(tempdf$Protein)
-  #tempdf$Peptide<-as.character(tempdf$Peptide)
-  
-  Meta_Summary<-NULL
-
-  for (i in 1:length(adducts)){
-    adductmass<-as.numeric(as.character(adductslist[adductslist$Name==adducts[i],"Mass"]))
-    peplist$mz<-as.numeric(peplist$mass+adductmass)
-    peplist$adduct<-adducts[i]
-    Meta_Summary<-rbind.data.frame(Meta_Summary,peplist)
-  }
-  
-      
-    }
-    
-  return(Meta_Summary)                
-                        
-  }
 
 
 
@@ -1882,61 +1493,7 @@ Build_adduct_list<-function(){
   adductslist
 }
 
-Protein_feature_list_fun<-function(workdir=WorkingDir(),
-                                   Fastadatabase,
-                                   format="fasta",
-                                   nrec=-1L, 
-                                   skip=0L, 
-                                   seek.first.rec=FALSE,
-                                   use.names=TRUE, 
-                                   with.qualities=FALSE,
-                                   Digestion_site="[G]",
-                                   missedCleavages=0:1,
-                                   adducts=c("M+H","M+NH4","M+Na"),
-                                   cl){
-  library(Biostrings)
-  list_of_protein_sequence<-readAAStringSet(Fastadatabase,
-                                            format,
-                                            nrec, 
-                                            skip, 
-                                            seek.first.rec,
-                                            use.names, 
-                                            with.qualities
-  )    
-  
-  Index_of_protein_sequence<-fasta.index(Fastadatabase,
-                                         nrec, 
-                                         skip)   
-  
-  peplist<-cleave(as.character(list_of_protein_sequence),custom=Digestion_site, missedCleavages=missedCleavages)
-  
-  
-  peplist<-peplist[duplicated(names(peplist))==FALSE]
-  
-  
-  
-  pimlist<-parentIonMasslist(peplist,Index_of_protein_sequence)
-  
-  peplist<-peplist[names(peplist) %in% names(pimlist) ==TRUE] 
-  
-  tempdf<-parLapply(cl=cl,  1: length(names(peplist)), Peptide_Summary_para,peplist)
-  
-  tempdf <- do.call("rbind", tempdf)
-  colnames(tempdf)<-c("Protein","Peptide")
-  tempdf<-as.data.frame(tempdf)
-  tempdf$Protein<-as.character(tempdf$Protein)
-  tempdf$Peptide<-as.character(tempdf$Peptide)
-  
-  Protein_Summary<-NULL
-  adductslist<-Build_adduct_list()
-  for (i in 1:length(adducts)){
-    adductmass<-as.numeric(as.character(adductslist[adductslist$Name==adducts[i],"Mass"]))
-    tempdf$mz<-as.numeric(parentIonMass(tempdf$Peptide)-1.00727600+adductmass)
-    tempdf$adduct<-adducts[i]
-    Protein_Summary<-rbind.data.frame(Protein_Summary,tempdf)
-  }
-  Protein_Summary
-}
+
 
 PMF_analysis_fun<-function(Peptide_Summary_searchlist,peaklist,ppm,cl){
   
