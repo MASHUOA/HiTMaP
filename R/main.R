@@ -23,7 +23,6 @@
 #' @import svDialogs
 #' @import svGUI
 #' @import KEGGREST
-#' @import S4Vectors
 #' @import RColorBrewer
 #' @import rgl
 #' @import mixOmics
@@ -41,7 +40,7 @@
 #' @import BiocParallel
 #' @importFrom stats na.omit runif
 #' @importFrom utils download.file modifyList packageVersion read.table tail
-
+#' @import S4Vectors
 
 
 

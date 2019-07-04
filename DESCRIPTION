@@ -17,7 +17,6 @@ Packaged:
 BugReports:
 Imports: 
     pryr,
-    S4Vectors,
     CAMERA,
     pacman,
     purrr,
@@ -57,7 +56,8 @@ Imports:
     pacman,
     devtools,
     fs,
-    processx
+    processx,
+    S4Vectors
 VignetteBuilder: knitr
 Suggests: 
     knitr,
