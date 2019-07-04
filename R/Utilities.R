@@ -1,18 +1,23 @@
+
 Load_Cardinal_imaging<-function(datafile=tk_choose.files(filter = Filters,
                                                          caption  = "Choose single or multiple file(s) for analysis",
                                                          multi = F),
+                                BPPARAM = bpparam(),
                                 resolution=2.5,
                                 attach.only=TRUE,
-                                preprocessing=F){
+                                preprocessing=F,
+                                rotate=0,as="MSImagingExperiment",
+                                mzrange=NULL){
   #imdata_meta <- importImzMl(datafile, coordinates = matrix(c(2, 4),nrow=1, ncol=2),removeEmptySpectra = F, centroided = T)
+  
   datafiles<-gsub(".imzML", "", datafile)
   workdir<-base::dirname(datafiles) 
   name <-gsub(base::dirname(datafiles),"",datafiles)
   folder<-base::dirname(datafiles)
-  imdata <- readImzML(name, folder, attach.only=attach.only,as="MSImageSet",resolution=resolution, units="ppm")
+  imdata <- readImzML(name, folder, attach.only=attach.only,as=as,resolution=resolution, units="ppm",rotate = rotate,BPPARAM=BPPARAM,mass.range=mzrange)
   if (preprocessing){
     imdata <- try(batchProcess(imdata, normalize=FALSE, smoothSignal=TRUE, reduceBaseline=list(method = "median",blocks=500, fun=min, spar=1),
-                               peakPick=list(SNR=12), peakAlign=TRUE))
+                               peakPick=list(SNR=12), peakAlign=TRUE,BPPARAM=BPPARAM))
   }
   imdata
   
@@ -148,39 +153,7 @@ cluster_image_cardinal_allinone<-function(clusterID,
   library(plotly)
   #rotate the image
   #imdata@pixelData@data<-rotatetmp
-  if(rotate_image){
-  rotatetmp<-imdata@pixelData@data
-  
-  rotatenew<-affine(rotatetmp[,c("x","y")])
-  rownames(rotatenew)<-paste0("x = ",rotatenew$x,", ","y = ",rotatenew$y,", ","z = ",rotatenew$z)
-  rotatenew$z=rotatetmp$z
-  rotatenew$sample=rotatetmp$sample
-  timdatapositionArray<-data.frame(imdata@imageData@positionArray,stringsAsFactors = F)
-  class(timdatapositionArray)
-  new_timdatapositionArray=data.frame(row.names = 1:max(rotatenew$y))
-  
-  new_timdatapositionArray=1
-  imdata@pixelData@data<-rotatenew
-  imdata@imageData@positionArray<-ttimdatapositionArray
-  imdata@imageData@coord<-rotatenew
-  rownames(imdata@imageData@coord)<-paste0("x = ",rotatenew$x,", ","y = ",rotatenew$y,", ","z = ",rotatenew$z)
-  imdata@imageData@dimnames[[2]]=paste0("x = ",rotatenew$x,", ","y = ",rotatenew$y,", ","z = ",rotatenew$z) 
-  
-  image_rotate(image, degrees)
-  plot(1:10, rnorm(10))
-  
-  library(gridGraphics)
-  
-  grab_grob <- function(){
-    grid.echo()
-    grid.grab()
-  }
-  
-  g <- grab_grob()
-  grid.newpage()
-  pushViewport(viewport(width=0.7,angle=30))
-  grid.draw(g)
-  }
+
   
   SMPLIST=as.data.frame(SMPLIST)
   outputpng=paste(getwd(),"\\",windows_filename(substr(clusterID, 1, 10)),"_cluster_plot",'.png',sep="")  
@@ -236,7 +209,13 @@ cluster_image_cardinal_allinone<-function(clusterID,
           contrast.enhance = contrast.enhance,
           smooth.image = smooth.image ,
           superpose=TRUE,normalize.image="linear",
-          plusminus=ppm)
+          plusminus=median(ppm*candidateunique/1000000))
+    
+    
+    l<-function(x,y,z,t=x+y,f=t+z){
+      paste(t,f)
+    }
+    l(1,2,3)
     
     dev.off()
     pngfile<-image_read(outputpng)
@@ -274,7 +253,7 @@ cluster_image_cardinal_allinone<-function(clusterID,
           contrast.enhance = contrast.enhance,
           smooth.image = smooth.image ,
           superpose=TRUE,normalize.image="linear",
-          plusminus=ppm)
+          plusminus=median(ppm*candidateunique/1000000))
     
     for (i in 1:length(candidateunique)){
       #image(imdata, mz=candidateunique[i], col=mycol[i], superpose=F,normalize.image="linear")
@@ -283,8 +262,9 @@ cluster_image_cardinal_allinone<-function(clusterID,
             contrast.enhance=contrast.enhance,
             smooth.image = smooth.image ,
             col.regions=col.regions,
-            normalize.image="linear",
-            plusminus=ppm)
+            
+            normalize.image="none",
+            plusminus=ppm*candidateunique[i]/1000000)
       componentname=unique(candidate[[componentID_colname]][candidate$mz==as.numeric(candidateunique[i])])
       for (component in componentname){
         text(cex=30/ifelse(nchar(component)>30,nchar(component),30),labels=paste0(component),x=1,y=1+(which(componentname==component)-1)*3,adj=0,pos=4,offset=1,col = "white")
@@ -321,28 +301,7 @@ cluster_image_cardinal_allinone<-function(clusterID,
           no.readonly = TRUE,ann=FALSE)  
     }
     
-    image_rotate<-function(...){
-      library(gridGraphics)
-      library(magick)
-      temp.png=tempfile(pattern = "file", tmpdir = tempdir(), fileext = ".png")
-      png(temp.png,width = 5,height = 5, bg = "black",units = "in",res = 300)
-      image(...)
-      dev.off()
-      image_read(temp.png)
-      
-      
-      grab_grob <- function(...){
-        grid.echo()
-        grid.grab()
-      }
-      
-      g <- grab_grob()
-      grid.newpage()
-      pushViewport(viewport(width=0.7,angle=30))
-      
-      grid.draw(g)
-      
-    }
+    
     
     
     image(imdata, mz=candidateunique, 
@@ -350,7 +309,7 @@ cluster_image_cardinal_allinone<-function(clusterID,
           contrast.enhance = contrast.enhance,
           smooth.image = smooth.image ,
           superpose=TRUE,normalize.image="linear",
-          plusminus=ppm)
+          plusminus=median(ppm*candidateunique/1000000))
     
 
     for (i in 1:length(candidateunique)){
@@ -361,7 +320,7 @@ cluster_image_cardinal_allinone<-function(clusterID,
             smooth.image = smooth.image,#smooth.image ,
             col.regions=intensity.colors_customize1(),
             normalize.image="none",
-            plusminus=ppm,
+            plusminus=ppm*candidateunique[i]/1000000,
             key=F,
             xlab=NULL,
             ylab=NULL,
@@ -440,6 +399,311 @@ cluster_image_cardinal_allinone<-function(clusterID,
   
 }
 
+cluster_image_grid<-function(clusterID,
+                                          SMPLIST,
+                                          ppm=20,
+                                          imdata=Load_Cardinal_imaging(datafile[i],preprocessing = F,resolution = ppm),
+                                          ClusterID_colname="Protein",
+                                          componentID_colname="Peptide",
+                                          Component_plot_threshold=2,
+                                          smooth.image="gaussian",
+                                          contrast.enhance = "suppression",
+                                          colorpallet="Set1",
+                                          plot_layout="grid",
+                                          export_Header_table=F,
+                                          plot_style=c("fleximaging","ClusterOnly","rainbow")){
+  #complementary(color="red", plot = TRUE, bg = "white", labcol = NULL, cex = 0.8, title = TRUE)
+  windows_filename<- function(stringX){
+    stringX<-stringr::str_remove_all(stringX,"[><*?:\\/\\\\]")
+    stringX<-gsub("\"", "", stringX)
+    stringX<-gsub("\\|", " ", stringX)
+    return(stringX)
+    
+  }
+  Sys.setenv("PATH" = paste(paste(unique(str_split(Sys.getenv("PATH"),.Platform$path.sep)[[1]]), sep = .Platform$path.sep,collapse = .Platform$path.sep), "C:/ProgramData/Anaconda3/orca_app", sep = .Platform$path.sep))
+  library(grid)
+  library(plotly)
+  #rotate the image
+  #imdata@pixelData@data<-rotatetmp
+  
+  
+  SMPLIST=as.data.frame(SMPLIST)
+  outputpng=paste(getwd(),"\\",windows_filename(substr(clusterID, 1, 10)),"_cluster_plot",'.png',sep="")  
+  #message(outputpng)
+  candidate=SMPLIST[SMPLIST[[ClusterID_colname]]==clusterID,]
+  #candidate=candidate[order(as.character())]
+  candidateunique=as.numeric(as.character(unique(candidate[,"mz"])))
+  if (length(candidateunique)>9){
+    candidate.dt <- data.table(candidate)
+    candidatet=candidate.dt[,list(Intensity=sum(Intensity)), by='mz']
+    candidatet=candidatet[order(-candidatet$Intensity)]
+    selections=as.numeric(t(candidatet[1:9,"mz"]))
+    candidate=candidate[candidate$mz %in% selections,]
+    candidateunique=as.numeric(unique(candidate[,"mz"]))
+    candidateunique=candidateunique[order(as.character(candidateunique))]
+    mycol <- factor(RColorBrewer::brewer.pal(length(candidateunique),colorpallet))
+    mycol <- factor(mycol,levels(mycol)) 
+  }else if (length(candidateunique)<3){
+    candidateunique=candidateunique[order(as.character(candidateunique))]
+    mycol <- factor(RColorBrewer::brewer.pal(3,colorpallet))
+    mycol <- factor(mycol,levels(mycol)) 
+    
+  }else{
+    candidateunique=candidateunique[order(as.character(candidateunique))]
+    mycol <- factor(RColorBrewer::brewer.pal(length(candidateunique),colorpallet))
+    mycol <- factor(mycol,levels(mycol)) 
+  }
+  
+  
+  
+  if (length(candidateunique)>=Component_plot_threshold){
+    
+    if (is.null(imdata)){
+      message("No imaging data")
+      
+    }else{
+      
+      
+      
+      library(RColorBrewer)
+      library(Cardinal)
+      library(EBImage)
+      #library(colortools)
+      
+      if (plot_style=="ClusterOnly"){
+        png(outputpng,width = 10,height = 10, bg = "black",units = "in",res = 300)
+        par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(1,1),
+            bty="n",pty="s",xaxt="n",
+            yaxt="n",
+            no.readonly = TRUE,ann=FALSE)
+        image(imdata, mz=candidateunique, 
+              col=mycol,
+              contrast.enhance = contrast.enhance,
+              smooth.image = smooth.image ,
+              superpose=TRUE,normalize.image="linear",
+              plusminus=median(ppm*candidateunique/1000000))
+        
+        
+        l<-function(x,y,z,t=x+y,f=t+z){
+          paste(t,f)
+        }
+        l(1,2,3)
+        
+        dev.off()
+        pngfile<-image_read(outputpng)
+        pngfile<-image_border(pngfile, "black", "30x30")
+        pngfile<-image_annotate(pngfile,paste(clusterID),gravity = "south",size = 50,color = "white")
+        pngfile<-image_trim(pngfile)
+        image_write(pngfile,outputpng)
+        
+      }else if (plot_style=="rainbow"){
+        
+        outputpngsum=paste(getwd(),"\\",windows_filename(substr(clusterID, 1, 10)),"_cluster_plot_sum",'.png',sep="")
+        
+        
+        if (plot_layout=="line"){
+          png(outputpngsum,width = 5*((length(candidateunique)+1)),height = 5, bg = "black",units = "in",res = 75)
+          par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(1,(length(candidateunique)+1)),
+              bty="n",pty="s",xaxt="n",
+              yaxt="n",
+              no.readonly = TRUE,ann=FALSE)   
+          
+          
+        }else{
+          png(outputpngsum,width = 5*2,height = 5*(ceiling((length(candidateunique)+1)/2)), bg = "black",units = "in",res = 75)
+          par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(ceiling((length(candidateunique)+1)/2), 2),
+              bty="n",pty="s",xaxt="n",
+              yaxt="n",
+              no.readonly = TRUE,ann=FALSE)  
+        }
+        
+        
+        
+        
+        image(imdata, mz=candidateunique, 
+              col=levels(mycol),
+              contrast.enhance = contrast.enhance,
+              smooth.image = smooth.image ,
+              superpose=TRUE,normalize.image="linear",
+              plusminus=median(ppm*candidateunique/1000000))
+        
+        for (i in 1:length(candidateunique)){
+          #image(imdata, mz=candidateunique[i], col=mycol[i], superpose=F,normalize.image="linear")
+          col.regions <- gradient.colors(100, start="black", end=levels(mycol)[i])
+          image(imdata, mz=candidateunique[i], 
+                contrast.enhance=contrast.enhance,
+                smooth.image = smooth.image ,
+                col.regions=col.regions,
+                
+                normalize.image="none",
+                plusminus=ppm*candidateunique[i]/1000000)
+          componentname=unique(candidate[[componentID_colname]][candidate$mz==as.numeric(candidateunique[i])])
+          for (component in componentname){
+            text(cex=30/ifelse(nchar(component)>30,nchar(component),30),labels=paste0(component),x=1,y=1+(which(componentname==component)-1)*3,adj=0,pos=4,offset=1,col = "white")
+          }
+        }
+        dev.off()
+        #pngfile<-image_read(outputpngsum)
+        #pngfile<-image_border(pngfile, "black", "30x30")
+        #pngfile<-image_annotate(pngfile,paste(clusterID),gravity = "south",size = 50,color = "white")
+        #pngfile<-image_trim(pngfile)
+        #image_write(pngfile,outputpngsum)
+        
+        
+      }else if(plot_style=="fleximaging"){
+        
+        ##################################
+        darkmode()
+        tmp_dir <- tempdir()
+        outputpngsum=paste(getwd(),"\\",windows_filename(substr(clusterID, 1, 10)),"_cluster_plot_sum_flex",'.png',sep="")
+        temp_cluster_png=tempfile(pattern = "file", tmpdir = tempdir(), fileext = ".png")
+        temp_component_png=list()
+        if (plot_layout=="line"){
+          png(temp_cluster_png,width = 5,height = 5 * length( levels(run(imdata))), bg = "black",units = "in",res = 300)
+          par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(length( levels(run(imdata))),1),
+          #par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(1,(length(candidateunique)+1)),
+              bty="n",pty="s",xaxt="n",
+              yaxt="n",
+              no.readonly = TRUE,ann=FALSE)   
+          
+          
+        }else{
+          png(temp_cluster_png,width = 5*2,height = 5*(ceiling((length(candidateunique)+1)/2)), bg = "black",units = "in",res = 300)
+          par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(ceiling((length(candidateunique)+1)/2), 2),
+              bty="n",pty="s",xaxt="n",
+              yaxt="n",
+              no.readonly = TRUE,ann=FALSE)  
+        }
+        
+        
+        
+        
+        clusterimg=image(imdata, mz=candidateunique, 
+              col=levels(mycol),
+              contrast.enhance = contrast.enhance,
+              smooth.image = smooth.image ,
+              superpose=TRUE,normalize.image="linear",
+              plusminus=median(ppm*candidateunique/1000000),
+              layout=c( length(levels(run(imdata))),1))
+        print(clusterimg)
+        
+        dev.off()
+        
+        
+        
+        componentimg=list()
+        for (i in 1:length(candidateunique)){
+          #image(imdata, mz=candidateunique[i], col=mycol[i], superpose=F,normalize.image="linear")
+          col.regions <- gradient.colors(100, start="black", end=levels(mycol)[i])
+        componentimg[[i]]=image(imdata, mz=candidateunique[i], 
+                contrast.enhance=contrast.enhance,
+                smooth.image = smooth.image,#smooth.image ,
+                col.regions=intensity.colors_customize1(),
+                normalize.image="none",
+                plusminus=ppm*candidateunique[i]/1000000,
+                key=F,
+                xlab=NULL,
+                ylab=NULL,
+                layout=c( length(levels(run(imdata))),1)
+                #xlim=c(0,50),
+                #ylim=c(0,40)
+          )
+        temp_component_png[[i]]=tempfile(pattern = "file", tmpdir = tempdir(), fileext = ".png")
+        png(temp_component_png[[i]],width = 5,height = 5 * length( levels(run(imdata))), bg = "black",units = "in",res = 300)
+        par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(length( levels(run(imdata))),1),
+            #par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(1,(length(candidateunique)+1)),
+            bty="n",pty="s",xaxt="n",
+            yaxt="n",
+            no.readonly = TRUE,ann=FALSE)  
+        print(componentimg[[i]])
+        dev.off()
+          #componentname=unique(candidate[[componentID_colname]][candidate$mz==as.numeric(candidateunique[i])])
+          #for (component in componentname){
+          #  text(cex=30/ifelse(nchar(component)>30,nchar(component),30),labels=paste0(component),x=1,y=1+(which(componentname==component)-1)*3,adj=0,pos=4,offset=1,col = "white")
+          #}
+        }
+
+        pngfile<-image_read(temp_cluster_png)
+        pngfile<-image_border(pngfile, "black", "30x30")
+        pngfile<-image_annotate(pngfile,paste(clusterID),gravity = "north",size = 50,color = "white")
+        
+        
+        pngcompfile=list()
+        for (i in 1:length(candidateunique)){
+          pngcompfile[[i]]<-image_read(temp_component_png[[i]])
+          pngcompfile[[i]]<-image_border(pngcompfile[[i]], "black", "30x30")
+          pngcompfile[[i]]<-image_annotate(pngcompfile[[i]],paste(unique(candidate[candidate$mz==candidateunique[i],"moleculeNames"]),candidateunique[i]),gravity = "north",size = 50,color = "white")
+         
+          }
+         pngfile=image_append(c(pngfile,unlist(pngcompfile)))
+        image_write(pngfile,outputpngsum)
+        
+        removetempfile(tmp_dir,matchword=c(".png$","^magick-"))
+        
+        rm(pngcompfile)
+      
+    }
+    
+    
+    
+    
+  }
+  
+  if(export_Header_table){
+    candidate_unique_table=unique(candidate[,c("mz","FA","Formula","moleculeNames" , "adduct")])
+    Header_table<-NULL
+    Header_table$mz=candidateunique
+    Header_table<-data.frame(Header_table)
+    Header_table=base::merge(Header_table,candidate_unique_table,all.x=T,by="mz",all.y=F)
+    #Header_table$ID=candidate[[componentID_colname]][candidate$mz==as.numeric(candidateunique)]
+    #componentnames=unique(Header_table[[componentID_colname]][Header_table$mz==as.numeric(candidateunique[i])])
+    p <- plot_ly(
+      type = 'table',
+      columnwidth = 20,
+      header = list(
+        values = c(paste0("<b>","Cluster","</b>"),Header_table$FA),
+        colspan = I(30),
+        align = c('center'),
+        line = list(width = 1, color = 'black'),
+        fill = list(color = "grey"),
+        font = list(family = "Arial", size = 15, color = "white")
+      ),
+      cells = list(
+        values = cbind(
+          #rbind(paste0("<b>","Cluster","</b>"), as.matrix(Header_table$FA)),
+          rbind("",as.matrix(Header_table$adduct)), 
+          rbind("",as.matrix(round(Header_table$mz,digits = 3)))
+        ),
+        align = c('left', rep('center', ncol(mtcars))),
+        line = list(color = "black", width = 1),
+        fill = list(color = "white"),
+        font = list(family = "Arial", size = 15, color = c("black"))
+        
+      ),
+      width=120*(nrow(Header_table)+10),
+      height=400,
+      
+      
+    ) %>% layout(
+      title = paste0("<b>",clusterID,"</b>"),
+      autosize = F,
+      margin=0,
+      font = list(family = "Arial",  color = "black",align = "bottom")
+    )
+    
+    
+    
+    
+    
+    orca(p, file = windows_filename(paste0(clusterID,"header.png")),width=120*(nrow(Header_table))+200,height=540) 
+    
+  }
+  
+  
+  
+  
+}}
+
 orca_initial<-function(){
   
 Sys.setenv("PATH" = paste(paste(unique(str_split(Sys.getenv("PATH"),.Platform$path.sep)[[1]]), sep = .Platform$path.sep,collapse = .Platform$path.sep), "C:/ProgramData/Anaconda3/orca_app", sep = .Platform$path.sep))
@@ -447,28 +711,384 @@ Sys.setenv("PATH" = paste(paste(unique(str_split(Sys.getenv("PATH"),.Platform$pa
   
 }
 
-affine <- function(x, translate=c(0,0), rotate=180,
+affine <- function(x, translate=c(0,0), rotate=0,
                    angle=c("degrees", "radians"), grid=TRUE)
 {
   x=x[,c("x","y")]
   angle <- match.arg(angle)
   theta <- -rotate
   if ( angle == "degrees" ) theta <- theta * pi / 180
+  new.x=spdep::Rotation(x,angle = theta)
+  #
   # translate center of mass to be near origin
-  tt <- sapply(x, function(xs) mean(xs))
-  new.x <- t(as.matrix(x)) - tt
+  #tt <- sapply(x, function(xs) mean(xs))
+  #new.x <- t(as.matrix(x)) - tt
   # rotate around origin
-  A <- matrix(c(cos(theta), sin(theta), -sin(theta), cos(theta)), nrow=2)
-  new.x <- A %*% new.x
+  #A <- matrix(c(cos(theta), sin(theta), -sin(theta), cos(theta)), nrow=2)
+  #new.x <- A %*% new.x
   # translate back and do requested translation
-  new.x <- t(new.x + tt + translate)
+  #new.x <- t(new.x + tt + translate)
   # remove negative coordinates and round to integers
   if ( grid ) {
     new.x <- round(new.x)
-    new.x[new.x < 1] <- 1
   }
   # return data.frame of new coordinates
   new.x <- as.data.frame(new.x)
   names(new.x) <- names(x)
   new.x
 }
+rotate_image<-function(imzdata,degree=0){
+  
+  imaxmldata<- readLines(paste0(imzdata,".imzML"))
+  filename=paste0(imzdata,".imzML")
+  
+  doc = xmlRoot(xmlTreeParse(filename, trim = FALSE, ignoreBlanks = FALSE))
+  print(doc, indent = FALSE, tagSeparator = "")
+  
+  
+  rotatetmp<-imdata@pixelData@data
+  
+  rotatenew<-affine(rotatetmp[,c("x","y")])
+  rownames(rotatenew)<-paste0("x = ",rotatenew$x,", ","y = ",rotatenew$y,", ","z = ",rotatenew$z)
+  rotatenew$z=rotatetmp$z
+  rotatenew$sample=rotatetmp$sample
+  timdatapositionArray<-data.frame(imdata@imageData@positionArray,stringsAsFactors = F)
+  class(timdatapositionArray)
+  new_timdatapositionArray=data.frame(row.names = 1:max(rotatenew$y))
+  
+  new_timdatapositionArray=1
+  imdata@pixelData@data<-rotatenew
+  imdata@imageData@positionArray<-ttimdatapositionArray
+  imdata@imageData@coord<-rotatenew
+  rownames(imdata@imageData@coord)<-paste0("x = ",rotatenew$x,", ","y = ",rotatenew$y,", ","z = ",rotatenew$z)
+  imdata@imageData@dimnames[[2]]=paste0("x = ",rotatenew$x,", ","y = ",rotatenew$y,", ","z = ",rotatenew$z) 
+  
+  image_rotate(image, degrees)
+  plot(1:10, rnorm(10))
+  
+  library(gridGraphics)
+  
+  grab_grob <- function(){
+    grid.echo()
+    grid.grab()
+  }
+  
+  g <- grab_grob()
+  grid.newpage()
+  pushViewport(viewport(width=0.7,angle=30))
+  grid.draw(g)
+}
+
+#### Read imzML files ####
+## ----------------------
+
+readImzML <- function(name, folder = getwd(), attach.only = TRUE,
+                      mass.range = NULL, resolution = 200, units = c("ppm", "mz"),
+                      as = c("MSImagingExperiment", "MSImageSet"), parse.only=FALSE,
+                      BPPARAM = bpparam(),rotate=0, ...)
+{
+  library(Cardinal)
+  # check input
+  dots <- list(...)
+  if ( "mass.accuracy" %in% names(dots) ) {
+    .stop("'mass.accuracy' is defunct.\n",
+          "Use 'resolution' instead.")
+  }
+  if ( "units.accuracy" %in% names(dots) ) {
+    .stop("'units.accuracy' is defunct.\n",
+          "Use 'units' instead.")
+  }
+  # get output format
+  outclass <- match.arg(as)
+  # check for files
+  xmlpath <- normalizePath(file.path(folder, paste(name, ".imzML", sep="")),
+                           mustWork=FALSE)
+  if ( !file.exists(xmlpath) ) .stop("expected file ", xmlpath, " does not exist")
+  ibdpath <- normalizePath(file.path(folder, paste(name, ".ibd", sep="")),
+                           mustWork=FALSE)
+  if ( !file.exists(ibdpath) ) .stop("expected file ", ibdpath, " does not exist")
+  # read imzML file
+  message("reading imzML file: '", xmlpath, "'")
+  info <- .readImzML(xmlpath)
+  coord=data.frame(x=info@scanList@listData[["position x"]],y=info@scanList@listData[["position y"]])
+  newcoord=affine(coord,rotate = rotate)
+  
+  newcoord$x=newcoord$x-min(newcoord$x)+1
+  newcoord$y=newcoord$y-min(newcoord$y)+1
+  info@scanList@listData[["position x"]]=as.integer(as.character(newcoord$x))
+  info@scanList@listData[["position y"]]=as.integer(as.character(newcoord$y))
+  info@metadata[["max count of pixels x"]]=max(newcoord$x)
+  info@metadata[["max count of pixels y"]]=max(newcoord$y)
+  
+  
+  if ( parse.only )    return(info)
+  # read ibd file
+  info@metadata[["files"]] <- c(xmlpath, ibdpath)
+  info@metadata[["name"]] <- name
+  units <- match.arg(units)
+  message("reading ibd file: '", ibdpath, "'")
+  object <- .readIbd(ibdpath, info, outclass=outclass, attach.only=attach.only,
+                     mass.range=mass.range, resolution=resolution, units=units, BPPARAM=BPPARAM)
+  #.log.collapse("loaded dataset:", capture.output(print(object)))
+  if ( validObject(object) ) {
+    message("done.")
+    object
+  }
+}
+
+.readImzML <- function(file) {
+  parse <- .Call("C_readImzML", normalizePath(file), PACKAGE="Cardinal")
+  len <- sapply(parse$experimentMetadata, nchar, type="bytes")
+  experimentMetadata <- parse$experimentMetadata[len > 0]
+  .MSImagingInfo(
+    scanList=as(parse$scanList, "DataFrame"),
+    mzArrayList=as(parse$mzArrayList, "DataFrame"),
+    intensityArrayList=as(parse$intensityArrayList, "DataFrame"),
+    metadata=experimentMetadata)
+}
+intensityData<-function(x){
+  x@intensityData
+}
+
+metadata<-function(x){
+  x@metadata
+}
+.readIbd <- function(file, info, outclass, attach.only,
+                     mass.range, resolution, units,...)
+{
+  library(matter)
+  file <- normalizePath(file)
+  ibdtype <- metadata(info)[["ibd binary type"]]
+  mz.ibdtype <- mzData(info)[["binary data type"]]
+  intensity.ibdtype <- imageData(info)[["binary data type"]]
+  # read binary data
+  if ( ibdtype == "continuous" ) {
+    mz <- matter::matter_vec(paths=file,
+                     datamode=Ctypeof(mz.ibdtype[1]),
+                     offset=mzData(info)[["external offset"]][1],
+                     extent=mzData(info)[["external array length"]][1])
+    intensity <- matter::matter_mat(paths=file,
+                            datamode=Ctypeof(intensity.ibdtype[1]),
+                            offset=imageData(info)[["external offset"]],
+                            extent=imageData(info)[["external array length"]])
+    if ( attach.only ) {
+      spectra <- intensity
+    } else {
+      spectra <- intensity[]
+    }
+    mz <- mz[]
+  } else if ( ibdtype == "processed" ) {
+    mz <- matter::matter_list(paths=file,
+                      datamode=Ctypeof(mz.ibdtype),
+                      offset=mzData(info)[["external offset"]],
+                      extent=mzData(info)[["external array length"]])
+    intensity <- matter::matter_list(paths=file,
+                             datamode=Ctypeof(intensity.ibdtype),
+                             offset=imageData(info)[["external offset"]],
+                             extent=imageData(info)[["external array length"]])
+    if ( is.null(mass.range) ) {
+      mzvec <- as(mz, "matter_vec")
+      chunksize(mzvec) <- 1e8L # read chunks of 800 MB
+      mz.range <- range(mzvec)
+    } else {
+      mz.range <- mass.range
+    }
+    mz.min <- mz.range[1]
+    mz.max <- mz.range[2]
+    if ( units == "ppm" ) {
+      if ( floor(mz.min) <= 0 )
+        .stop("readImzML: m/z values must be positive for units='ppm'")
+      mzout <- seq.ppm(
+        from=floor(mz.min),
+        to=ceiling(mz.max),
+        ppm=resolution) # ppm == half-bin-widths
+      error <- resolution * 1e-6 * mzout
+      tol <- c(relative = resolution * 1e-6)
+    } else {
+      mzout <- seq(
+        from=floor(mz.min),
+        to=ceiling(mz.max),
+        by=resolution * 2)  # by == full-bin-widths
+      error <- rep(resolution, length(mzout))
+      tol <- c(absolute = resolution)
+    }
+    mz.bins <- c(mzout[1] - error[1], mzout + error)
+    if ( attach.only ) {
+      data <- list(keys=mz, values=intensity)
+      mz <- mzout
+      spectra <- sparse_mat(data, keys=mz,
+                            nrow=length(mz), ncol=length(intensity),
+                            tolerance=tol, combiner="sum")
+    } else {
+      if ( outclass == "MSImageSet" ) {
+        data <- list(keys=list(), values=list())
+        for ( i in seq_along(mz) ) {
+          mzi <- mz[[i]]
+          wh <- findInterval(mzi, mz.bins)
+          s <- as.vector(tapply(intensity[[i]], wh, sum))
+          data$keys[[i]] <- mzout[unique(wh)]
+          data$values[[i]] <- s
+        }
+      } else if ( outclass == "MSImagingExperiment") {
+        data <- list(keys=mz[], values=intensity[])
+      }
+      mz <- mzout
+      spectra <- sparse_mat(data, keys=mz,
+                            nrow=length(mz), ncol=length(intensity),
+                            tolerance=tol, combiner="sum")
+    }
+  }
+  # set up coordinates
+  x <- scans(info)[["position x"]]
+  y <- scans(info)[["position y"]]
+  z <- scans(info)[["position z"]]
+  x3d <- scans(info)[["3DPositionX"]]
+  y3d <- scans(info)[["3DPositionY"]]
+  z3d <- scans(info)[["3DPositionZ"]]
+  if ( all(is.na(z)) && all(is.na(z3d)) ) {
+    coord <- data.frame(x=x, y=y)
+  } else if ( all(is.na(z3d)) ) {
+    coord <- data.frame(x=x, y=y, z=z)
+  } else {
+    z <- as.integer(as.factor(z3d))
+    coord <- data.frame(x=x, y=y, z=z)
+  }
+  if ( outclass == "MSImageSet" ) {
+    experimentData <- new("MIAPE-Imaging")
+    processingData <- new("MSImageProcess", files=metadata(info)[["files"]])
+    object <- MSImageSet(spectra=spectra, mz=mz, coord=coord,
+                         processingData=processingData,
+                         experimentData=experimentData)
+    sampleNames(object) <- metadata(info)[["name"]]
+  } else if ( outclass == "MSImagingExperiment" ) {
+    centroided <- isTRUE(spectrumRepresentation(info) == "centroid spectrum")
+    object <- MSImagingExperiment(spectra,
+                                  featureData=MassDataFrame(mz=mz),
+                                  pixelData=PositionDataFrame(coord=coord,
+                                                              run=metadata(info)[["name"]]),
+                                  metadata=metadata(info),
+                                  centroided=centroided)
+  } else {
+    stop("unrecognized outclass")
+  }
+  object
+}
+
+.MSImagingInfo <- setClass("MSImagingInfo",
+                           contains = "Vector",
+                           slots = c(
+                             scanList = "DataTable",
+                             mzArrayList = "DataTable",
+                             intensityArrayList = "DataTable"),
+                           prototype = prototype(
+                             scanList = DataFrame(),
+                             mzArrayList = DataFrame(),
+                             intensityArrayList = DataFrame()))
+.message <- function(..., progress=c("none", "start", "stop", "increment"), min=0, max=1) {
+  progress <- match.arg(progress)
+  if ( progress == "none" ) {
+    .log(...)
+    for ( f in .Cardinal$message ) {
+      f(...)
+    }
+  } else if ( progress == "start" ) {
+    if ( length(list(...)) > 1 )
+      .log(...)
+    .Cardinal$progress$i <- min
+    .Cardinal$progress$min <- min
+    .Cardinal$progress$max <- max
+    for ( f in .Cardinal$progress$start ) {
+      f(..., min=min, max=max)
+    }
+  } else if ( progress == "increment" ) {
+    .Cardinal$progress$i <- .Cardinal$progress$i + 1
+    for ( f in .Cardinal$progress$increment ) {
+      f()
+    }
+  } else if ( progress == "stop" ) {
+    if ( length(list(...)) > 1 )
+      .log(...)
+    for ( f in .Cardinal$progress$stop ) {
+      f(...)
+    }
+  }
+}
+.log <- function(...) {
+  msg <- paste(date(), paste0(..., collapse="\n  "))
+  .Cardinal$log <- append(.Cardinal$log, msg)
+  elapsed <- proc.time()[3] - .Cardinal$time$flush
+  if ( elapsed > getOption("Cardinal.flush") )
+    .log.flush()
+}
+
+Ctypeof <- function(type) {
+  vapply(type, function(t) {
+    switch(t,
+           `16-bit integer` = "short",
+           `32-bit integer` = "int",
+           `64-bit integer` = "long",
+           `32-bit float` = "float",
+           `64-bit float` = "double",
+           stop("unrecognized binary type"))
+  }, character(1))
+}
+
+seq.ppm <- function(from, to, ppm) {
+  length.out <- (log(to) - log(from)) / log((1 + 1e-6 * ppm) / (1 - 1e-6 *ppm))
+  length.out <- floor(1 + length.out)
+  i <- seq_len(length.out)
+  from * ((1 + 1e-6 * ppm) / (1 - 1e-6 * ppm))^(i-1)
+}
+
+intensity.colors_customize1 <- function(n = 100, alpha = 1,colset=1) {
+  col2 <- rainbow(3*n, alpha=alpha)[(2*n):1]
+  if (colset==1){
+  f <- colorRamp(colors=c("darkorchid4", "dodgerblue","green", "greenyellow","yellow"))  
+  } else {
+  f <- colorRamp(colors=c("darkorchid4", "blue", "darkseagreen1", "yellow"))  
+  }
+  
+  alpha <- col2rgb(col2, alpha=TRUE)[[4]]
+  col1 <- sapply(seq(from=0, to=1, length.out=n), function(i) do.call(rgb,
+                                                                      c(as.list(f(i)), maxColorValue=255, alpha=alpha)))
+  col1
+}
+
+Scilslab_mass_interval<-function(masslist,ppm){
+  
+  writelines=list()
+  writelines[[1]]="<ImagingResults flexImagingVersion=\"3.0\" last_modified=\"\" created=\"SCiLS export\">"
+  line=2
+  for (mz in rownames(masslist)){
+    
+    writelines[[line]]=paste0("<Result Type=\"PkFilter\" Name=\"",masslist[mz,"moleculeNames"],
+                              "\" Color=\"#5555ff\" Show=\"0\" MinIntensity=\"0\" IntensityThreshold=\"100\" AbsIntens=\"0\" LogScale=\"0\" MinMass=\"",
+                              masslist[mz,"mz"]-(masslist[mz,"mz"]*ppm/1000000),
+                              "\" MaxMass=\"",
+                              masslist[mz,"mz"]+(masslist[mz,"mz"]*ppm/1000000),
+                              "\" Integrate=\"0\" FindMass=\"0\" RelMass=\"1\"></Result>")
+    line=line+1
+  }
+  writelines[[line]]="</ImagingResults>"
+    
+  writeLines(unlist(writelines),"massinterval.MIR")  
+    
+    
+    
+  
+  
+}
+
+removetempfile<-function(temp_dir=tempdir(),matchword=c(".png$","^magick-"), intersect=F){
+  filelist=list.files(temp_dir)
+  if (intersect){
+    test=grep(paste0(matchword,collapse = "+"),filelist,ignore.case = T)
+  }else{
+    test=grep(paste0(matchword,collapse = "|"),filelist,ignore.case = T)
+  }
+  file.remove(paste0(temp_dir,"\\",filelist[test]))
+  
+  
+}
+
+

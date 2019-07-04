@@ -1,3 +1,4 @@
+
 Package: Metwork
 Type: Package
 Title: A collection of tools for imaging MS data processing
@@ -16,6 +17,7 @@ Packaged:
 BugReports:
 Imports: 
     pryr,
+    S4Vectors,
     CAMERA,
     pacman,
     purrr,

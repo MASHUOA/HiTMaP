@@ -1,3 +1,4 @@
+
 require("pacman")
 library(tcltk)
 #.libPaths("~/R/win-library/peptidegidest353")
@@ -180,7 +181,7 @@ imaging_identification<-function(
   write.csv(Protein_feature_list,"Cluster.csv")
   
   if (plot_cluster_image){
-    imdata=Load_Cardinal_imaging(datafile[i],preprocessing = F,resolution = ppm)
+    imdata=Load_Cardinal_imaging(datafile[i],preprocessing = F,resolution = ppm,rotate=90)
     if (dir.exists(paste(currentdir,"/cluster Ion images",sep=""))==FALSE){dir.create(paste(currentdir,"/cluster Ion images",sep=""))}
     setwd(paste(currentdir,"/cluster Ion images",sep=""))
     
@@ -219,8 +220,41 @@ imaging_identification<-function(
   
 }
 
+#' imaging_Spatial_Quant
+#'
+#' This is a spatial quantitation function for maldi imaging data set
+#' this function will read the candidate list file and generate quantification result
+#' @param datafile
+#' @param threshold specify the intensities threshold (0 to 1 in percentage)to report a identified molecule 
+#' @param ppm the mz tolerance (in ppm) for peak integration
+#' @param Quant_list the quantifiaction candidate list, spatial quantification will go through every datafile and collect the ion intensities for each listed component
+#' @param adducts  the adducts list to be used for generating the PMF search candidates
+#' @param cal.mz=T If set with TRUE, the function will recalculate the mz value according to the column named "formular" in the \code{Quant_list}
+#' @param mzlist_bypass=F 
+#' @param PMF_analysis Set \code{"true"} if you want to have a PMF search, set \code{"false"} if you want to bypass it
+#' @param Protein_feature_summary  \code{"PMF_analysis"} follow-up process that will collect all the identified peptide information and associate them with possible proteins 
+#' @param plot_cluster_image  \code{"Protein_feature_summary"} follow-up process that will plot the protein cluster image 
+#' @param Peptide_feature_summarya \code{"PMF_analysis"} follow-up process that will summarize all datafiles identified peptides and generats a \code{"peptide shortlist"} in the result summary folder
+#' @param plot_ion_image  \code{"Peptide_feature_summarya"} follow-up process that will plot every connponents in the \code{"peptide shortlist"}
+#' @param parallel the number of threads will be used in the PMF search, this option now only works for windows OS
+#' @param spectra_segments_per_file optimal number of distinctive regions in the imaging, a virtual segmentation will be applied to the image files with this value. To have a better PMF result you may set a value that in the sweet point of sensitivety and false discovery rate (FDR).
+#' @param spatialKMeans set true to enable a \code{"spatialKMeans"}  method for the automatic virtual segmentation. If a region rank file was supplied, you can disable this to perform a mannual segmentation.
+#' @param Smooth_range \code{"spatialKMeans"} pixel smooth range 
+#' @param Virtual_segmentation set \code{"TRUE"} if you want to overide the automaitic segmentation
+#' @param Virtual_segmentation_rankfile specify a region rank file contains region information for manualy region segmentation
+#' @return None
+#'
+#' @examples
+#' imaging_identification(threshold=0.05, ppm=5,Digestion_site="[G]",
+#'                        missedCleavages=0:1,Fastadatabase="murine_matrisome.fasta",
+#'                        adducts=c("M+H","M+NH4","M+Na"),PMF_analysis=TRUE,
+#'                        Protein_feature_summary=TRUE,plot_cluster_image=TRUE,
+#'                        Peptide_feature_summary=TRUE,plot_ion_image=FALSE,
+#'                        parallel=3,spectra_segments_per_file=5,spatialKMeans=TRUE
+#'                        )
+#'
+#' @export
 
-#read the candidate list file and generate quantification result
 imaging_Spatial_Quant<-function(
   #==============Choose the imzml raw data file(s) to process  make sure the fasta file in the same folder
   datafile=tk_choose.files(filter =  matrix(c( "imzml file", ".imzML",
@@ -260,6 +294,7 @@ imaging_Spatial_Quant<-function(
   Region_feature_analysis_bar_plot=T,
   norm_datafiles=T,
   norm_Type="Median",
+  mzrang=NULL,
   ...
 ){
   library(pacman)
@@ -770,8 +805,13 @@ imaging_Spatial_Quant<-function(
   #Plot cluster images across the datafiles
   if(plot_cluster_image){
     Protein_feature_list=fread(paste(workdir,"/Summary folder/Protein_feature_summary_sl.csv",sep=""))
+    if (!is.null(rotateimg)){rotateimg=read.csv(rotateimg,stringsAsFactors = F)}
     for (i in 1:length(datafile)){
-    imdata=Load_Cardinal_imaging(datafile[i],preprocessing = F,resolution = ppm/2)
+      rotate=rotateimg[rotateimg$filenames==datafile[i],"rotation"]
+      rotate=as.numeric(rotate)
+    imdata=Load_Cardinal_imaging(datafile[i],preprocessing = F,resolution = ppm,rotate = rotate,attach.only=F)
+    
+    
     currentdir<-paste0(datafile[i] ," ID")
     if (dir.exists(paste(currentdir,"/cluster Ion images",sep=""))==FALSE){dir.create(paste(currentdir,"/cluster Ion images",sep=""))}
     setwd(paste(currentdir,"/cluster Ion images",sep=""))
@@ -847,7 +887,70 @@ imaging_Spatial_Quant<-function(
       image_write(Pngclustervseg, paste0(outputfolder,"datafiles_vseg.png"))
    }
 
+  if(plot_cluster_image_grid){
+    Protein_feature_list=fread(paste(workdir,"/Summary folder/Protein_feature_summary_sl.csv",sep=""))
+    if (!is.null(rotateimg)){rotateimg=read.csv(rotateimg,stringsAsFactors = F)}
+    imdata=list()
+    combinedimdata=NULL
+    register(SerialParam())
+    for (i in 1:length(datafile)){
+      
+      rotate=rotateimg[rotateimg$filenames==datafile[i],"rotation"]
+      rotate=as.numeric(rotate)
+      imdata[[i]]=Load_Cardinal_imaging(datafile[i],preprocessing = F,resolution = ppm*2,rotate = rotate,attach.only=F,as="MSImagingExperiment",mzrange=mzrange)
+      #imdata[[i]]@elementMetadata@coord=imdata[[i]]@elementMetadata@coord[,c("x","y")]
+      if (i==1) {
+        combinedimdata=imdata[[i]]
+        }else{
+        combinedimdata=cbind(combinedimdata,imdata[[i]]) 
+        }
+      imdata[[i]]=NULL
+      
+    }
+    
+    
+    combinedimdata@elementMetadata@coord@listData[["z"]]=NULL
+    
+    imdata=combinedimdata
+    
+    outputfolder=paste(workdir,"/Summary folder/cluster Ion images/",sep="")
+    
+    if (dir.exists(outputfolder)==FALSE){dir.create(outputfolder)}
+    setwd(outputfolder)
+    
+    lapply(unique(Protein_feature_list$Name),
+           cluster_image_grid,
+           imdata=NULL,
+           SMPLIST=Protein_feature_list,
+           ppm=ppm,ClusterID_colname="Name",
+           componentID_colname="FA",
+           plot_layout="line",
+           Component_plot_threshold=1,
+           export_Header_table=T)
+    
+    
 
+    Pngclusterkmean=NULL
+    Pngclustervseg=NULL
+    for (i in 1:length(datafile)){
+      #imdata=Load_Cardinal_imaging(datafile[i],preprocessing = F,resolution = ppm)
+      currentdir<-paste0(datafile[i] ," ID")
+      setwd(paste(currentdir))
+      name=gsub(base::dirname(datafile[i]),"",datafile[i])
+      name=gsub("/","",name)
+      pngimagekmean=magick::image_read("spatialKMeans_image.png")
+      pngimagevseg=magick::image_read(paste0("Virtual_segmentation ",name,".png"))
+      if( is.null(Pngclusterkmean)){
+        Pngclusterkmean=pngimagekmean
+        Pngclustervseg=pngimagevseg
+      }else{
+        Pngclusterkmean=magick::image_append(c(Pngclusterkmean,pngimagekmean),stack = T)
+        Pngclustervseg=magick::image_append(c(Pngclustervseg,pngimagevseg),stack = T)
+      }
+    } 
+    image_write(Pngclusterkmean, paste0(outputfolder,"datafiles_kmean.png"))
+    image_write(Pngclustervseg, paste0(outputfolder,"datafiles_vseg.png"))
+  }
 }
 
 run_spatial_quant_workflow<-function(){
@@ -1104,8 +1207,7 @@ Meta_feature_list_fun<-function(workdir=workdir,
   library("Rcpp")
   library(dplyr)
   library(Rdisop)
-  #library("OrgMassSpecR")                
-  #peplist<-read.csv(Quant_list,as.is = TRUE, col.names=c("Name","moleculeNames","Formula"))
+  
    
     adductslist<-Build_adduct_list()
     peplist<-read.csv(paste0(workdir,"/",Quant_list),as.is = TRUE)
@@ -1792,7 +1894,7 @@ Protein_feature_list_fun<-function(workdir=WorkingDir(),
                                    missedCleavages=0:1,
                                    adducts=c("M+H","M+NH4","M+Na"),
                                    cl){
-  
+  library(Biostrings)
   list_of_protein_sequence<-readAAStringSet(Fastadatabase,
                                             format,
                                             nrec, 
@@ -2312,7 +2414,4 @@ Pathway_overview_graphite<-function(){
   meta_g <- pathwayGraph(p, which = "metabolites")
   
 }
-
-
-
 
