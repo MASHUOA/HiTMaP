@@ -1091,4 +1091,90 @@ removetempfile<-function(temp_dir=tempdir(),matchword=c(".png$","^magick-"), int
   
 }
 
+testcolume<-function(df,testcolnames){
+  
+  library(stringr)
+  
+  testcolnames=unique(testcolnames)
+  
+  test=sapply(testcolnames,FUN = grepl,names(df))
+  
+  testresult=sapply(colnames(test),FUN = function(x,df){sum(df[,x])},test) == 0
+  
+  case_test=sapply(testcolnames,FUN = grepl,names(df),ignore.case = T)
+  
+  case_testresult=sapply(testcolnames,FUN = function(x,df){sum(df[,x])},case_test) > 1
+  
+  duplicatecol=names(case_testresult)[case_testresult==T]
+  
+  if (length(duplicatecol)==0){duplicatecol=NULL}
+  
+  testfail=names(testresult)[testresult==T]
+  
+  passcol=names(testresult)[testresult==F]
+  
+  renamecol=NULL
+  
+  if (length(passcol)<length(testcolnames)){
+    
+  case_test=sapply(testfail,FUN = grepl,names(df),ignore.case = T)
+  
+  case_testresult=sapply(colnames(case_test),FUN = function(x,df){sum(df[,x])},case_test) == 1
+  
+  renamecol=names(case_testresult)[case_testresult==T]
+  
+  if (length(renamecol)>0){
+    
+  failcol=testfail[!grep(renamecol,testfail)]  
+    
+  }else{
+    
+    failcol=NULL
+    
+  }
+  
+  
+    
+  } else{
+    
+  failcol=NULL
+    
+  }
+
+  
+  
+  return(list(passcol=passcol,renamecol=renamecol,failcol=failcol,duplicatecol=duplicatecol))
+}
+
+data_test_rename<-function(required_col,df){
+  
+testcolumeresult = testcolume(df,required_col)
+
+if (length(testcolumeresult$failcol)>0){
+  
+ stop(paste(testcolumeresult$failcol,"column is missing in the input file, please check your datafile"))  
+  
+}
+
+if (length(testcolumeresult$renamecol)>0){
+  
+lapply(testcolumeresult$renamecol,gsub,testcolumeresult$renamecol,ignore.case = T,x=names(df))
+  
+for (i in length(testcolumeresult$renamecol)){
+  
+  names(df)=gsub(testcolumeresult$renamecol,testcolumeresult$renamecol,ignore.case = T,x=names(df))
+  
+}
+
+}
+
+if (length(testcolumeresult$duplicatecol)>0){
+  
+  message(paste("Found ambigous or duplicate column: ",testcolumeresult$duplicatecol))
+  
+}
+
+return(df)
+
+}
 

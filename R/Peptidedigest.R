@@ -260,9 +260,8 @@ imaging_Spatial_Quant<-function(
   message(paste(length(datafile), "files were selected and will be used for Searching"))
   
   Meta_feature_list<-Meta_feature_list_fun(workdir=workdir,
-                                           Quant_list=Quant_list,
+                                           database = Quant_list,
                                            adducts=adducts,
-                                           cl=cl,
                                            cal.mz = cal.mz,
                                            bypass=mzlist_bypass)
   
