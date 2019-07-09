@@ -47,8 +47,7 @@ Filters <- matrix(c( "imzml file", ".imzML",
 #' 
 imaging_identification<-function(
 #==============Choose the imzml raw data file(s) to process  make sure the fasta file in the same folder
-               datafile=tk_choose.files(filter = matrix(c( "imzml file", ".imzML","Text", ".txt", "All files", "*"),3, 2, byrow = TRUE),
-                                        caption  = "Choose single or multiple file(s) for analysis"),
+               datafile,
                threshold=0.05, 
                ppm=5,
                Digestion_site="[G]",
@@ -67,9 +66,13 @@ imaging_identification<-function(
                Virtual_segmentation=FALSE,
                Virtual_segmentation_rankfile=NULL
                ){
-
-  p_load(RColorBrewer,RCurl,bitops,magick,ggplot2,reticulate,dplyr,stringr,tcltk,data.table,doParallel,iterators,foreach,protViz,cleaver,MALDIquant,Biostrings,XVector,IRanges,Cardinal,ProtGenerics,S4Vectors,stats4,EBImage,BiocParallel,BiocGenerics,parallel,stats,graphics,grDevices,utils,datasets,methods)
-  
+  library("pacman")
+  p_load(RColorBrewer,RCurl,bitops,magick,ggplot2,reticulate,dplyr,stringr,tcltk,
+         data.table,doParallel,iterators,foreach,protViz,cleaver,MALDIquant,Biostrings,
+         XVector,IRanges,Cardinal,ProtGenerics,S4Vectors,stats4,EBImage,BiocParallel,
+         BiocGenerics,parallel,stats,graphics,grDevices,utils,datasets,methods)
+  if (missing(datafile)) {datafile=tk_choose.files(filter = matrix(c( "imzml file", ".imzML","Text", ".txt", "All files", "*"),3, 2, byrow = TRUE),
+                                        caption  = "Choose single or multiple file(s) for analysis")}
   datafile<-gsub(".imzML", "", datafile)
   workdir<-base::dirname(datafile[1])
   setwd(workdir)
@@ -80,17 +83,10 @@ imaging_identification<-function(
   message(paste(length(datafile), "files were selected and will be used for Searching"))
   
   Protein_feature_list<-Protein_feature_list_fun(workdir=workdir,
-                                                 Fastadatabase=Fastadatabase,
-                                                 format="fasta",
-                                                 nrec=-1L, 
-                                                 skip=0L, 
-                                                 seek.first.rec=FALSE,
-                                                 use.names=TRUE, 
-                                                 with.qualities=FALSE,
+                                                 database=Fastadatabase,
                                                  Digestion_site=Digestion_site,
                                                  missedCleavages=missedCleavages,
-                                                 adducts=adducts,
-                                                 cl=autoStopCluster(makeCluster(parallel)))
+                                                 adducts=adducts)
   
   if(PMF_analysis){
     
@@ -121,7 +117,9 @@ imaging_identification<-function(
   write.csv(Peptide_feature_list,"Peptide_feature_list.csv")
   uniques_intensity<-unique(Peptide_Summary_file[,c("mz","Intensity")])
   Protein_feature_list$Intensity<-0
-  Protein_feature_list$Intensity<-unlist(parLapply(cl=autoStopCluster(makeCluster(parallel)),Protein_feature_list$mz,intensity_sum_para,uniques_intensity))
+  #Protein_feature_list$Intensity<-unlist(parLapply(cl=autoStopCluster(makeCluster(parallel)),Protein_feature_list$mz,intensity_sum_para,uniques_intensity))
+  
+  Protein_feature_list$Intensity<-unlist(bplapply(Protein_feature_list$mz,intensity_sum_para,uniques_intensity,BPPARAM=BPPARAM))
   Protein_feature_list=Protein_feature_list[Protein_feature_list$Intensity>(threshold*max(Protein_feature_list$Intensity)),]
   write.csv(Protein_feature_list,"Cluster.csv")
   
@@ -240,6 +238,7 @@ imaging_Spatial_Quant<-function(
   norm_datafiles=T,
   norm_Type="Median",
   mzrang=NULL,
+  BPPARAM=bpparam(),
   ...
 ){
   library(pacman)
@@ -272,12 +271,12 @@ imaging_Spatial_Quant<-function(
     Peptide_Summary_file<-PMF_Cardinal_Datafilelist(datafile, 
                                                     Meta_feature_list,
                                                     SPECTRUM_for_average=spectra_segments_per_file,
-                                                    threshold=threshold,cl=cl,
+                                                    threshold=threshold,
                                                     ppm=ppm,
                                                     spatialKMeans=spatialKMeans,
                                                     Virtual_segmentation=Virtual_segmentation,
                                                     Virtual_segmentation_rankfile=Virtual_segmentation_rankfile,
-                                                    Smooth_range=Smooth_range,
+                                                    Smooth_range=Smooth_range,BPPARAM = BPPARAM,
                                                     PMFsearch = TRUE)
     
   }
@@ -297,8 +296,8 @@ imaging_Spatial_Quant<-function(
       write.csv(Peptide_feature_list,"Peptide_feature_list.csv")
       uniques_intensity<-unique(Peptide_Summary_file[,c("mz","Intensity")])
       Meta_feature_list$Intensity<-0
-      Meta_feature_list$Intensity<-unlist(parLapply(cl=autoStopCluster(makeCluster(parallel)),Meta_feature_list$mz,intensity_sum_para,uniques_intensity))
-      
+      #Meta_feature_list$Intensity<-unlist(parLapply(cl=autoStopCluster(makeCluster(parallel)),Meta_feature_list$mz,intensity_sum_para,uniques_intensity))
+      Meta_feature_list$Intensity<-unlist(bplapply(Meta_feature_list$mz,intensity_sum_para,uniques_intensity,BPPARAM=BPPARAM))
       write.csv(Meta_feature_list[Meta_feature_list$Intensity>0,],"Cluster.csv",row.names = F)
       
     }
@@ -425,7 +424,8 @@ imaging_Spatial_Quant<-function(
           Spectrum_summary_col_norm
         }
         
-        Spectrum_summary_norm=unlist(parLapply(cl=autoStopCluster(makeCluster(detectCores())),which(colnames(Spectrum_summary)!="ID"),par_norm_datacol_cluster,Spectrum_summary,clusterID))
+        #Spectrum_summary_norm=unlist(parLapply(cl=autoStopCluster(makeCluster(detectCores())),which(colnames(Spectrum_summary)!="ID"),par_norm_datacol_cluster,Spectrum_summary,clusterID))
+        Spectrum_summary_norm=unlist(bplapply(which(colnames(Spectrum_summary)!="ID"),par_norm_datacol_cluster,Spectrum_summary,clusterID,BPPARAM = BPPARAM))
         
         #a=as.list(Spectrum_summary[,which(colnames(Spectrum_summary)!="ID")])
         Spectrum_summary_norm=matrix(Spectrum_summary_norm,nrow = nrow(Spectrum_summary))
@@ -514,7 +514,8 @@ imaging_Spatial_Quant<-function(
     }
     
     if(plot_each_metabolites){
-    p_names=parLapply(cl=autoStopCluster(makeCluster(4)),which(moleculeNames!=""),plotly_for_region_with_ID,data,moleculeNames)
+    #p_names=parLapply(cl=autoStopCluster(makeCluster(4)),which(moleculeNames!=""),plotly_for_region_with_ID,data,moleculeNames)
+    p_names=bplapply(which(moleculeNames!=""),plotly_for_region_with_ID,data,moleculeNames,BPPARAM=BPPARAM)
     zip("Result_lipid.zip", c(as.character(p_names), "lib"))}
     
     Spectrum_summary_tran_tran=as.data.frame(t(Spectrum_summary_tran),stringsAsFactors = FALSE)
@@ -595,8 +596,8 @@ imaging_Spatial_Quant<-function(
       #list(filename=windows_filename(paste0(moleculeNames[i],".html")), image= p %>% add_surface())
     }
     
-    p_names=parLapply(cl=autoStopCluster(makeCluster(1)),which(colnames(data)!="Class"),plotly_for_region_with_ClusterID,data,output_statice=T)
-    
+    #p_names=parLapply(cl=autoStopCluster(makeCluster(1)),which(colnames(data)!="Class"),plotly_for_region_with_ClusterID,data,output_statice=T)
+    p_names=bplapply(which(colnames(data)!="Class"),plotly_for_region_with_ClusterID,data,output_statice=T,BPPARAM = BPPARAM)
     zip("Result_clusterID.zip", c(as.character(p_names), "lib"))
     
     
@@ -927,11 +928,6 @@ parentIonMasslist<-function(peplist,Index_of_protein_sequence){
   return(PIM)
 }
 
-#please change the fasta location and run the main scripts refer the result by using 
-#Parentionmass[[Index_of_protein_sequence$desc[1]]] 
-#main() function can generate the PMF search result 
-
-
 Peptide_feature_summary_all_files<-function(listfile,workdir,threshold=0.1){
   Peptide_feature_summary<-NULL
   for (i in 1:length(listfile)){
@@ -1201,19 +1197,20 @@ searchPMF<-function(pimlist,spectrumlist,ppm){
   return(pimresultlist)
 }
 
-searchPMF_para<-function(pimlist,spectrumlist,ppm,cl){
+searchPMF_para<-function(pimlist,spectrumlist,ppm,BPPARAM=bpparam()){
   pimresultlist<-pimlist
   print("Start PMF search")
-    pimresultlist<-parLapply(cl=cl,pimlist,PMFsum,spectrumlist,ppm)
-  
+    #pimresultlist<-parLapply(cl=cl,pimlist,PMFsum,spectrumlist,ppm)
+    pimresultlist<-bplapply(pimlist,PMFsum,spectrumlist,ppm,BPPARAM = BPPARAM)
   
   return(pimresultlist)
 }
 
-searchPMF_data_frame<-function(pimlist,spectrumlist,ppm,cl){
+searchPMF_data_frame<-function(pimlist,spectrumlist,ppm,BPPARAM = bpparam()){
   pimresultlist<-pimlist
   print("Start PMF search")
-  pimresultlist<-parLapply(cl=cl,pimlist,PMFsum,spectrumlist,ppm)
+  #pimresultlist<-parLapply(cl=cl,pimlist,PMFsum,spectrumlist,ppm)
+  pimresultlist<-bplapply(pimlist,PMFsum,spectrumlist,ppm,BPPARAM = BPPARAM)
   return(pimresultlist)
 }
 
@@ -1494,9 +1491,10 @@ Build_adduct_list<-function(){
 
 
 
-PMF_analysis_fun<-function(Peptide_Summary_searchlist,peaklist,ppm,cl){
+PMF_analysis_fun<-function(Peptide_Summary_searchlist,peaklist,ppm,BPPARAM =bpparam()){
   
-  Peptide_Summary_searchlist$Intensity<-parLapply(cl=cl,Peptide_Summary_searchlist$mz,PMFsum_para,peaklist,ppm)
+  #Peptide_Summary_searchlist$Intensity<-parLapply(cl=cl,Peptide_Summary_searchlist$mz,PMFsum_para,peaklist,ppm)
+  Peptide_Summary_searchlist$Intensity<-bplapply(Peptide_Summary_searchlist$mz,PMFsum_para,peaklist,ppm,BPPARAM = BPPARAM)
   Peptide_Summary_searchlist <- as.data.frame(sapply(Peptide_Summary_searchlist,unlist),stringsAsFactors=FALSE)
   Peptide_Summary_searchlist$Intensity<-as.numeric(Peptide_Summary_searchlist$Intensity)
   Peptide_Summary_searchlist$mz<-as.numeric(Peptide_Summary_searchlist$mz)
@@ -1608,7 +1606,7 @@ PMF_Cardinal_Datafilelist<-function(datafile,Peptide_Summary_searchlist,
                                     colorstyle="Set1",
                                     Virtual_segmentation=FALSE,
                                     Virtual_segmentation_rankfile="Z:\\George skyline results\\maldiimaging\\Maldi_imaging - Copy\\radius_rank.csv",
-                                    PMFsearch=TRUE,
+                                    PMFsearch=TRUE,BPPARAM=bpparam(),
                                     ...){
   library(data.table)
   library(Cardinal)
@@ -1691,11 +1689,14 @@ for (z in 1:length(datafile)){
   #coordistmatrix<-matrix(nrow=nrow(coordata),ncol=nrow(coordata))
   #coordistmatrix<-NULL
   #cl=autoStopCluster(cl)
-  coordistmatrix=parLapply(cl=cl,1:  nrow(coordata),coordist_para,coordata)
+  #coordistmatrix=parLapply(cl=cl,1:  nrow(coordata),coordist_para,coordata)
+  coordistmatrix=bplapply(1:  nrow(coordata),coordist_para,coordata,BPPARAM = BPPARAM)
   coordistmatrix=matrix(unlist(coordistmatrix),nrow = nrow(coordata),ncol = nrow(coordata))
   coordistmatrix=as.data.table(coordistmatrix)
   coordistmatrix$sum=0
-  coordistmatrix$sum=base::unlist(parLapply(cl=cl,1:nrow(coordata),function(j,coordistmatrix,coordata){coordistmatrix$sum[j]=sum(coordistmatrix[j,1:nrow(coordata)])},coordistmatrix,coordata))
+  #coordistmatrix$sum=base::unlist(parLapply(cl=cl,1:nrow(coordata),function(j,coordistmatrix,coordata){coordistmatrix$sum[j]=sum(coordistmatrix[j,1:nrow(coordata)])},coordistmatrix,coordata))
+  coordistmatrix$sum=base::unlist(bplapply(1:nrow(coordata),function(j,coordistmatrix,coordata){coordistmatrix$sum[j]=sum(coordistmatrix[j,1:nrow(coordata)])},coordistmatrix,coordata,BPPARAM = BPPARAM))
+  
   coorrange=max(coordistmatrix$sum)-min(coordistmatrix$sum)
   
 
@@ -1860,7 +1861,7 @@ for (z in 1:length(datafile)){
     message(paste("PMF_analysis",name,"region",SPECTRUM_batch))
     peaklist<-imdata_ed@featureData@data
     colnames(peaklist)<-c("m.z","intensities")
-    Peptide_Summary_searchlist<-PMF_analysis_fun(Peptide_Summary_searchlist=Peptide_Summary_searchlist,peaklist=peaklist,ppm=ppm,cl=cl)
+    Peptide_Summary_searchlist<-PMF_analysis_fun(Peptide_Summary_searchlist=Peptide_Summary_searchlist,peaklist=peaklist,ppm=ppm,BPPARAM=BPPARAM)
     Peptide_feature_list<-Peptide_Summary_searchlist[Peptide_Summary_searchlist$Intensity>0,]
     Peptide_plot_list<-Peptide_feature_list[Peptide_feature_list$Intensity>=max(Peptide_feature_list$Intensity)*threshold,]
     if(is.null(Peptide_plot_list$moleculeNames)){Peptide_plot_list$moleculeNames=Peptide_plot_list$Peptide}
@@ -1871,7 +1872,8 @@ for (z in 1:length(datafile)){
     Peptide_plot_list$Region=SPECTRUM_batch
     write.csv(Peptide_plot_list,paste("Peptide_segment_PMF_RESULT",SPECTRUM_batch,".csv"),row.names = F)
     write.csv(peaklist,paste("Spectrum",SPECTRUM_batch,".csv"),row.names = F)
-    Peptide_Summary_file$Intensity<-Peptide_Summary_file$Intensity+unlist(parLapply(cl=cl,Peptide_Summary_file$mz,intensity_sum_para,uniques_intensity))
+    #Peptide_Summary_file$Intensity<-Peptide_Summary_file$Intensity+unlist(parLapply(cl=cl,Peptide_Summary_file$mz,intensity_sum_para,uniques_intensity))
+    Peptide_Summary_file$Intensity<-Peptide_Summary_file$Intensity+unlist(bplapply(Peptide_Summary_file$mz,intensity_sum_para,uniques_intensity,BPPARAM = BPPARAM))
     Peptide_Summary_file_regions<-rbind(Peptide_Summary_file_regions,Peptide_plot_list)
     #return(list(Peptide_Summary_file,Peptide_Summary_file_regions))
     }
