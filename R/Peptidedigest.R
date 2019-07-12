@@ -50,6 +50,7 @@ imaging_identification<-function(
                datafile,
                threshold=0.05, 
                ppm=5,
+               mode=c("Proteomics","Metabolomics"),
                Digestion_site="[G]",
                missedCleavages=0:1,
                Fastadatabase="murine_matrisome.fasta",
@@ -64,7 +65,9 @@ imaging_identification<-function(
                spatialKMeans=TRUE,
                Smooth_range=1,
                Virtual_segmentation=FALSE,
-               Virtual_segmentation_rankfile=NULL
+               Virtual_segmentation_rankfile=NULL,
+               rotateimg=NULL,
+               ...
                ){
   library("pacman")
   p_load(RColorBrewer,RCurl,bitops,magick,ggplot2,reticulate,dplyr,stringr,tcltk,
@@ -76,17 +79,24 @@ imaging_identification<-function(
   datafile<-gsub(".imzML", "", datafile)
   workdir<-base::dirname(datafile[1])
   setwd(workdir)
-  cl <- autoStopCluster(makeCluster(parallel))
+  #cl <- autoStopCluster(makeCluster(parallel))
+  parallel=try(detectCores()-1)
+  BPPARAM=bpparam()
+  BiocParallel::bpworkers(BPPARAM)=parallel
   setwd(workdir)
   message(paste(try(detectCores()), "Cores detected,",parallel, "threads will be used for computing"))
 
   message(paste(length(datafile), "files were selected and will be used for Searching"))
   
+  message(paste(Fastadatabase, "was selected as data base", "candidates will be generated through",mode ,"mode" ))
+  
   Protein_feature_list<-Protein_feature_list_fun(workdir=workdir,
                                                  database=Fastadatabase,
                                                  Digestion_site=Digestion_site,
                                                  missedCleavages=missedCleavages,
-                                                 adducts=adducts)
+                                                 adducts=adducts,BPPARAM = BPPARAM)
+  
+  if (!is.null(rotateimg)){rotateimg=read.csv(rotateimg,stringsAsFactors = F)}
   
   if(PMF_analysis){
     
@@ -95,12 +105,13 @@ imaging_identification<-function(
   Peptide_Summary_file<-PMF_Cardinal_Datafilelist(datafile, 
                                                   Peptide_Summary_searchlist,
                                                   SPECTRUM_for_average=spectra_segments_per_file,
-                                                  threshold=threshold,cl=cl,
+                                                  threshold=threshold,rotate = rotateimg,
                                                   ppm=ppm,
                                                   spatialKMeans=spatialKMeans,
                                                   PMFsearch = PMF_analysis,
                                                   Virtual_segmentation=Virtual_segmentation,
-                                                  Virtual_segmentation_rankfile = Virtual_segmentation_rankfile)
+                                                  Virtual_segmentation_rankfile = Virtual_segmentation_rankfile,
+                                                  BPPARAM = BPPARAM)
   
   }
   #Summarize the peptide list
@@ -122,17 +133,9 @@ imaging_identification<-function(
   Protein_feature_list$Intensity<-unlist(bplapply(Protein_feature_list$mz,intensity_sum_para,uniques_intensity,BPPARAM=BPPARAM))
   Protein_feature_list=Protein_feature_list[Protein_feature_list$Intensity>(threshold*max(Protein_feature_list$Intensity)),]
   write.csv(Protein_feature_list,"Cluster.csv")
-  
-  if (plot_cluster_image){
-    imdata=Load_Cardinal_imaging(datafile[i],preprocessing = F,resolution = ppm,rotate=90)
-    if (dir.exists(paste(currentdir,"/cluster Ion images",sep=""))==FALSE){dir.create(paste(currentdir,"/cluster Ion images",sep=""))}
-    setwd(paste(currentdir,"/cluster Ion images",sep=""))
-    
-    lapply(unique(Protein_feature_list$Protein),cluster_image_cardinal_allinone,imdata=imdata,SMPLIST=Protein_feature_list,ppm=10,ClusterID_colname="Protein")
-    
-    
-  }
-  }
+  } 
+    if (dir.exists(paste(workdir,"/Summary folder",sep=""))==FALSE){dir.create(paste(workdir,"/Summary folder",sep=""))}
+    Protein_feature_summary_all_files_new(datafile,workdir,threshold = threshold)
   }
   
  
@@ -140,7 +143,8 @@ imaging_identification<-function(
   if(Peptide_feature_summary){
       print("Peptide_feature_summary")
       if (dir.exists(paste(workdir,"/Summary folder",sep=""))==FALSE){dir.create(paste(workdir,"/Summary folder",sep=""))}
-      Peptide_feature_summary_all_files_new(datafile,workdir,threshold = threshold)}
+      Peptide_feature_summary_all_files_new(datafile,workdir,threshold = threshold)
+      }
 
   if(plot_ion_image){
     print("plot_ion_image")
@@ -160,6 +164,147 @@ imaging_identification<-function(
                                       contrast.enhance = "histogram")
   }
 
+  if(Region_feature_summary){
+    Spectrum_summary<-NULL
+    for (i in 1:length(datafile)){
+      datafilename<-gsub(paste(workdir,"/",sep=""),"",gsub(".imzML", "", datafile[i]))
+      currentdir<-paste0(datafile[i] ," ID")
+      setwd(currentdir)
+      name <-gsub(base::dirname(datafile[i]),"",datafile[i])
+      message(paste("Region_feature_summary",datafile[i]))
+      
+      if (dir.exists(paste(workdir,"/Summary folder",sep=""))==FALSE){dir.create(paste(workdir,"/Summary folder",sep=""))}
+      #Feature_summary_all_files(datafile,workdir,threshold = threshold)
+      match_pattern <- "Peptide_region_file.csv"
+      
+      for (spectrum_file in dir()[str_detect(dir(), match_pattern)]){
+        spectrum_file_table=fread(spectrum_file) 
+        
+        spectrum_file_table$ID=paste(spectrum_file_table$moleculeNames,spectrum_file_table$adduct,spectrum_file_table$mz,spectrum_file_table$Region,sep = "@")
+        spectrum_file_table=spectrum_file_table[,c( "ID",	"Intensity")]
+        colnames(spectrum_file_table)=c("ID",paste(name))
+        if (is.null(Spectrum_summary)){
+          Spectrum_summary=spectrum_file_table
+        }else{
+          Spectrum_summary=base::merge(Spectrum_summary,spectrum_file_table,by="ID",all=TRUE)
+        }
+      }
+    }
+    
+    name <-gsub(base::dirname(datafile[1]),"",datafile)
+    Spectrum_summary[is.na(Spectrum_summary)] <- 0
+    colnames(Spectrum_summary)=c("ID",name)
+    colnames(Spectrum_summary)=gsub("/","",colnames(Spectrum_summary))
+    write.csv(Spectrum_summary,file = paste(workdir,"/Summary folder/Region_feature_summary.csv",sep=""),row.names = F)
+    
+    
+  }
+  
+  if(plot_cluster_image_grid){
+    Protein_feature_list=fread(paste(workdir,"/Summary folder/Protein_feature_summary_sl.csv",sep=""))
+    if (!is.null(rotateimg)){rotateimg=read.csv(rotateimg,stringsAsFactors = F)}
+    imdata=list()
+    combinedimdata=NULL
+    #register(SerialParam())      
+    if (!exists("mzrange")){
+        mzrange=NULL
+        testrange=c(0,0)
+        for (i in 1:length(datafile)){
+          
+          rotate=rotateimg[rotateimg$filenames==datafile[i],"rotation"]
+          rotate=as.numeric(rotate)
+          
+          if (length(rotate)==0){rotate=0}
+          imdata[[i]]=Load_Cardinal_imaging(datafile[i],preprocessing = F,resolution = ppm*2,rotate = rotate,attach.only=F,as="MSImagingExperiment",mzrange=mzrange)
+          #imdata[[i]]@elementMetadata@coord=imdata[[i]]@elementMetadata@coord[,c("x","y")]
+          
+          
+          if (i==1) {
+            testrange=c(min(imdata[[i]]@featureData@mz),max(imdata[[i]]@featureData@mz))
+          }else{
+            
+            if (min(imdata[[i]]@featureData@mz)>testrange[1]) testrange[1]<-min(imdata[[i]]@featureData@mz)
+            if (max(imdata[[i]]@featureData@mz)>testrange[2]) testrange[2]<-max(imdata[[i]]@featureData@mz)
+          }
+          imdata[[i]]=NULL
+        }
+        mzrange=testrange
+    } 
+    
+    for (i in 1:length(datafile)){
+
+      rotate=rotateimg[rotateimg$filenames==datafile[i],"rotation"]
+      rotate=as.numeric(rotate)
+      
+      if (length(rotate)==0){rotate=0}
+      imdata[[i]]=Load_Cardinal_imaging(datafile[i],preprocessing = F,resolution = ppm*2,rotate = rotate,attach.only=F,as="MSImagingExperiment",mzrange=mzrange)
+      #imdata[[i]]@elementMetadata@coord=imdata[[i]]@elementMetadata@coord[,c("x","y")]
+      max(imdata[[i]]@featureData@mz)
+      min(imdata[[i]]@featureData@mz)
+      if (i==1) {
+        combinedimdata=imdata[[i]]
+      }else{
+        combinedimdata=cbind(combinedimdata,imdata[[i]]) 
+      }
+      imdata[[i]]=NULL
+      
+    }
+      
+    
+    combinedimdata@elementMetadata@coord@listData[["z"]]=NULL
+    
+    imdata=combinedimdata
+    
+    outputfolder=paste(workdir,"/Summary folder/cluster Ion images/",sep="")
+    
+    if (dir.exists(outputfolder)==FALSE){dir.create(outputfolder)}
+    setwd(outputfolder)
+    
+    lapply(unique(Protein_feature_list$Protein),
+           cluster_image_grid,
+           imdata=imdata,
+           SMPLIST=Protein_feature_list,
+           ppm=ppm,ClusterID_colname="Protein",
+           componentID_colname="Peptide",
+           plot_layout="line",
+           Component_plot_threshold=4,
+           export_Header_table=F)
+    
+    
+    lapply(unique(Protein_feature_list$Protein),
+           cluster_image_grid,
+           imdata=NULL,
+           SMPLIST=Protein_feature_list,
+           ppm=ppm,ClusterID_colname="Protein",
+           componentID_colname="Peptide",
+           plot_layout="line",
+           Component_plot_threshold=4,
+           export_Header_table=T)
+    
+    
+    
+    Pngclusterkmean=NULL
+    Pngclustervseg=NULL
+    for (i in 1:length(datafile)){
+      #imdata=Load_Cardinal_imaging(datafile[i],preprocessing = F,resolution = ppm)
+      currentdir<-paste0(datafile[i] ," ID")
+      setwd(paste(currentdir))
+      name=gsub(base::dirname(datafile[i]),"",datafile[i])
+      name=gsub("/","",name)
+      pngimagekmean=magick::image_read("spatialKMeans_image.png")
+      pngimagevseg=magick::image_read(paste0("Virtual_segmentation ",name,".png"))
+      if( is.null(Pngclusterkmean)){
+        Pngclusterkmean=pngimagekmean
+        Pngclustervseg=pngimagevseg
+      }else{
+        Pngclusterkmean=magick::image_append(c(Pngclusterkmean,pngimagekmean),stack = T)
+        Pngclustervseg=magick::image_append(c(Pngclustervseg,pngimagevseg),stack = T)
+      }
+    } 
+    image_write(Pngclusterkmean, paste0(outputfolder,"datafiles_kmean.png"))
+    image_write(Pngclustervseg, paste0(outputfolder,"datafiles_vseg.png"))
+  }
+  
   
 }
 
@@ -239,6 +384,7 @@ imaging_Spatial_Quant<-function(
   norm_Type="Median",
   mzrang=NULL,
   BPPARAM=bpparam(),
+  rotateimg=NULL,
   ...
 ){
   library(pacman)
@@ -1215,6 +1361,8 @@ searchPMF_data_frame<-function(pimlist,spectrumlist,ppm,BPPARAM = bpparam()){
 }
 
 PlotPMFsig<-function(pimresultindex,spectrumlist,peplist,pimlist,pimresultlist, threshold=0.05){
+  library(ggplot2)
+  #library(ggplot)
   print("Ploting Sig PMF")
   pimresultsl<-pimresultindex[pimresultindex[,"Normalized Mean"]>threshold,]
   
@@ -1601,22 +1749,38 @@ Plot_Ion_image_Png_Cardinal<- function(WKdir, imagefile, png_filename, mz,adduct
 
 PMF_Cardinal_Datafilelist<-function(datafile,Peptide_Summary_searchlist, 
                                     SPECTRUM_for_average=5,threshold=0.1,
-                                    cl,ppm,spatialKMeans=FALSE,
+                                    ppm,spatialKMeans=FALSE,
                                     Smooth_range=1,
                                     colorstyle="Set1",
                                     Virtual_segmentation=FALSE,
                                     Virtual_segmentation_rankfile="Z:\\George skyline results\\maldiimaging\\Maldi_imaging - Copy\\radius_rank.csv",
-                                    PMFsearch=TRUE,BPPARAM=bpparam(),
+                                    PMFsearch=TRUE,
+                                    rotate=NULL,
+                                    BPPARAM=bpparam(),
                                     ...){
   library(data.table)
   library(Cardinal)
   library(RColorBrewer)
+  
+  if (!is.null(rotate)){
+    message("Found rotation info")
+    #rotatedegrees=rotate[rotate$filenames==datafile,"rotation"]
+    rotatedegrees=sapply(datafile,function(x,df){
+      degree=df[df$filenames==x,"rotation"]
+      if (length(degree)==0) {
+        message("Missing rotation data please check the rotation configuration file: ",x)
+        degree=0
+      }
+      degree
+    },rotate)
+    rotate=unlist(rotatedegrees)
+  }else{rotate=rep(0,length(datafile))}
   #mycol <- color.map(map =c("black", "blue", "green", "yellow", "red","#FF00FF","white"), n = 100)
   #mycol <- colorRampPalette(c("black", "blue", "green", "yellow", "red","#FF00FF","white"))
   #mycol <- gradient.colors(100, start="white", end="blue")
 for (z in 1:length(datafile)){
   #cl=autoStopCluster(makeCluster(6))
-  imdata <- Load_Cardinal_imaging(datafile[z],preprocessing = F,attach.only = FALSE,resolution = 300)
+  imdata <- Load_Cardinal_imaging(datafile[z],preprocessing = F,attach.only = T,resolution = 200,rotate = rotate[z],as="MSImageSet",BPPARAM = BPPARAM)
   name <-gsub(base::dirname(datafile[z]),"",datafile[z])
   folder<-base::dirname(datafile[z])
   coordata=imdata@pixelData@data
@@ -1673,7 +1837,6 @@ for (z in 1:length(datafile)){
   }
   
   }else if(Virtual_segmentation){
-    
   radius_rank=read.csv(file = Virtual_segmentation_rankfile)
   radius_rank=radius_rank[order(radius_rank$Rank),]
   coordist_para=function(i,coordata){
@@ -1843,7 +2006,7 @@ for (z in 1:length(datafile)){
   
   
   if(PMFsearch){   
-    imdata <- Load_Cardinal_imaging(datafile[z],preprocessing = F,resolution = ppm)
+    imdata <- Load_Cardinal_imaging(datafile[z],preprocessing = F,resolution = ppm,rotate = rotate[z],as="MSImageSet")
     if (dir.exists(paste0(datafile[z] ," ID"))==FALSE){dir.create(paste0(datafile[z] ," ID"))}
     setwd(paste0(datafile[z] ," ID"))
     #cl=makeCluster(8)

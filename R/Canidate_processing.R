@@ -113,8 +113,8 @@ Protein_feature_list_fun<-function(workdir=getwd(),
                                             with.qualities=FALSE)    
   
   Index_of_protein_sequence<-fasta.index(database,
-                                         nrec, 
-                                         skip)   
+                                         nrec=-1L, 
+                                         skip=0L)   
   
   peplist<-cleave(as.character(list_of_protein_sequence),custom=Digestion_site, missedCleavages=missedCleavages)
   

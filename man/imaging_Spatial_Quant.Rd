@@ -21,7 +21,8 @@ imaging_Spatial_Quant(datafile = tk_choose.files(filter =
   Spectrum_feature_summary = T, Region_feature_summary = T,
   Region_feature_analysis = T, plot_each_metabolites = T,
   Cluster_level = "High", Region_feature_analysis_bar_plot = T,
-  norm_datafiles = T, norm_Type = "Median", mzrang = NULL, ...)
+  norm_datafiles = T, norm_Type = "Median", mzrang = NULL,
+  BPPARAM = bpparam(), rotateimg = NULL, ...)
 }
 \arguments{
 \item{threshold}{specify the intensities threshold (0 to 1 in percentage)to report a identified molecule}
@@ -32,7 +33,9 @@ imaging_Spatial_Quant(datafile = tk_choose.files(filter =
 
 \item{adducts}{the adducts list to be used for generating the PMF search candidates}
 
-\item{PMF_analysis}{Set \code{"true"} if you want to have a PMF search, set \code{"false"} if you want to bypass it}
+\item{cal.mz}{If set with \code{"true"}, the function will recalculate the mz value according to the column named "formular" in the \code{Quant_list} and the specified adducts.}
+
+\item{mzlist_bypass}{Set \code{"true"} if you want to bypass the mzlist generating process}
 
 \item{Protein_feature_summary}{\code{"PMF_analysis"} follow-up process that will collect all the identified peptide information and associate them with possible proteins}
 
@@ -52,10 +55,6 @@ imaging_Spatial_Quant(datafile = tk_choose.files(filter =
 
 \item{Virtual_segmentation_rankfile}{specify a region rank file contains region information for manualy region segmentation}
 
-\item{cal.mz=T}{If set with TRUE, the function will recalculate the mz value according to the column named "formular" in the \code{Quant_list}}
-
-\item{mzlist_bypass=F}{}
-
 \item{Peptide_feature_summarya}{\code{"PMF_analysis"} follow-up process that will summarize all datafiles identified peptides and generats a \code{"peptide shortlist"} in the result summary folder}
 }
 \value{
@@ -66,7 +65,7 @@ This is a spatial quantitation function for maldi imaging data set
 this function will read the candidate list file and generate quantification result
 }
 \examples{
-imaging_identification(threshold=0.05, ppm=5,Digestion_site="[G]",
+imaging_Spatial_Quant(threshold=0.05, ppm=5,Digestion_site="[G]",
                        missedCleavages=0:1,Fastadatabase="murine_matrisome.fasta",
                        adducts=c("M+H","M+NH4","M+Na"),PMF_analysis=TRUE,
                        Protein_feature_summary=TRUE,plot_cluster_image=TRUE,

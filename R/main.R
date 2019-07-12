@@ -38,6 +38,9 @@
 #' @import pacman
 #' @import backports
 #' @import BiocParallel
+#' @import spdep
+#' @import deldir
+#' @import ggplot2
 #' @importFrom stats na.omit runif
 #' @importFrom utils download.file modifyList packageVersion read.table tail
 #' @import S4Vectors

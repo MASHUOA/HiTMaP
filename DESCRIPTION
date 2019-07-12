@@ -57,7 +57,8 @@ Imports:
     devtools,
     fs,
     processx,
-    S4Vectors
+    S4Vectors,
+    spdep
 VignetteBuilder: knitr
 Suggests: 
     knitr,

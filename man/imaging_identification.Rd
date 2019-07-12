@@ -4,18 +4,16 @@
 \alias{imaging_identification}
 \title{imaging_identification}
 \usage{
-imaging_identification(datafile = tk_choose.files(filter =
-  matrix(c("imzml file", ".imzML", "Text", ".txt", "All files", "*"), 3, 2,
-  byrow = TRUE), caption =
-  "Choose single or multiple file(s) for analysis"), threshold = 0.05,
-  ppm = 5, Digestion_site = "[G]", missedCleavages = 0:1,
-  Fastadatabase = "murine_matrisome.fasta", adducts = c("M+H", "M+NH4",
-  "M+Na"), PMF_analysis = TRUE, Protein_feature_summary = TRUE,
-  plot_cluster_image = TRUE, Peptide_feature_summary = TRUE,
-  plot_ion_image = FALSE, parallel = detectCores(),
-  spectra_segments_per_file = 5, spatialKMeans = TRUE,
-  Smooth_range = 1, Virtual_segmentation = FALSE,
-  Virtual_segmentation_rankfile = NULL)
+imaging_identification(datafile, threshold = 0.05, ppm = 5,
+  mode = c("Proteomics", "Metabolomics"), Digestion_site = "[G]",
+  missedCleavages = 0:1, Fastadatabase = "murine_matrisome.fasta",
+  adducts = c("M+H", "M+NH4", "M+Na"), PMF_analysis = TRUE,
+  Protein_feature_summary = TRUE, plot_cluster_image = TRUE,
+  Peptide_feature_summary = TRUE, plot_ion_image = FALSE,
+  parallel = detectCores(), spectra_segments_per_file = 5,
+  spatialKMeans = TRUE, Smooth_range = 1,
+  Virtual_segmentation = FALSE, Virtual_segmentation_rankfile = NULL,
+  rotateimg = NULL, ...)
 }
 \arguments{
 \item{threshold}{specify the intensities threshold (0 to 1 in percentage)to report a identified molecule}
