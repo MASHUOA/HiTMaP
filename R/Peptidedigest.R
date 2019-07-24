@@ -2085,7 +2085,8 @@ if(PMFsearch){
       if (dir.exists(paste0(datafile[z] ," ID"))==FALSE){dir.create(paste0(datafile[z] ," ID"))}
       setwd(paste0(datafile[z] ," ID"))
       match_pattern <- "Spectrum.{2,}csv"
-      
+      name <-gsub(base::dirname(datafile[z]),"",datafile[z])
+      folder<-base::dirname(datafile[z])
       for (SPECTRUM_batch in dir()[str_detect(dir(), match_pattern)]){
         spectrum_file_table=fread(SPECTRUM_batch)
         SPECTRUM_batch=gsub("^Spectrum.","",SPECTRUM_batch)
