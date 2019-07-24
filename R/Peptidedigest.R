@@ -2022,7 +2022,7 @@ if(PMFsearch){
     if (dir.exists(paste0(datafile[z] ," ID"))==FALSE){dir.create(paste0(datafile[z] ," ID"))}
     setwd(paste0(datafile[z] ," ID"))
     #cl=makeCluster(8)
-    message(paste("PMFsearch"))
+    message(paste("PMFsearch",name))
     message(paste( "region",names(x),sep=" ",collapse = "\n"))
     for (SPECTRUM_batch in names(x)){
       
