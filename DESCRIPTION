@@ -64,9 +64,8 @@ Suggests:
     knitr,
     rmarkdown,
     devtools,
-    testthat,
     plotly,
-    bitops,
+    bitops
 RoxygenNote: 6.1.1
 biocViews: Software, Infrastructure, Proteomics, Lipidomics,
         MassSpectrometry, ImagingMassSpectrometry, ImmunoOncology,
