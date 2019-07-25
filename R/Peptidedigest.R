@@ -91,7 +91,7 @@ imaging_identification<-function(
 
   message(paste(length(datafile), "files were selected and will be used for Searching"))
   
-  message(paste(Fastadatabase, "was selected as data base", "candidates will be generated through",mode ,"mode" ))
+  message(paste(Fastadatabase, "was selected as data base", "candidates will be generated through",mode[1] ,"mode" ))
   
   Protein_feature_list<-Protein_feature_list_fun(workdir=workdir,
                                                  database=Fastadatabase,
