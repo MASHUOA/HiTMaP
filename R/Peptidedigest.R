@@ -1788,8 +1788,10 @@ PMF_Cardinal_Datafilelist<-function(datafile,Peptide_Summary_searchlist,
   #mycol <- color.map(map =c("black", "blue", "green", "yellow", "red","#FF00FF","white"), n = 100)
   #mycol <- colorRampPalette(c("black", "blue", "green", "yellow", "red","#FF00FF","white"))
   #mycol <- gradient.colors(100, start="white", end="blue")
+  
   for (z in 1:length(datafile)){
   if (Bypass_segmentation==F){
+  message("Segmentation in progress...")
      #cl=autoStopCluster(makeCluster(6))
   imdata <- Load_Cardinal_imaging(datafile[z],preprocessing = F,attach.only = T,resolution = 200,rotate = rotate[z],as="MSImageSet",BPPARAM = BPPARAM)
   name <-gsub(base::dirname(datafile[z]),"",datafile[z])
@@ -2081,6 +2083,7 @@ if(PMFsearch){
   }
   
   } else{
+    message("Segmentation is bypassed, will perform PMF search via existing spectra in ID folder...")
     if(PMFsearch){   
       if (dir.exists(paste0(datafile[z] ," ID"))==FALSE){dir.create(paste0(datafile[z] ," ID"))}
       setwd(paste0(datafile[z] ," ID"))
