@@ -51,10 +51,11 @@ imaging_identification<-function(
                threshold=0.005, 
                ppm=5,
                mode=c("Proteomics","Metabolomics"),
-               Digestion_site="[G]",
+               Digestion_site="[GN][LI]",
                missedCleavages=0:1,
                Fastadatabase="murine_matrisome.fasta",
                adducts=c("M+H","M+NH4","M+Na"),
+               Decoy_adducts=c("M+He","M+Ne","M+Ar","M+Kr","M+Xe","M+Rn","M+Cu","M+Co","M+Ag"),
                PMF_analysis=TRUE,
                Bypass_segmentation=F,
                Protein_feature_summary=TRUE,
@@ -68,6 +69,8 @@ imaging_identification<-function(
                Virtual_segmentation=FALSE,
                Virtual_segmentation_rankfile=NULL,
                rotateimg=NULL,
+               Region_feature_summary=T,
+               Spectrum_validate=T,
                ...
                ){
   library("pacman")
@@ -97,7 +100,7 @@ imaging_identification<-function(
                                                  database=Fastadatabase,
                                                  Digestion_site=Digestion_site,
                                                  missedCleavages=missedCleavages,
-                                                 adducts=adducts,BPPARAM = BPPARAM)
+                                                 adducts=adducts,BPPARAM = BPPARAM,Decoy_adducts=Decoy_adducts)
   
   if (!is.null(rotateimg)){rotateimg=read.csv(rotateimg,stringsAsFactors = F)}
   
@@ -133,7 +136,7 @@ imaging_identification<-function(
   uniques_intensity<-unique(Peptide_Summary_file[,c("mz","Intensity")])
   Protein_feature_list$Intensity<-0
   #Protein_feature_list$Intensity<-unlist(parLapply(cl=autoStopCluster(makeCluster(parallel)),Protein_feature_list$mz,intensity_sum_para,uniques_intensity))
-  
+  message("Iterating protein information")
   Protein_feature_list$Intensity<-unlist(bplapply(Protein_feature_list$mz,intensity_sum_para,uniques_intensity,BPPARAM=BPPARAM))
   Protein_feature_list=Protein_feature_list[Protein_feature_list$Intensity>(threshold*max(Protein_feature_list$Intensity)),]
   write.csv(Protein_feature_list,"Cluster.csv")
@@ -204,6 +207,13 @@ imaging_identification<-function(
     
   }
   
+  if(Spectrum_validate){
+    install.packages("OrgMassSpecR")
+    require(OrgMassSpecR)
+    Protein_feature_summary<-read.csv(paste(workdir,"/Summary folder",sep=""))
+    
+    SpectrumSimilarity
+  }
   if(plot_cluster_image_grid){
     Protein_feature_list=fread(paste(workdir,"/Summary folder/Protein_feature_summary_sl.csv",sep=""))
     if (!is.null(rotateimg)){rotateimg=read.csv(rotateimg,stringsAsFactors = F)}
@@ -311,6 +321,9 @@ imaging_identification<-function(
   
   
 }
+
+
+
 
 #' imaging_Spatial_Quant
 #'
@@ -446,6 +459,7 @@ imaging_Spatial_Quant<-function(
       write.csv(Peptide_feature_list,"Peptide_feature_list.csv")
       uniques_intensity<-unique(Peptide_Summary_file[,c("mz","Intensity")])
       Meta_feature_list$Intensity<-0
+      message("Iterating identification result")
       #Meta_feature_list$Intensity<-unlist(parLapply(cl=autoStopCluster(makeCluster(parallel)),Meta_feature_list$mz,intensity_sum_para,uniques_intensity))
       Meta_feature_list$Intensity<-unlist(bplapply(Meta_feature_list$mz,intensity_sum_para,uniques_intensity,BPPARAM=BPPARAM))
       write.csv(Meta_feature_list[Meta_feature_list$Intensity>0,],"Cluster.csv",row.names = F)
@@ -573,7 +587,7 @@ imaging_Spatial_Quant<-function(
           #}  
           Spectrum_summary_col_norm
         }
-        
+        message("Region_feature_analysis")
         #Spectrum_summary_norm=unlist(parLapply(cl=autoStopCluster(makeCluster(detectCores())),which(colnames(Spectrum_summary)!="ID"),par_norm_datacol_cluster,Spectrum_summary,clusterID))
         Spectrum_summary_norm=unlist(bplapply(which(colnames(Spectrum_summary)!="ID"),par_norm_datacol_cluster,Spectrum_summary,clusterID,BPPARAM = BPPARAM))
         
@@ -664,6 +678,7 @@ imaging_Spatial_Quant<-function(
     }
     
     if(plot_each_metabolites){
+      message("plot_each_metabolites")
     #p_names=parLapply(cl=autoStopCluster(makeCluster(4)),which(moleculeNames!=""),plotly_for_region_with_ID,data,moleculeNames)
     p_names=bplapply(which(moleculeNames!=""),plotly_for_region_with_ID,data,moleculeNames,BPPARAM=BPPARAM)
     zip("Result_lipid.zip", c(as.character(p_names), "lib"))}
@@ -745,7 +760,7 @@ imaging_Spatial_Quant<-function(
       #plotly::orca(p, windows_filename(paste0(data["moleculeNames",i], data["adducts",i]," in ",data["RegionName",i],".png")))
       #list(filename=windows_filename(paste0(moleculeNames[i],".html")), image= p %>% add_surface())
     }
-    
+    message("plotly_for_region_with_ClusterID")
     #p_names=parLapply(cl=autoStopCluster(makeCluster(1)),which(colnames(data)!="Class"),plotly_for_region_with_ClusterID,data,output_statice=T)
     p_names=bplapply(which(colnames(data)!="Class"),plotly_for_region_with_ClusterID,data,output_statice=T,BPPARAM = BPPARAM)
     zip("Result_clusterID.zip", c(as.character(p_names), "lib"))
@@ -1349,7 +1364,7 @@ searchPMF<-function(pimlist,spectrumlist,ppm){
 
 searchPMF_para<-function(pimlist,spectrumlist,ppm,BPPARAM=bpparam()){
   pimresultlist<-pimlist
-  print("Start PMF search")
+  message("Start PMF search")
     #pimresultlist<-parLapply(cl=cl,pimlist,PMFsum,spectrumlist,ppm)
     pimresultlist<-bplapply(pimlist,PMFsum,spectrumlist,ppm,BPPARAM = BPPARAM)
   
@@ -1358,7 +1373,7 @@ searchPMF_para<-function(pimlist,spectrumlist,ppm,BPPARAM=bpparam()){
 
 searchPMF_data_frame<-function(pimlist,spectrumlist,ppm,BPPARAM = bpparam()){
   pimresultlist<-pimlist
-  print("Start PMF search")
+  message("Start PMF search")
   #pimresultlist<-parLapply(cl=cl,pimlist,PMFsum,spectrumlist,ppm)
   pimresultlist<-bplapply(pimlist,PMFsum,spectrumlist,ppm,BPPARAM = BPPARAM)
   return(pimresultlist)
@@ -1627,20 +1642,6 @@ autoStopCluster <- function(cl) {
   cl
 }
 
-Build_adduct_list<-function(){
-  
-  Name=as.character(c("M+H","M+NH4","M+Na","M+K","M+","M-H","M-2H","M-3H","M+FA-H","M+Hac-H","M-","M+3H","M+2H+Na","M+H+2Na","M+3Na","M+2H","M+H+NH4","M+H+Na","M+H+K","M+ACN+2H","M+2Na","M+2ACN+2H","M+3ACN+2H","M+CH3OH+H","M+ACN+H","M+2Na-H","M+IsoProp+H","M+ACN+Na","M+2K-H","M+DMSO+H","M+2ACN+H","M+IsoProp+Na+H","2M+H","2M+NH4","2M+Na","2M+3H2O+2H","2M+K","2M+ACN+H","2M+ACN+Na","M-H2O-H","M+Na-2H","M+Cl","M+K-2H","M+Br","M+TFA-H","2M-H","2M+FA-H","2M+Hac-H","3M-H"))
-  calc=c("M+1.007276","M+18.033823","M+22.989218","M+38.963158","M-0.00054858","M-1.007276","M/2-1.007276","M/3-1.007276","M+44.998201","M+59.013851","M+0.00054858","M/3+1.007276","M/3+8.334590","M/3+15.7661904","M/3+22.989218","M/2+1.007276","M/2+9.520550","M/2+11.998247","M/2+19.985217","M/2+21.520550","M/2+22.989218","M/2+42.033823","M/2+62.547097","M+33.033489","M+42.033823","M+44.971160","M+61.06534","M+64.015765","M+76.919040","M+79.02122","M+83.060370","M+84.05511","2M+1.007276","2M+18.033823","2M+22.989218","M+28.02312","2M+38.963158","2M+42.033823","2M+64.015765","M-19.01839","M+20.974666","M+34.969402","M+36.948606","M+78.918885","M+112.985586","2M-1.007276","2M+44.998201","2M+59.013851","3M-1.007276")
-  Charge=c(" 1"," 1"," 1"," 1"," 1","-1","-2","-3","-1","-1","-1"," 3"," 3"," 3"," 3"," 2"," 2"," 2"," 2"," 2"," 2"," 2"," 2"," 1"," 1"," 1"," 1"," 1"," 1"," 1"," 1"," 1"," 1"," 1"," 1"," 1"," 1"," 1"," 1","-1","-1","-1","-1","-1","-1","-1","-1","-1","-1")
-  Mult=c("1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","2","2","2","2","2","2","2","1","1","1","1","1","1","2","2","2","3")
-  Mass=as.numeric(as.character(c("  1.00727600"," 18.03382300"," 22.98921800"," 38.96315800"," -0.00054858"," -1.00727600"," -1.00727600"," -1.00727600"," 44.99820100"," 59.01385100","  0.00054858","  1.00727600","  8.33459000"," 15.76619000"," 22.98921800","  1.00727600","  9.52055000"," 11.99824700"," 19.98521700"," 21.52055000"," 22.98921800"," 42.03382300"," 62.54709700"," 33.03348900"," 42.03382300"," 44.97116000"," 61.06534000"," 64.01576500"," 76.91904000"," 79.02122000"," 83.06037000"," 84.05511000","  1.00727600"," 18.03382300"," 22.98921800"," 28.02312000"," 38.96315800"," 42.03382300"," 64.01576500","-19.01839000"," 20.97466600"," 34.96940200"," 36.94860600"," 78.91888500","112.98558600"," -1.00727600"," 44.99820100"," 59.01385100","  1.00727600")))
-  Ion_mode=c("positive","positive","positive","positive","positive","negative","negative","negative","negative","negative","negative","positive","positive","positive","positive","positive","positive","positive","positive","positive","positive","positive","positive","positive","positive","positive","positive","positive","positive","positive","positive","positive","positive","positive","positive","positive","positive","positive","positive","negative","negative","negative","negative","negative","negative","negative","negative","negative","negative")
-  Formula_add=c("H1","N1H4","Na1","K1","FALSE","FALSE","FALSE","FALSE","C1O2H2","C2O2H4","FALSE","H3","H2Na1","H1Na2","Na3","H2","H1N1H4","H1Na1","H1K1","C2H5N1","Na2","C4H8N2","C6H11N3","C1H5O1","C2H4N1","Na2","C3H9O1","C2H3N1Na1","K2","C2H7S1O1","C4H7N2","C3H9O1Na1","H1","N1H4","Na1","H8O6","K1","C2H4N1","C2H3N1Na1","FALSE","Na1","Cl1","K1","Br1","C2F3O2H1","FALSE","C1O2H2","C2O2H4","FALSE")
-  Formula_ded=c("FALSE","FALSE","FALSE","FALSE","FALSE","H1","H2","H3","H1","H1","FALSE","FALSE","FALSE","FALSE","FALSE","FALSE","FALSE","FALSE","FALSE","FALSE","FALSE","FALSE","FALSE","FALSE","FALSE","H1","FALSE","FALSE","H1","FALSE","FALSE","FALSE","FALSE","FALSE","FALSE","FALSE","FALSE","FALSE","FALSE","H3O1","H2","FALSE","H2","FALSE","H1","H1","H1","H1","H1")
-  Multi=c("1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","2","2","2","2","2","2","2","1","1","1","1","1","1","2","2","2","3")
-  adductslist<-cbind.data.frame(Name,calc,Charge,Mult,Mass,Ion_mode,Formula_add,Formula_ded,Multi)
-  adductslist
-}
 
 
 
@@ -1649,6 +1650,7 @@ PMF_analysis_fun<-function(Peptide_Summary_searchlist,peaklist,ppm,BPPARAM =bppa
   #Peptide_Summary_searchlist$Intensity<-parLapply(cl=cl,Peptide_Summary_searchlist$mz,PMFsum_para,peaklist,ppm)
   #Peptide_Summary_searchlist=Peptide_Summary_searchlist[`&`(Peptide_Summary_searchlist$mz>=mzrange[1],Peptide_Summary_searchlist$mz<=mzrange[2]),]
   Peptide_Summary_searchlist[,"Intensity"]<-0
+  message("PMF_analysis_fun")
   Peptide_Summary_searchlist$Intensity<-bplapply(Peptide_Summary_searchlist$mz,PMFsum_para,peaklist,ppm,BPPARAM = BPPARAM)
   #Peptide_Summary_searchlistIntensity<-lapply(Peptide_Summary_searchlistmz,PMFsum_para,peaklist,ppm)
   Peptide_Summary_searchlist <- as.data.frame(sapply(Peptide_Summary_searchlist,unlist),stringsAsFactors=FALSE)

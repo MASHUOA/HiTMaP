@@ -100,10 +100,14 @@ Protein_feature_list_fun<-function(workdir=getwd(),
                                    Digestion_site="[G]",
                                    missedCleavages=0:1,
                                    adducts=c("M+H","M+NH4","M+Na"),
-                                   BPPARAM=bpparam()){
+                                   BPPARAM=bpparam(),
+                                   Decoy_adducts=c("M+He","M+Li","M+Cu","M+Co","M+Ag","M+Ar")){
   library(Biostrings)
   library(cleaver)
   library(protViz)
+  library(rcdk)
+  library(BiocParallel)
+  Decoy_adducts=Decoy_adducts[1:length(adducts)]
   list_of_protein_sequence<-readAAStringSet(database,
                                             format="fasta",
                                             nrec=-1L, 
@@ -111,6 +115,9 @@ Protein_feature_list_fun<-function(workdir=getwd(),
                                             seek.first.rec=FALSE,
                                             use.names=TRUE, 
                                             with.qualities=FALSE)    
+ 
+  
+  
   
   Index_of_protein_sequence<-fasta.index(database,
                                          nrec=-1L, 
@@ -135,14 +142,243 @@ Protein_feature_list_fun<-function(workdir=getwd(),
   tempdf<-as.data.frame(tempdf)
   tempdf$Protein<-as.character(tempdf$Protein)
   tempdf$Peptide<-as.character(tempdf$Peptide)
-  
+  tempdf1<-tempdf
   Protein_Summary<-NULL
   adductslist<-Build_adduct_list()
   for (i in 1:length(adducts)){
     adductmass<-as.numeric(as.character(adductslist[adductslist$Name==adducts[i],"Mass"]))
-    tempdf$mz<-as.numeric(parentIonMass(tempdf$Peptide)-1.00727600+adductmass)
+    multiplier<-as.numeric(as.character(adductslist[adductslist$Name==adducts[i],"Multi"]))
+    adductsformula<-c(as.character(adductslist[adductslist$Name==adducts[i],"Formula_add"]),
+    as.character(adductslist[adductslist$Name==adducts[i],"Formula_ded"]))
+    adductsformula=paste0(ifelse(adductsformula=="FALSE","",adductsformula),collapse = "")
+    
+    tempdf$mz<-as.numeric(parentIonMass(tempdf$Peptide)-1.007825+adductmass)
     tempdf$adduct<-adducts[i]
+    #tempdf$isdecoy<-rep(0,nrow(tempdf))
+    #convert_peptide_adduct(tempdf$Peptide[2],adductsname = adducts[i],multiplier = c(multiplier,1),adductslist = adductslist)
+    #tempdf$formula<-bplapply(tempdf$Peptide,convert_peptide_adduct,adductsformula = adducts[i],multiplier = c(multiplier,1),BPPARAM = BPPARAM)
+    Protein_Summary<-rbind.data.frame(Protein_Summary,tempdf)
+  }
+  
+  Protein_Summary
+}
+
+Protein_feature_list_fun1<-function(workdir=getwd(),
+                                   database,
+                                   Digestion_site="[G]",
+                                   missedCleavages=0:1,
+                                   adducts=c("M+H","M+NH4","M+Na"),
+                                   BPPARAM=bpparam(),
+                                   Decoy_adducts=c("M+He","M+Li","M+Cu","M+Co","M+Ag","M+Ar")){
+  library(Biostrings)
+  library(cleaver)
+  library(protViz)
+  library(rcdk)
+  library(BiocParallel)
+  Decoy_adducts=Decoy_adducts[1:length(adducts)]
+  list_of_protein_sequence<-readAAStringSet(database,
+                                            format="fasta",
+                                            nrec=-1L, 
+                                            skip=0L, 
+                                            seek.first.rec=FALSE,
+                                            use.names=TRUE, 
+                                            with.qualities=FALSE)    
+  
+  
+  
+  
+  Index_of_protein_sequence<-fasta.index(database,
+                                         nrec=-1L, 
+                                         skip=0L)   
+  
+  peplist<-cleave(as.character(list_of_protein_sequence),custom=Digestion_site, missedCleavages=missedCleavages)
+  
+  
+  peplist<-peplist[duplicated(names(peplist))==FALSE]
+  
+  
+  
+  pimlist<-parentIonMasslist(peplist,Index_of_protein_sequence)
+  
+  peplist<-peplist[names(peplist) %in% names(pimlist) ==TRUE] 
+  
+  #tempdf<-parLapply(cl=cl,  1: length(names(peplist)), Peptide_Summary_para,peplist)
+  #bplapply()
+  tempdf<-bplapply( 1: length(names(peplist)), Peptide_Summary_para,peplist,BPPARAM = BPPARAM)
+  tempdf <- do.call("rbind", tempdf)
+  colnames(tempdf)<-c("Protein","Peptide")
+  tempdf<-as.data.frame(tempdf)
+  tempdf$Protein<-as.character(tempdf$Protein)
+  tempdf$Peptide<-as.character(tempdf$Peptide)
+  tempdf1<-tempdf
+  Protein_Summary<-NULL
+  adductslist<-Build_adduct_list()
+  for (i in 1:length(adducts)){
+    adductmass<-as.numeric(as.character(adductslist[adductslist$Name==adducts[i],"Mass"]))
+    multiplier<-as.numeric(as.character(adductslist[adductslist$Name==adducts[i],"Multi"]))
+    adductsformula<-c(as.character(adductslist[adductslist$Name==adducts[i],"Formula_add"]),
+                      as.character(adductslist[adductslist$Name==adducts[i],"Formula_ded"]))
+    adductsformula=paste0(ifelse(adductsformula=="FALSE","",adductsformula),collapse = "")
+    
+    tempdf$mz<-as.numeric(parentIonMass(tempdf$Peptide)-1.007825+adductmass)
+    tempdf$adduct<-adducts[i]
+    tempdf$isdecoy<-rep(0,nrow(tempdf))
+    convert_peptide_adduct(tempdf$Peptide[2],adductsname = adducts[i],multiplier = c(multiplier,1),adductslist = adductslist)
+    tempdf$formula<-bplapply(tempdf$Peptide,convert_peptide_adduct,adductsformula = adducts[i],multiplier = c(multiplier,1),BPPARAM = BPPARAM)
+    Protein_Summary<-rbind.data.frame(Protein_Summary,tempdf)
+  }
+  tempdf<-tempdf1
+  for (i in 1:length(Decoy_adducts)){
+    tempdf<-tempdf1
+    adductmass<-as.numeric(as.character(adductslist[adductslist$Name==Decoy_adducts[i],"Mass"]))
+    tempdf$mz<-as.numeric(parentIonMass(tempdf$Peptide)-1.007825+adductmass)
+    tempdf$isdecoy<-rep(1,nrow(tempdf))
+    tempdf$adduct<-Decoy_adducts[i]
     Protein_Summary<-rbind.data.frame(Protein_Summary,tempdf)
   }
   Protein_Summary
+}
+
+vendiagram<-function(){
+  library(stringr)
+  Protein_feature_summary_uniport <- read.csv("D:/Tumour test/test7/Summary folder/Protein_feature_summary.csv")
+  Protein_feature_summary_marine <- read.csv("D:/Tumour test/test9 new matrisome/Summary folder/Protein_feature_summary.csv")
+  Protein_feature_summary_nonmarine <- read.csv("D:/Tumour test/test9 new matrisome/Summary folder/Protein_feature_summary.csv")
+  
+  Protein_feature_summary_uniport <- read.csv("D:/Tumour test/test12 new non matrisome gnil/Summary folder/Protein_feature_summary.csv")
+  Protein_feature_summary_marine <- read.csv("D:/Tumour test/test11 new matrisome gnil/Summary folder/Protein_feature_summary.csv")
+  #Protein_feature_summary_nonmarine <- read.csv("D:/Tumour test/test9 new matrisome/Summary folder/Protein_feature_summary.csv")
+  
+  max(Protein_feature_summary_uniport$Intensity)
+  max(Protein_feature_summary_marine$Intensity)
+  maxinte=max(Protein_feature_summary_marine$Intensity)
+  uniport_peptides0.05<-unique(Protein_feature_summary_uniport$Peptide[Protein_feature_summary_uniport$Intensity>=maxinte*0.05])
+  matrisome_peptides0.05<-unique(Protein_feature_summary_marine$Peptide[Protein_feature_summary_marine$Intensity>=maxinte*0.05])
+  length(matrisome_peptides0.05)
+  length(uniport_peptides0.05)
+  sum(matrisome_peptides0.05 %in% uniport_peptides0.05)
+  
+  uniport_peptides0.005<-unique(Protein_feature_summary_uniport$Peptide[Protein_feature_summary_uniport$Intensity>=maxinte*0.005])
+  matrisome_peptides0.005<-unique(Protein_feature_summary_marine$Peptide[Protein_feature_summary_marine$Intensity>=maxinte*0.005])
+  length(matrisome_peptides0.005)
+  length(uniport_peptides0.005)
+  sum(matrisome_peptides0.005 %in% uniport_peptides0.005)
+  
+  uniport_mz0.05<-unique(Protein_feature_summary_uniport$mz[Protein_feature_summary_uniport$Intensity>=maxinte*0.05])
+  matrisome_mz0.05<-unique(Protein_feature_summary_marine$mz[Protein_feature_summary_marine$Intensity>=maxinte*0.05])
+  length(matrisome_mz0.05)
+  length(uniport_mz0.05)
+  sum(uniport_mz0.05 %in% matrisome_mz0.05)
+  
+  uniport_mz0.005<-unique(Protein_feature_summary_uniport$mz[Protein_feature_summary_uniport$Intensity>=maxinte*0.005])
+  matrisome_mz0.005<-unique(Protein_feature_summary_marine$mz[Protein_feature_summary_marine$Intensity>=maxinte*0.005])
+  length(matrisome_mz0.005)
+  length(uniport_mz0.005)
+  sum(uniport_mz0.005 %in% matrisome_mz0.005)
+  
+  uniport_prot<-unique(Protein_feature_summary_uniport$Protein[Protein_feature_summary_uniport$Intensity>=maxinte*0.05])
+  matrisome_prot<-unique(Protein_feature_summary_marine$Protein[Protein_feature_summary_marine$Intensity>=maxinte*0.05])
+  length(uniport_prot)
+  length(matrisome_prot)
+  
+  uniport_prot_a=str_extract(uniport_prot,"\\|.{2,}\\|")
+  matrisome_prot_a=str_extract(matrisome_prot,"\\|.{2,}\\|")
+  
+  sum(uniport_prot_a %in% matrisome_prot_a)
+  
+  protein_unique=unique(Protein_feature_list$mz)
+}
+
+fastafile_utils<-function(){
+  
+  library(Biostrings)
+  library(cleaver)
+  library(protViz)
+  library(rcdk)
+  
+  list_of_protein_sequence<-readAAStringSet(database,
+                                            format="fasta",
+                                            nrec=-1L, 
+                                            skip=0L, 
+                                            seek.first.rec=FALSE,
+                                            use.names=TRUE, 
+                                            with.qualities=FALSE) 
+  
+  Index_of_protein_sequence_uniport<-fasta.index("D:/Tumour test/test7/uniprot.fasta",
+                                         nrec=-1L, 
+                                         skip=0L) 
+  Index_of_protein_sequence_matrisome<-fasta.index("D:/Tumour test/test8_matrisome/murine_matrisome.fasta",
+                                                 nrec=-1L, 
+                                                 skip=0L)
+  
+  Index_of_protein_sequence_uniport$ID<-str_extract(Index_of_protein_sequence_uniport$desc,"\\|.{2,}\\|")
+  
+  Index_of_protein_sequence_matrisome$ID<-str_extract(Index_of_protein_sequence_matrisome$desc,"\\|.{2,}\\|")
+  
+  overlapID<-intersect(Index_of_protein_sequence_uniport$ID,Index_of_protein_sequence_matrisome$ID)
+
+  uniquematrisomeID<-Index_of_protein_sequence_matrisome[!(Index_of_protein_sequence_matrisome$ID %in% overlapID),]
+  
+  matrisome_def<-fread(file="matrisome_mm_masterlist.csv",header = T)
+  
+  matrisome_def_id<-paste(matrisome_def$UniProt_IDs, collapse = ":")
+  
+  matrisome_def_id<-(str_split(matrisome_def_id,":"))[[1]]
+  
+  matrisome_def_id<-paste0("|",matrisome_def_id,"|")
+  
+  sum(matrisome_def_id %in% Index_of_protein_sequence_uniport$ID)
+  
+  sum(!(matrisome_def_id %in% Index_of_protein_sequence_uniport$ID))
+  
+  matrisome_def_unique_id<-matrisome_def_id[!(matrisome_def_id %in% Index_of_protein_sequence_uniport$ID)]
+  
+  matrisome_def_overlap_id<-matrisome_def_id[(matrisome_def_id %in% Index_of_protein_sequence_uniport$ID)]
+  
+  Index_of_protein_sequence_matrisome_subset<-Index_of_protein_sequence_uniport[Index_of_protein_sequence_uniport$ID %in% matrisome_def_overlap_id,]
+  
+  Index_of_protein_sequence_nonmatrisome_subset<-Index_of_protein_sequence_uniport[!(Index_of_protein_sequence_uniport$ID %in% matrisome_def_overlap_id),]
+  
+  list_of_matrisome<-readAAStringSet(Index_of_protein_sequence_matrisome_subset) 
+  
+  list_of_nonmatrisome<-readAAStringSet(Index_of_protein_sequence_nonmatrisome_subset)
+  
+  
+  
+  writeXStringSet(list_of_matrisome,"matrisome.fasta")
+  
+  writeXStringSet(list_of_nonmatrisome,"non-matrisome.fasta")
+  
+  sum(!(matrisome_def_unique_id %in% uniquematrisomeID$ID))
+  
+  sum(!(uniquematrisomeID$ID %in% matrisome_def_unique_id))
+  
+}
+
+convert_peptide_adduct<-function(peptide,adductsname,multiplier=c(1,1),adductslist=Build_adduct_list()){
+  library(rcdk)
+  library(OrgMassSpecR)
+  adductsformula_add= as.character(adductslist[adductslist$Name==adductsname,"Formula_add"])
+  adductsformula_ded= as.character(adductslist[adductslist$Name==adductsname,"Formula_ded"])
+  
+  null_if_false<-function(x){if (x==FALSE){""} else{get.formula(x)}}
+  
+  adductsformula_add<-null_if_false(adductsformula_add)
+  adductsformula_ded<-null_if_false(adductsformula_ded)
+  
+  formula<-ConvertPeptide(peptide,IAA = F)
+  if (multiplier[1]!=1){
+    lapply(names(formula),FUN = function(x,formula,multiplier){
+      formula[[x]]=formula[[x]]*multiplier[1]
+    },formula,multiplier)
+   formula[[adductsformula]]= formula[[adductsformula]]+multiplier[2] 
+  }else{
+   formula[[adductsformula]]= formula[[adductsformula]]+multiplier[2]
+  }
+  for (name in names(formula)){
+    if(formula[[name]]==0){ formula[[name]]=NULL}
+  }
+
+  paste0(names(formula),formula,collapse = "")
+  
 }
