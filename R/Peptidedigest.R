@@ -1792,9 +1792,7 @@ PMF_Cardinal_Datafilelist<-function(datafile,Peptide_Summary_searchlist,
   #mycol <- gradient.colors(100, start="white", end="blue")
   
   for (z in 1:length(datafile)){
-  if (Bypass_segmentation==F){
-  message("Segmentation in progress...")
-     #cl=autoStopCluster(makeCluster(6))
+    
   imdata <- Load_Cardinal_imaging(datafile[z],preprocessing = F,attach.only = T,resolution = 200,rotate = rotate[z],as="MSImageSet",BPPARAM = BPPARAM)
   name <-gsub(base::dirname(datafile[z]),"",datafile[z])
   folder<-base::dirname(datafile[z])
@@ -1804,7 +1802,13 @@ PMF_Cardinal_Datafilelist<-function(datafile,Peptide_Summary_searchlist,
   Peptide_Summary_file$Intensity<-0
   Peptide_Summary_file_regions<-NULL
   if (dir.exists(paste0(datafile[z] ," ID"))==FALSE){dir.create(paste0(datafile[z] ," ID"))}
-  setwd(paste0(datafile[z] ," ID"))
+  setwd(paste0(datafile[z] ," ID")) 
+    
+    
+  if (Bypass_segmentation==F){
+  message("Segmentation in progress...")
+     #cl=autoStopCluster(makeCluster(6))
+
   
   if (spatialKMeans){
     set.seed(1)
@@ -2086,6 +2090,7 @@ if(PMFsearch){
   
   } else{
     message("Segmentation is bypassed, will perform PMF search via existing spectra in ID folder...")
+    message(datafile[z])
     if(PMFsearch){   
       if (dir.exists(paste0(datafile[z] ," ID"))==FALSE){dir.create(paste0(datafile[z] ," ID"))}
       setwd(paste0(datafile[z] ," ID"))
@@ -2101,7 +2106,7 @@ if(PMFsearch){
       message(paste( "region",SPECTRUM_batch,sep=" ",collapse = "\n"))
       savename=paste(name,SPECTRUM_batch)
            #PMFsearch_para<-function(SPECTRUM_batch,x,imdata,name,ppm,cl,Peptide_Summary_file,Peptide_Summary_file_regions){
-          message(paste("PMF_analysis",name,"region",SPECTRUM_batch))
+          message(paste("PMF_analysis","region",SPECTRUM_batch))
           peaklist<-spectrum_file_table[spectrum_file_table$intensities!=0,]
           colnames(peaklist)<-c("m.z","intensities")
           mzrange=c(min(peaklist$m.z),max(peaklist$m.z))

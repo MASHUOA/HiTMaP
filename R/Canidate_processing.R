@@ -241,52 +241,54 @@ Protein_feature_list_fun1<-function(workdir=getwd(),
 
 vendiagram<-function(){
   library(stringr)
-  Protein_feature_summary_uniport <- read.csv("D:/Tumour test/test7/Summary folder/Protein_feature_summary.csv")
-  Protein_feature_summary_marine <- read.csv("D:/Tumour test/test9 new matrisome/Summary folder/Protein_feature_summary.csv")
-  Protein_feature_summary_nonmarine <- read.csv("D:/Tumour test/test9 new matrisome/Summary folder/Protein_feature_summary.csv")
-  
-  Protein_feature_summary_uniport <- read.csv("D:/Tumour test/test12 new non matrisome gnil/Summary folder/Protein_feature_summary.csv")
-  Protein_feature_summary_marine <- read.csv("D:/Tumour test/test11 new matrisome gnil/Summary folder/Protein_feature_summary.csv")
+  library(tcltk)
+  folder1<-tkchooseDirectory()
+  folder2<-tkchooseDirectory()
+  Protein_feature_summary_uniport <- read.csv(paste0(folder1,"/Summary folder/Protein_feature_summary.csv"))
+  Protein_feature_summary_marine <- read.csv(paste0(folder2,"/Summary folder/Protein_feature_summary.csv"))
   #Protein_feature_summary_nonmarine <- read.csv("D:/Tumour test/test9 new matrisome/Summary folder/Protein_feature_summary.csv")
   
-  max(Protein_feature_summary_uniport$Intensity)
-  max(Protein_feature_summary_marine$Intensity)
-  maxinte=max(Protein_feature_summary_marine$Intensity)
+  #Protein_feature_summary_uniport <- read.csv("D:/Tumour test/test12 new non matrisome gnil/Summary folder/Protein_feature_summary.csv")
+  #Protein_feature_summary_marine <- read.csv("D:/Tumour test/test11 new matrisome gnil/Summary folder/Protein_feature_summary.csv")
+  #Protein_feature_summary_nonmarine <- read.csv("D:/Tumour test/test9 new matrisome/Summary folder/Protein_feature_summary.csv")
+  
+  result<-list()
+  maxinte=min(max(Protein_feature_summary_marine$Intensity),max(Protein_feature_summary_uniport$Intensity))
   uniport_peptides0.05<-unique(Protein_feature_summary_uniport$Peptide[Protein_feature_summary_uniport$Intensity>=maxinte*0.05])
   matrisome_peptides0.05<-unique(Protein_feature_summary_marine$Peptide[Protein_feature_summary_marine$Intensity>=maxinte*0.05])
-  length(matrisome_peptides0.05)
-  length(uniport_peptides0.05)
-  sum(matrisome_peptides0.05 %in% uniport_peptides0.05)
+  result[["peptides0.05"]][1]<-length(matrisome_peptides0.05)
+  result[["peptides0.05"]][2]<-length(uniport_peptides0.05)
+  result[["peptides0.05"]][3]<-sum(matrisome_peptides0.05 %in% uniport_peptides0.05)
   
   uniport_peptides0.005<-unique(Protein_feature_summary_uniport$Peptide[Protein_feature_summary_uniport$Intensity>=maxinte*0.005])
   matrisome_peptides0.005<-unique(Protein_feature_summary_marine$Peptide[Protein_feature_summary_marine$Intensity>=maxinte*0.005])
-  length(matrisome_peptides0.005)
-  length(uniport_peptides0.005)
-  sum(matrisome_peptides0.005 %in% uniport_peptides0.005)
+  result[["peptides0.005"]][1]<-length(matrisome_peptides0.005)
+  result[["peptides0.005"]][2]<-length(uniport_peptides0.005)
+  result[["peptides0.005"]][3]<-sum(matrisome_peptides0.005 %in% uniport_peptides0.005)
   
   uniport_mz0.05<-unique(Protein_feature_summary_uniport$mz[Protein_feature_summary_uniport$Intensity>=maxinte*0.05])
   matrisome_mz0.05<-unique(Protein_feature_summary_marine$mz[Protein_feature_summary_marine$Intensity>=maxinte*0.05])
-  length(matrisome_mz0.05)
-  length(uniport_mz0.05)
-  sum(uniport_mz0.05 %in% matrisome_mz0.05)
+  result[["mz0.05"]][1]<-length(matrisome_mz0.05)
+  result[["mz0.05"]][2]<-length(uniport_mz0.05)
+  result[["mz0.05"]][3]<-sum(uniport_mz0.05 %in% matrisome_mz0.05)
   
   uniport_mz0.005<-unique(Protein_feature_summary_uniport$mz[Protein_feature_summary_uniport$Intensity>=maxinte*0.005])
   matrisome_mz0.005<-unique(Protein_feature_summary_marine$mz[Protein_feature_summary_marine$Intensity>=maxinte*0.005])
-  length(matrisome_mz0.005)
-  length(uniport_mz0.005)
-  sum(uniport_mz0.005 %in% matrisome_mz0.005)
+  result[["mz0.005"]][1]<-length(matrisome_mz0.005)
+  result[["mz0.005"]][2]<-length(uniport_mz0.005)
+  result[["mz0.005"]][3]<-sum(uniport_mz0.005 %in% matrisome_mz0.005)
   
   uniport_prot<-unique(Protein_feature_summary_uniport$Protein[Protein_feature_summary_uniport$Intensity>=maxinte*0.05])
   matrisome_prot<-unique(Protein_feature_summary_marine$Protein[Protein_feature_summary_marine$Intensity>=maxinte*0.05])
-  length(uniport_prot)
-  length(matrisome_prot)
+  
   
   uniport_prot_a=str_extract(uniport_prot,"\\|.{2,}\\|")
   matrisome_prot_a=str_extract(matrisome_prot,"\\|.{2,}\\|")
-  
-  sum(uniport_prot_a %in% matrisome_prot_a)
-  
-  protein_unique=unique(Protein_feature_list$mz)
+  result[["prot0.05"]][1]<-length(uniport_prot)
+  result[["prot0.05"]][2]<-length(matrisome_prot)
+  result[["prot0.05"]][3]<-sum(uniport_prot %in% matrisome_prot)
+  return(result)
+  #protein_unique=unique(Protein_feature_list$mz)
 }
 
 fastafile_utils<-function(){

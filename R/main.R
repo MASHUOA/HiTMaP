@@ -41,6 +41,7 @@
 #' @import spdep
 #' @import deldir
 #' @import ggplot2
+#' @import rcdk
 #' @importFrom stats na.omit runif
 #' @importFrom utils download.file modifyList packageVersion read.table tail
 #' @import S4Vectors
