@@ -1791,16 +1791,16 @@ PMF_Cardinal_Datafilelist<-function(datafile,Peptide_Summary_searchlist,
   #mycol <- colorRampPalette(c("black", "blue", "green", "yellow", "red","#FF00FF","white"))
   #mycol <- gradient.colors(100, start="white", end="blue")
   
+  #imdata <- readImzML(name, folder, attach.only=FALSE,as="MSImageSet",resolution=10, units="ppm")
+  Peptide_Summary_file<-Peptide_Summary_searchlist
+  Peptide_Summary_file$Intensity<-0
+  Peptide_Summary_file_regions<-NULL
   for (z in 1:length(datafile)){
     
   imdata <- Load_Cardinal_imaging(datafile[z],preprocessing = F,attach.only = T,resolution = 200,rotate = rotate[z],as="MSImageSet",BPPARAM = BPPARAM)
   name <-gsub(base::dirname(datafile[z]),"",datafile[z])
   folder<-base::dirname(datafile[z])
   coordata=imdata@pixelData@data
-  #imdata <- readImzML(name, folder, attach.only=FALSE,as="MSImageSet",resolution=10, units="ppm")
-  Peptide_Summary_file<-Peptide_Summary_searchlist
-  Peptide_Summary_file$Intensity<-0
-  Peptide_Summary_file_regions<-NULL
   if (dir.exists(paste0(datafile[z] ," ID"))==FALSE){dir.create(paste0(datafile[z] ," ID"))}
   setwd(paste0(datafile[z] ," ID")) 
     
