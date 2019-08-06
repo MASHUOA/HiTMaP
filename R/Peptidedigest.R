@@ -55,7 +55,7 @@ imaging_identification<-function(
                missedCleavages=0:1,
                Fastadatabase="murine_matrisome.fasta",
                adducts=c("M+H","M+NH4","M+Na"),
-               Decoy_search=T,
+               Decoy_search=F,
                Decoy_adducts=c("M+He","M+Ne","M+Ar","M+Kr","M+Xe","M+Rn","M+Cu","M+Co","M+Ag"),
                PMF_analysis=TRUE,
                Bypass_segmentation=F,
