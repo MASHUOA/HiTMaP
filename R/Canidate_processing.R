@@ -101,12 +101,20 @@ Protein_feature_list_fun<-function(workdir=getwd(),
                                    missedCleavages=0:1,
                                    adducts=c("M+H","M+NH4","M+Na"),
                                    BPPARAM=bpparam(),
-                                   Decoy_adducts=c("M+He","M+Li","M+Cu","M+Co","M+Ag","M+Ar")){
+                                   Decoy_adducts=c("M+He","M+Ne","M+Ar","M+Kr","M+Xe","M+Rn"),
+                                   Decoy_search=T){
   library(Biostrings)
   library(cleaver)
   library(protViz)
   library(rcdk)
   library(BiocParallel)
+  library(OrgMassSpecR)
+  library(rJava)
+  library(rcdklibs)
+  library(grid)
+  setwd(workdir)
+  
+  Decoy_adducts=Decoy_adducts[!(Decoy_adducts %in% adducts)]
   Decoy_adducts=Decoy_adducts[1:length(adducts)]
   list_of_protein_sequence<-readAAStringSet(database,
                                             format="fasta",
@@ -116,15 +124,24 @@ Protein_feature_list_fun<-function(workdir=getwd(),
                                             use.names=TRUE, 
                                             with.qualities=FALSE)    
  
+  if (length(list_of_protein_sequence)<2000){bpworkers(BPPARAM)=3}
   
-  
+  if (length(list_of_protein_sequence)<500){bpworkers(BPPARAM)=1}
   
   Index_of_protein_sequence<-fasta.index(database,
                                          nrec=-1L, 
                                          skip=0L)   
+  peplist<-list()
   
-  peplist<-cleave(as.character(list_of_protein_sequence),custom=Digestion_site, missedCleavages=missedCleavages)
+  for (i in 1:length(Digestion_site)){
+    
+    peplist_option<-cleave(as.character(list_of_protein_sequence),custom=Digestion_site[i], missedCleavages=missedCleavages)
+    
+    peplist<-c(peplist,peplist_option)
+    
+  }
   
+  #message(paste("Peptide list generated",length(peplist),"entries in total."))
   
   peplist<-peplist[duplicated(names(peplist))==FALSE]
   
@@ -136,6 +153,7 @@ Protein_feature_list_fun<-function(workdir=getwd(),
   
   #tempdf<-parLapply(cl=cl,  1: length(names(peplist)), Peptide_Summary_para,peplist)
   #bplapply()
+  message(paste("Peptide list generated",length(peplist),"entries in total."))
   tempdf<-bplapply( 1: length(names(peplist)), Peptide_Summary_para,peplist,BPPARAM = BPPARAM)
   tempdf <- do.call("rbind", tempdf)
   colnames(tempdf)<-c("Protein","Peptide")
@@ -145,102 +163,58 @@ Protein_feature_list_fun<-function(workdir=getwd(),
   tempdf1<-tempdf
   Protein_Summary<-NULL
   adductslist<-Build_adduct_list()
+  
+  message(paste("Generating peptide formula..."))
+  peptide_symbol=bplapply(tempdf$Peptide,ConvertPeptide,BPPARAM = BPPARAM)
+  message(paste("Generating peptide formula with adducts:",paste(adducts,collapse = " ")))
+  peptides_symbol_adducts=bplapply(adducts,convert_peptide_adduct_list,peptide_symbol,BPPARAM = BPPARAM,adductslist=adductslist)
+  
   for (i in 1:length(adducts)){
-    adductmass<-as.numeric(as.character(adductslist[adductslist$Name==adducts[i],"Mass"]))
-    multiplier<-as.numeric(as.character(adductslist[adductslist$Name==adducts[i],"Multi"]))
-    adductsformula<-c(as.character(adductslist[adductslist$Name==adducts[i],"Formula_add"]),
-    as.character(adductslist[adductslist$Name==adducts[i],"Formula_ded"]))
-    adductsformula=paste0(ifelse(adductsformula=="FALSE","",adductsformula),collapse = "")
-    
-    tempdf$mz<-as.numeric(parentIonMass(tempdf$Peptide)-1.007825+adductmass)
+    charge=as.numeric(as.character(adductslist$Charge[adductslist$Name==adducts[i]]))
+    #tempdf$formula[1:1000]<-as.character(peptides_symbol_adducts[[i]])
+    tempdf$formula<-peptides_symbol_adducts[[i]]
+    message(paste("Calculating peptide mz with adducts:",adducts[i]))
+    templist=bplapply(tempdf$formula,function(x,charge){
+      rcdk::get.formula(x,charge = charge)@mass
+      },charge,BPPARAM = BPPARAM)
+    if (charge==0){actingcharge=1} else {actingcharge=abs(charge)}
+    tempdf$mz<-as.numeric(unlist(templist))
+    tempdf$mz<-tempdf$mz/actingcharge
     tempdf$adduct<-adducts[i]
+    tempdf$isdecoy<-rep(0,nrow(tempdf))
     #tempdf$isdecoy<-rep(0,nrow(tempdf))
     #convert_peptide_adduct(tempdf$Peptide[2],adductsname = adducts[i],multiplier = c(multiplier,1),adductslist = adductslist)
     #tempdf$formula<-bplapply(tempdf$Peptide,convert_peptide_adduct,adductsformula = adducts[i],multiplier = c(multiplier,1),BPPARAM = BPPARAM)
     Protein_Summary<-rbind.data.frame(Protein_Summary,tempdf)
   }
   
-  Protein_Summary
+  if (length(Decoy_adducts)>0 && Decoy_search){
+    message(paste("Generating peptide formula with Decoy adducts:",paste(Decoy_adducts,collapse = " ")))
+  peptides_symbol_adducts=bplapply(Decoy_adducts,convert_peptide_adduct_list,peptide_symbol,BPPARAM = BPPARAM,adductslist=adductslist)
+  for (i in 1:length(Decoy_adducts)){
+    charge=as.numeric(as.character(adductslist$Charge[adductslist$Name==Decoy_adducts[i]]))
+    #tempdf$formula[1:1000]<-as.character(peptides_symbol_adducts[[i]])
+    tempdf$formula<-peptides_symbol_adducts[[i]]
+    message(paste("Calculating peptide mz with adducts:",Decoy_adducts[i]))
+    templist=bplapply(tempdf$formula,function(x,charge){
+      rcdk::get.formula(x,charge = charge)@mass
+    },charge,BPPARAM = BPPARAM)
+    tempdf$mz<-as.numeric(unlist(templist))
+    if (charge==0){actingcharge=1} else {actingcharge=abs(charge)}
+    tempdf$mz<-tempdf$mz/actingcharge
+    tempdf$adduct<-Decoy_adducts[i]
+    tempdf$isdecoy<-rep(1,nrow(tempdf))
+    #tempdf$isdecoy<-rep(0,nrow(tempdf))
+    #convert_peptide_adduct(tempdf$Peptide[2],adductsname = adducts[i],multiplier = c(multiplier,1),adductslist = adductslist)
+    #tempdf$formula<-bplapply(tempdf$Peptide,convert_peptide_adduct,adductsformula = adducts[i],multiplier = c(multiplier,1),BPPARAM = BPPARAM)
+    Protein_Summary<-rbind.data.frame(Protein_Summary,tempdf)
+  } 
+  }
+
+  
+  return(Protein_Summary)
 }
 
-Protein_feature_list_fun1<-function(workdir=getwd(),
-                                   database,
-                                   Digestion_site="[G]",
-                                   missedCleavages=0:1,
-                                   adducts=c("M+H","M+NH4","M+Na"),
-                                   BPPARAM=bpparam(),
-                                   Decoy_adducts=c("M+He","M+Li","M+Cu","M+Co","M+Ag","M+Ar")){
-  library(Biostrings)
-  library(cleaver)
-  library(protViz)
-  library(rcdk)
-  library(BiocParallel)
-  Decoy_adducts=Decoy_adducts[1:length(adducts)]
-  list_of_protein_sequence<-readAAStringSet(database,
-                                            format="fasta",
-                                            nrec=-1L, 
-                                            skip=0L, 
-                                            seek.first.rec=FALSE,
-                                            use.names=TRUE, 
-                                            with.qualities=FALSE)    
-  
-  
-  
-  
-  Index_of_protein_sequence<-fasta.index(database,
-                                         nrec=-1L, 
-                                         skip=0L)   
-  
-  peplist<-cleave(as.character(list_of_protein_sequence),custom=Digestion_site, missedCleavages=missedCleavages)
-  
-  
-  peplist<-peplist[duplicated(names(peplist))==FALSE]
-  
-  
-  
-  pimlist<-parentIonMasslist(peplist,Index_of_protein_sequence)
-  
-  peplist<-peplist[names(peplist) %in% names(pimlist) ==TRUE] 
-  
-  #tempdf<-parLapply(cl=cl,  1: length(names(peplist)), Peptide_Summary_para,peplist)
-  #bplapply()
-  tempdf<-bplapply( 1: length(names(peplist)), Peptide_Summary_para,peplist,BPPARAM = BPPARAM)
-  tempdf <- do.call("rbind", tempdf)
-  colnames(tempdf)<-c("Protein","Peptide")
-  tempdf<-as.data.frame(tempdf)
-  tempdf$Protein<-as.character(tempdf$Protein)
-  tempdf$Peptide<-as.character(tempdf$Peptide)
-  tempdf1<-tempdf
-  Protein_Summary<-NULL
-  adductslist<-Build_adduct_list()
-  for (i in 1:length(adducts)){
-    adductmass<-as.numeric(as.character(adductslist[adductslist$Name==adducts[i],"Mass"]))
-    multiplier<-as.numeric(as.character(adductslist[adductslist$Name==adducts[i],"Multi"]))
-    
-    adductsformula<-c(as.character(adductslist[adductslist$Name==adducts[i],"Formula_add"]),
-                      as.character(adductslist[adductslist$Name==adducts[i],"Formula_ded"]))
-    
-    adductsformula=paste0(ifelse(adductsformula=="FALSE","",adductsformula),collapse = "")
-    
-    tempdf$mz<-as.numeric(parentIonMass(tempdf$Peptide)-1.007825+adductmass)
-    tempdf$adduct<-adducts[i]
-    tempdf$isdecoy<-rep(0,nrow(tempdf))
-    #convert_peptide_adduct(tempdf$Peptide[2],adductsname = adducts[i],multiplier = c(multiplier,1),adductslist = adductslist)
-    message(paste("Building candidates list for adduct",adducts[i])) 
-    tempdf$formula<-bplapply(tempdf$Peptide,convert_peptide_adduct,adductsname = adducts[i],adductslist=adductslist,multiplier = c(multiplier,1),BPPARAM = BPPARAM)
-    Protein_Summary<-rbind.data.frame(Protein_Summary,tempdf)
-  }
-  tempdf<-tempdf1
-  for (i in 1:length(Decoy_adducts)){
-    tempdf<-tempdf1
-    adductmass<-as.numeric(as.character(adductslist[adductslist$Name==Decoy_adducts[i],"Mass"]))
-    tempdf$mz<-as.numeric(parentIonMass(tempdf$Peptide)-1.007825+adductmass)
-    tempdf$isdecoy<-rep(1,nrow(tempdf))
-    tempdf$adduct<-Decoy_adducts[i]
-    Protein_Summary<-rbind.data.frame(Protein_Summary,tempdf)
-  }
-  Protein_Summary
-}
 
 vendiagram<-function(){
   library(stringr)
@@ -364,7 +338,123 @@ fastafile_utils<-function(){
 convert_peptide_adduct<-function(peptide,adductsname,multiplier=c(1,1),adductslist=Build_adduct_list()){
   library(rcdk)
   library(OrgMassSpecR)
-  
+  ConvertPeptide<-function (sequence, output = "elements") {
+    peptideVector <- strsplit(sequence, split = "")[[1]]
+    if (output == "elements") {
+      FindElement <- function(residue) {
+        element<-c(C = 0, H = 0, N = 0, O = 0, S = 0)
+        switch(residue,
+               A={element <- c(C = 3, H = 5, N = 1, O = 1, S = 0)},
+               R={element <- c(C = 6, H = 12, N = 4, O = 1, S = 0)},
+               N={element <- c(C = 4, H = 6, N = 2, O = 2, S = 0)},
+               D={element <- c(C = 4, H = 5, N = 1, O = 3, S = 0)},
+               E={element <- c(C = 5, H = 7, N = 1, O = 3, S = 0)},
+               Q={element <- c(C = 5, H = 8, N = 2, O = 2, S = 0)},
+               G={element <- c(C = 2, H = 3, N = 1, O = 1, S = 0)},
+               H={element <- c(C = 6, H = 7, N = 3, O = 1, S = 0)},
+               I={element <- c(C = 6, H = 11, N = 1, O = 1, S = 0)},
+               L={element <- c(C = 6, H = 11, N = 1, O = 1, S = 0)},
+               K={element <- c(C = 6, H = 12, N = 2, O = 1, S = 0)},
+               M={element <- c(C = 5, H = 9, N = 1, O = 1, S = 1)},
+               F={element <- c(C = 9, H = 9, N = 1, O = 1, S = 0)},
+               P={element <- c(C = 5, H = 7, N = 1, O = 1, S = 0)},
+               S={element <- c(C = 3, H = 5, N = 1, O = 2, S = 0)},
+               T={element <- c(C = 4, H = 7, N = 1, O = 2, S = 0)},
+               W={element <- c(C = 11, H = 10, N = 2, O = 1, S = 0)},
+               Y={element <- c(C = 9, H = 9, N = 1, O = 2, S = 0)},
+               V={element <- c(C = 5, H = 9, N = 1, O = 1, S = 0)},
+               C={element <- c(C = 3, H = 5, N = 1, O = 1, S = 1)})
+        
+        return(element)
+      }
+      resultsVector <- c(C = 0, H = 0, N = 0, O = 0, S = 0)
+      for (i in 1:length(peptideVector)) {
+        resultsVector <- FindElement(peptideVector[i]) + 
+          resultsVector
+      }
+      resultsVector <- resultsVector + c(C = 0, H = 2, N = 0, 
+                                         O = 1, S = 0)
+      return(as.list(resultsVector))
+    }
+    if (output == "3letter") {
+      FindCode <- function(residue) {
+        if (residue == "A") 
+          let <- "Ala"
+        if (residue == "R") 
+          let <- "Arg"
+        if (residue == "N") 
+          let <- "Asn"
+        if (residue == "D") 
+          let <- "Asp"
+        if (residue == "C") 
+          let <- "Cys"
+        if (residue == "E") 
+          let <- "Glu"
+        if (residue == "Q") 
+          let <- "Gln"
+        if (residue == "G") 
+          let <- "Gly"
+        if (residue == "H") 
+          let <- "His"
+        if (residue == "I") 
+          let <- "Ile"
+        if (residue == "L") 
+          let <- "Leu"
+        if (residue == "K") 
+          let <- "Lys"
+        if (residue == "M") 
+          let <- "Met"
+        if (residue == "F") 
+          let <- "Phe"
+        if (residue == "P") 
+          let <- "Pro"
+        if (residue == "S") 
+          let <- "Ser"
+        if (residue == "T") 
+          let <- "Thr"
+        if (residue == "W") 
+          let <- "Trp"
+        if (residue == "Y") 
+          let <- "Tyr"
+        if (residue == "V") 
+          let <- "Val"
+        return(let)
+      }
+      codes <- sapply(peptideVector, FindCode)
+      return(paste(codes, collapse = ""))
+    }
+  }
+  merge_atoms<-function(atoms,addelements,check_merge=T,mode=c("add","ded"),multiplier=c(1,1)){
+    
+    atomsorg=atoms
+    
+    if (missing(mode)) mode="add"
+    
+    if (mode=="ded"){
+      for (x in names(addelements)){
+        addelements[[x]]=-addelements[[x]]
+      }
+    }
+    
+    for (x in names(addelements)){
+      if (is.null(atoms[[x]])){
+        atoms[[x]]=addelements[[x]]
+      }else {
+        atoms[[x]]=(atoms[[x]]*multiplier[1]) + (addelements[[x]]*multiplier[2])
+      } 
+    }
+    
+    if (check_merge==F){
+      for (x in names(atoms)){
+        if (atoms[[x]]<0){
+          stop("add atoms failed due to incorrect number of",x)
+        } 
+      }
+      
+    }
+    return(as.list(atoms))
+    
+  }
   get_atoms<-function(Symbol){
     #form = "C5H11BrO" 
     if (Symbol!=""){
@@ -372,9 +462,9 @@ convert_peptide_adduct<-function(peptide,adductsname,multiplier=c(1,1),adductsli
       seperated = sapply(1:(length(ups)-1), function(x) substr(Symbol, ups[x], ups[x+1] - 1)) 
       elements =  gsub("[[:digit:]]", "", seperated) 
       nums = gsub("[[:alpha:]]", "", seperated) 
-      ans = data.frame(element = as.character(elements), num = as.numeric(ifelse(nums == "", 1, nums)), stringsAsFactors = FALSE)
+      ans = data.frame(elements = as.character(elements), num = as.numeric(ifelse(nums == "", 1, nums)), stringsAsFactors = FALSE)
       list<-as.list(ans$num)
-      names(list)=ans$element
+      names(list)=ans$elements
       return(list)
     }else{return(NULL)}
   }
@@ -393,7 +483,7 @@ convert_peptide_adduct<-function(peptide,adductsname,multiplier=c(1,1),adductsli
   
   adductsformula<-merge_atoms(adductsformula_add,adductsformula_ded,check_merge = F,mode = "ded")
   
-  formula<-ConvertPeptide(peptide,IAA = F)
+  formula<-ConvertPeptide(peptide)
   
   formula_with_adducts<-merge_atoms(formula,adductsformula,check_merge = T,mode = "add", multiplier = multiplier)
   
@@ -401,10 +491,173 @@ convert_peptide_adduct<-function(peptide,adductsname,multiplier=c(1,1),adductsli
     if(formula_with_adducts[[name]]==0){ formula_with_adducts[[name]]=NULL}
   }
 
-  return(paste0(names(formula),formula,collapse = ""))
+  return(paste0(names(formula_with_adducts),formula_with_adducts,collapse = ""))
   
 }
 
+convert_peptide_adduct_list<-function(adductsname,peptide_symbol,multiplier=c(1,1),adductslist=Build_adduct_list()){
+  library(rcdk)
+  library(OrgMassSpecR)
+  ConvertPeptide<-function (sequence, output = "elements") {
+    peptideVector <- strsplit(sequence, split = "")[[1]]
+    if (output == "elements") {
+      FindElement <- function(residue) {
+        element<-c(C = 0, H = 0, N = 0, O = 0, S = 0)
+        switch(residue,
+               A={element <- c(C = 3, H = 5, N = 1, O = 1, S = 0)},
+               R={element <- c(C = 6, H = 12, N = 4, O = 1, S = 0)},
+               N={element <- c(C = 4, H = 6, N = 2, O = 2, S = 0)},
+               D={element <- c(C = 4, H = 5, N = 1, O = 3, S = 0)},
+               E={element <- c(C = 5, H = 7, N = 1, O = 3, S = 0)},
+               Q={element <- c(C = 5, H = 8, N = 2, O = 2, S = 0)},
+               G={element <- c(C = 2, H = 3, N = 1, O = 1, S = 0)},
+               H={element <- c(C = 6, H = 7, N = 3, O = 1, S = 0)},
+               I={element <- c(C = 6, H = 11, N = 1, O = 1, S = 0)},
+               L={element <- c(C = 6, H = 11, N = 1, O = 1, S = 0)},
+               K={element <- c(C = 6, H = 12, N = 2, O = 1, S = 0)},
+               M={element <- c(C = 5, H = 9, N = 1, O = 1, S = 1)},
+               F={element <- c(C = 9, H = 9, N = 1, O = 1, S = 0)},
+               P={element <- c(C = 5, H = 7, N = 1, O = 1, S = 0)},
+               S={element <- c(C = 3, H = 5, N = 1, O = 2, S = 0)},
+               T={element <- c(C = 4, H = 7, N = 1, O = 2, S = 0)},
+               W={element <- c(C = 11, H = 10, N = 2, O = 1, S = 0)},
+               Y={element <- c(C = 9, H = 9, N = 1, O = 2, S = 0)},
+               V={element <- c(C = 5, H = 9, N = 1, O = 1, S = 0)},
+               C={element <- c(C = 3, H = 5, N = 1, O = 1, S = 1)})
+        
+        return(element)
+      }
+      resultsVector <- c(C = 0, H = 0, N = 0, O = 0, S = 0)
+      for (i in 1:length(peptideVector)) {
+        resultsVector <- FindElement(peptideVector[i]) + 
+          resultsVector
+      }
+      resultsVector <- resultsVector + c(C = 0, H = 2, N = 0, 
+                                         O = 1, S = 0)
+      return(as.list(resultsVector))
+    }
+    if (output == "3letter") {
+      FindCode <- function(residue) {
+        if (residue == "A") 
+          let <- "Ala"
+        if (residue == "R") 
+          let <- "Arg"
+        if (residue == "N") 
+          let <- "Asn"
+        if (residue == "D") 
+          let <- "Asp"
+        if (residue == "C") 
+          let <- "Cys"
+        if (residue == "E") 
+          let <- "Glu"
+        if (residue == "Q") 
+          let <- "Gln"
+        if (residue == "G") 
+          let <- "Gly"
+        if (residue == "H") 
+          let <- "His"
+        if (residue == "I") 
+          let <- "Ile"
+        if (residue == "L") 
+          let <- "Leu"
+        if (residue == "K") 
+          let <- "Lys"
+        if (residue == "M") 
+          let <- "Met"
+        if (residue == "F") 
+          let <- "Phe"
+        if (residue == "P") 
+          let <- "Pro"
+        if (residue == "S") 
+          let <- "Ser"
+        if (residue == "T") 
+          let <- "Thr"
+        if (residue == "W") 
+          let <- "Trp"
+        if (residue == "Y") 
+          let <- "Tyr"
+        if (residue == "V") 
+          let <- "Val"
+        return(let)
+      }
+      codes <- sapply(peptideVector, FindCode)
+      return(paste(codes, collapse = ""))
+    }
+  }
+  merge_atoms<-function(atoms,addelements,check_merge=T,mode=c("add","ded"),multiplier=c(1,1)){
+    
+    atomsorg=atoms
+    
+    if (missing(mode)) mode="add"
+    
+    if (mode=="ded"){
+      for (x in names(addelements)){
+        addelements[[x]]=-addelements[[x]]
+      }
+    }
+    
+    for (x in names(addelements)){
+      if (is.null(atoms[[x]])){
+        atoms[[x]]=addelements[[x]]
+      }else {
+        atoms[[x]]=(atoms[[x]]*multiplier[1]) + (addelements[[x]]*multiplier[2])
+      } 
+    }
+    
+    if (check_merge==F){
+      for (x in names(atoms)){
+        if (atoms[[x]]<0){
+          stop("add atoms failed due to incorrect number of",x)
+        } 
+      }
+      
+    }
+    return(as.list(atoms))
+    
+  }
+  
+  get_atoms<-function(Symbol){
+    #form = "C5H11BrO" 
+    if (Symbol!=""){
+      ups = c(gregexpr("[[:upper:]]", Symbol)[[1]], nchar(Symbol) + 1) 
+      seperated = sapply(1:(length(ups)-1), function(x) substr(Symbol, ups[x], ups[x+1] - 1)) 
+      elements =  gsub("[[:digit:]]", "", seperated) 
+      nums = gsub("[[:alpha:]]", "", seperated) 
+      ans = data.frame(elements = as.character(elements), num = as.numeric(ifelse(nums == "", 1, nums)), stringsAsFactors = FALSE)
+      list<-as.list(ans$num)
+      names(list)=ans$elements
+      return(list)
+    }else{return(NULL)}
+  }
+   if (missing(multiplier)){
+     multiplier[1]= as.numeric(as.character(adductslist[adductslist$Name==adductsname,"Mult"]))
+     multiplier[2]=1
+   }
+  adductsformula_add= as.character(adductslist[adductslist$Name==adductsname,"Formula_add"])
+  adductsformula_ded= as.character(adductslist[adductslist$Name==adductsname,"Formula_ded"])
+  
+  null_if_false<-function(x){if (x==FALSE){""} else{get.formula(x)@string}}
+  
+  adductsformula_add<-null_if_false(adductsformula_add)
+  adductsformula_ded<-null_if_false(adductsformula_ded)
+  
+  adductsformula_add<-get_atoms(adductsformula_add)
+  adductsformula_ded<-get_atoms(adductsformula_ded)
+  
+  adductsformula<-merge_atoms(adductsformula_add,adductsformula_ded,check_merge = F,mode = "ded")
+  peptide_formula<-as.character()
+  #formula<-ConvertPeptide(peptide)
+  for (formula in 1:length(peptide_symbol)){
+   formula_with_adducts<-merge_atoms(peptide_symbol[[formula]],adductsformula,check_merge = T,mode = "add", multiplier = multiplier) 
+   for (name in names(formula_with_adducts)){
+    if(formula_with_adducts[[name]]==0){ formula_with_adducts[[name]]=NULL}
+   }
+   peptide_formula[[formula]]=(paste0(names(formula_with_adducts),formula_with_adducts,collapse = ""))
+  }
+  
+  return(peptide_formula)
+  
+}
 #' get_atoms
 #'
 #' This is a function that prepare the candiate list for maldi imaging data qualitative or quantitative analysis.
@@ -483,4 +736,94 @@ merge_atoms<-function(atoms,addelements,check_merge=T,mode=c("add","ded"),multip
   }
   return(as.list(atoms))
   
+}
+
+
+
+ConvertPeptide<-function (sequence, output = "elements") 
+{
+  peptideVector <- strsplit(sequence, split = "")[[1]]
+  if (output == "elements") {
+    FindElement <- function(residue) {
+      element<-c(C = 0, H = 0, N = 0, O = 0, S = 0)
+      switch(residue,
+             A={element <- c(C = 3, H = 5, N = 1, O = 1, S = 0)},
+             R={element <- c(C = 6, H = 12, N = 4, O = 1, S = 0)},
+             N={element <- c(C = 4, H = 6, N = 2, O = 2, S = 0)},
+             D={element <- c(C = 4, H = 5, N = 1, O = 3, S = 0)},
+             E={element <- c(C = 5, H = 7, N = 1, O = 3, S = 0)},
+             Q={element <- c(C = 5, H = 8, N = 2, O = 2, S = 0)},
+             G={element <- c(C = 2, H = 3, N = 1, O = 1, S = 0)},
+             H={element <- c(C = 6, H = 7, N = 3, O = 1, S = 0)},
+             I={element <- c(C = 6, H = 11, N = 1, O = 1, S = 0)},
+             L={element <- c(C = 6, H = 11, N = 1, O = 1, S = 0)},
+             K={element <- c(C = 6, H = 12, N = 2, O = 1, S = 0)},
+             M={element <- c(C = 5, H = 9, N = 1, O = 1, S = 1)},
+             F={element <- c(C = 9, H = 9, N = 1, O = 1, S = 0)},
+             P={element <- c(C = 5, H = 7, N = 1, O = 1, S = 0)},
+             S={element <- c(C = 3, H = 5, N = 1, O = 2, S = 0)},
+             T={element <- c(C = 4, H = 7, N = 1, O = 2, S = 0)},
+             W={element <- c(C = 11, H = 10, N = 2, O = 1, S = 0)},
+             Y={element <- c(C = 9, H = 9, N = 1, O = 2, S = 0)},
+             V={element <- c(C = 5, H = 9, N = 1, O = 1, S = 0)},
+             C={element <- c(C = 3, H = 5, N = 1, O = 1, S = 1)})
+
+      return(element)
+    }
+    resultsVector <- c(C = 0, H = 0, N = 0, O = 0, S = 0)
+    for (i in 1:length(peptideVector)) {
+      resultsVector <- FindElement(peptideVector[i]) + 
+        resultsVector
+    }
+    resultsVector <- resultsVector + c(C = 0, H = 2, N = 0, 
+                                       O = 1, S = 0)
+    return(as.list(resultsVector))
+  }
+  if (output == "3letter") {
+    FindCode <- function(residue) {
+      if (residue == "A") 
+        let <- "Ala"
+      if (residue == "R") 
+        let <- "Arg"
+      if (residue == "N") 
+        let <- "Asn"
+      if (residue == "D") 
+        let <- "Asp"
+      if (residue == "C") 
+        let <- "Cys"
+      if (residue == "E") 
+        let <- "Glu"
+      if (residue == "Q") 
+        let <- "Gln"
+      if (residue == "G") 
+        let <- "Gly"
+      if (residue == "H") 
+        let <- "His"
+      if (residue == "I") 
+        let <- "Ile"
+      if (residue == "L") 
+        let <- "Leu"
+      if (residue == "K") 
+        let <- "Lys"
+      if (residue == "M") 
+        let <- "Met"
+      if (residue == "F") 
+        let <- "Phe"
+      if (residue == "P") 
+        let <- "Pro"
+      if (residue == "S") 
+        let <- "Ser"
+      if (residue == "T") 
+        let <- "Thr"
+      if (residue == "W") 
+        let <- "Trp"
+      if (residue == "Y") 
+        let <- "Tyr"
+      if (residue == "V") 
+        let <- "Val"
+      return(let)
+    }
+    codes <- sapply(peptideVector, FindCode)
+    return(paste(codes, collapse = ""))
+  }
 }
