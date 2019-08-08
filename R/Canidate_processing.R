@@ -124,9 +124,9 @@ Protein_feature_list_fun<-function(workdir=getwd(),
                                             use.names=TRUE, 
                                             with.qualities=FALSE)    
  
-  if (length(list_of_protein_sequence)<2000){bpworkers(BPPARAM)=3}
+  #if (length(list_of_protein_sequence)<2000){bpworkers(BPPARAM)=3}
   
-  if (length(list_of_protein_sequence)<500){bpworkers(BPPARAM)=1}
+  #if (length(list_of_protein_sequence)<500){bpworkers(BPPARAM)=1}
   
   Index_of_protein_sequence<-fasta.index(database,
                                          nrec=-1L, 

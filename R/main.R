@@ -43,6 +43,11 @@
 #' @import ggplot2
 #' @import rcdk
 #' @import magick
+#' @import OrgMassSpecR
+#' @import enviPat
+#' @import grid
+#' @import ggplot2
+#' @import zoo
 #' @importFrom stats na.omit runif
 #' @importFrom utils download.file modifyList packageVersion read.table tail
 #' @import S4Vectors

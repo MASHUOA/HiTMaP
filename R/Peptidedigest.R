@@ -58,7 +58,7 @@ imaging_identification<-function(
                Decoy_search=F,
                Decoy_adducts=c("M+He","M+Ne","M+Ar","M+Kr","M+Xe","M+Rn","M+Cu","M+Co","M+Ag"),
                PMF_analysis=TRUE,
-               Bypass_segmentation=F,
+               Bypass_generate_spectrum=F,
                Protein_feature_summary=TRUE,
                plot_cluster_image=TRUE,
                Peptide_feature_summary=TRUE,
@@ -72,6 +72,7 @@ imaging_identification<-function(
                rotateimg=NULL,
                Region_feature_summary=T,
                Spectrum_validate=T,
+               output_candidatelist=T,
                ...
                ){
   library("pacman")
@@ -101,7 +102,14 @@ imaging_identification<-function(
                                                  database=Fastadatabase,
                                                  Digestion_site=Digestion_site,
                                                  missedCleavages=missedCleavages,
-                                                 adducts=adducts,BPPARAM = BPPARAM,Decoy_adducts=Decoy_adducts,Decoy_search=Decoy_search)
+                                                 adducts=adducts,
+                                                 BPPARAM = BPPARAM,
+                                                 Decoy_adducts=Decoy_adducts,
+                                                 Decoy_search=Decoy_search
+                                                 )
+  if(output_candidatelist){
+    if (dir.exists(paste(workdir,"/Summary folder",sep=""))==FALSE){dir.create(paste(workdir,"/Summary folder",sep=""))}
+    write.csv(Protein_feature_list,paste(workdir,"/Summary folder/candidatelist.csv",sep=""),row.names = F)}
   
   if (!is.null(rotateimg)){rotateimg=read.csv(rotateimg,stringsAsFactors = F)}
   
@@ -119,7 +127,7 @@ imaging_identification<-function(
                                                   Virtual_segmentation=Virtual_segmentation,
                                                   Virtual_segmentation_rankfile = Virtual_segmentation_rankfile,
                                                   BPPARAM = BPPARAM,
-                                                  Bypass_segmentation=Bypass_segmentation)
+                                                  Bypass_generate_spectrum=Bypass_generate_spectrum)
   
   }
   #Summarize the peptide list
@@ -1650,6 +1658,7 @@ PMF_analysis_fun<-function(Peptide_Summary_searchlist,peaklist,ppm,BPPARAM =bppa
   if (missing(mzrange)){mzrange=c(min(peaklist$m.z),max(peaklist$m.z))}
   #Peptide_Summary_searchlist$Intensity<-parLapply(cl=cl,Peptide_Summary_searchlist$mz,PMFsum_para,peaklist,ppm)
   #Peptide_Summary_searchlist=Peptide_Summary_searchlist[`&`(Peptide_Summary_searchlist$mz>=mzrange[1],Peptide_Summary_searchlist$mz<=mzrange[2]),]
+  Peptide_Summary_searchlist=as.data.frame(Peptide_Summary_searchlist)
   Peptide_Summary_searchlist[,"Intensity"]<-0
   message("PMF_analysis_fun")
   Peptide_Summary_searchlist$Intensity<-bplapply(Peptide_Summary_searchlist$mz,PMFsum_para,peaklist,ppm,BPPARAM = BPPARAM)
@@ -1769,7 +1778,7 @@ PMF_Cardinal_Datafilelist<-function(datafile,Peptide_Summary_searchlist,
                                     rotate=NULL,
                                     matching_validation=T,
                                     BPPARAM=bpparam(),
-                                    Bypass_segmentation=F,
+                                    Bypass_generate_spectrum=F,
                                     scoring=T,
                                     ...){
   library(data.table)
@@ -1794,11 +1803,11 @@ PMF_Cardinal_Datafilelist<-function(datafile,Peptide_Summary_searchlist,
   #mycol <- gradient.colors(100, start="white", end="blue")
   
   #imdata <- readImzML(name, folder, attach.only=FALSE,as="MSImageSet",resolution=10, units="ppm")
-  Peptide_Summary_file<-Peptide_Summary_searchlist
-  Peptide_Summary_file$Intensity<-0
-  Peptide_Summary_file_regions<-NULL
+  Peptide_Summary_file<-Peptide_Summary_searchlist  
   for (z in 1:length(datafile)){
-    
+
+  Peptide_Summary_file$Intensity<-rep(0,nrow(Peptide_Summary_file))
+  
   imdata <- Load_Cardinal_imaging(datafile[z],preprocessing = F,attach.only = T,resolution = 200,rotate = rotate[z],as="MSImageSet",BPPARAM = BPPARAM)
   name <-gsub(base::dirname(datafile[z]),"",datafile[z])
   folder<-base::dirname(datafile[z])
@@ -1807,7 +1816,7 @@ PMF_Cardinal_Datafilelist<-function(datafile,Peptide_Summary_searchlist,
   setwd(paste0(datafile[z] ," ID")) 
     
     
-  if (Bypass_segmentation==F){
+  if (Bypass_generate_spectrum==F){
   message("Segmentation in progress...")
      #cl=autoStopCluster(makeCluster(6))
 
@@ -1856,6 +1865,8 @@ PMF_Cardinal_Datafilelist<-function(datafile,Peptide_Summary_searchlist,
     listname=as.character(regions[i])
   x[[listname]]<-y[y[, 1] == regions[i], "pixel"]
   }
+  
+  
   
   
   }else if(Virtual_segmentation){
@@ -2019,10 +2030,11 @@ PMF_Cardinal_Datafilelist<-function(datafile,Peptide_Summary_searchlist,
   dev.off()
   
   
+  
   }else{
 
   x=1:length(pixels(imdata))
-  x=split(x, sort(x%%SPECTRUM_for_average)) 
+  x=split(x, sort(x%%1)) 
     
     
   } 
@@ -2035,42 +2047,58 @@ if(PMFsearch){
     message(paste("PMFsearch",name))
     message(paste( "region",names(x),sep=" ",collapse = "\n"))
     for (SPECTRUM_batch in names(x)){
-      
-
+      if (dir.exists(paste0(datafile[z] ," ID/",SPECTRUM_batch,"/"))==FALSE){dir.create(paste0(datafile[z] ," ID/",SPECTRUM_batch,"/"))}
     #PMFsearch_para<-function(SPECTRUM_batch,x,imdata,name,ppm,cl,Peptide_Summary_file,Peptide_Summary_file_regions){
     imdata_ed <- batchProcess(imdata, normalize=FALSE, smoothSignal=FALSE, reduceBaseline=FALSE,
                            peakPick=list(SNR=10), peakAlign=FALSE, pixel=pixels(imdata)[unlist(x[SPECTRUM_batch])])
-    
     if(class(imdata_ed)=="MSImageSet"){
-      spectrum_file_table=imdata_ed@featureData@data
+    spectrum_file_table=imdata_ed@featureData@data
     savename=paste(name,SPECTRUM_batch)
     message(paste("PMF_analysis",name,"region",SPECTRUM_batch))
     peaklist<-imdata_ed@featureData@data
-    
     colnames(peaklist)<-c("m.z","intensities")
-    peaklist<-peaklist[peaklist$intensities!=0,]
-    peaklist=peaklist[peaklist$intensities>=(max(peaklist$intensities)*threshold),]
-    mzrange=c(min(peaklist$m.z),max(peaklist$m.z))
-    Peptide_Summary_searchlist_mz=NULL
-    uniquemz=unique(Peptide_Summary_searchlist[,"mz"])
-    Peptide_Summary_searchlist_mz$mz=uniquemz[`&`(uniquemz>mzrange[1],uniquemz<mzrange[2])]
-    Peptide_Summary_searchlist_mz$Intensity=rep(0,length(Peptide_Summary_searchlist_mz$mz))
-    #Peptide_Summary_searchlist<-PMF_analysis_fun(Peptide_Summary_searchlist=Peptide_Summary_searchlist,peaklist=peaklist,ppm=ppm,BPPARAM=BPPARAM)
-    Peptide_Summary_searchlist_mz<-PMF_analysis_fun(Peptide_Summary_searchlist=Peptide_Summary_searchlist_mz,peaklist=peaklist,ppm=ppm,BPPARAM=BPPARAM)
-    Peptide_Summary_searchlist_mz=as.data.frame(Peptide_Summary_searchlist_mz,stringsAsFactors = F)
-    #Peptide_feature_list<-Peptide_Summary_searchlist[Peptide_Summary_searchlist$Intensity>0,]
-    #Peptide_plot_list<-Peptide_feature_list[Peptide_feature_list$Intensity>=max(Peptide_feature_list$Intensity)*threshold,]
-    mz_feature_list<-Peptide_Summary_searchlist_mz[Peptide_Summary_searchlist_mz$Intensity>0,]
-    mz_plot_list<-mz_feature_list
-    Peptide_Summary_file$Intensity<-Peptide_Summary_file$Intensity+unlist(bplapply(Peptide_Summary_file$mz,intensity_sum_para,mz_feature_list,BPPARAM = BPPARAM))
-    Peptide_Summary_searchlist$Intensity<-unlist(bplapply(Peptide_Summary_searchlist$mz,intensity_sum_para,mz_feature_list,BPPARAM = BPPARAM))
-    Peptide_plot_list<-Peptide_Summary_searchlist
+    
+    mz_feature_list<-Do_PMF_search(peaklist,Peptide_Summary_searchlist)
+    
+    message("Iterating peptide information...")
     if(is.null(Peptide_plot_list$moleculeNames)){Peptide_plot_list$moleculeNames=Peptide_plot_list$Peptide}
+    Peptide_Summary_searchlist$Intensity<-unlist(bplapply(Peptide_Summary_searchlist$mz,intensity_sum_para,mz_feature_list,BPPARAM = BPPARAM))
+    Peptide_Summary_file$Intensity<-Peptide_Summary_file$Intensity+Peptide_Summary_searchlist$Intensity
+    Peptide_plot_list<-Peptide_Summary_searchlist[Peptide_Summary_searchlist$Intensity>0,]
+    Peptide_plot_list$Region=SPECTRUM_batch
+    write.csv(Peptide_plot_list,paste0(datafile[z] ," ID/",SPECTRUM_batch,"/Peptide_1st_ID.csv"),row.names = F)
+    
+    Peptide_plot_list<-Peptide_Summary_searchlist[Peptide_Summary_searchlist$Intensity>300,]
+    #Peptide_plot_list<-Peptide_Summary_searchlist[Peptide_Summary_searchlist$Intensity>=(max(Peptide_Summary_searchlist$Intensity)*threshold),]
+    
+    
+    
     #Peptide_plot_list$moleculeNames<-Peptide_plot_list$Peptide
-    Plot_PMF_all(Peptide_plot_list,peaklist=imdata_ed@featureData@data,threshold=threshold,savename)
+    if (scoring){
+      library(enviPat)
+      library(ggplot2)
+      data(isotopes)
+      message("Scoring peptide...")
+      head(Peptide_plot_list$formula)
+      head(peaklist)
+      head(isotopes)
+      BPPARAM
+      Peptide_plot_list_Score=bplapply(Peptide_plot_list$formula,SCORE_PMF,peaklist=peaklist,isotopes=isotopes,charge=1,ppm=ppm,BPPARAM = BPPARAM)
+      #Peptide_plot_list_Score=bplapply(Peptide_plot_list$formula,SCORE_PMF,peaklist,BPPARAM = BPPARAM)
+      Peptide_plot_list_Score=unlist(Peptide_plot_list_Score)
+      #Peptide_plot_list_Score_frame=do.call(rbind,Peptide_plot_list_Score)
+      Peptide_plot_list$Score=Peptide_plot_list_Score
+      FDR_cutoff= FDR_cutoff_plot(Peptide_plot_list,FDR_cutoff=0.1,FDR_strip=0.002,plot_fdr=T,outputdir=paste0(datafile[z] ," ID/",SPECTRUM_batch))
+      Peptide_plot_list=Peptide_plot_list[`&`(Peptide_plot_list$Score>=FDR_cutoff,!is.na(Peptide_plot_list$Intensity)),]
+      
+      write.csv(Peptide_plot_list,paste0(datafile[z] ," ID/",SPECTRUM_batch,"/Peptide_2nd_ID.csv"),row.names = F)
+      plot_matching_score(Peptide_plot_list,peaklist,charge=1,ppm,outputdir=paste0(datafile[z] ," ID/",SPECTRUM_batch,"/ppm"))
+      
+    } 
+    Plot_PMF_all(Peptide_plot_list,peaklist=peaklist,threshold=threshold,savename)
     #uniques_intensity<-unique(Peptide_plot_list[,c("mz","Intensity")])
     #uniques_intensity<-uniques_intensity[uniques_intensity$Intensity>0,]
-    Peptide_plot_list$Region=SPECTRUM_batch
+
     write.csv(Peptide_plot_list,paste("Peptide_segment_PMF_RESULT",SPECTRUM_batch,".csv"),row.names = F)
     write.csv(peaklist,paste("Spectrum",SPECTRUM_batch,".csv"),row.names = F)
     #Peptide_Summary_file$Intensity<-Peptide_Summary_file$Intensity+unlist(parLapply(cl=cl,Peptide_Summary_file$mz,intensity_sum_para,uniques_intensity))
@@ -2092,7 +2120,7 @@ if(PMFsearch){
   }
   
   } else{
-    message("Segmentation is bypassed, will perform PMF search via existing spectra in ID folder...")
+    message("Spectrum generation is bypassed, will perform PMF search via existing spectra in ID folder...")
     message(datafile[z])
     if(PMFsearch){   
       if (dir.exists(paste0(datafile[z] ," ID"))==FALSE){dir.create(paste0(datafile[z] ," ID"))}
@@ -2100,60 +2128,49 @@ if(PMFsearch){
       match_pattern <- "Spectrum.{2,}csv"
       name <-gsub(base::dirname(datafile[z]),"",datafile[z])
       folder<-base::dirname(datafile[z])
+      message(paste("Found spectrum file:",dir()[str_detect(dir(), match_pattern)]),collapse="\n")
+      
       for (SPECTRUM_batch in dir()[str_detect(dir(), match_pattern)]){
-        spectrum_file_table=fread(SPECTRUM_batch)
+        peaklist=fread(SPECTRUM_batch)
         SPECTRUM_batch=gsub("^Spectrum.","",SPECTRUM_batch)
         SPECTRUM_batch=gsub(".csv$","",SPECTRUM_batch)
         SPECTRUM_batch=gsub(" ","",SPECTRUM_batch)
       message(paste("PMFsearch"))
       message(paste( "region",SPECTRUM_batch,sep=" ",collapse = "\n"))
       savename=paste(name,SPECTRUM_batch)
+      if (dir.exists(paste0(datafile[z] ," ID/",SPECTRUM_batch,"/"))==FALSE){dir.create(paste0(datafile[z] ," ID/",SPECTRUM_batch,"/"))}
            #PMFsearch_para<-function(SPECTRUM_batch,x,imdata,name,ppm,cl,Peptide_Summary_file,Peptide_Summary_file_regions){
           message(paste("PMF_analysis","region",SPECTRUM_batch))
-          peaklist<-spectrum_file_table[spectrum_file_table$intensities!=0,]
+          peaklist<-peaklist[peaklist$intensities!=0,]
           colnames(peaklist)<-c("m.z","intensities")
-          mzrange=c(min(peaklist$m.z),max(peaklist$m.z))
-          #peaklist=peaklist[peaklist$intensities>=(max(peaklist$intensities)/3*threshold),]
-          Peptide_Summary_searchlist_mz=NULL
-          uniquemz=unique(Peptide_Summary_searchlist[,"mz"])
-          Peptide_Summary_searchlist_mz$mz=uniquemz[`&`(uniquemz>mzrange[1],uniquemz<mzrange[2])]
-          Peptide_Summary_searchlist_mz$Intensity=rep(0,length(Peptide_Summary_searchlist_mz$mz))
-          Peptide_Summary_searchlist_mz=as.data.frame(Peptide_Summary_searchlist_mz)
-          #Peptide_Summary_searchlist<-PMF_analysis_fun(Peptide_Summary_searchlist=Peptide_Summary_searchlist,peaklist=peaklist,ppm=ppm,BPPARAM=BPPARAM)
-          Peptide_Summary_searchlist_mz<-PMF_analysis_fun(Peptide_Summary_searchlist=Peptide_Summary_searchlist_mz,peaklist=peaklist,ppm=ppm,BPPARAM=BPPARAM,mzrange=mzrange)
-          Peptide_Summary_searchlist_mz=as.data.frame(Peptide_Summary_searchlist_mz,stringsAsFactors = F)
-          #Peptide_feature_list<-Peptide_Summary_searchlist[Peptide_Summary_searchlist$Intensity>0,]
-          #Peptide_plot_list<-Peptide_feature_list[Peptide_feature_list$Intensity>=max(Peptide_feature_list$Intensity)*threshold,]
-          mz_feature_list<-Peptide_Summary_searchlist_mz[Peptide_Summary_searchlist_mz$Intensity>0,]
-          mz_plot_list<-mz_feature_list
-          Peptide_Summary_file$Intensity<-Peptide_Summary_file$Intensity+unlist(bplapply(Peptide_Summary_file$mz,intensity_sum_para,mz_feature_list,BPPARAM = BPPARAM))
+          mz_feature_list<-Do_PMF_search(peaklist,Peptide_Summary_searchlist)
           message("Iterating peptide information...")
           Peptide_Summary_searchlist$Intensity<-unlist(bplapply(Peptide_Summary_searchlist$mz,intensity_sum_para,mz_feature_list,BPPARAM = BPPARAM))
-          Peptide_plot_list<-Peptide_Summary_searchlist[Peptide_Summary_searchlist$Intensity>0,]
+          Peptide_Summary_file$Intensity<-Peptide_Summary_file$Intensity+Peptide_Summary_searchlist$Intensity
+          Peptide_plot_list<-Peptide_Summary_searchlist[Peptide_Summary_searchlist$Intensity>300,]
+          #Peptide_plot_list<-Peptide_Summary_searchlist[Peptide_Summary_searchlist$Intensity>=(max(Peptide_Summary_searchlist$Intensity)*threshold),]
+          Peptide_plot_list$Region=SPECTRUM_batch
+          write.csv(Peptide_plot_list,paste0(datafile[z] ," ID/",SPECTRUM_batch,"/Peptide_1st_ID.csv"),row.names = F)
           if(is.null(Peptide_plot_list$moleculeNames)){Peptide_plot_list$moleculeNames=Peptide_plot_list$Peptide}
           #Peptide_plot_list$moleculeNames<-Peptide_plot_list$Peptide
-          Plot_PMF_all(Peptide_plot_list,spectrum_file_table,threshold=threshold,savename)
-          #uniques_intensity<-unique(Peptide_plot_list[,c("mz","Intensity")])
-          #uniques_intensity<-uniques_intensity[uniques_intensity$Intensity>0,]
-          Peptide_plot_list$Region=SPECTRUM_batch
           if (scoring){
             library(enviPat)
+            library(ggplot2)
             data(isotopes)
-            Peptide_plot_list_Score=bplapply(Peptide_plot_list$formula,SCORE_PMF,peaklist,isotopes,BPPARAM = BPPARAM)
-            #Peptide_plot_list_Score=bplapply(Peptide_plot_list$formula,SCORE_PMF,peaklist,BPPARAM = BPPARAM)
-            Peptide_plot_list_Score_frame=do.call(rbind,Peptide_plot_list_Score)
-            Peptide_plot_list$Score=Peptide_plot_list_Score_frame$similarity.score
-            if (dir.exists(paste0(datafile[z] ," ID\\",SPECTRUM_batch))==FALSE){dir.create(paste0(datafile[z] ," ID\\",SPECTRUM_batch))}
-            Peptide_plot_list_Score_frame$newplot=paste(datafile[z] ," ID\\",SPECTRUM_batch,"\\",Peptide_plot_list$Peptide,Peptide_plot_list$adduct,Peptide_plot_list$Region,".png",sep = "_")
-            lapply(1:nrow(Peptide_plot_list_Score_frame), function(x,Peptide_plot_list_Score_frame){
-              png(Peptide_plot_list_Score_frame$newplot[x])
-              print(Peptide_plot_list_Score_frame$plot[x])
-              dev.off()
-            },Peptide_plot_list_Score_frame)
             
-            plot_score_FDR(Peptide_plot_list,FDR_threshold=0.05)
-        
+            Peptide_plot_list_Score=bplapply(Peptide_plot_list$formula,SCORE_PMF,peaklist,isotopes)
+            #Peptide_plot_list_Score=bplapply(Peptide_plot_list$formula,SCORE_PMF,peaklist,BPPARAM = BPPARAM)
+            Peptide_plot_list_Score=unlist(Peptide_plot_list_Score)
+            #Peptide_plot_list_Score_frame=do.call(rbind,Peptide_plot_list_Score)
+            Peptide_plot_list$Score=Peptide_plot_list_Score
+            FDR_cutoff= FDR_cutoff_plot(Peptide_plot_list,FDR_cutoff=0.1,FDR_strip=0.002,plot_fdr=T,outputdir=paste0(datafile[z] ," ID/",SPECTRUM_batch))
+            Peptide_plot_list=Peptide_plot_list[Peptide_plot_list$Score>=FDR_cutoff,]
+            write.csv(Peptide_plot_list,paste0(datafile[z] ," ID/",SPECTRUM_batch,"/Peptide_2nd_ID.csv"),row.names = F)
+            plot_matching_score(Peptide_plot_list,peaklist,charge=1,ppm,outputdir=paste0(datafile[z] ," ID/",SPECTRUM_batch))
+            
           } 
+          Plot_PMF_all(Peptide_plot_list,peaklist=peaklist,threshold=threshold,savename)
+         
           write.csv(Peptide_plot_list,paste("Peptide_segment_PMF_RESULT",SPECTRUM_batch,".csv"),row.names = F)
           #write.csv(peaklist,paste("Spectrum",SPECTRUM_batch,".csv"),row.names = F)
           #Peptide_Summary_file$Intensity<-Peptide_Summary_file$Intensity+unlist(parLapply(cl=cl,Peptide_Summary_file$mz,intensity_sum_para,uniques_intensity))
@@ -2266,7 +2283,7 @@ Pathway_overview_graphite<-function(){
   
 }
 
-SCORE_PMF<-function(formula,peaklist,isotopes=NULL,threshold=0.01,charge=1,ppm=5){
+SCORE_PMF<-function(formula,peaklist,isotopes=NULL,threshold=0.01,charge=1,ppm=5,print.graphic=F,output.list=F,outputfile=NULL,...){
   library(rcdk)
   library(OrgMassSpecR)
   library(enviPat)
@@ -2276,7 +2293,7 @@ SCORE_PMF<-function(formula,peaklist,isotopes=NULL,threshold=0.01,charge=1,ppm=5
   
   Spectrum_scoring <- function(spec.top, spec.bottom, t = 0.25, b = 10, top.label = NULL, 
                                bottom.label = NULL, xlim = c(50, 1200), x.threshold = 0, print.alignment = FALSE,
-                               print.graphic = TRUE, output.list = FALSE,score_method="SQRT") {
+                               print.graphic = print.graphic, output.list = output.list,score_method="SQRT",outputfile=NULL) {
     
     
     ## format spectra and normalize intensitites
@@ -2326,9 +2343,9 @@ SCORE_PMF<-function(formula,peaklist,isotopes=NULL,threshold=0.01,charge=1,ppm=5
     
     if(print.graphic == TRUE) {
       library(ggplot2)
-      library(magick)
-      tempfilename=tempfile(pattern = "file", tmpdir = tempdir())
-      tempfilename=paste(tempfilename,".png",sep="")
+      #library(magick)
+      #tempfilename=tempfile(pattern = "file", tmpdir = tempdir())
+      tempfilename=outputfile
       png(tempfilename, bg = "white")
       plot.new()
       plot.window(xlim = xlim, ylim = c(-125, 125))
@@ -2345,7 +2362,7 @@ SCORE_PMF<-function(formula,peaklist,isotopes=NULL,threshold=0.01,charge=1,ppm=5
       text(10, 9, top.label)
       text(10, -9, bottom.label)
       dev.off()
-      p<-magick::image_read(tempfilename)
+      #p<-magick::image_read(tempfilename)
     }
     
     if(output.list == TRUE) {
@@ -2374,6 +2391,7 @@ SCORE_PMF<-function(formula,peaklist,isotopes=NULL,threshold=0.01,charge=1,ppm=5
   #getMolecule(formula)
   #isopattern(chemforms = formula)
   #data(isotopes)
+  message(formula)
   pattern<-isopattern(
     isotopes,
     formula,
@@ -2385,21 +2403,100 @@ SCORE_PMF<-function(formula,peaklist,isotopes=NULL,threshold=0.01,charge=1,ppm=5
     verbose = F
   )
   pattern=pattern[[formula]]
-  
+  m_1_pattern=data.frame("m/z"=pattern[1,1]-(1.003354840/ifelse(charge==0,1,abs(charge))),abundance=0)
+  colnames(m_1_pattern)=colnames(pattern[,1:2])
+  pattern=rbind(m_1_pattern,pattern[,1:2])
   spectrum=data.frame(mz=pattern[,1],intensity=unlist(lapply(1:nrow(pattern), function(x,pattern,peaklist,ppm){
   PMF_spectrum_intensity<-peaklist[between(peaklist$m.z,pattern[x,1]*(1-ppm/1000000),pattern[x,1]*(1+ppm/1000000)),2]
   if(nrow(PMF_spectrum_intensity)>0) sum(PMF_spectrum_intensity,na.rm = T) else 0
   },pattern,peaklist,ppm)))
   
-  score=Spectrum_scoring(pattern,spectrum,b=0,t=mean(pattern[,1])*ppm/1000000,top.label = "Theoritical",bottom.label = "Observed spectrum",xlim = c(min(range(pattern[,1],na.rm = T))-1,max(range(pattern[,1],na.rm = T))+1),output.list=T,print.graphic = T)
+
+  score=Spectrum_scoring(pattern,spectrum,b=0,t=mean(pattern[,1])*ppm/1000000,top.label = "Theoritical",bottom.label = "Observed spectrum",xlim = c(min(range(pattern[,1],na.rm = T))-1,max(range(pattern[,1],na.rm = T))+1),output.list=output.list,print.graphic = print.graphic,outputfile = outputfile)
 
   return(score)
 }
 
-plot_score_FDR<-function(Peptide_plot_list,FDR_threshold=0.05){
+
+
+Do_PMF_search<-function(peaklist,Peptide_Summary_searchlist){
+peaklist<-peaklist[peaklist$intensities!=0,]
+colnames(peaklist)<-c("m.z","intensities")
+mzrange=c(min(peaklist$m.z),max(peaklist$m.z))
+#peaklist=peaklist[peaklist$intensities>=(max(peaklist$intensities)/3*threshold),]
+Peptide_Summary_searchlist_mz=NULL
+uniquemz=unique(Peptide_Summary_searchlist[,"mz"])
+Peptide_Summary_searchlist_mz$mz=uniquemz[`&`(uniquemz>mzrange[1],uniquemz<mzrange[2])]
+Peptide_Summary_searchlist_mz$Intensity=rep(0,length(Peptide_Summary_searchlist_mz$mz))
+Peptide_Summary_searchlist_mz=as.data.frame(Peptide_Summary_searchlist_mz)
+#Peptide_Summary_searchlist<-PMF_analysis_fun(Peptide_Summary_searchlist=Peptide_Summary_searchlist,peaklist=peaklist,ppm=ppm,BPPARAM=BPPARAM)
+Peptide_Summary_searchlist_mz<-PMF_analysis_fun(Peptide_Summary_searchlist=Peptide_Summary_searchlist_mz,peaklist=peaklist,ppm=ppm,BPPARAM=BPPARAM,mzrange=mzrange)
+Peptide_Summary_searchlist_mz=as.data.frame(Peptide_Summary_searchlist_mz,stringsAsFactors = F)
+#Peptide_feature_list<-Peptide_Summary_searchlist[Peptide_Summary_searchlist$Intensity>0,]
+#Peptide_plot_list<-Peptide_feature_list[Peptide_feature_list$Intensity>=max(Peptide_feature_list$Intensity)*threshold,]
+mz_feature_list<-Peptide_Summary_searchlist_mz[Peptide_Summary_searchlist_mz$Intensity>0,]
+
+return(mz_feature_list)
+}
+
+FDR_cutoff_plot<-function(Peptide_plot_list,FDR_cutoff=0.05,FDR_strip=0.002,plot_fdr=F,outputdir=NULL){
   library(ggplot2)
-  library(ggpubr)
+  library(data.table)
+  library(dplyr)
+  library(zoo)
+  Peptide_plot_list=data_test_rename(c("isdecoy","Score"),Peptide_plot_list)
+  target_score<-Peptide_plot_list[Peptide_plot_list$isdecoy!=1,"Score"]
+  decoy_score<-Peptide_plot_list[Peptide_plot_list$isdecoy==1,"Score"]
+  breaks = seq(0, 1, by=FDR_strip)
+  target_score.cut = cut(target_score, breaks, right=T) 
+  decoy_score.cut = cut(decoy_score, breaks,right=T) 
+  target_score.freq = table(target_score.cut)
+  decoy_score.freq = table(decoy_score.cut)
+  target_score.freq= target_score.freq[rev(names(target_score.freq))]
+  target_score.freq0 = c(0, cumsum(target_score.freq))
+  decoy_score.freq= decoy_score.freq[rev(names(decoy_score.freq))]
+  decoy_score.freq0 = c(0, cumsum(decoy_score.freq))
   
-  p<-ggplot(Peptide_plot_list,aes(x=,y=score))
+
+  
+  FDR=decoy_score.freq0/target_score.freq0
+  
+  df=data.frame(breaks=rev(breaks),target_score.freq0=target_score.freq0 ,decoy_score.freq0=decoy_score.freq0,FDR=FDR)
+  #df=df[order(breaks,decreasing = TRUE),]
+  df$FDR_m.av<-rollmean(df$FDR, 3,fill = list(0, NaN, NaN))
+  df$logscore=log(df$breaks)
+  
+  Score_cutoff<-min(df$breaks[(df$FDR_m.av<=FDR_cutoff)==T],na.rm = T)
+  
+  if (!is.null(outputdir) && plot_fdr){
+  
+  png(paste0(outputdir,"/FDR.png"))
+  plot.new()
+  plot(df$breaks, df$FDR,            # plot the data 
+       main="FDR plot",  # main title 
+       xlab="Matching score",        # x−axis label 
+       ylab="FDR")   # y−axis label 
+  lines(df$breaks, df$FDR_m.av)
+  dev.off()  
+    
+  write.csv(df,paste0(outputdir,"/FDR.CSV"),row.names = F)  
+    
+  }
+
+  
+  return(Score_cutoff)
+  
+}
+
+plot_matching_score<-function(Peptide_plot_list,peaklist,charge,ppm,outputdir=getwd()){
+  library(enviPat)
+  data("isotopes")
+  if (dir.exists(outputdir)==FALSE){dir.create(outputdir)}
+  Peptide_plot_list1=Peptide_plot_list
+  Peptide_plot_list=Peptide_plot_list[!is.na(Peptide_plot_list$Intensity),]
+  for (i in 1:nrow(Peptide_plot_list)){
+  SCORE_PMF(Peptide_plot_list$formula[i],peaklist,isotopes=isotopes,threshold=0.01,charge=charge,ppm=ppm,print.graphic=T,output.list=F,outputfile=paste0(outputdir,"/",Peptide_plot_list$Peptide[i]," ",Peptide_plot_list$adduct[i],".png"))
+  }
+  
   
 }
