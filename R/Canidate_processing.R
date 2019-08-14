@@ -102,7 +102,8 @@ Protein_feature_list_fun<-function(workdir=getwd(),
                                    adducts=c("M+H","M+NH4","M+Na"),
                                    BPPARAM=bpparam(),
                                    Decoy_adducts=c("M+He","M+Ne","M+Ar","M+Kr","M+Xe","M+Rn"),
-                                   Decoy_search=T){
+                                   Decoy_search=T,
+                                   mzrange=c(500,4000)){
   library(Biostrings)
   library(cleaver)
   library(protViz)
@@ -135,6 +136,8 @@ Protein_feature_list_fun<-function(workdir=getwd(),
   
   for (i in 1:length(Digestion_site)){
     
+    if (Digestion_site[i]==""){Digestion_site[i]="J"}
+    
     peplist_option<-cleave(as.character(list_of_protein_sequence),custom=Digestion_site[i], missedCleavages=missedCleavages)
     
     peplist<-c(peplist,peplist_option)
@@ -150,7 +153,11 @@ Protein_feature_list_fun<-function(workdir=getwd(),
   pimlist<-parentIonMasslist(peplist,Index_of_protein_sequence)
   
   peplist<-peplist[names(peplist) %in% names(pimlist) ==TRUE] 
-  
+  AA<-c(71.037114, 114.534940, 103.009185, 115.026943, 129.042593, 147.068414, 
+        57.021464, 137.058912, 113.084064, 0.000000, 128.094963, 113.084064, 
+        131.040485, 114.042927, 0.000000, 97.052764, 128.058578, 156.101111, 
+        87.032028, 101.047679, 150.953630, 99.068414, 186.079313, 111.000000, 
+        163.063329, 100.994269)
   #tempdf<-parLapply(cl=cl,  1: length(names(peplist)), Peptide_Summary_para,peplist)
   #bplapply()
   message(paste("Peptide list generated",length(peplist),"entries in total."))
@@ -160,6 +167,8 @@ Protein_feature_list_fun<-function(workdir=getwd(),
   tempdf<-as.data.frame(tempdf)
   tempdf$Protein<-as.character(tempdf$Protein)
   tempdf$Peptide<-as.character(tempdf$Peptide)
+  tempdf$pepmz <- as.numeric(parentIonMass(tempdf$Peptide,fixmod=AA)- 1.007276 )
+  tempdf<-tempdf[`&`(tempdf$pepmz>=mzrange[1],tempdf$pepmz<=mzrange[2]),]
   tempdf1<-tempdf
   Protein_Summary<-NULL
   adductslist<-Build_adduct_list()
@@ -170,18 +179,20 @@ Protein_feature_list_fun<-function(workdir=getwd(),
   peptides_symbol_adducts=bplapply(adducts,convert_peptide_adduct_list,peptide_symbol,BPPARAM = BPPARAM,adductslist=adductslist)
   
   for (i in 1:length(adducts)){
+    adductmass <- as.numeric(as.character(adductslist[adductslist$Name == adducts[i], "Mass"]))
     charge=as.numeric(as.character(adductslist$Charge[adductslist$Name==adducts[i]]))
     #tempdf$formula[1:1000]<-as.character(peptides_symbol_adducts[[i]])
     tempdf$formula<-peptides_symbol_adducts[[i]]
     message(paste("Calculating peptide mz with adducts:",adducts[i]))
-    templist=bplapply(tempdf$formula,function(x,charge){
-      rcdk::get.formula(x,charge = charge)@mass
-      },charge,BPPARAM = BPPARAM)
+    #3templist=bplapply(tempdf$formula,function(x,charge){
+    #  rcdk::get.formula(x,charge = charge)@mass
+    #  },charge,BPPARAM = BPPARAM)
     if (charge==0){actingcharge=1} else {actingcharge=abs(charge)}
-    tempdf$mz<-as.numeric(unlist(templist))
-    tempdf$mz<-tempdf$mz/actingcharge
+    #tempdf$mz<-as.numeric(unlist(templist))
+    tempdf$mz<-(tempdf$pepmz+adductmass)/actingcharge
     tempdf$adduct<-adducts[i]
     tempdf$isdecoy<-rep(0,nrow(tempdf))
+    tempdf$charge<-charge
     #tempdf$isdecoy<-rep(0,nrow(tempdf))
     #convert_peptide_adduct(tempdf$Peptide[2],adductsname = adducts[i],multiplier = c(multiplier,1),adductslist = adductslist)
     #tempdf$formula<-bplapply(tempdf$Peptide,convert_peptide_adduct,adductsformula = adducts[i],multiplier = c(multiplier,1),BPPARAM = BPPARAM)
@@ -192,18 +203,20 @@ Protein_feature_list_fun<-function(workdir=getwd(),
     message(paste("Generating peptide formula with Decoy adducts:",paste(Decoy_adducts,collapse = " ")))
   peptides_symbol_adducts=bplapply(Decoy_adducts,convert_peptide_adduct_list,peptide_symbol,BPPARAM = BPPARAM,adductslist=adductslist)
   for (i in 1:length(Decoy_adducts)){
+    adductmass <- as.numeric(as.character(adductslist[adductslist$Name == Decoy_adducts[i], "Mass"]))
     charge=as.numeric(as.character(adductslist$Charge[adductslist$Name==Decoy_adducts[i]]))
     #tempdf$formula[1:1000]<-as.character(peptides_symbol_adducts[[i]])
     tempdf$formula<-peptides_symbol_adducts[[i]]
-    message(paste("Calculating peptide mz with adducts:",Decoy_adducts[i]))
-    templist=bplapply(tempdf$formula,function(x,charge){
-      rcdk::get.formula(x,charge = charge)@mass
-    },charge,BPPARAM = BPPARAM)
-    tempdf$mz<-as.numeric(unlist(templist))
+    message(paste("Calculating peptide mz with Decoy_adducts:",Decoy_adducts[i]))
+    #3templist=bplapply(tempdf$formula,function(x,charge){
+    #  rcdk::get.formula(x,charge = charge)@mass
+    #  },charge,BPPARAM = BPPARAM)
     if (charge==0){actingcharge=1} else {actingcharge=abs(charge)}
-    tempdf$mz<-tempdf$mz/actingcharge
+    #tempdf$mz<-as.numeric(unlist(templist))
+    tempdf$mz<-(tempdf$pepmz+adductmass)/actingcharge
     tempdf$adduct<-Decoy_adducts[i]
     tempdf$isdecoy<-rep(1,nrow(tempdf))
+    tempdf$charge<-charge
     #tempdf$isdecoy<-rep(0,nrow(tempdf))
     #convert_peptide_adduct(tempdf$Peptide[2],adductsname = adducts[i],multiplier = c(multiplier,1),adductslist = adductslist)
     #tempdf$formula<-bplapply(tempdf$Peptide,convert_peptide_adduct,adductsformula = adducts[i],multiplier = c(multiplier,1),BPPARAM = BPPARAM)
@@ -523,7 +536,8 @@ convert_peptide_adduct_list<-function(adductsname,peptide_symbol,multiplier=c(1,
                W={element <- c(C = 11, H = 10, N = 2, O = 1, S = 0)},
                Y={element <- c(C = 9, H = 9, N = 1, O = 2, S = 0)},
                V={element <- c(C = 5, H = 9, N = 1, O = 1, S = 0)},
-               C={element <- c(C = 3, H = 5, N = 1, O = 1, S = 1)})
+               C={element <- c(C = 3, H = 5, N = 1, O = 1, S = 1)},
+               Z={element <- c(C = 3, H = 3, N = 1, O = 1, S = 1)})
         
         return(element)
       }
@@ -766,7 +780,8 @@ ConvertPeptide<-function (sequence, output = "elements")
              W={element <- c(C = 11, H = 10, N = 2, O = 1, S = 0)},
              Y={element <- c(C = 9, H = 9, N = 1, O = 2, S = 0)},
              V={element <- c(C = 5, H = 9, N = 1, O = 1, S = 0)},
-             C={element <- c(C = 3, H = 5, N = 1, O = 1, S = 1)})
+             C={element <- c(C = 3, H = 5, N = 1, O = 1, S = 1)},
+             Z={element <- c(C = 3, H = 3, N = 1, O = 1, S = 1)})
 
       return(element)
     }
