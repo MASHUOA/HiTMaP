@@ -134,23 +134,44 @@ Protein_feature_list_fun<-function(workdir=getwd(),
                                          skip=0L)   
   peplist<-list()
   
+  Index_of_protein_sequence_list<-data.frame() 
+  
   for (i in 1:length(Digestion_site)){
     
     if (Digestion_site[i]==""){Digestion_site[i]="J"}
     
     peplist_option<-cleave(as.character(list_of_protein_sequence),custom=Digestion_site[i], missedCleavages=missedCleavages)
     
+    Index_of_protein_sequence_option<-Index_of_protein_sequence
+    
+    Index_of_protein_sequence_option$desc<-paste(names(peplist_option),Digestion_site[i])
+    
+    names(peplist_option)=paste(names(peplist_option),Digestion_site[i])
+    
+    Index_of_protein_sequence_list<-rbind(Index_of_protein_sequence_list,Index_of_protein_sequence_option)
+    
     peplist<-c(peplist,peplist_option)
     
   }
   
   #message(paste("Peptide list generated",length(peplist),"entries in total."))
+  parentIonMasslist<-function(peplist,Index_of_protein_sequence){
+    AA<-rep(0,26)
+    PIM<-NULL
+    for (i in 1:length(peplist)){
+      
+      PIM[[Index_of_protein_sequence$desc[i]]] <- parentIonMass(peplist[[Index_of_protein_sequence$desc[i]]],fixmod=AA)}
+    return(PIM)
+  }
   
   peplist<-peplist[duplicated(names(peplist))==FALSE]
+  message(paste("Testing fasta sequances..."))
+  pimlist<-bplapply(peplist,function(x){
+    AA<-rep(0,26)
+    parentIonMass(x,fixmod=AA)
+  },BPPARAM = BPPARAM)
   
-  
-  
-  pimlist<-parentIonMasslist(peplist,Index_of_protein_sequence)
+  #pimlist<-parentIonMasslist(peplist,Index_of_protein_sequence_list)
   
   peplist<-peplist[names(peplist) %in% names(pimlist) ==TRUE] 
   AA<-c(71.037114, 114.534940, 103.009185, 115.026943, 129.042593, 147.068414, 
@@ -160,7 +181,7 @@ Protein_feature_list_fun<-function(workdir=getwd(),
         163.063329, 100.994269)
   #tempdf<-parLapply(cl=cl,  1: length(names(peplist)), Peptide_Summary_para,peplist)
   #bplapply()
-  message(paste("Peptide list generated",length(peplist),"entries in total."))
+  message(paste("Peptide list generated",length(peplist),"entries in total. Computing exact masses..."))
   tempdf<-bplapply( 1: length(names(peplist)), Peptide_Summary_para,peplist,BPPARAM = BPPARAM)
   tempdf <- do.call("rbind", tempdf)
   colnames(tempdf)<-c("Protein","Peptide")
@@ -169,7 +190,7 @@ Protein_feature_list_fun<-function(workdir=getwd(),
   tempdf$Peptide<-as.character(tempdf$Peptide)
   tempdf$pepmz <- as.numeric(parentIonMass(tempdf$Peptide,fixmod=AA)- 1.007276 )
   tempdf<-tempdf[`&`(tempdf$pepmz>=mzrange[1],tempdf$pepmz<=mzrange[2]),]
-  tempdf1<-tempdf
+  #tempdf1<-tempdf
   Protein_Summary<-NULL
   adductslist<-Build_adduct_list()
   
