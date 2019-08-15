@@ -55,7 +55,7 @@ imaging_identification<-function(
                missedCleavages=0:1,
                Fastadatabase="murine_matrisome.fasta",
                adducts=c("M+H","M+NH4","M+Na"),
-               Decoy_search=F,
+               Decoy_search=T,
                Decoy_adducts=c("M+He","M+Ne","M+Ar","M+Kr","M+Xe","M+Rn","M+Cu","M+Co","M+Ag"),
                PMF_analysis=TRUE,
                Bypass_generate_spectrum=F,
@@ -114,7 +114,8 @@ imaging_identification<-function(
   if (!is.null(rotateimg)){rotateimg=read.csv(rotateimg,stringsAsFactors = F)}
   
   if(PMF_analysis){
-    
+  message(paste("Protein_feature_list was selected as database",spectra_segments_per_file,threshold,ppm,PMF_analysis,Virtual_segmentation,
+                "\nVirtual_segmentation_rankfile",Virtual_segmentation_rankfile,"\nBypass_generate_spectrum",Bypass_generate_spectrum))
   Peptide_Summary_searchlist<-unique(Protein_feature_list[,c("Peptide","mz","adduct","formula","isdecoy")])
   
   Peptide_Summary_file<-PMF_Cardinal_Datafilelist(datafile, 
