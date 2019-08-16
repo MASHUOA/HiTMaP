@@ -1244,3 +1244,24 @@ Build_adduct_list<-function(){
   adductslist
 }
 
+rank_mz_feature<-function(Peptide_plot_list){
+  
+  mz=unique(Peptide_plot_list$mz)
+  
+  Peptide_plot_list_rank<-lapply(mz,function(x,Peptide_plot_list){
+    
+    randklist <- Peptide_plot_list[Peptide_plot_list$mz==x,]
+    
+    if (nrow(randklist)>=2){
+      randklist=randklist[order(Intensity,decreasing = T),]
+      randklist$Rank=1:nrow(randklist)
+      return(randklist)
+    }else if (nrow(randklist)==1){
+      randklist$Rank=1
+      return(randklist)
+    }
+  },Peptide_plot_list)
+  
+  Peptide_plot_list_rank<-do.call(rbind,Peptide_plot_list_rank)
+  return(Peptide_plot_list_rank)
+}
