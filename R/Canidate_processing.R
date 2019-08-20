@@ -102,6 +102,7 @@ Protein_feature_list_fun<-function(workdir=getwd(),
                                    adducts=c("M+H","M+NH4","M+Na"),
                                    BPPARAM=bpparam(),
                                    Decoy_adducts=c("M+He","M+Ne","M+Ar","M+Kr","M+Xe","M+Rn"),
+                                   Decoy_mode=c("adducts","elements"),
                                    Decoy_search=T,
                                    mzrange=c(500,4000)){
   library(Biostrings)
@@ -132,29 +133,13 @@ Protein_feature_list_fun<-function(workdir=getwd(),
   Index_of_protein_sequence<-fasta.index(database,
                                          nrec=-1L, 
                                          skip=0L)   
+  
+  Index_of_protein_sequence$Degestion=""
+  
   peplist<-list()
   
   Index_of_protein_sequence_list<-data.frame() 
   
-  for (i in 1:length(Digestion_site)){
-    
-    if (Digestion_site[i]==""){Digestion_site[i]="J"}
-    
-    peplist_option<-cleave(as.character(list_of_protein_sequence),custom=Digestion_site[i], missedCleavages=missedCleavages)
-    
-    Index_of_protein_sequence_option<-Index_of_protein_sequence
-    
-    Index_of_protein_sequence_option$desc<-paste(names(peplist_option),Digestion_site[i])
-    
-    names(peplist_option)=paste(names(peplist_option),Digestion_site[i])
-    
-    Index_of_protein_sequence_list<-rbind(Index_of_protein_sequence_list,Index_of_protein_sequence_option)
-    
-    peplist<-c(peplist,peplist_option)
-    
-  }
-  
-  #message(paste("Peptide list generated",length(peplist),"entries in total."))
   parentIonMasslist<-function(peplist,Index_of_protein_sequence){
     AA<-rep(0,26)
     PIM<-NULL
@@ -164,16 +149,52 @@ Protein_feature_list_fun<-function(workdir=getwd(),
     return(PIM)
   }
   
-  peplist<-peplist[duplicated(names(peplist))==FALSE]
-  message(paste("Testing fasta sequances..."))
-  pimlist<-bplapply(peplist,function(x){
+  for (i in 1:length(Digestion_site)){
+    
+    if (Digestion_site[i]==""){Digestion_site[i]="J"}
+    
+    peplist_option<-cleave(as.character(list_of_protein_sequence),custom=Digestion_site[i], missedCleavages=missedCleavages)
+    
+    Index_of_protein_sequence_option<-Index_of_protein_sequence
+    
+    #Index_of_protein_sequence_option$desc<-paste(names(peplist_option),Digestion_site[i])
+    
+    #names(peplist_option)=paste(names(peplist_option),Digestion_site[i])
+    
+    
+    
+    pimlist<-bplapply(peplist_option,function(x){
     AA<-rep(0,26)
-    parentIonMass(x,fixmod=AA)
-  },BPPARAM = BPPARAM)
+    protViz::parentIonMass(x,fixmod=AA)},BPPARAM = BPPARAM)
+    
+    
+    
+    peplist_option<-peplist_option[duplicated(names(peplist_option))==FALSE]
+    
+    message(paste("Testing fasta sequances..."))
+    
+    peplist_option<-peplist_option[names(peplist_option) %in% names(pimlist) ==TRUE]
+    
+    Index_of_protein_sequence_option<-Index_of_protein_sequence_option[Index_of_protein_sequence_option$desc %in% names(pimlist),]
+    
+    Index_of_protein_sequence_option$Degestion=Digestion_site[i]
+    
+    Index_of_protein_sequence_option
+    
+    peplist<-c(peplist,peplist_option)
+    
+    Index_of_protein_sequence_list<-rbind(Index_of_protein_sequence_list,Index_of_protein_sequence_option)
+  }
+  
+  #message(paste("Peptide list generated",length(peplist),"entries in total."))
+  
+  
+  
+  
   
   #pimlist<-parentIonMasslist(peplist,Index_of_protein_sequence_list)
   
-  peplist<-peplist[names(peplist) %in% names(pimlist) ==TRUE] 
+  
   AA<-c(71.037114, 114.534940, 103.009185, 115.026943, 129.042593, 147.068414, 
         57.021464, 137.058912, 113.084064, 0.000000, 128.094963, 113.084064, 
         131.040485, 114.042927, 0.000000, 97.052764, 128.058578, 156.101111, 
@@ -220,9 +241,9 @@ Protein_feature_list_fun<-function(workdir=getwd(),
     Protein_Summary<-rbind.data.frame(Protein_Summary,tempdf)
   }
   
-  if (length(Decoy_adducts)>0 && Decoy_search){
+  if (length(Decoy_adducts)>0 && Decoy_search && ("adducts" %in% Decoy_mode)){
     message(paste("Generating peptide formula with Decoy adducts:",paste(Decoy_adducts,collapse = " ")))
-  peptides_symbol_adducts=bplapply(Decoy_adducts,convert_peptide_adduct_list,peptide_symbol,BPPARAM = BPPARAM,adductslist=adductslist)
+    peptides_symbol_adducts=bplapply(Decoy_adducts,convert_peptide_adduct_list,peptide_symbol,BPPARAM = BPPARAM,adductslist=adductslist)
   for (i in 1:length(Decoy_adducts)){
     adductmass <- as.numeric(as.character(adductslist[adductslist$Name == Decoy_adducts[i], "Mass"]))
     charge=as.numeric(as.character(adductslist$Charge[adductslist$Name==Decoy_adducts[i]]))
@@ -244,7 +265,64 @@ Protein_feature_list_fun<-function(workdir=getwd(),
     Protein_Summary<-rbind.data.frame(Protein_Summary,tempdf)
   } 
   }
+  if (Decoy_search && ("elements" %in% Decoy_mode)){
+    
+    message(paste("Generating peptide formula with Decoy elemental composition:"))
+    library(enviPat)
+    library(rcdk)
+    total_target_mols<-unique(Protein_Summary$formula)
+    target_mz=unique(round(Protein_Summary$mz,digits = 3))
+    select_mol_num=ceiling(length(total_target_mols)/length(target_mz))
+    
+    decoymol<-bplapply(target_mz,function(x,ppm,select_mol_num){
+      library(rcdk)
+     mit <- generate.formula.iter(x, window = x*ppm/(1000000),
+                          elements = list(
+                            C=c(0,100),
+                            H=c(0,100),
+                            N=c(0,100),
+                            O=c(0,100),
+                            S=c(0,100)),
+                          validation = FALSE,
+                          charge = 0.0,
+                          as.string=TRUE)
 
+    i=1
+    moleresult<-as.character()
+    hit <- itertools::ihasNext(mit)
+    while (`&`(itertools::hasNext(hit),i<=select_mol_num))  {
+      moleresult<-c(moleresult,iterators::nextElem(hit))
+      
+      i=i+1
+    }  
+    #message(x)
+    return(moleresult)
+    
+    },ppm,select_mol_num)
+    
+    names(decoymol)=as.character(target_mz)
+    
+    #saveRDS(decoymol, file = "decoymol.rds")
+    
+    #decoymol<-readRDS(file = "decoymol.rds")
+    
+    decoymolvec<-do.call(c,decoymol)
+    
+    length_decoydf<-lapply(decoymol,length)
+    
+    decoy_mz<-names(length_decoydf)
+    
+    decoymol<-decoymol[!(decoymol %in% Protein_Summary$formula)]
+    
+    decoy_tempdf=data.frame(stringsAsFactors = F,
+                            Protein=paste("Decoy_",rep(decoy_mz,length_decoydf),sep=""),
+                            Peptide=paste("Decoy_",rep(decoy_mz,length_decoydf),sep=""),
+                            pepmz=rep(decoy_mz,length_decoydf),
+                            formula=decoymolvec,mz=rep(decoy_mz,length_decoydf),adduct="M",
+                            isdecoy=1,charge=1)
+    
+    Protein_Summary<-rbind(Protein_Summary,decoy_tempdf)
+  }
   
   return(Protein_Summary)
 }

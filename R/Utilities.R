@@ -1244,24 +1244,37 @@ Build_adduct_list<-function(){
   adductslist
 }
 
-rank_mz_feature<-function(Peptide_plot_list){
+rank_mz_feature<-function(Peptide_plot_list,mz_feature,BPPARAM=bpparam()){
+  
+  library(data.table)
   
   mz=unique(Peptide_plot_list$mz)
   
-  Peptide_plot_list_rank<-lapply(mz,function(x,Peptide_plot_list){
+  Peptide_plot_list$mz_align<-NULL
+  
+  mz_align<-sapply(mz,function(x,mz_feature){
     
-    randklist <- Peptide_plot_list[Peptide_plot_list$mz==x,]
+    mz_feature$m.z[which.min(abs(mz_feature$m.z-x))]
     
-    if (nrow(randklist)>=2){
-      randklist=randklist[order(Intensity,decreasing = T),]
-      randklist$Rank=1:nrow(randklist)
-      return(randklist)
-    }else if (nrow(randklist)==1){
-      randklist$Rank=1
-      return(randklist)
-    }
-  },Peptide_plot_list)
+  },mz_feature)
+  
+  mz_feature_cluster<-data.table(mz=mz,mz_align=mz_align)
+  
+  Peptide_plot_list<-merge(Peptide_plot_list,mz_feature_cluster,by="mz",all=T)
+  
+  mz=unique(Peptide_plot_list$mz_align)
+  
+  Peptide_plot_list_rank<-bplapply(mz,function(x,Peptide_plot_list){
+    
+    randklist <- Peptide_plot_list[Peptide_plot_list$mz_align==x,]
+    
+    randklist$Rank<- as.numeric(factor(randklist$Score,levels=sort(unique(randklist$Score),decreasing = T)))
+    
+    return(randklist)
+    
+  },Peptide_plot_list,BPPARAM=BPPARAM)
   
   Peptide_plot_list_rank<-do.call(rbind,Peptide_plot_list_rank)
+  
   return(Peptide_plot_list_rank)
 }
