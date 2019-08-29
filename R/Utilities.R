@@ -1278,3 +1278,135 @@ rank_mz_feature<-function(Peptide_plot_list,mz_feature,BPPARAM=bpparam()){
   
   return(Peptide_plot_list_rank)
 }
+
+plotRanges <- function(ranged,labels=NULL,do.labs=T,skip.plot.new=F,lty="solid", alt.y=NULL,
+                       v.lines=FALSE,ylim=NULL,xlim=NULL,scl=c("b","Kb","Mb","Gb"),
+                       col=NULL,srt=0,pos=4,pch=1,lwd=1,cex=1,...) {
+  if(!is(ranged)[1] %in% c("RangedData","GRanges")) { 
+    warning("ranged needs to be a RangedData or GRanges object, plot likely to fail") ; return(NULL) }
+  chk <- chrNums(ranged)
+  typ <- is(ranged)[1]
+  if(!is.null(alt.y)) {
+    if(is.numeric(alt.y)) {
+      if(length(alt.y)==1 | length(alt.y)==length(ranged)) {
+        yy <- alt.y
+      } else {
+        warning("alt.y ignored, must be same length as ranged, or else length 1"); alt.y <- NULL
+      }
+    } else {
+      if(is.character(alt.y)) {
+        if(typ=="GRanges") { 
+          cn <- colnames(mcols(ranged)); df <- mcols(ranged)
+        } else {
+          cn <- colnames(ranged); df <- ranged
+        }
+        if(!alt.y %in% cn) { stop("alternative y.axis column name ",alt.y," not found in 'ranged'") }
+        yy <- df[,alt.y]; rm(df)
+      } else { 
+        warning("invalid value for alt.y, ignoring"); alt.y <- NULL
+      }
+    }
+  }
+  if(!is.null(labels)) {
+    labels <- paste(labels)
+    if(is.character(labels)) {
+      if(length(labels)==1 | length(labels)==length(ranged)) {
+        if(length(labels)==1) {
+          if(typ=="GRanges") { 
+            cn <- colnames(mcols(ranged)); df <- mcols(ranged)
+          } else {
+            cn <- colnames(ranged); df <- ranged
+          }
+          if(!labels %in% cn) { stop("labels column name ",labels," not found in 'ranged'") }
+          lab <- df[,labels]; rm(df)
+        } else {
+          lab <- labels
+        }
+      } else {
+        warning("labels ignored, must be same length as ranged, or else length 1"); labels <- NULL
+      }
+    } else {
+      warning("invalid value for labels, ignoring"); labels <- NULL
+    }
+  } else {
+    lab <- rownames(ranged) 
+  } 
+  if(length(chk)>1) { 
+    warning(length(chk)," chromosomes in 'ranged', only using the first, chr",chk[1]) 
+    ranged <- chrSel(ranged,1) 
+  }
+  if(all(width(ranged)<=1)) { theyAreSnps <- TRUE } else { theyAreSnps <- FALSE }
+  scl <- make.divisor(scl)
+  xl <- range(c(start(ranged),end(ranged)),na.rm=T)
+  xl <- xl + ((diff(xl)*0.1)*c(-1,1))
+  xl <- xl/scl
+  nr <- nrow(ranged); if(is.null(nr)) { nr <- length(ranged) }
+  if(is.null(alt.y)) {
+    yl <- c(0,(nr+2))
+  } else {
+    yl <- range(yy,na.rm=T)
+  }
+  if(is.numeric(ylim) & length(ylim)==2) {
+    ylim <- range(ylim,na.rm=T)
+    ydif <- diff(ylim)
+    yl <- ylim
+  }
+  if(is.numeric(xlim) & length(xlim)==2) {
+    xlim <- range(xlim,na.rm=T)
+    xdif <- diff(xlim)
+    xl <- xlim
+  }
+  if(is.null(alt.y)) {
+    YY <- seq(from=yl[1],to=yl[2],length.out=nr+2)[-1]
+  } else {
+    if(length(yy)==1) { YY <- rep(yy,length(nr)) } else { YY <- yy }
+  }
+  #print(YY)
+  if(!is.null(col)) {
+    if(length(col)==1) {
+      col <- rep(col,times=nr) 
+    } else {
+      if(length(col)!=nr) { warning("col was not the same length as ranged, using first only"); col <- rep(col[1],nr) }
+    }
+  }
+  if(is.null(col)) {
+    if(nr>22) { colz <- rep("black",nr) } else { colz <- get.distinct.cols(nr) }
+  } else { colz <- col[1:nr] }
+  if(is.null(lab) & do.labs) { lab <- paste(1:nr) } # last resort
+  if(!skip.plot.new) {
+    position <- c(start(ranged[1,]),end(ranged[1,]))/scl
+    Y <- YY[c(1,1)]
+    #prv(position,Y)
+    TY <- if(theyAreSnps) { "p" } else { "l" }
+    if(v.lines) {
+      plot(x=position, y=Y, xlim=xl, ylim=yl, type=TY, col="white", lty=lty, ...)
+      abline(v=position,col=colz[1])
+    } else {
+      plot(x=position, y=Y, xlim=xl, ylim=yl, type=TY, col=colz[1], lty=lty, lwd=lwd, cex=cex, ...)
+    }
+    st <- 2
+  } else {
+    st <- 1
+  }
+  if(nr>1 | st==1) {
+    for (cc in st:nr) {
+      if(v.lines) {
+        abline(v=c(start(ranged[cc,]),end(ranged[cc,]))/scl,col=colz[cc],lty=lty)
+      } else {
+        if(theyAreSnps) { 
+          points(x=c(start(ranged[cc,]),end(ranged[cc,]))/scl,y=YY[c(cc,cc)],col=colz[cc], pch=pch, cex=cex)
+        } else { 
+          lines(x=c(start(ranged[cc,]),end(ranged[cc,]))/scl,y=YY[c(cc,cc)],col=colz[cc], lty=lty, lwd=lwd)
+        }
+      }
+    }
+  }
+  if(do.labs) {
+    for (cc in 1:nr) {
+      if(v.lines) { YY <- rep(tail(YY,1),length(YY)) }
+      V.scale <- (diff(head(YY,2))*0.5)
+      if(length(V.scale)<1 | srt!=90) { V.scale <- 0 }
+      text(x=start(ranged[cc,])/scl,y=YY[cc]+V.scale,labels=lab[cc],cex=0.6,pos=pos,offset=0,srt=srt)
+    }
+  }
+}

@@ -118,7 +118,7 @@ Protein_feature_list_fun<-function(workdir=getwd(),
   
   Decoy_adducts=Decoy_adducts[!(Decoy_adducts %in% adducts)]
   Decoy_adducts=Decoy_adducts[1:length(adducts)]
-  list_of_protein_sequence<-readAAStringSet(database,
+  list_of_protein_sequence<<-readAAStringSet(database,
                                             format="fasta",
                                             nrec=-1L, 
                                             skip=0L, 
@@ -184,6 +184,7 @@ Protein_feature_list_fun<-function(workdir=getwd(),
     peplist<-c(peplist,peplist_option)
     
     Index_of_protein_sequence_list<-rbind(Index_of_protein_sequence_list,Index_of_protein_sequence_option)
+    
   }
   
   #message(paste("Peptide list generated",length(peplist),"entries in total."))

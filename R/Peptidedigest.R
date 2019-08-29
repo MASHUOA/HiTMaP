@@ -2132,46 +2132,33 @@ if(PMFsearch){
       Peptide_plot_list_Score=bplapply(Peptide_plot_list$formula,SCORE_PMF,peaklist=peaklist,isotopes=isotopes,score_method=score_method,charge = 1,ppm=ppm,BPPARAM = BPPARAM)
       #testscore=lapply("C50H77N11O10S1Na1",SCORE_PMF,score_method=score_method,peaklist=peaklist,isotopes=isotopes,charge = 1,ppm=ppm)
       #Peptide_plot_list_Score=lapply(testdf$formula,SCORE_PMF,peaklist=peaklist,isotopes=isotopes,score_method=score_method,charge = 1,ppm=ppm)
-      Peptide_plot_list_Score_decoyisotope=bplapply(Peptide_plot_list$formula,SCORE_PMF,peaklist=peaklist,isotopes=decoy_isotopes,score_method=score_method,charge = 1,ppm=ppm,BPPARAM = BPPARAM)
-      Peptide_plot_list_Score_decoyisotope_N=bplapply(Peptide_plot_list$formula,SCORE_PMF,peaklist=peaklist,isotopes=decoy_isotopes_N,score_method=score_method,charge = 1,ppm=ppm,BPPARAM = BPPARAM)
+      #Peptide_plot_list_Score_decoyisotope=bplapply(Peptide_plot_list$formula,SCORE_PMF,peaklist=peaklist,isotopes=decoy_isotopes,score_method=score_method,charge = 1,ppm=ppm,BPPARAM = BPPARAM)
+      #Peptide_plot_list_Score_decoyisotope_N=bplapply(Peptide_plot_list$formula,SCORE_PMF,peaklist=peaklist,isotopes=decoy_isotopes_N,score_method=score_method,charge = 1,ppm=ppm,BPPARAM = BPPARAM)
       
       #Peptide_plot_list_Score=bplapply(Peptide_plot_list$formula,SCORE_PMF,peaklist,BPPARAM = BPPARAM)
       Peptide_plot_list_Score=unlist(Peptide_plot_list_Score)
-      Peptide_plot_list_Score_decoyisotope=unlist(Peptide_plot_list_Score_decoyisotope)
-      Peptide_plot_list_decoy=Peptide_plot_list
-      Peptide_plot_list_decoy$isdecoy=1
-      Peptide_plot_list_decoy$Score=Peptide_plot_list_Score_decoyisotope
+      #Peptide_plot_list_Score_decoyisotope=unlist(Peptide_plot_list_Score_decoyisotope)
+      #Peptide_plot_list_decoy=Peptide_plot_list
+      #Peptide_plot_list_decoy$isdecoy=1
+      #Peptide_plot_list_decoy$Score=Peptide_plot_list_Score_decoyisotope
       Peptide_plot_list$Score=Peptide_plot_list_Score
       #Peptide_plot_list_Score_frame=do.call(rbind,Peptide_plot_list_Score)
-      Peptide_plot_list<-rbind(Peptide_plot_list,Peptide_plot_list_decoy)
+      #Peptide_plot_list<-rbind(Peptide_plot_list,Peptide_plot_list_decoy)
       
       Peptide_plot_list_rank=rank_mz_feature(Peptide_plot_list,mz_feature=deconv_peaklist,BPPARAM = BPPARAM)
       Peptide_plot_list_rank=Peptide_plot_list_rank[Peptide_plot_list_rank$Rank<=Rank,]
       Peptide_plot_list_rank<-Peptide_plot_list_rank[,c("mz","Peptide","adduct","formula","isdecoy","Intensity","moleculeNames","Region","Score",        
                                                         "mz_align","Rank")]
       
-      Protein_feature_list_rank=merge(Protein_feature_list,Peptide_plot_list_rank,by=c("mz","Peptide","adduct","formula","isdecoy"))
+      Protein_feature_result<-protein_scoring(Protein_feature_list,Peptide_plot_list_rank)
       
-      sum_pro_int<-Protein_feature_list_rank %>% group_by(.dots=c("Protein","isdecoy")) %>% summarize(Intensity=mean(Intensity)) 
-      
-      sum_pro_score<-Protein_feature_list_rank %>% group_by(.dots=c("Protein","isdecoy")) %>% summarize(Score=mean(Score)) 
-      
-      sum_pro_pep_count<-Protein_feature_list_rank %>% group_by(.dots=c("Protein","isdecoy")) %>% summarize(peptide_count=length(unique(formula))) 
-      
-      Protein_feature_result<-merge(sum_pro_int,sum_pro_score,by=c("Protein","isdecoy"))
-      
-      Protein_feature_result<-merge(Protein_feature_result,sum_pro_pep_count,by=c("Protein","isdecoy"))
-      
-      Protein_feature_result$Proscore=(log(Protein_feature_result$Intensity,100) + Protein_feature_result$Score)* log(Protein_feature_result$peptide_count)
-      
-      
-      write.csv(Protein_feature_result,paste0(datafile[z] ," ID/",SPECTRUM_batch,"/Protein_1st_ID_score_rank",score_method,".csv"),row.names = F)
-      
+      write.csv(Protein_feature_result,paste0(datafile[z] ," ID/",SPECTRUM_batch,"/Protein_ID_score_rank",score_method,".csv"),row.names = F)
+      write.csv(Protein_feature_result,paste("Protein_segment_PMF_RESULT",SPECTRUM_batch,".csv"),row.names = F)
       #group_by(c("Protein","isdecoy"))  %>%  summarize(sum("Intensity"))
       
       write.csv(Peptide_plot_list_rank,paste0(datafile[z] ," ID/",SPECTRUM_batch,"/Peptide_1st_ID_score_rank",score_method,".csv"),row.names = F)
-      FDR_cutoff= FDR_cutoff_plot(Peptide_plot_list_rank,FDR_cutoff=0.2,plot_fdr=T,outputdir=paste0(datafile[z] ," ID/",SPECTRUM_batch),adjust_score = F)
-      Peptide_plot_list_2nd=Peptide_plot_list_rank[((Peptide_plot_list_rank$Score>=FDR_cutoff)&(!is.na(Peptide_plot_list_rank$Intensity))&(Peptide_plot_list_rank$isdecoy==0)),]
+      Score_cutoff= FDR_cutoff_plot(Peptide_plot_list_rank,FDR_cutoff=0.1,plot_fdr=T,outputdir=paste0(datafile[z] ," ID/",SPECTRUM_batch),adjust_score = F)
+      Peptide_plot_list_2nd=Peptide_plot_list_rank[((Peptide_plot_list_rank$Score>=Score_cutoff)&(!is.na(Peptide_plot_list_rank$Intensity))&(Peptide_plot_list_rank$isdecoy==0)),]
 
       write.csv(Peptide_plot_list_2nd,paste0(datafile[z] ," ID/",SPECTRUM_batch,"/Peptide_2nd_ID_score_rank",score_method,"_Rank_above_",Rank,".csv"),row.names = F)
       plot_matching_score(Peptide_plot_list_2nd,peaklist,charge=1,ppm,outputdir=paste0(datafile[z] ," ID/",SPECTRUM_batch,"/ppm"))
@@ -2883,4 +2870,99 @@ spec_peakdetect<-function(x){
   names(spectra) <- type$SpectID # spectra IDs are lost with removeBaseline()
   # Summary of spectra features (results for positions 10 to 20)
   summarySpectra(spectra[10:20])
+}
+
+protein_scoring<-function(Protein_feature_list,Peptide_plot_list_rank){
+  
+  library(dplyr)
+  
+  Protein_feature_list_rank=merge(Protein_feature_list,Peptide_plot_list_rank,by=c("mz","Peptide","adduct","formula","isdecoy"))
+  
+  sum_pro_int<-Protein_feature_list_rank %>% group_by(.dots=c("Protein","isdecoy")) %>% summarize(Intensity=mean(Intensity)) 
+  
+  sum_pro_score<-Protein_feature_list_rank %>% group_by(.dots=c("Protein","isdecoy")) %>% summarize(Score=mean(Score)) 
+  
+  sum_pro_pep_count<-Protein_feature_list_rank %>% group_by(.dots=c("Protein","isdecoy")) %>% summarize(peptide_count=length(unique(Peptide))) 
+  
+  #if (missing(sum_pro_pep_count_thero)){
+  #  sum_pro_pep_count_thero<-Protein_feature_list %>% group_by(.dots=c("Protein","isdecoy")) %>% summarize(peptide_count_thero=length(unique(Peptide)))
+  #}
+  
+  list_of_protein_sequence<-get("list_of_protein_sequence", envir = .GlobalEnv)
+  
+  sum_pro_coverage <- unlist(bplapply(sum_pro_int$Protein, function(x,Protein_feature_list_rank,list_of_protein_sequence,peptide_map_to_protein){
+    protein_seq<-try(list_of_protein_sequence[x],silent = T)
+    peptides<-unique(Protein_feature_list_rank$Peptide[Protein_feature_list_rank$Protein==x])
+    if (class(protein_seq)!="try-error"){
+     peptide_map_to_protein(peptides = peptides, protein_seq = protein_seq)
+    }else{return(1)}
+  },Protein_feature_list_rank=Protein_feature_list_rank,list_of_protein_sequence=list_of_protein_sequence,peptide_map_to_protein=peptide_map_to_protein,BPPARAM = BPPARAM))
+  
+  
+  
+  #sum_pro_pep_count<-merge(sum_pro_pep_count,sum_pro_pep_count_thero,by=c("Protein","isdecoy"),all.x=T)
+  sum_pro_pep_count$peptide_coverage<-sum_pro_coverage
+  
+  #sum_pro_pep_count$peptide_coverage=sum_pro_pep_count$peptide_count/sum_pro_pep_count$peptide_count_thero
+  
+  Protein_feature_result<-merge(sum_pro_int,sum_pro_score,by=c("Protein","isdecoy"))
+  
+  Protein_feature_result<-merge(Protein_feature_result,sum_pro_pep_count,by=c("Protein","isdecoy"))
+  
+  Protein_feature_result$Intensity_norm<-Protein_feature_result$Intensity/median(Protein_feature_result$Intensity)
+  
+  Protein_feature_result$Proscore=(Protein_feature_result$Intensity_norm*10 + Protein_feature_result$Score) * Protein_feature_result$peptide_coverage
+  
+  return(Protein_feature_result)
+}
+
+peptide_map_to_protein<-function(peptides, protein_seq){
+  #peptides<-Protein_feature_list_rank[Protein_feature_list_rank$Protein=="sp|A2ASS6|TITIN_MOUSE Titin OS=Mus musculus OX=10090 GN=Ttn PE=1 SV=1",]
+  #protein_seq=list_of_protein_sequence["sp|A2ASS6|TITIN_MOUSE Titin OS=Mus musculus OX=10090 GN=Ttn PE=1 SV=1"]
+  #protein_seq=seq(protein_seq)
+  suppressMessages(library(Biostrings))
+  suppressMessages(library(IRanges))
+  s1=AAStringSet(peptides)
+  
+  s2=protein_seq
+  palign1 <- pairwiseAlignment(s1, s2,type="overlap")
+  coverage_ranges<-palign1@subject@range
+  cov <- coverage(coverage_ranges)
+  
+  #plotRanges(cov)
+  cov <- as.vector(cov)
+  cov_len<-length(which(cov==1))
+  
+  coverage_percentage=cov_len/width(protein_seq)
+  return(coverage_percentage)
+  
+}
+
+seq.cov <- function(x,plot_coverage=F){
+  suppressMessages(library(IRanges))
+  if(!class(x)=="PairwiseAlignmentsSingleSubject"){
+    message('Only supports objects from class PairwiseAlignedFixedSubject')
+    stop()
+  }
+  
+  coverage_ranges<-x@subject@range
+  #coverage_table<-NULL
+  #coverage_table$start<-coverage_ranges@start
+  #coverage_table$end<-coverage_ranges@start+coverage_ranges@width-1
+  #coverage_table$width<-coverage_ranges@width
+  #coverage_table<-data.frame(coverage_table,stringsAsFactors = F)
+  cov <- coverage(coverage_ranges)
+  
+  #plotRanges(cov)
+  cov <- as.vector(cov)
+  cov_len<-length(which(cov==1))
+  #mat <- cbind(seq_along(cov)-0.5, cov)
+  #d <- diff(cov) != 0
+  #mat <- rbind(cbind(mat[d,1]+1, mat[d,2]), mat)
+  #mat <- mat[order(mat[,1]),]
+  #lines(mat, col="red", lwd=4)
+  #axis(2)
+  
+  
+  return(cov_len)
 }
