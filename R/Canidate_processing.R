@@ -102,7 +102,7 @@ Protein_feature_list_fun<-function(workdir=getwd(),
                                    adducts=c("M+H","M+NH4","M+Na"),
                                    BPPARAM=bpparam(),
                                    Decoy_adducts=c("M+He","M+Ne","M+Ar","M+Kr","M+Xe","M+Rn"),
-                                   Decoy_mode=c("adducts","elements"),
+                                   Decoy_mode=c("adducts","elements","isotope"),
                                    Decoy_search=T,
                                    mzrange=c(500,4000)){
   library(Biostrings)
@@ -272,7 +272,8 @@ Protein_feature_list_fun<-function(workdir=getwd(),
     library(enviPat)
     library(rcdk)
     total_target_mols<-unique(Protein_Summary$formula)
-    target_mz=unique(round(Protein_Summary$mz,digits = 3))
+
+    target_mz=unique(round(as.numeric(Protein_Summary$mz),digits = 3))
     select_mol_num=ceiling(length(total_target_mols)/length(target_mz))
     
     decoymol<-bplapply(target_mz,function(x,ppm,select_mol_num){
@@ -316,7 +317,7 @@ Protein_feature_list_fun<-function(workdir=getwd(),
     decoymol<-decoymol[!(decoymol %in% Protein_Summary$formula)]
     
     decoy_tempdf=data.frame(stringsAsFactors = F,
-                            Protein=paste("Decoy_",rep(decoy_mz,length_decoydf),sep=""),
+                            Protein=paste("Decoy_protein",sep=""),
                             Peptide=paste("Decoy_",rep(decoy_mz,length_decoydf),sep=""),
                             pepmz=rep(decoy_mz,length_decoydf),
                             formula=decoymolvec,mz=rep(decoy_mz,length_decoydf),adduct="M",

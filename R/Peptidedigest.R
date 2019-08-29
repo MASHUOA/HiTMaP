@@ -132,7 +132,9 @@ imaging_identification<-function(
                                                   Virtual_segmentation_rankfile = Virtual_segmentation_rankfile,
                                                   BPPARAM = BPPARAM,
                                                   Bypass_generate_spectrum=Bypass_generate_spectrum,
-                                                  score_method = score_method,Protein_feature_list=Protein_feature_list)
+                                                  score_method = score_method,
+                                                  Protein_feature_list=Protein_feature_list,
+                                                  Decoy_mode=Decoy_mode)
   
   }
   #Summarize the peptide list
@@ -1790,6 +1792,7 @@ PMF_Cardinal_Datafilelist<-function(datafile,Peptide_Summary_searchlist,
                                     score_method="balanced-SQRT",
                                     Rank=3,
                                     Protein_feature_list=NULL,
+                                    Decoy_mode="",
                                     ...){
   library(data.table)
   library(Cardinal)
@@ -2006,6 +2009,7 @@ PMF_Cardinal_Datafilelist<-function(datafile,Peptide_Summary_searchlist,
       yaxt="n",
       no.readonly = TRUE,ann=FALSE)
   Cardinal::image(skm, col=brewer.pal(SPECTRUM_for_average,colorstyle), key=FALSE, ann=FALSE,axes=FALSE)
+  
   legend("topright", legend=1:SPECTRUM_for_average, fill=brewer.pal(SPECTRUM_for_average,colorstyle), col=brewer.pal(SPECTRUM_for_average,"Paired"), bg="transparent",xpd=TRUE,cex = 1)
   
   #Cardinal::plot(skm, col=brewer.pal(SPECTRUM_for_average,colorstyle), type=c('p','h'), key=FALSE)
@@ -2119,10 +2123,8 @@ if(PMFsearch){
       library(enviPat)
       library(ggplot2)
       data(isotopes)
-      decoy_isotopes=isotopes
-      decoy_isotopes[11,]=data.frame(element="C",isotope="11C",mass=10.99664516,aboudance=0.0107,ratioC=0,stringsAsFactors = F)
-      decoy_isotopes_N=isotopes
-      decoy_isotopes_N[13,]=data.frame(element="N",isotope="15N",mass=15.000108970		,aboudance=0.01070000,ratioC=4,stringsAsFactors = F)
+      
+      
       Peptide_plot_list<-read.csv(paste0(datafile[z] ," ID/",SPECTRUM_batch,"/Peptide_1st_ID.csv"),stringsAsFactors = F)
       #message("Scoring peptide...")
       #message(head(Peptide_plot_list$formula))
@@ -2144,7 +2146,14 @@ if(PMFsearch){
       Peptide_plot_list$Score=Peptide_plot_list_Score
       #Peptide_plot_list_Score_frame=do.call(rbind,Peptide_plot_list_Score)
       #Peptide_plot_list<-rbind(Peptide_plot_list,Peptide_plot_list_decoy)
+      if (Decoy_search && ("isotope" %in% Decoy_mode)){
+      decoy_isotopes=isotopes
+      decoy_isotopes[11,]=data.frame(element="C",isotope="11C",mass=10.99664516,aboudance=0.0107,ratioC=0,stringsAsFactors = F)
+      #decoy_isotopes_N=isotopes
+      decoy_isotopes[13,]=data.frame(element="N",isotope="13N",mass=13.00603905,aboudance=0.00364000,ratioC=4,stringsAsFactors = F)
       
+      Peptide_plot_list_Score_decoy=bplapply(Peptide_plot_list$formula,SCORE_PMF,peaklist=peaklist,isotopes=decoy_isotopes,score_method=score_method,charge = 1,ppm=ppm,BPPARAM = BPPARAM)
+      }
       Peptide_plot_list_rank=rank_mz_feature(Peptide_plot_list,mz_feature=deconv_peaklist,BPPARAM = BPPARAM)
       Peptide_plot_list_rank=Peptide_plot_list_rank[Peptide_plot_list_rank$Rank<=Rank,]
       Peptide_plot_list_rank<-Peptide_plot_list_rank[,c("mz","Peptide","adduct","formula","isdecoy","Intensity","moleculeNames","Region","Score",        
@@ -2397,7 +2406,7 @@ SCORE_PMF<-function(formula,peaklist,isotopes=NULL,threshold=2.5,charge=1,ppm=5,
    # for(i in 1:nrow(bottom))
    #   top[,1][bottom[,1][i] >= top[,1] - t & bottom[,1][i] <= top[,1] + t] <- bottom[,1][i]
     alignment <- merge(top, bottom, by = 1, all = TRUE)
-    if(length(unique(alignment[,1])) != length(alignment[,1])) warning("the m/z tolerance is set too high")
+    #if(length(unique(alignment[,1])) != length(alignment[,1])) warning("the m/z tolerance is set too high")
     alignment[,c(2,3)][is.na(alignment[,c(2,3)])] <- 0   # convert NAs to zero (R-Help, Sept. 15, 2004, John Fox)
     names(alignment) <- c("mz", "intensity.top", "intensity.bottom")
     
@@ -2416,10 +2425,10 @@ SCORE_PMF<-function(formula,peaklist,isotopes=NULL,threshold=2.5,charge=1,ppm=5,
     
     if (score_method=="SQRT"){
       u <- alignment[,2]; v <- alignment[,3]
-      
+      #sum( u*v)
       #similarity_score <- as.vector((u %*% v) / (sqrt(sum(u^2)) * sqrt(sum(v^2)))) 
       
-      similarity_score <- -log(as.vector(sqrt(sum(((u-v)*u)^2)) / (sqrt(sum(u^2)) * sqrt(sum(v^2))))) 
+      similarity_score <- -log(as.vector(sqrt(sum(((u-v))^2)) / (sqrt(sum(u^2)) * sqrt(sum(v^2))))) 
       
     }else if (score_method=="balanced-SQRT"){
       u <- alignment[,2]; v <- alignment[,3]
@@ -2566,7 +2575,7 @@ SCORE_PMF<-function(formula,peaklist,isotopes=NULL,threshold=2.5,charge=1,ppm=5,
   Peak_intensity<-spectrum$Intensity[spectrum$mz==monomass]
   #message(head(spectrum))
   #message(c(min(range(pattern[,1],na.rm = T))-1," ",max(range(pattern[,1],na.rm = T))+1))
-  score=Spectrum_scoring(pattern,spectrum,b=0,t=mean(pattern[,1])*ppm/1000000,top.label = "Theoretical",score_method=score_method,bottom.label = "Observed spectrum",xlim = c(min(range(pattern[,1],na.rm = T))-1,max(range(pattern[,1],na.rm = T))+1),output.list=output.list,print.graphic = print.graphic,outputfile = outputfile,Peak_intensity=Peak_intensity)
+  score=Spectrum_scoring(spec.top = pattern,spec.bottom = spectrum,b=0,t=mean(pattern[,1])*ppm/1000000,top.label = "Theoretical",score_method=score_method,bottom.label = "Observed spectrum",xlim = c(min(range(pattern[,1],na.rm = T))-1,max(range(pattern[,1],na.rm = T))+1),output.list=output.list,print.graphic = print.graphic,outputfile = outputfile,Peak_intensity=Peak_intensity)
   #score
   #message(score)
   return(score)
