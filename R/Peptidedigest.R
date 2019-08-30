@@ -134,7 +134,8 @@ imaging_identification<-function(
                                                   Bypass_generate_spectrum=Bypass_generate_spectrum,
                                                   score_method = score_method,
                                                   Protein_feature_list=Protein_feature_list,
-                                                  Decoy_mode=Decoy_mode)
+                                                  Decoy_mode=Decoy_mode,
+                                                  Decoy_search=Decoy_search)
   
   }
   #Summarize the peptide list
@@ -1793,6 +1794,7 @@ PMF_Cardinal_Datafilelist<-function(datafile,Peptide_Summary_searchlist,
                                     Rank=3,
                                     Protein_feature_list=NULL,
                                     Decoy_mode="",
+                                    Decoy_search=T,
                                     ...){
   library(data.table)
   library(Cardinal)
@@ -2148,12 +2150,24 @@ if(PMFsearch){
       #Peptide_plot_list<-rbind(Peptide_plot_list,Peptide_plot_list_decoy)
       if (Decoy_search && ("isotope" %in% Decoy_mode)){
       decoy_isotopes=isotopes
-      decoy_isotopes[11,]=data.frame(element="C",isotope="11C",mass=10.99664516,aboudance=0.0107,ratioC=0,stringsAsFactors = F)
+      decoy_isotopes[decoy_isotopes$isotope=="13C",]=data.frame(element="C",isotope="11C",mass=10.99664516,aboudance=0.0107,ratioC=0,stringsAsFactors = F)
       #decoy_isotopes_N=isotopes
-      decoy_isotopes[13,]=data.frame(element="N",isotope="13N",mass=13.00603905,aboudance=0.00364000,ratioC=4,stringsAsFactors = F)
-      
+      decoy_isotopes[decoy_isotopes$isotope=="15N",]=data.frame(element="N",isotope="13N",mass=13.00603905,aboudance=0.00364000,ratioC=4,stringsAsFactors = F)
+      decoy_isotopes[decoy_isotopes$isotope=="2H",]=data.frame(element="H",isotope="0H",mass=0.001548286,aboudance=0.00011500,ratioC=6,stringsAsFactors = F)
+      decoy_isotopes[decoy_isotopes$isotope=="17O",]=data.frame(element="O",isotope="15O",mass=14.99069774,aboudance=0.00038000,ratioC=3,stringsAsFactors = F)
+      decoy_isotopes[decoy_isotopes$isotope=="18O",]=data.frame(element="O",isotope="14O",mass=13.99066884,aboudance=0.00205000,ratioC=3,stringsAsFactors = F)
+      decoy_isotopes[decoy_isotopes$isotope=="33S",]=data.frame(element="S",isotope="31S",mass=30.97268292,aboudance=0.0075,ratioC=3,stringsAsFactors = F)
+      decoy_isotopes[decoy_isotopes$isotope=="34S",]=data.frame(element="S",isotope="30S",mass=29.9762745,aboudance=0.0425,ratioC=3,stringsAsFactors = F)
+      decoy_isotopes[decoy_isotopes$isotope=="35S",]=data.frame(element="S",isotope="29S",mass=28.94414146,aboudance=0,ratioC=3,stringsAsFactors = F)
+      decoy_isotopes[decoy_isotopes$isotope=="36S",]=data.frame(element="S",isotope="28S",mass=27.97706058,aboudance=0.0001,ratioC=3,stringsAsFactors = F)
       Peptide_plot_list_Score_decoy=bplapply(Peptide_plot_list$formula,SCORE_PMF,peaklist=peaklist,isotopes=decoy_isotopes,score_method=score_method,charge = 1,ppm=ppm,BPPARAM = BPPARAM)
+      Peptide_plot_list_Score_decoy=unlist(Peptide_plot_list_Score_decoy)
+      Peptide_plot_list_decoy=Peptide_plot_list
+      Peptide_plot_list_decoy$isdecoy=1
+      Peptide_plot_list_decoy$Score=Peptide_plot_list_Score_decoy
+      Peptide_plot_list<-rbind(Peptide_plot_list,Peptide_plot_list_decoy)
       }
+      
       Peptide_plot_list_rank=rank_mz_feature(Peptide_plot_list,mz_feature=deconv_peaklist,BPPARAM = BPPARAM)
       Peptide_plot_list_rank=Peptide_plot_list_rank[Peptide_plot_list_rank$Rank<=Rank,]
       Peptide_plot_list_rank<-Peptide_plot_list_rank[,c("mz","Peptide","adduct","formula","isdecoy","Intensity","moleculeNames","Region","Score",        
@@ -2417,18 +2431,24 @@ SCORE_PMF<-function(formula,peaklist,isotopes=NULL,threshold=2.5,charge=1,ppm=5,
     
     ## similarity score calculation
     
-    if(x.threshold < 0) stop("x.threshold argument must be zero or a positive number")
+    #if(x.threshold < 0) stop("x.threshold argument must be zero or a positive number")
     
-    alignment <- alignment[alignment[,1] >= x.threshold, ]
+    #alignment <- alignment[alignment[,1] >= x.threshold, ]
+    
+    match_score <- sum(`&`(alignment$intensity.top>0,alignment$intensity.bottom>0))
     
    # u <- alignment[,2]; v <- alignment[,3]
     
     if (score_method=="SQRT"){
       u <- alignment[,2]; v <- alignment[,3]
+      #u<-u/100; v<-v/100
+      
       #sum( u*v)
       #similarity_score <- as.vector((u %*% v) / (sqrt(sum(u^2)) * sqrt(sum(v^2)))) 
       
-      similarity_score <- -log(as.vector(sqrt(sum(((u-v))^2)) / (sqrt(sum(u^2)) * sqrt(sum(v^2))))) 
+      similarity_score <- -log(as.vector(sqrt(sum(((u-v))^2)) / (sqrt(sum(u^2)) * sqrt(sum(v^2)))))
+      
+      #similarity_score <- -log(as.vector(sqrt(sum(((u-v))^2)) ))
       
     }else if (score_method=="balanced-SQRT"){
       u <- alignment[,2]; v <- alignment[,3]
@@ -2490,6 +2510,7 @@ SCORE_PMF<-function(formula,peaklist,isotopes=NULL,threshold=2.5,charge=1,ppm=5,
       #p<-magick::image_read(tempfilename)
     }
     
+    if (abs(similarity_score)==Inf) similarity_score = 0
     if(output.list == TRUE) {
       
       # Grid graphics head to tail plot
@@ -2519,8 +2540,9 @@ SCORE_PMF<-function(formula,peaklist,isotopes=NULL,threshold=2.5,charge=1,ppm=5,
     
     pattern_ppm_delta=numeric()
     
-    filtered_pattern<-data.frame()
+    
     filtered_pattern<-pattern[1,]
+    filtered_pattern<-t(data.frame(filtered_pattern,stringsAsFactors = F))
     #dim(filtered_pattern)
     for (i in 1:(length(pattern_ppm)-1)){
       
@@ -2560,11 +2582,12 @@ SCORE_PMF<-function(formula,peaklist,isotopes=NULL,threshold=2.5,charge=1,ppm=5,
   #message(pattern)
   pattern=pattern[[formula]]
   pattern=isopattern_ppm_filter(pattern = pattern[,1:2], ppm=ppm)
-  monomass=pattern[1,1]
-  m_1_pattern=data.frame("m/z"=pattern[1,1]-(1.003354840/ifelse(charge==0,1,abs(charge))),abundance=0)
-  colnames(m_1_pattern)=colnames(pattern[,1:2])
-  pattern=rbind(m_1_pattern,pattern[,1:2])
-  rownames(pattern)=1:nrow(pattern)
+  
+  #monomass=pattern[1,1]
+  #m_1_pattern=data.frame("m/z"=pattern[1,1]-(1.003354840/ifelse(charge==0,1,abs(charge))),abundance=0)
+  #colnames(m_1_pattern)=colnames(pattern[,1:2])
+  #pattern=rbind(m_1_pattern,pattern[,1:2])
+  #rownames(pattern)=1:nrow(pattern)
   #message(charge)
   spectrumintensity=unlist(lapply(1:nrow(pattern), function(x,pattern,peaklist,ppm){
     PMF_spectrum_intensity<-as.numeric(peaklist[between(peaklist$m.z,pattern[x,1]*(1-ppm/1000000),pattern[x,1]*(1+ppm/1000000)),2])
@@ -2572,12 +2595,13 @@ SCORE_PMF<-function(formula,peaklist,isotopes=NULL,threshold=2.5,charge=1,ppm=5,
   },pattern,peaklist,ppm))
   #message(spectrumintensity)
   spectrum=data.frame(mz=pattern[,1],Intensity=spectrumintensity)
-  Peak_intensity<-spectrum$Intensity[spectrum$mz==monomass]
+  Peak_intensity<-max(spectrum$Intensity)
   #message(head(spectrum))
   #message(c(min(range(pattern[,1],na.rm = T))-1," ",max(range(pattern[,1],na.rm = T))+1))
   score=Spectrum_scoring(spec.top = pattern,spec.bottom = spectrum,b=0,t=mean(pattern[,1])*ppm/1000000,top.label = "Theoretical",score_method=score_method,bottom.label = "Observed spectrum",xlim = c(min(range(pattern[,1],na.rm = T))-1,max(range(pattern[,1],na.rm = T))+1),output.list=output.list,print.graphic = print.graphic,outputfile = outputfile,Peak_intensity=Peak_intensity)
   #score
   #message(score)
+  
   return(score)
 }
 
@@ -2905,7 +2929,7 @@ protein_scoring<-function(Protein_feature_list,Peptide_plot_list_rank){
     if (class(protein_seq)!="try-error"){
      peptide_map_to_protein(peptides = peptides, protein_seq = protein_seq)
     }else{return(1)}
-  },Protein_feature_list_rank=Protein_feature_list_rank,list_of_protein_sequence=list_of_protein_sequence,peptide_map_to_protein=peptide_map_to_protein,BPPARAM = BPPARAM))
+  },Protein_feature_list_rank=Protein_feature_list_rank,list_of_protein_sequence=list_of_protein_sequence,peptide_map_to_protein=peptide_map_to_protein))
   
   
   

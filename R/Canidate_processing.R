@@ -114,6 +114,7 @@ Protein_feature_list_fun<-function(workdir=getwd(),
   library(rJava)
   library(rcdklibs)
   library(grid)
+  library(stringr)
   setwd(workdir)
   
   Decoy_adducts=Decoy_adducts[!(Decoy_adducts %in% adducts)]
@@ -207,9 +208,15 @@ Protein_feature_list_fun<-function(workdir=getwd(),
   tempdf<-bplapply( 1: length(names(peplist)), Peptide_Summary_para,peplist,BPPARAM = BPPARAM)
   tempdf <- do.call("rbind", tempdf)
   colnames(tempdf)<-c("Protein","Peptide")
+  
   tempdf<-as.data.frame(tempdf)
+  
   tempdf$Protein<-as.character(tempdf$Protein)
   tempdf$Peptide<-as.character(tempdf$Peptide)
+
+  tempdf<-tempdf[-grep("X",tempdf$Peptide),]
+  tempdf<-tempdf[-grep("U",tempdf$Peptide),]
+  
   tempdf$pepmz <- as.numeric(parentIonMass(tempdf$Peptide,fixmod=AA)- 1.007276 )
   tempdf<-tempdf[`&`(tempdf$pepmz>=mzrange[1],tempdf$pepmz<=mzrange[2]),]
   #tempdf1<-tempdf
@@ -268,7 +275,7 @@ Protein_feature_list_fun<-function(workdir=getwd(),
   }
   if (Decoy_search && ("elements" %in% Decoy_mode)){
     
-    message(paste("Generating peptide formula with Decoy elemental composition:"))
+    message(paste("Generating peptide formula with Decoy elemental composition."))
     library(enviPat)
     library(rcdk)
     total_target_mols<-unique(Protein_Summary$formula)
@@ -276,8 +283,8 @@ Protein_feature_list_fun<-function(workdir=getwd(),
     target_mz=unique(round(as.numeric(Protein_Summary$mz),digits = 3))
     select_mol_num=ceiling(length(total_target_mols)/length(target_mz))
     
-    decoymol<-bplapply(target_mz,function(x,ppm,select_mol_num){
-      library(rcdk)
+    decoymol<-lapply(target_mz,function(x,ppm,select_mol_num){
+      require(rcdk,quietly = T)
      mit <- generate.formula.iter(x, window = x*ppm/(1000000),
                           elements = list(
                             C=c(0,100),
