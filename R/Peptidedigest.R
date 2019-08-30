@@ -2930,7 +2930,7 @@ protein_scoring<-function(Protein_feature_list,Peptide_plot_list_rank){
     if (class(protein_seq)!="try-error"){
      peptide_map_to_protein(peptides = peptides, protein_seq = protein_seq)
     }else{return(1)}
-  },Protein_feature_list_rank=Protein_feature_list_rank,list_of_protein_sequence=list_of_protein_sequence,peptide_map_to_protein=peptide_map_to_protein))
+  },Protein_feature_list_rank=Protein_feature_list_rank,list_of_protein_sequence=list_of_protein_sequence,peptide_map_to_protein=peptide_map_to_protein,BPPARAM = BPPARAM))
   
   
   
@@ -2954,6 +2954,7 @@ peptide_map_to_protein<-function(peptides, protein_seq){
   #peptides<-Protein_feature_list_rank[Protein_feature_list_rank$Protein=="sp|A2ASS6|TITIN_MOUSE Titin OS=Mus musculus OX=10090 GN=Ttn PE=1 SV=1",]
   #protein_seq=list_of_protein_sequence["sp|A2ASS6|TITIN_MOUSE Titin OS=Mus musculus OX=10090 GN=Ttn PE=1 SV=1"]
   #protein_seq=seq(protein_seq)
+  
   suppressMessages(library(Biostrings))
   suppressMessages(library(IRanges))
   s1=AAStringSet(peptides)
@@ -2999,4 +3000,36 @@ seq.cov <- function(x,plot_coverage=F){
   
   
   return(cov_len)
+}
+
+isopattern_ppm_filter<-function(pattern,ppm){
+  
+  pattern_ppm=as.numeric(as.character(pattern[,1]))
+  
+  pattern_ppm_delta=numeric()
+  
+  
+  filtered_pattern<-pattern[1,]
+  filtered_pattern<-t(data.frame(filtered_pattern,stringsAsFactors = F))
+  #dim(filtered_pattern)
+  for (i in 1:(length(pattern_ppm)-1)){
+    
+    pattern_ppm_delta[i]=(pattern_ppm[i+1]-pattern_ppm[i])/pattern_ppm[i]
+    
+    if (pattern_ppm_delta[i]>(ppm/1000000)){
+      filtered_pattern<-rbind(filtered_pattern,pattern[i+1,])
+    } else {
+      #previous_iso=filtered_pattern[nrow(filtered_pattern),]
+      
+      #newline=as.data.frame(list("m/z"=(filtered_pattern[nrow(filtered_pattern),1]*filtered_pattern[nrow(filtered_pattern),2]+pattern[i+1,1]*pattern[i+1,2])/(sum(filtered_pattern[nrow(filtered_pattern),2],pattern[i+1,2])),"abundance"=filtered_pattern[nrow(filtered_pattern),2]+pattern[i+1,2]))
+      #names(newline)=c("m/z","abundance")
+      newline=c((filtered_pattern[nrow(filtered_pattern),1]*filtered_pattern[nrow(filtered_pattern),2]+pattern[i+1,1]*pattern[i+1,2])/(sum(filtered_pattern[nrow(filtered_pattern),2],pattern[i+1,2])),
+                filtered_pattern[nrow(filtered_pattern),2]+pattern[i+1,2])
+      filtered_pattern[nrow(filtered_pattern),]<-newline
+    }
+    
+  }
+  rownames(filtered_pattern)=1:nrow(filtered_pattern)
+  
+  return(filtered_pattern)
 }
