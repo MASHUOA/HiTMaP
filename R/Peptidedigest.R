@@ -57,6 +57,7 @@ imaging_identification<-function(
                adducts=c("M+H","M+NH4","M+Na"),
                Decoy_search=T,
                Decoy_adducts=c("M+ACN+H","M+IsoProp+H","M+DMSO+H","M+Co","M+Ag","M+Cu","M+He","M+Ne","M+Ar","M+Kr","M+Xe","M+Rn"),
+               Decoy_mode = "isotope",
                PMF_analysis=TRUE,
                Bypass_generate_spectrum=F,
                Protein_feature_summary=TRUE,
@@ -105,7 +106,7 @@ imaging_identification<-function(
                                                  adducts=adducts,
                                                  BPPARAM = BPPARAM,
                                                  Decoy_adducts=Decoy_adducts,
-                                                 Decoy_search=Decoy_search,Decoy_mode = "elements"
+                                                 Decoy_search=Decoy_search,Decoy_mode = Decoy_mode
                                                  )
   if(output_candidatelist){
   
@@ -2169,7 +2170,7 @@ if(PMFsearch){
       }
       
       Peptide_plot_list_rank=rank_mz_feature(Peptide_plot_list,mz_feature=deconv_peaklist,BPPARAM = BPPARAM)
-      Peptide_plot_list_rank=Peptide_plot_list_rank[Peptide_plot_list_rank$Rank<=Rank,]
+      #Peptide_plot_list_rank=Peptide_plot_list_rank[Peptide_plot_list_rank$Rank<=Rank,]
       Peptide_plot_list_rank<-Peptide_plot_list_rank[,c("mz","Peptide","adduct","formula","isdecoy","Intensity","moleculeNames","Region","Score",        
                                                         "mz_align","Rank")]
       
