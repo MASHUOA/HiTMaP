@@ -361,8 +361,8 @@ Protein_feature_list_fun<-function(workdir=getwd(),
   if(use_previous_candidates){
     #if (dir.exists(paste(workdir,"/Summary folder",sep=""))==FALSE){dir.create(paste(workdir,"/Summary folder",sep=""))}
     if (sum(c("candidatelist.csv","protein_index.csv") %in% dir(paste(workdir,"/Summary folder",sep="")))==2){
-     Protein_Summary<-read.csv(paste(workdir,"/Summary folder/candidatelist.csv",sep=""),row.names = F)
-    Index_of_protein_sequence<-read.csv(paste(workdir,"/Summary folder/protein_index.csv",sep=""),row.names = F)
+     Protein_Summary<-read.csv(paste(workdir,"/Summary folder/candidatelist.csv",sep=""))
+    Index_of_protein_sequence<<-read.csv(paste(workdir,"/Summary folder/protein_index.csv",sep=""))
     message("Candidate list has been loaded.") 
     }else{stop("Can not find the previously established candidate list.")}
     
