@@ -104,7 +104,9 @@ Protein_feature_list_fun<-function(workdir=getwd(),
                                    Decoy_adducts=c("M+He","M+Ne","M+Ar","M+Kr","M+Xe","M+Rn"),
                                    Decoy_mode=c("adducts","elements","isotope"),
                                    Decoy_search=T,
-                                   mzrange=c(500,4000)){
+                                   mzrange=c(500,4000),
+                                   output_candidatelist=T,
+                                   use_previous_candidates=F){
   library(Biostrings)
   library(cleaver)
   library(protViz)
@@ -117,6 +119,7 @@ Protein_feature_list_fun<-function(workdir=getwd(),
   library(stringr)
   setwd(workdir)
   
+  if(use_previous_candidates!=T){
   Decoy_adducts=Decoy_adducts[!(Decoy_adducts %in% adducts)]
   Decoy_adducts=Decoy_adducts[1:length(adducts)]
   list_of_protein_sequence<<-readAAStringSet(database,
@@ -131,9 +134,17 @@ Protein_feature_list_fun<-function(workdir=getwd(),
   
   #if (length(list_of_protein_sequence)<500){bpworkers(BPPARAM)=1}
   
-  Index_of_protein_sequence<-fasta.index(database,
+  
+  
+  
+  Index_of_protein_sequence<<-fasta.index(database,
                                          nrec=-1L, 
                                          skip=0L)   
+  names_pro<-data.frame(desc=names(list_of_protein_sequence),stringsAsFactors = F)
+  
+  names_pro<-merge(names_pro,Index_of_protein_sequence,by="desc")
+  
+  names(list_of_protein_sequence)<-names_pro$recno
   
   Index_of_protein_sequence$Degestion=""
   
@@ -145,8 +156,7 @@ Protein_feature_list_fun<-function(workdir=getwd(),
     AA<-rep(0,26)
     PIM<-NULL
     for (i in 1:length(peplist)){
-      
-      PIM[[Index_of_protein_sequence$desc[i]]] <- parentIonMass(peplist[[Index_of_protein_sequence$desc[i]]],fixmod=AA)}
+      PIM[[Index_of_protein_sequence$recno[i]]] <- parentIonMass(peplist[[Index_of_protein_sequence$recno[i]]],fixmod=AA)}
     return(PIM)
   }
   
@@ -176,7 +186,7 @@ Protein_feature_list_fun<-function(workdir=getwd(),
     
     peplist_option<-peplist_option[names(peplist_option) %in% names(pimlist) ==TRUE]
     
-    Index_of_protein_sequence_option<-Index_of_protein_sequence_option[Index_of_protein_sequence_option$desc %in% names(pimlist),]
+    Index_of_protein_sequence_option<-Index_of_protein_sequence_option[Index_of_protein_sequence_option$recno %in% names(pimlist),]
     
     Index_of_protein_sequence_option$Degestion=Digestion_site[i]
     
@@ -204,7 +214,7 @@ Protein_feature_list_fun<-function(workdir=getwd(),
         163.063329, 100.994269)
   #tempdf<-parLapply(cl=cl,  1: length(names(peplist)), Peptide_Summary_para,peplist)
   #bplapply()
-  message(paste("Peptide list generated",length(peplist),"entries in total. Computing exact masses..."))
+  message(paste("Generated",length(peplist),"entries in total. Computing exact masses..."))
   tempdf<-bplapply( 1: length(names(peplist)), Peptide_Summary_para,peplist,BPPARAM = BPPARAM)
   tempdf <- do.call("rbind", tempdf)
   colnames(tempdf)<-c("Protein","Peptide")
@@ -331,8 +341,32 @@ Protein_feature_list_fun<-function(workdir=getwd(),
                             isdecoy=1,charge=1)
     
     Protein_Summary<-rbind(Protein_Summary,decoy_tempdf)
+    
   }
   
+  #Protein_Summary$Protein=Index_of_protein_sequence[Index_of_protein_sequence$desc==Protein_Summary$Protein]
+  #temp_index=Index_of_protein_sequence
+  #temp_index$Protein=temp_index$desc
+  #temp_index=temp_index[,c("Protein","recno")]
+  #Protein_Summary=merge(Protein_Summary,temp_index,by="Protein",all.x=T)
+  #Protein_Summary$Protein=Protein_Summary$recno
+  if(output_candidatelist){
+    if (dir.exists(paste(workdir,"/Summary folder",sep=""))==FALSE){dir.create(paste(workdir,"/Summary folder",sep=""))}
+    write.csv(Protein_Summary,paste(workdir,"/Summary folder/candidatelist.csv",sep=""),row.names = F)
+    write.csv(Index_of_protein_sequence,paste(workdir,"/Summary folder/protein_index.csv",sep=""),row.names = F)
+    message("Candidate list has been exported.")
+  }
+  }
+
+  if(use_previous_candidates){
+    #if (dir.exists(paste(workdir,"/Summary folder",sep=""))==FALSE){dir.create(paste(workdir,"/Summary folder",sep=""))}
+    if (sum(c("candidatelist.csv","protein_index.csv") %in% dir(paste(workdir,"/Summary folder",sep="")))==2){
+     Protein_Summary<-read.csv(paste(workdir,"/Summary folder/candidatelist.csv",sep=""),row.names = F)
+    Index_of_protein_sequence<-read.csv(paste(workdir,"/Summary folder/protein_index.csv",sep=""),row.names = F)
+    message("Candidate list has been loaded.") 
+    }else{stop("Can not find the previously established candidate list.")}
+    
+  }
   return(Protein_Summary)
 }
 

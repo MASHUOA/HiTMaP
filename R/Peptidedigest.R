@@ -74,6 +74,7 @@ imaging_identification<-function(
                Region_feature_summary=F,
                Spectrum_validate=T,
                output_candidatelist=T,
+               use_previous_candidates=F,
                ...
                ){
   library("pacman")
@@ -106,14 +107,12 @@ imaging_identification<-function(
                                                  adducts=adducts,
                                                  BPPARAM = BPPARAM,
                                                  Decoy_adducts=Decoy_adducts,
-                                                 Decoy_search=Decoy_search,Decoy_mode = Decoy_mode
+                                                 Decoy_search=Decoy_search,
+                                                 Decoy_mode = Decoy_mode,
+                                                 output_candidatelist=output_candidatelist,
+                                                 use_previous_candidates=use_previous_candidates
                                                  )
-  if(output_candidatelist){
-  
-    if (dir.exists(paste(workdir,"/Summary folder",sep=""))==FALSE){dir.create(paste(workdir,"/Summary folder",sep=""))}
-    write.csv(Protein_feature_list,paste(workdir,"/Summary folder/candidatelist.csv",sep=""),row.names = F)
-    message("Candidate list has been exported.")
-    }
+
   
   if (!is.null(rotateimg)){rotateimg=read.csv(rotateimg,stringsAsFactors = F)}
   
@@ -2080,7 +2079,7 @@ if(PMFsearch){
     
     colnames(peaklist)<-c("m.z","intensities")
     
-    deconv_peaklist<-isopattern_ppm_filter(peaklist,ppm=ppm)
+    deconv_peaklist<-isopattern_ppm_filter_peaklist(peaklist,ppm=ppm)
     #MassSpecWavelet_fun(peaklist = peaklist)
     mz_feature_list<-Do_PMF_search(deconv_peaklist,Peptide_Summary_searchlist,BPPARAM=BPPARAM)
     
@@ -2923,12 +2922,18 @@ protein_scoring<-function(Protein_feature_list,Peptide_plot_list_rank){
   #}
   
   list_of_protein_sequence<-get("list_of_protein_sequence", envir = .GlobalEnv)
-  
+  Index_of_protein_sequence<-get("Index_of_protein_sequence", envir = .GlobalEnv)
+  #Proteinlist=sum_pro_int$Protein
   sum_pro_coverage <- unlist(bplapply(sum_pro_int$Protein, function(x,Protein_feature_list_rank,list_of_protein_sequence,peptide_map_to_protein){
     protein_seq<-try(list_of_protein_sequence[x],silent = T)
     peptides<-unique(Protein_feature_list_rank$Peptide[Protein_feature_list_rank$Protein==x])
     if (class(protein_seq)!="try-error"){
-     peptide_map_to_protein(peptides = peptides, protein_seq = protein_seq)
+     if (length(peptides)==1){
+       width(peptides)/width(protein_seq)
+     } else {
+       return(peptide_map_to_protein(peptides = peptides, protein_seq = protein_seq))
+     }
+     
     }else{return(1)}
   },Protein_feature_list_rank=Protein_feature_list_rank,list_of_protein_sequence=list_of_protein_sequence,peptide_map_to_protein=peptide_map_to_protein,BPPARAM = BPPARAM))
   
@@ -3002,7 +3007,7 @@ seq.cov <- function(x,plot_coverage=F){
   return(cov_len)
 }
 
-isopattern_ppm_filter<-function(pattern,ppm){
+isopattern_ppm_filter_peaklist<-function(pattern,ppm){
   
   pattern_ppm=as.numeric(as.character(pattern[,1]))
   
@@ -3010,7 +3015,7 @@ isopattern_ppm_filter<-function(pattern,ppm){
   
   
   filtered_pattern<-pattern[1,]
-  filtered_pattern<-t(data.frame(filtered_pattern,stringsAsFactors = F))
+  #filtered_pattern<-t(data.frame(filtered_pattern,stringsAsFactors = F))
   #dim(filtered_pattern)
   for (i in 1:(length(pattern_ppm)-1)){
     
