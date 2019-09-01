@@ -214,7 +214,7 @@ Protein_feature_list_fun<-function(workdir=getwd(),
         163.063329, 100.994269)
   #tempdf<-parLapply(cl=cl,  1: length(names(peplist)), Peptide_Summary_para,peplist)
   #bplapply()
-  message(paste("Generated",length(peplist),"entries in total. Computing exact masses..."))
+  message(paste("Generated",length(peplist),"Proteins in total. Computing exact masses..."))
   tempdf<-bplapply( 1: length(names(peplist)), Peptide_Summary_para,peplist,BPPARAM = BPPARAM)
   tempdf <- do.call("rbind", tempdf)
   colnames(tempdf)<-c("Protein","Peptide")

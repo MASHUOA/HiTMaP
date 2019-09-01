@@ -2080,6 +2080,8 @@ if(PMFsearch){
     colnames(peaklist)<-c("m.z","intensities")
     
     deconv_peaklist<-isopattern_ppm_filter_peaklist(peaklist,ppm=ppm)
+    
+    message(paste(nrow(deconv_peaklist),"mz features found in the spectrum") )
     #MassSpecWavelet_fun(peaklist = peaklist)
     mz_feature_list<-Do_PMF_search(deconv_peaklist,Peptide_Summary_searchlist,BPPARAM=BPPARAM)
     
@@ -2175,7 +2177,7 @@ if(PMFsearch){
       
       Protein_feature_result<-protein_scoring(Protein_feature_list,Peptide_plot_list_rank)
       
-      write.csv(Protein_feature_result,paste0(datafile[z] ," ID/",SPECTRUM_batch,"/Protein_ID_score_rank",score_method,".csv"),row.names = F)
+      write.csv(Protein_feature_result,paste0(datafile[z] ," ID/",SPECTRUM_batch,"/Protein_ID_score_rank_",score_method,".csv"),row.names = F)
       write.csv(Protein_feature_result,paste("Protein_segment_PMF_RESULT",SPECTRUM_batch,".csv"),row.names = F)
       #group_by(c("Protein","isdecoy"))  %>%  summarize(sum("Intensity"))
       
@@ -2208,7 +2210,7 @@ if(PMFsearch){
   if(is.null(Peptide_Summary_file$Peptide)){Peptide_Summary_file$Peptide=Peptide_Summary_file$moleculeNames}
   if(is.null(Peptide_Summary_file$moleculeNames)){Peptide_Summary_file$moleculeNames=Peptide_Summary_file$Peptide}
   
-  Peptide_Summary_file<-Peptide_regions_Summary(Peptide_Summary_file_regions)
+  Peptide_Summary_file<-Peptide_regions_Summary_fun(Peptide_Summary_file_regions)
   write.csv(Peptide_Summary_file,"Peptide_Summary_file.csv",row.names = F)
   write.csv(Peptide_Summary_file_regions,"Peptide_region_file.csv",row.names = F)
   }
@@ -2798,7 +2800,7 @@ Mass_defect_plot<-function(Protein_feature_list,outputdir=NULL){
   dev.off()
 }
 
-Peptide_regions_Summary<-function(Peptide_Summary_file_regions){
+Peptide_regions_Summary_fun<-function(Peptide_Summary_file_regions){
   
   library(data.table)
   #rowsorg<-nrow(Peptide_Summary_file_regions)
@@ -2836,9 +2838,15 @@ Peptide_regions_Summary<-function(Peptide_Summary_file_regions){
   }
   
   a=colnames(Peptide_regions_Summary) %in% c(as.character(paste("Intensity",as.character(unique_region))))
-  region_intensity=Peptide_regions_Summary[,..a]
+  region_intensity=Peptide_regions_Summary[,a]
   region_intensity[is.na(region_intensity)]=0
-  Peptide_regions_Summary$Intensity=rowSums(region_intensity)
+  if (!is.null(dim(region_intensity))){
+    
+    Peptide_regions_Summary$Intensity=rowSums(region_intensity)}else{
+      
+      Peptide_regions_Summary$Intensity=region_intensity
+    
+  }
   #region_intensity[1,1]=NaN
   return(Peptide_regions_Summary)
 }
@@ -2924,7 +2932,8 @@ protein_scoring<-function(Protein_feature_list,Peptide_plot_list_rank){
   list_of_protein_sequence<-get("list_of_protein_sequence", envir = .GlobalEnv)
   Index_of_protein_sequence<-get("Index_of_protein_sequence", envir = .GlobalEnv)
   #Proteinlist=sum_pro_int$Protein
-  sum_pro_coverage <- unlist(bplapply(sum_pro_int$Protein, function(x,Protein_feature_list_rank,list_of_protein_sequence,peptide_map_to_protein){
+  sum_pro_coverage <- unlist(bplapply(sum_pro_int$Protein, function(x,Protein_feature_list_rank,list_of_protein_sequence,Index_of_protein_sequence,peptide_map_to_protein){
+    x=Index_of_protein_sequence$desc[Index_of_protein_sequence$recno==x]
     protein_seq<-try(list_of_protein_sequence[x],silent = T)
     peptides<-unique(Protein_feature_list_rank$Peptide[Protein_feature_list_rank$Protein==x])
     if (class(protein_seq)!="try-error"){
@@ -2935,7 +2944,7 @@ protein_scoring<-function(Protein_feature_list,Peptide_plot_list_rank){
      }
      
     }else{return(1)}
-  },Protein_feature_list_rank=Protein_feature_list_rank,list_of_protein_sequence=list_of_protein_sequence,peptide_map_to_protein=peptide_map_to_protein,BPPARAM = BPPARAM))
+  },Protein_feature_list_rank=Protein_feature_list_rank,list_of_protein_sequence=list_of_protein_sequence,Index_of_protein_sequence=Index_of_protein_sequence,peptide_map_to_protein=peptide_map_to_protein,BPPARAM = BPPARAM))
   
   
   
@@ -2951,6 +2960,8 @@ protein_scoring<-function(Protein_feature_list,Peptide_plot_list_rank){
   Protein_feature_result$Intensity_norm<-Protein_feature_result$Intensity/median(Protein_feature_result$Intensity)
   
   Protein_feature_result$Proscore=(Protein_feature_result$Intensity_norm*10 + Protein_feature_result$Score) * Protein_feature_result$peptide_coverage
+  
+  Protein_feature_result=merge(Protein_feature_result,Index_of_protein_sequence[,c("recno","desc")],by.x="Protein",by.y="recno",all.x=T)
   
   return(Protein_feature_result)
 }
