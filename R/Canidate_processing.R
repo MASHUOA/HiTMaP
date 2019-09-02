@@ -122,7 +122,7 @@ Protein_feature_list_fun<-function(workdir=getwd(),
   if(use_previous_candidates!=T){
   Decoy_adducts=Decoy_adducts[!(Decoy_adducts %in% adducts)]
   Decoy_adducts=Decoy_adducts[1:length(adducts)]
-  list_of_protein_sequence<<-readAAStringSet(database,
+  list_of_protein_sequence <- readAAStringSet(database,
                                             format="fasta",
                                             nrec=-1L, 
                                             skip=0L, 
@@ -142,9 +142,11 @@ Protein_feature_list_fun<-function(workdir=getwd(),
                                          skip=0L)   
   names_pro<-data.frame(desc=names(list_of_protein_sequence),stringsAsFactors = F)
   
-  names_pro<-merge(names_pro,Index_of_protein_sequence,by="desc")
+  names_pro<-merge(names_pro,Index_of_protein_sequence,by="desc",sort=F)
   
-  names(list_of_protein_sequence)<-names_pro$recno
+  names(list_of_protein_sequence) <- names_pro$recno
+  
+  list_of_protein_sequence <<- list_of_protein_sequence
   
   Index_of_protein_sequence$Degestion=""
   
@@ -356,6 +358,7 @@ Protein_feature_list_fun<-function(workdir=getwd(),
     write.csv(Index_of_protein_sequence,paste(workdir,"/Summary folder/protein_index.csv",sep=""),row.names = F)
     message("Candidate list has been exported.")
   }
+  
   }
 
   if(use_previous_candidates){

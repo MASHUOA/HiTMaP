@@ -2404,13 +2404,13 @@ SCORE_PMF<-function(formula,peaklist,isotopes=NULL,threshold=2.5,charge=1,ppm=5,
     ## format spectra and normalize intensitites
     
     top_tmp <- data.frame(mz = spec.top[,1], intensity = spec.top[,2])
-    top_tmp$normalized <- round((top_tmp$intensity / max(top_tmp$intensity)) * 100,digits = 2)
+    top_tmp$normalized <- round((top_tmp$intensity / max(top_tmp$intensity)) ,digits = 2)
     #top_tmp <- subset(top_tmp, top_tmp$mz >= xlim[1] & top_tmp$mz <= xlim[2])   
     top_plot <- data.frame(mz = top_tmp$mz, intensity = top_tmp$normalized)   # data frame for plotting spectrum
     top <- subset(top_plot, top_plot$intensity >= b)   # data frame for similarity score calculation
     
     bottom_tmp <- data.frame(mz = spec.bottom[,1], intensity = spec.bottom[,2])
-    bottom_tmp$normalized <- round((bottom_tmp$intensity / max(bottom_tmp$intensity)) * 100,digits = 2)
+    bottom_tmp$normalized <- round((bottom_tmp$intensity / max(bottom_tmp$intensity)) ,digits = 2)
     #bottom_tmp <- subset(bottom_tmp, bottom_tmp$mz >= xlim[1] & bottom_tmp$mz <= xlim[2])   
     bottom_plot <- data.frame(mz = bottom_tmp$mz, intensity = bottom_tmp$normalized)   # data frame for plotting spectrum
     bottom <- subset(bottom_plot, bottom_plot$intensity >= b)   # data frame for similarity score calculation
@@ -2497,9 +2497,9 @@ SCORE_PMF<-function(formula,peaklist,isotopes=NULL,threshold=2.5,charge=1,ppm=5,
       plot.new()
       plot.window(xlim = xlim, ylim = c(-125, 125))
       ticks <- c(-100, -50, 0, 50, 100)
-      for(i in 1:length(top_plot$mz)) lines(rep(top_plot$mz[i], 2), c(0, top_plot$intensity[i]), col = "blue")
-      for(i in 1:length(bottom_plot$mz)) lines(rep(bottom_plot$mz[i], 2), c(0, -bottom_plot$intensity[i]), col = "red")
-      axis(2, at = ticks, labels = abs(ticks), pos = xlim[1], ylab = "intensity")
+      for(i in 1:length(top_plot$mz)) lines(rep(top_plot$mz[i], 2), c(0, top_plot$intensity[i]*100), col = "blue")
+      for(i in 1:length(bottom_plot$mz)) lines(rep(bottom_plot$mz[i], 2), c(0, -bottom_plot$intensity[i]*100), col = "red")
+      axis(2, at = ticks, labels = abs(ticks), pos = xlim[1], ylab = "Intensity")
       axis(1, pos = -125)
       lines(xlim, c(0,0))
       rect(xlim[1], -125, xlim[2], 125)
@@ -2609,7 +2609,7 @@ SCORE_PMF<-function(formula,peaklist,isotopes=NULL,threshold=2.5,charge=1,ppm=5,
 
 
 
-Do_PMF_search<-function(peaklist,Peptide_Summary_searchlist,BPPARAM=bpparam()){
+Do_PMF_search<-function(peaklist,Peptide_Summary_searchlist,BPPARAM=bpparam(),ppm=2){
 peaklist<-peaklist[peaklist$intensities!=0,]
 colnames(peaklist)<-c("m.z","intensities")
 mzrange=c(min(peaklist$m.z),max(peaklist$m.z))
@@ -2933,14 +2933,15 @@ protein_scoring<-function(Protein_feature_list,Peptide_plot_list_rank){
   Index_of_protein_sequence<-get("Index_of_protein_sequence", envir = .GlobalEnv)
   #Proteinlist=sum_pro_int$Protein
   sum_pro_coverage <- unlist(bplapply(sum_pro_int$Protein, function(x,Protein_feature_list_rank,list_of_protein_sequence,Index_of_protein_sequence,peptide_map_to_protein){
-    x=Index_of_protein_sequence$desc[Index_of_protein_sequence$recno==x]
+    #proteinid=Index_of_protein_sequence$desc[Index_of_protein_sequence$recno==x]
+    #message(proteinid)
     protein_seq<-try(list_of_protein_sequence[x],silent = T)
     peptides<-unique(Protein_feature_list_rank$Peptide[Protein_feature_list_rank$Protein==x])
     if (class(protein_seq)!="try-error"){
      if (length(peptides)==1){
        width(peptides)/width(protein_seq)
-     } else {
-       return(peptide_map_to_protein(peptides = peptides, protein_seq = protein_seq))
+     } else if (length(peptides)>=2){
+       return(peptide_map_to_protein(peptides = peptides, protein_seq = protein_seq,map_type = "grep"))
      }
      
     }else{return(1)}
@@ -2966,13 +2967,15 @@ protein_scoring<-function(Protein_feature_list,Peptide_plot_list_rank){
   return(Protein_feature_result)
 }
 
-peptide_map_to_protein<-function(peptides, protein_seq){
+peptide_map_to_protein<-function(peptides, protein_seq ,map_type="grep"){
   #peptides<-Protein_feature_list_rank[Protein_feature_list_rank$Protein=="sp|A2ASS6|TITIN_MOUSE Titin OS=Mus musculus OX=10090 GN=Ttn PE=1 SV=1",]
   #protein_seq=list_of_protein_sequence["sp|A2ASS6|TITIN_MOUSE Titin OS=Mus musculus OX=10090 GN=Ttn PE=1 SV=1"]
   #protein_seq=seq(protein_seq)
-  
-  suppressMessages(library(Biostrings))
+  #if(map_type c("grep","alignment")){map_type="grep"}
   suppressMessages(library(IRanges))
+  if (map_type=="alignment"){
+      suppressMessages(library(Biostrings))
+  
   s1=AAStringSet(peptides)
   
   s2=protein_seq
@@ -2985,6 +2988,22 @@ peptide_map_to_protein<-function(peptides, protein_seq){
   cov_len<-length(which(cov==1))
   
   coverage_percentage=cov_len/width(protein_seq)
+  }else if (map_type=="grep"){
+    s1=(peptides)
+    s2=as.character(protein_seq)
+    palign2 <- sapply(s1,regexpr , s2)
+    coverage_ranges<-IRanges(start = palign2,end = palign2+width(s1)-1,width = width(s1))
+    coverage_ranges<-coverage_ranges[coverage_ranges@start>0,]
+    cov <- coverage(coverage_ranges)
+    
+    #plotRanges(cov)
+    cov <- as.vector(cov)
+    cov_len<-length(which(cov!=0))
+    
+    coverage_percentage=cov_len/width(protein_seq)
+    
+  }
+
   return(coverage_percentage)
   
 }
