@@ -75,6 +75,7 @@ imaging_identification<-function(
                Spectrum_validate=T,
                output_candidatelist=T,
                use_previous_candidates=F,
+               score_method="SQRT",
                ...
                ){
   library("pacman")
@@ -2083,7 +2084,7 @@ if(PMFsearch){
     
     message(paste(nrow(deconv_peaklist),"mz features found in the spectrum") )
     #MassSpecWavelet_fun(peaklist = peaklist)
-    mz_feature_list<-Do_PMF_search(deconv_peaklist,Peptide_Summary_searchlist,BPPARAM=BPPARAM)
+    mz_feature_list<-Do_PMF_search(deconv_peaklist,Peptide_Summary_searchlist,BPPARAM=BPPARAM,ppm = ppm)
     
     mz_feature_list<-unique(mz_feature_list)
     
