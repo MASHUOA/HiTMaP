@@ -1246,6 +1246,8 @@ Build_adduct_list<-function(){
 
 rank_mz_feature<-function(Peptide_plot_list,mz_feature,BPPARAM=bpparam()){
   
+  
+  
   library(data.table)
   
   mz=unique(Peptide_plot_list$mz)
@@ -1263,6 +1265,8 @@ rank_mz_feature<-function(Peptide_plot_list,mz_feature,BPPARAM=bpparam()){
   Peptide_plot_list<-merge(Peptide_plot_list,mz_feature_cluster,by="mz",all=T)
   
   mz=unique(Peptide_plot_list$mz_align)
+  
+  message(paste("Ranking mz feature:",length(unique(Peptide_plot_list$mz)), "unique candidates mz,",length(unique(Peptide_plot_list$mz_align)),"aligned mz feature"))
   
   Peptide_plot_list_rank<-bplapply(mz,function(x,Peptide_plot_list){
     

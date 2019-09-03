@@ -75,7 +75,7 @@ imaging_identification<-function(
                Spectrum_validate=T,
                output_candidatelist=T,
                use_previous_candidates=F,
-               score_method="SQRT",
+               score_method="SQRTP",
                ...
                ){
   library("pacman")
@@ -2149,7 +2149,7 @@ if(PMFsearch){
       #Peptide_plot_list_decoy$isdecoy=1
       #Peptide_plot_list_decoy$Score=Peptide_plot_list_Score_decoyisotope
       Peptide_plot_list$Score=Peptide_plot_list_Score
-      #Peptide_plot_list_Score_frame=do.call(rbind,Peptide_plot_list_Score)
+       #Peptide_plot_list_Score_frame=do.call(rbind,Peptide_plot_list_Score)
       #Peptide_plot_list<-rbind(Peptide_plot_list,Peptide_plot_list_decoy)
       if (Decoy_search && ("isotope" %in% Decoy_mode)){
       decoy_isotopes=isotopes
@@ -2169,6 +2169,9 @@ if(PMFsearch){
       Peptide_plot_list_decoy$isdecoy=1
       Peptide_plot_list_decoy$Score=Peptide_plot_list_Score_decoy
       Peptide_plot_list<-rbind(Peptide_plot_list,Peptide_plot_list_decoy)
+      Protein_feature_list_decoy<-Protein_feature_list
+      Protein_feature_list_decoy$isdecoy=1
+      Protein_feature_list<-rbind(Protein_feature_list,Protein_feature_list_decoy)
       }
       
       Peptide_plot_list_rank=rank_mz_feature(Peptide_plot_list,mz_feature=deconv_peaklist,BPPARAM = BPPARAM)
@@ -2177,9 +2180,12 @@ if(PMFsearch){
                                                         "mz_align","Rank")]
       
       Protein_feature_result<-protein_scoring(Protein_feature_list,Peptide_plot_list_rank)
+      Score_cutoff_protein= FDR_cutoff_plot_protein(Protein_feature_result,FDR_cutoff=0.1,plot_fdr=T,outputdir=paste0(datafile[z] ," ID/",SPECTRUM_batch),adjust_score = F)
+      Protein_feature_result_cutoff=Protein_feature_result[((Protein_feature_result$Score>=Score_cutoff_protein)&(!is.na(Protein_feature_result$Intensity))&(Protein_feature_result$isdecoy==0)),]
+      
       
       write.csv(Protein_feature_result,paste0(datafile[z] ," ID/",SPECTRUM_batch,"/Protein_ID_score_rank_",score_method,".csv"),row.names = F)
-      write.csv(Protein_feature_result,paste("Protein_segment_PMF_RESULT",SPECTRUM_batch,".csv"),row.names = F)
+      write.csv(Protein_feature_result_cutoff,paste("Protein_segment_PMF_RESULT",SPECTRUM_batch,".csv"),row.names = F)
       #group_by(c("Protein","isdecoy"))  %>%  summarize(sum("Intensity"))
       
       write.csv(Peptide_plot_list_rank,paste0(datafile[z] ," ID/",SPECTRUM_batch,"/Peptide_1st_ID_score_rank",score_method,".csv"),row.names = F)
@@ -2405,16 +2411,16 @@ SCORE_PMF<-function(formula,peaklist,isotopes=NULL,threshold=2.5,charge=1,ppm=5,
     ## format spectra and normalize intensitites
     
     top_tmp <- data.frame(mz = spec.top[,1], intensity = spec.top[,2])
-    top_tmp$normalized <- round((top_tmp$intensity / max(top_tmp$intensity)) ,digits = 2)
+    top_tmp$normalized <- round((top_tmp$intensity / max(top_tmp$intensity)) ,digits = 3)
     #top_tmp <- subset(top_tmp, top_tmp$mz >= xlim[1] & top_tmp$mz <= xlim[2])   
     top_plot <- data.frame(mz = top_tmp$mz, intensity = top_tmp$normalized)   # data frame for plotting spectrum
-    top <- subset(top_plot, top_plot$intensity >= b)   # data frame for similarity score calculation
+    top <- subset(top_plot, top_plot$intensity > b)   # data frame for similarity score calculation
     
     bottom_tmp <- data.frame(mz = spec.bottom[,1], intensity = spec.bottom[,2])
-    bottom_tmp$normalized <- round((bottom_tmp$intensity / max(bottom_tmp$intensity)) ,digits = 2)
+    bottom_tmp$normalized <- round((bottom_tmp$intensity / max(bottom_tmp$intensity)) ,digits = 3)
     #bottom_tmp <- subset(bottom_tmp, bottom_tmp$mz >= xlim[1] & bottom_tmp$mz <= xlim[2])   
     bottom_plot <- data.frame(mz = bottom_tmp$mz, intensity = bottom_tmp$normalized)   # data frame for plotting spectrum
-    bottom <- subset(bottom_plot, bottom_plot$intensity >= b)   # data frame for similarity score calculation
+    bottom <- subset(bottom_plot, bottom_plot$intensity > b)   # data frame for similarity score calculation
     #top <- spec.top
     #bottom <- spec.bottom
     
@@ -2438,7 +2444,7 @@ SCORE_PMF<-function(formula,peaklist,isotopes=NULL,threshold=2.5,charge=1,ppm=5,
     
     #alignment <- alignment[alignment[,1] >= x.threshold, ]
     
-    match_score <- sum(`&`(alignment$intensity.top>0,alignment$intensity.bottom>0))
+    match_score <- sum(`&`(alignment$intensity.top>0,alignment$intensity.bottom>0))/sum(alignment$intensity.top>0)
     
    # u <- alignment[,2]; v <- alignment[,3]
     
@@ -2453,6 +2459,17 @@ SCORE_PMF<-function(formula,peaklist,isotopes=NULL,threshold=2.5,charge=1,ppm=5,
       
       #similarity_score <- -log(as.vector(sqrt(sum(((u-v))^2)) ))
       
+    }else if (score_method=="SQRTP"){
+      u <- alignment[,2]; v <- alignment[,3]
+      #u<-u/100; v<-v/100
+      
+      #sum( u*v)
+      #similarity_score <- as.vector((u %*% v) / (sqrt(sum(u^2)) * sqrt(sum(v^2)))) 
+      
+      similarity_score <- -log(as.vector(sqrt(sum(((u-v))^2)) / (sqrt(sum(u^2)) * sqrt(sum(v^2)))))
+      match_score <- log(sum(`&`(alignment$intensity.top>0,alignment$intensity.bottom>0))/sum(alignment$intensity.top>0))
+      #similarity_score <- -log(as.vector(sqrt(sum(((u-v))^2)) ))
+      similarity_score <- similarity_score + match_score
     }else if (score_method=="balanced-SQRT"){
       u <- alignment[,2]; v <- alignment[,3]
       
@@ -2629,6 +2646,133 @@ mz_feature_list<-Peptide_Summary_searchlist_mz[Peptide_Summary_searchlist_mz$Int
 
 return(mz_feature_list)
 }
+
+FDR_cutoff_plot_protein<-function(Protein_feature_result,FDR_cutoff=0.1,plot_fdr=T,outputdir=paste0(datafile[z] ," ID/",SPECTRUM_batch),adjust_score = F){
+  
+  library(ggplot2)
+  library(data.table)
+  library(dplyr)
+  library(zoo)
+  library(FTICRMS)
+  Protein_feature_result=data_test_rename(c("isdecoy","Proscore"),Protein_feature_result)
+  
+  Protein_feature_result$isdecoy<-factor(Protein_feature_result$isdecoy)
+  
+  #unique_fomula<-unique(Protein_feature_result$formula)
+  
+  unique_fomula_ID<-unique(Protein_feature_result[,c("Protein","isdecoy","Intensity_norm","Proscore")])
+  
+  
+  Protein_feature_result=unique_fomula_ID
+  
+  Protein_feature_result$Proscore=Protein_feature_result$Proscore
+  
+
+  
+  if(adjust_score){
+    
+    Proscore_boundary<-sapply(1:max(Protein_feature_result$mz),function(x,Protein_feature_result){
+      
+      max(Protein_feature_result$Proscore[between(Protein_feature_result$mz,x-0.5,x+0.5)])
+      
+    },Protein_feature_result)
+    
+    names(Proscore_boundary)=as.character(1:max(Protein_feature_result$mz))
+    
+    Proscore_boundary<-Proscore_boundary[Proscore_boundary>0]
+    
+    Proscore_boundary<-Proscore_boundary[!is.na(Proscore_boundary)]
+    
+    Proscore_boundary<-data.frame(mz=names(Proscore_boundary),top=Proscore_boundary,stringsAsFactors = F)
+    
+    x <- as.numeric(Proscore_boundary$mz)
+    y <- Proscore_boundary$top
+    #plot(x,y)
+    
+    fit3 <- lm( y~poly(as.numeric(as.character(x)),3) )
+    
+    fitx=Protein_feature_result$mz
+    
+    fitdata=as.data.frame(stats::predict(fit3, data.frame(x = fitx), interval="confidence"))
+    
+    Protein_feature_result$Proscore_factor<-fitdata$upr
+    
+    Protein_feature_result$adjusted_Proscore<-Protein_feature_result$Proscore/Protein_feature_result$Proscore_factor
+    Protein_feature_result$adjusted_Proscore<-Protein_feature_result$adjusted_Proscore/max(Protein_feature_result$adjusted_Proscore,na.rm = T)
+    Protein_feature_result$original_Proscore<-Protein_feature_result$Proscore
+    Protein_feature_result$Proscore<-Protein_feature_result$adjusted_Proscore
+    if (!is.null(outputdir) && plot_fdr){
+      png(paste0(outputdir,"/Matching_PROTEIN_Score_vs_mz_after_adjustment.png"))
+      p<-ggplot(data=Protein_feature_result,aes(x=mz,y=Proscore,color=isdecoy)) + geom_point(size=1,alpha=1/10) + 
+        ggtitle("Matching score vs mz after adjustment") +
+        xlab("mz") + ylab("Matching score") + labs(fill = "isdecoy")
+      print(p)
+      dev.off() 
+    }
+    
+  }
+  
+  target_Proscore<-Protein_feature_result$Proscore[Protein_feature_result$isdecoy!=1]
+  decoy_Proscore<-Protein_feature_result$Proscore[Protein_feature_result$isdecoy==1]
+  target_Proscore[is.na(target_Proscore)]=0
+  decoy_Proscore[is.na(decoy_Proscore)]=0
+  target_Proscore[target_Proscore==Inf]<-0
+  decoy_Proscore[decoy_Proscore==Inf]<-0
+  
+  breaks = seq(min(Protein_feature_result$Proscore), max(Protein_feature_result$Proscore), by=max(Protein_feature_result$Proscore)/FDR_strip)
+  target_Proscore.cut = cut(target_Proscore, breaks, right=T) 
+  decoy_Proscore.cut = cut(decoy_Proscore, breaks,right=T) 
+  target_Proscore.freq = table(target_Proscore.cut)
+  decoy_Proscore.freq = table(decoy_Proscore.cut)
+  target_Proscore.freq= target_Proscore.freq[rev(names(target_Proscore.freq))]
+  target_Proscore.freq0 = c(0, cumsum(target_Proscore.freq))
+  decoy_Proscore.freq= decoy_Proscore.freq[rev(names(decoy_Proscore.freq))]
+  decoy_Proscore.freq0 = c(0, cumsum(decoy_Proscore.freq))
+  
+  
+  
+  FDR=decoy_Proscore.freq0/target_Proscore.freq0
+  
+  df=data.frame(breaks=rev(breaks),target_Proscore.freq0=target_Proscore.freq0 ,decoy_Proscore.freq0=decoy_Proscore.freq0,FDR=FDR)
+  #df=df[order(breaks,decreasing = TRUE),]
+  df$FDR_m.av<-rollmean(df$FDR, 3,fill = list(0, NaN, NaN))
+  #df$logProscore=log(df$breaks)
+  
+  Proscore_cutoff<-min(df$breaks[(df$FDR_m.av<=FDR_cutoff)==T],na.rm = T)
+  
+  if (!is.null(outputdir) && plot_fdr){
+    
+    png(paste0(outputdir,"/protein_FDR.png"))
+    plot.new()
+    plot(df$breaks, df$FDR,            # plot the data 
+         main="FDR plot",  # main title 
+         xlab="Matching Proscore",        # x−axis label 
+         ylab="FDR")   # y−axis label 
+    lines(df$breaks, df$FDR_m.av)
+    dev.off()  
+    
+    write.csv(df,paste0(outputdir,"/PROTEIN_FDR.CSV"),row.names = F)  
+    
+  }
+  
+  if (!is.null(outputdir) && plot_fdr){
+    Protein_feature_result_plot<-Protein_feature_result[,c("isdecoy","Proscore")]
+    target_decoy<-factor(ifelse(Protein_feature_result$isdecoy==1,"Decoy","Tagret"))
+    Protein_feature_result_plot$target_decoy=target_decoy
+    png(paste0(outputdir,"/PROTEIN_Score_histogram.png"))
+    p<-ggplot(data=Protein_feature_result_plot,aes(x=Proscore,color=target_decoy, fill=target_decoy)) + geom_histogram( fill="white",alpha=0.5, bins = 500, position="identity")  +
+      ggtitle("Protein score vs Counts") +
+      xlab("Protein score") + ylab("Counts") + labs(fill = "Is_Decoy") + theme_classic() + facet_grid(target_decoy ~ .)
+    print(p)
+    dev.off() 
+  }
+  
+  return(Proscore_cutoff)
+  
+  
+
+}
+
 
 FDR_cutoff_plot<-function(Peptide_plot_list,FDR_cutoff=0.1,FDR_strip=500,plot_fdr=F,outputdir=NULL,adjust_score=F){
   library(ggplot2)
@@ -2918,6 +3062,8 @@ protein_scoring<-function(Protein_feature_list,Peptide_plot_list_rank){
   
   library(dplyr)
   
+  
+  
   Protein_feature_list_rank=merge(Protein_feature_list,Peptide_plot_list_rank,by=c("mz","Peptide","adduct","formula","isdecoy"))
   
   sum_pro_int<-Protein_feature_list_rank %>% group_by(.dots=c("Protein","isdecoy")) %>% summarize(Intensity=mean(Intensity)) 
@@ -2961,7 +3107,7 @@ protein_scoring<-function(Protein_feature_list,Peptide_plot_list_rank){
   
   Protein_feature_result$Intensity_norm<-Protein_feature_result$Intensity/median(Protein_feature_result$Intensity)
   
-  Protein_feature_result$Proscore=(Protein_feature_result$Intensity_norm*10 + Protein_feature_result$Score) * Protein_feature_result$peptide_coverage
+  Protein_feature_result$Proscore=(log(Protein_feature_result$Intensity_norm,10) + Protein_feature_result$Score) * Protein_feature_result$peptide_coverage
   
   Protein_feature_result=merge(Protein_feature_result,Index_of_protein_sequence[,c("recno","desc")],by.x="Protein",by.y="recno",all.x=T)
   
