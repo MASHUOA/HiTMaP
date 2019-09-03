@@ -146,7 +146,7 @@ Protein_feature_list_fun<-function(workdir=getwd(),
   
   names(list_of_protein_sequence) <- names_pro$recno
   
-  list_of_protein_sequence <<- list_of_protein_sequence
+  assign("list_of_protein_sequence", list_of_protein_sequence, envir=.GlobalEnv) 
   
   Index_of_protein_sequence$Degestion=""
   

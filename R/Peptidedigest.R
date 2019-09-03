@@ -2756,11 +2756,11 @@ FDR_cutoff_plot_protein<-function(Protein_feature_result,FDR_cutoff=0.1,plot_fdr
   }
   
   if (!is.null(outputdir) && plot_fdr){
-    Protein_feature_result_plot<-Protein_feature_result[,c("isdecoy","Proscore")]
+    Protein_feature_result_plot<-Protein_feature_result[,c("isdecoy","Proscore","Score")]
     target_decoy<-factor(ifelse(Protein_feature_result$isdecoy==1,"Decoy","Tagret"))
     Protein_feature_result_plot$target_decoy=target_decoy
     png(paste0(outputdir,"/PROTEIN_Score_histogram.png"))
-    p<-ggplot(data=Protein_feature_result_plot,aes(x=Proscore,color=target_decoy, fill=target_decoy)) + geom_histogram( fill="white",alpha=0.5, bins = 500, position="identity")  +
+    p<-ggplot(data=Protein_feature_result_plot,aes(x=Score,color=target_decoy, fill=target_decoy)) + geom_histogram( fill="white",alpha=0.5, bins = 200, position="identity")  +
       ggtitle("Protein score vs Counts") +
       xlab("Protein score") + ylab("Counts") + labs(fill = "Is_Decoy") + theme_classic() + facet_grid(target_decoy ~ .)
     print(p)
