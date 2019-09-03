@@ -4,19 +4,22 @@
 \alias{imaging_identification}
 \title{imaging_identification}
 \usage{
-imaging_identification(datafile, threshold = 0.005, ppm = 5,
+imaging_identification(datafile, threshold = 0.001, ppm = 5,
   mode = c("Proteomics", "Metabolomics"), Digestion_site = "[GN][LI]",
   missedCleavages = 0:1, Fastadatabase = "murine_matrisome.fasta",
-  adducts = c("M+H", "M+NH4", "M+Na"), Decoy_adducts = c("M+He",
-  "M+Ne", "M+Ar", "M+Kr", "M+Xe", "M+Rn", "M+Cu", "M+Co", "M+Ag"),
-  PMF_analysis = TRUE, Bypass_segmentation = F,
-  Protein_feature_summary = TRUE, plot_cluster_image = TRUE,
-  Peptide_feature_summary = TRUE, plot_ion_image = FALSE,
-  parallel = detectCores(), spectra_segments_per_file = 5,
-  spatialKMeans = TRUE, Smooth_range = 1,
-  Virtual_segmentation = FALSE, Virtual_segmentation_rankfile = NULL,
-  rotateimg = NULL, Region_feature_summary = T,
-  Spectrum_validate = T, ...)
+  adducts = c("M+H", "M+NH4", "M+Na"), Decoy_search = T,
+  Decoy_adducts = c("M+ACN+H", "M+IsoProp+H", "M+DMSO+H", "M+Co", "M+Ag",
+  "M+Cu", "M+He", "M+Ne", "M+Ar", "M+Kr", "M+Xe", "M+Rn"),
+  Decoy_mode = "isotope", PMF_analysis = TRUE,
+  Bypass_generate_spectrum = F, Protein_feature_summary = TRUE,
+  plot_cluster_image = TRUE, Peptide_feature_summary = TRUE,
+  plot_ion_image = FALSE, parallel = detectCores(),
+  spectra_segments_per_file = 5, spatialKMeans = TRUE,
+  Smooth_range = 1, Virtual_segmentation = FALSE,
+  Virtual_segmentation_rankfile = NULL, rotateimg = NULL,
+  Region_feature_summary = F, Spectrum_validate = T,
+  output_candidatelist = T, use_previous_candidates = F,
+  score_method = "SQRTP", ...)
 }
 \arguments{
 \item{threshold}{specify the intensities threshold (0 to 1 in percentage)to report a identified molecule}

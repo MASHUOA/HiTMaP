@@ -58,7 +58,8 @@ Imports:
     fs,
     processx,
     S4Vectors,
-    spdep
+    spdep,
+    zoo
 VignetteBuilder: knitr
 Suggests: 
     knitr,
