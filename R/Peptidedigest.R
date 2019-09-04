@@ -2804,8 +2804,9 @@ FDR_cutoff_plot<-function(Peptide_plot_list,FDR_cutoff=0.1,FDR_strip=500,plot_fd
       xlab("Score") + ylab("Counts") + labs(fill = "Is_Decoy") + theme_classic() #+ facet_grid(target_decoy ~ .)
     print(p)
     dev.off() 
-    
+    detach("package:dplyr", unload=TRUE)
     library(dplyr)
+    
     mu <- Peptide_plot_list_plot %>% group_by(target_decoy) %>% summarize(mean=mean(Score)) 
     
     png(paste0(outputdir,"/Peptide_Score_histogram.png"))
