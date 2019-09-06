@@ -2195,7 +2195,7 @@ if(PMFsearch){
       Peptide_plot_list_2nd$mz=as.numeric(as.character(Peptide_plot_list_2nd$mz))
       
       Protein_feature_result<-protein_scoring(Protein_feature_list,Peptide_plot_list_2nd,BPPARAM = BPPARAM)
-      Protein_feature_result<-protein_scoring(Protein_feature_list,Peptide_plot_list_rank,BPPARAM = BPPARAM)
+      #Protein_feature_result<-protein_scoring(Protein_feature_list,Peptide_plot_list_rank,BPPARAM = BPPARAM)
       Score_cutoff_protein= FDR_cutoff_plot_protein(Protein_feature_result,FDR_cutoff=0.1,plot_fdr=T,outputdir=paste0(datafile[z] ," ID/",SPECTRUM_batch),adjust_score = F)
       Protein_feature_result_cutoff=Protein_feature_result[((Protein_feature_result$Score>=Score_cutoff_protein)&(!is.na(Protein_feature_result$Intensity))&(Protein_feature_result$isdecoy==0)),]
       
@@ -2795,7 +2795,6 @@ FDR_cutoff_plot<-function(Peptide_plot_list,FDR_cutoff=0.1,FDR_strip=500,plot_fd
   
   unique_fomula_ID<-unique(Peptide_plot_list[,c("mz","formula","isdecoy","Intensity","Score")])
   
-  
   Peptide_plot_list=unique_fomula_ID
   
   if (!is.null(outputdir) && plot_fdr){
@@ -2809,11 +2808,12 @@ FDR_cutoff_plot<-function(Peptide_plot_list,FDR_cutoff=0.1,FDR_strip=500,plot_fd
       xlab("Score") + ylab("Counts") + labs(fill = "Is_Decoy") + theme_classic() #+ facet_grid(target_decoy ~ .)
     print(p)
     dev.off() 
-    detach("package:dplyr", unload=TRUE)
-    library(dplyr)
-    
-    mu <- Peptide_plot_list_plot %>% group_by(target_decoy) %>% summarize(mean=mean(Score)) 
-    
+    #detach("package:plyr", unload=TRUE)
+    #library(dplyr)
+    #library(plyr)
+    mu<-NULL
+    mu <- Peptide_plot_list_plot %>% dplyr::group_by(target_decoy) %>% dplyr::summarise(mean=mean(Score)) 
+    #message(class(mu))
     png(paste0(outputdir,"/Peptide_Score_histogram.png"))
     p<-ggplot(Peptide_plot_list_plot, aes(x=Score, color=target_decoy, fill=target_decoy)) +
       geom_histogram(aes(y=..density..), position="Dodge", alpha=0.5, bins = 50)+
