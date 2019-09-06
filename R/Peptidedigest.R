@@ -227,13 +227,8 @@ imaging_identification<-function(
     
   }
   
-  if(Spectrum_validate){
-    install.packages("OrgMassSpecR")
-    require(OrgMassSpecR)
-    Protein_feature_summary<-read.csv(paste(workdir,"/Summary folder",sep=""))
-    
-    SpectrumSimilarity
-  }
+
+  
   if(plot_cluster_image_grid){
     Protein_feature_list=fread(paste(workdir,"/Summary folder/Protein_feature_summary_sl.csv",sep=""))
     if (!is.null(rotateimg)){rotateimg=read.csv(rotateimg,stringsAsFactors = F)}
@@ -244,19 +239,13 @@ imaging_identification<-function(
         mzrange=NULL
         testrange=c(0,0)
         for (i in 1:length(datafile)){
-          
           rotate=rotateimg[rotateimg$filenames==datafile[i],"rotation"]
           rotate=as.numeric(rotate)
-          
           if (length(rotate)==0){rotate=0}
           imdata[[i]]=Load_Cardinal_imaging(datafile[i],preprocessing = F,resolution = ppm*2,rotate = rotate,attach.only=F,as="MSImagingExperiment",mzrange=mzrange)
-          #imdata[[i]]@elementMetadata@coord=imdata[[i]]@elementMetadata@coord[,c("x","y")]
-          
-          
           if (i==1) {
             testrange=c(min(imdata[[i]]@featureData@mz),max(imdata[[i]]@featureData@mz))
           }else{
-            
             if (min(imdata[[i]]@featureData@mz)>testrange[1]) testrange[1]<-min(imdata[[i]]@featureData@mz)
             if (max(imdata[[i]]@featureData@mz)>testrange[2]) testrange[2]<-max(imdata[[i]]@featureData@mz)
           }
@@ -266,10 +255,8 @@ imaging_identification<-function(
     } 
     
     for (i in 1:length(datafile)){
-
       rotate=rotateimg[rotateimg$filenames==datafile[i],"rotation"]
       rotate=as.numeric(rotate)
-      
       if (length(rotate)==0){rotate=0}
       imdata[[i]]=Load_Cardinal_imaging(datafile[i],preprocessing = F,resolution = ppm*2,rotate = rotate,attach.only=F,as="MSImagingExperiment",mzrange=mzrange)
       #imdata[[i]]@elementMetadata@coord=imdata[[i]]@elementMetadata@coord[,c("x","y")]
@@ -281,10 +268,8 @@ imaging_identification<-function(
         combinedimdata=cbind(combinedimdata,imdata[[i]]) 
       }
       imdata[[i]]=NULL
-      
     }
       
-    
     combinedimdata@elementMetadata@coord@listData[["z"]]=NULL
     
     imdata=combinedimdata
@@ -314,8 +299,6 @@ imaging_identification<-function(
            plot_layout="line",
            Component_plot_threshold=4,
            export_Header_table=T)
-    
-    
     
     Pngclusterkmean=NULL
     Pngclustervseg=NULL
