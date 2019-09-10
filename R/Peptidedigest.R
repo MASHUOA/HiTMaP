@@ -62,6 +62,7 @@ imaging_identification<-function(
                Bypass_generate_spectrum=F,
                Protein_feature_summary=TRUE,
                plot_cluster_image=TRUE,
+               ClusterID_colname="Protein",
                Peptide_feature_summary=TRUE,
                plot_ion_image=FALSE,
                parallel=detectCores(),
@@ -283,7 +284,7 @@ imaging_identification<-function(
            cluster_image_grid,
            imdata=imdata,
            SMPLIST=Protein_feature_list,
-           ppm=ppm,ClusterID_colname="Protein",
+           ppm=ppm,ClusterID_colname=ClusterID_colname,
            componentID_colname="Peptide",
            plot_layout="line",
            Component_plot_threshold=4,
@@ -294,7 +295,7 @@ imaging_identification<-function(
            cluster_image_grid,
            imdata=NULL,
            SMPLIST=Protein_feature_list,
-           ppm=ppm,ClusterID_colname="Protein",
+           ppm=ppm,ClusterID_colname=ClusterID_colname,
            componentID_colname="Peptide",
            plot_layout="line",
            Component_plot_threshold=4,
@@ -369,12 +370,12 @@ imaging_Spatial_Quant<-function(
                                                          "Text", ".txt", "All files", "*"),
                                                       3, 2, byrow = TRUE),caption  = "Choose single or multiple file(s) for analysis"),
   threshold=0.00, 
-  ppm=5,
+  ppm=2.5,
   #Fastadatabase="murine_matrisome.fasta",
-  Quant_list="lipid candidates manual.csv",
+  Quant_list="Metabolites of Interest.csv",
   adducts=c("M-H","M+Cl"),
-  cal.mz=T,
-  mzlist_bypass=F,
+  cal.mz=F,
+  mzlist_bypass=T,
   #==============TRUE if you want to plot protein PMF result
   PMF_analysis=TRUE,
   #==============TRUE if you want to generate protein summary in the Summary folder
@@ -399,10 +400,11 @@ imaging_Spatial_Quant<-function(
   Region_feature_analysis=T,
   plot_each_metabolites=T,
   Cluster_level="High",
+  ClusterID_colname="Name",
   Region_feature_analysis_bar_plot=T,
   norm_datafiles=T,
   norm_Type="Median",
-  mzrang=NULL,
+  mzrange=NULL,
   BPPARAM=bpparam(),
   rotateimg=NULL,
   ...
@@ -417,9 +419,19 @@ imaging_Spatial_Quant<-function(
   workdir<-base::dirname(datafile[1])
   setwd(workdir)
   closeAllConnections()
-  #cl <- autoStopCluster(makeCluster(parallel))
-  #setwd(workdir)
-  cl <- makeCluster(parallel)
+  parallel=try(detectCores()/2)
+  if (parallel<1 | is.null(parallel)){parallel=1}
+  BPPARAM=bpparam()
+  BiocParallel::bpworkers(BPPARAM)=parallel
+  bpprogressbar(BPPARAM)=TRUE
+  
+  if (is.null(rotateimg)){
+    rotateimg$filenames=datafile;rotateimg$rotation=rep(0,length(datafile))
+    rotateimg=as.data.frame(rotateimg)
+    write.csv(rotateimg,"image_rotation.csv",row.names = F)
+    rotateimg=paste0(workdir,"/image_rotation.csv")
+  }
+  
   message(paste(try(detectCores()), "Cores detected,",parallel, "threads will be used for computing"))
   
   message(paste(length(datafile), "files were selected and will be used for Searching"))
@@ -567,32 +579,38 @@ imaging_Spatial_Quant<-function(
     radius_rank=read.csv(file =Virtual_segmentation_rankfile)
     if (norm_datafiles){
       
-      #Spectrum_summary_norm=Spectrum_summary
+      Spectrum_summary_norm=Spectrum_summary
       clusterID=as.character(Spectrum_summary$ID)
-      clusterID=data.frame(str_split(clusterID," "),stringsAsFactors = F)
-      clusterID=as.data.frame(t(clusterID))
-      clusterID=as.character(clusterID[["V1"]])
+      #clusterID=data.frame(str_split(clusterID," "),stringsAsFactors = F)
+      #clusterID=as.data.frame(t(clusterID))
+      #clusterID=as.character(clusterID[["V1"]])
       clusterID=data.frame(str_split(clusterID,"@"),stringsAsFactors = F)
       clusterID=as.data.frame(t(clusterID))
       clusterID=as.character(clusterID[["V1"]])
       
-        par_norm_datacol_cluster<-function(col,Spectrum_summary,clusterID){
+        par_norm_datacol_cluster<-function(col,Spectrum_summary,clusterID,norm_method=c("TIC","mTIC")){
           Spectrum_summary_col_norm<-Spectrum_summary[,col]
           Spectrum_summary_col_norm_value<-Spectrum_summary[,col]
           Spectrum_summary_col<-Spectrum_summary[,col]
-          for (uniqueclusterID in unique(clusterID)){
-            
+          
+          if( norm_method=="mTIC"){
+            for (uniqueclusterID in unique(clusterID)){
             Spectrum_summary_col_norm_value[clusterID==uniqueclusterID]= median.default(Spectrum_summary_col[clusterID==uniqueclusterID],na.rm = T)
           }
+          }else if (norm_method=="TIC"){
+            Spectrum_summary_col_norm_value=median(Spectrum_summary_col[],na.rm = T)
+          }
+          
+          
           Spectrum_summary_col_norm=Spectrum_summary_col/Spectrum_summary_col_norm_value
           #for (row in 1:length(Spectrum_summary_col)){
           #Spectrum_summary_col_norm[row]=(Spectrum_summary_col[row]/median.default(Spectrum_summary_col[clusterID==clusterID[row]],na.rm = T))
           #}  
           Spectrum_summary_col_norm
         }
-        message("Region_feature_analysis")
+        message("Region_feature_analysis normalizaation")
         #Spectrum_summary_norm=unlist(parLapply(cl=autoStopCluster(makeCluster(detectCores())),which(colnames(Spectrum_summary)!="ID"),par_norm_datacol_cluster,Spectrum_summary,clusterID))
-        Spectrum_summary_norm=unlist(bplapply(which(colnames(Spectrum_summary)!="ID"),par_norm_datacol_cluster,Spectrum_summary,clusterID,BPPARAM = BPPARAM))
+        Spectrum_summary_norm=unlist(bplapply(which(colnames(Spectrum_summary)!="ID"),par_norm_datacol_cluster,Spectrum_summary,clusterID,norm_method="TIC",BPPARAM = BPPARAM))
         
         #a=as.list(Spectrum_summary[,which(colnames(Spectrum_summary)!="ID")])
         Spectrum_summary_norm=matrix(Spectrum_summary_norm,nrow = nrow(Spectrum_summary))
@@ -606,13 +624,20 @@ imaging_Spatial_Quant<-function(
     colnames_case=gsub("X","",colnames_case)
     colnames_case=gsub("y.+","",colnames_case)
     colnames_case=gsub("ID","",colnames_case)
-    
+    colnames_case=gsub(".hr","",colnames_case)
+    colnames_case=gsub("20.ctrl","-1",colnames_case)
+    colnames_case=c("ID",as.numeric(colnames_case[2:length(colnames_case)]))
     #colnames_caset=gsub("y[:print:]+","",colnames_case)
+    colnames(Spectrum_summary)=colnames_case
+    colnames_case=c(colnames_case[1],sort(as.numeric(colnames_case[2:length(colnames_case)])))
+    Spectrum_summary=Spectrum_summary[,colnames_case]
     Spectrum_summary_tran=t(Spectrum_summary)
     
     Spectrum_summary_tran=data.frame(Spectrum_summary_tran)
     colnames(Spectrum_summary_tran)=Spectrum_summary$ID
-    Spectrum_summary_tran[,"Class"]=colnames_case
+    colnames_case=as.numeric(colnames_case)
+    colnames_case[1]=""
+    Spectrum_summary_tran[,"Class"]=(colnames_case)
     
     
     
@@ -620,18 +645,22 @@ imaging_Spatial_Quant<-function(
     case_info=as.data.frame(case_info)
     case_info=t(case_info)
     colnames(case_info)=c("ID","adducts","mz","Rank")
-    case_info=merge(case_info,radius_rank[,c("Rank","Name")])
+    case_info=merge(case_info,radius_rank[,c("Rank","Name")],by="Rank",sort=F)
     
     colnames(case_info)=c("RegionRank","moleculeNames","adducts","mz","RegionName")
-    case_info=merge(case_info,unique(Meta_feature_list[,c("moleculeNames","Name")]),all.x=T,all.y=F)
-    case_info$ClusterID=case_info$Name
+    case_info=merge(case_info,unique(Meta_feature_list[,c("moleculeNames",ClusterID_colname)]),all.x=T,all.y=F,by="moleculeNames")
+    
+    case_info$ClusterID=case_info[,`ClusterID_colname`]
     if (Cluster_level=="High"){
-    a=data.table(str_split(case_info$Name," ",simplify = T))
+    a=data.table(str_split(case_info$ClusterID," ",simplify = T))
     case_info$ClusterID=a$V1
     }
+    
+    colnames_case_info=paste0(case_info$moleculeNames,"@",case_info$adducts,"@",case_info$mz,"@",case_info$RegionRank)
+    
     case_info=t(case_info)
     case_info=data.frame(case_info)
-    colnames(case_info)=colnames(Spectrum_summary_tran)[1:(length(Spectrum_summary_tran)-1)]
+    colnames(case_info)=colnames_case_info
     case_info$Class=""
     Spectrum_summary_tran=rbind(case_info,Spectrum_summary_tran)
     
@@ -641,7 +670,7 @@ imaging_Spatial_Quant<-function(
     library(dplyr)
     library(plotly)
     library(stringr)
-    moleculeNames=t(Spectrum_summary_tran["ID",])
+    moleculeNames=c(colnames_case_info)
     
 
     data=Spectrum_summary_tran[which(rownames(Spectrum_summary_tran)=="ID"):nrow(Spectrum_summary_tran),]
@@ -651,7 +680,7 @@ imaging_Spatial_Quant<-function(
     base::Sys.setenv("plotly_username"="guoguodigital")
     base::Sys.setenv('MAPBOX_TOKEN' = 'pk.eyJ1IjoiZ3VvZ3VvZGlnaXQiLCJhIjoiY2p1aHhheHM5MTBuYjQ0bnZzMzg0Mjd3aSJ9.XyqEayJi68xfGloNQQ28KA')
     
-    plotly_for_region_with_ID<-function(i,data,moleculeNames){
+    plotly_for_region_with_ID<-function(i,data,moleculeNames,output_statice=T){
       library(dplyr)
       library(plotly)
       library(stringr)
@@ -660,10 +689,34 @@ imaging_Spatial_Quant<-function(
       stringX<-stringr::str_remove_all(stringX,"[><*?:\\/\\\\]")
       stringX<-gsub("\"", "", stringX)
       return(stringX)}
-      p <- plot_ly(data=data, x =data$Class[which(data$Class!="")] , y = data[which(data$Class!=""),moleculeNames[i]], name = moleculeNames[i], type = 'scatter', mode = 'markers') %>%
-      add_trace(y =lowess(data$Class[which(data$Class!="")],as.numeric(as.character(data[[moleculeNames[i]]][which(data$Class!="")])),iter=3)$y, name = 'Moving average', mode = 'lines') %>%   
-      layout(title = paste(data["moleculeNames",i], data["adducts",i]," in ",data["RegionName",i]),
-             xaxis = list(title = "Age"),
+      
+      x <- as.numeric(as.character(as.numeric(data$Class[which(data$Class!="")])))
+      y <- as.numeric(as.character(data[which(data$Class!=""),moleculeNames[i]]))
+      #plot(x,y)
+      
+      fit3 <- lm( y~poly(as.numeric(as.character(x)),3) )
+      
+      fitx=seq(min(x), max(x), length=1000)
+      
+      fitdata=as.data.frame(stats::predict(fit3, data.frame(x = fitx), interval="confidence"))
+      newdata=data.frame(x=x,y=y)
+      
+      p <- plot_ly(data=newdata, x =~x , y = ~y, name = moleculeNames[i], type = 'scatter', mode = 'markers') %>%
+        add_lines(x=unique(fitx),y=unique(fitdata$fit), name = 'Poly Fit', mode = 'lines',inherit=FALSE) %>%  
+        add_lines(x=unique(fitx),y=unique(fitdata$lwr), name = 'Poly Fit lwr', mode = 'lines',inherit=FALSE, line = list(color="grey", dash = 'dash')) %>% 
+        add_lines(x=unique(fitx),y=unique(fitdata$upr), name = 'Poly Fit upr', mode = 'lines',inherit=FALSE, line = list(color="grey", dash = 'dash')) %>% 
+        #add_trace(lowess(x,y,iter=6)$y, name = 'Moving average', mode = 'lines') %>%   
+        layout(title = moleculeNames[i],
+               xaxis = list(title = "Age"),
+               yaxis = list (title = "Conc."),
+               showlegend = TRUE)
+      
+      p <- plot_ly(data=data, x =as.numeric(data$Class[which(data$Class!="")]) , y = data[which(data$Class!=""),moleculeNames[i]], name = data["moleculeNames",moleculeNames[i]], type = 'scatter', mode = 'markers') %>%
+      #add_trace(y =lowess(factor(data$Class[which(data$Class!="")],levels = sort(as.numeric(data$Class[which(data$Class!="")]))),as.numeric(as.character(data[[moleculeNames[i]]][which(data$Class!="")])),iter=3)$y, name = 'Moving average', mode = 'lines') %>%   
+        add_trace(y =lowess(as.numeric(data$Class[which(data$Class!="")]),as.numeric(as.character(data[[moleculeNames[i]]][which(data$Class!="")])),iter=3)$y, name = 'Moving average', mode = 'lines') %>%   
+        
+        layout(title = paste(data["moleculeNames",data["moleculeNames",moleculeNames[i]]], data["adducts",moleculeNames[i]]," in ",data["RegionName",moleculeNames[i]]),
+             xaxis = list(title = "Cases"),
              yaxis = list (title = "Relative Conc."),
              showlegend = FALSE)
       
@@ -673,9 +726,16 @@ imaging_Spatial_Quant<-function(
     #plotly_IMAGE(p, format = "png", out_file = windows_filename(paste0(data["moleculeNames",i], data["adducts",i],"in",data["RegionName",i],".png")))
     ##png(windows_filename(paste0(data["moleculeNames",i], data["adducts",i]," in ",data["RegionName",i],".png")))
     #p
-    #dev.off()
-    htmlwidgets::saveWidget(as_widget(p), windows_filename(paste0(data["moleculeNames",i], data["adducts",i]," in ",data["RegionName",i],".html")), selfcontained = F, libdir = "lib")
-       
+    #dev.off()      
+    if (output_statice){
+      
+      orca(p, file = windows_filename(paste0(data["moleculeNames",moleculeNames[i]],".png"))) 
+      windows_filename(paste0(data["moleculeNames",moleculeNames[i]],".png"))
+    }else{
+      htmlwidgets::saveWidget(as_widget(p), windows_filename(paste0(data["moleculeNames",moleculeNames[i]],".html")), selfcontained = F, libdir = "lib")
+      windows_filename(paste0(data["moleculeNames",moleculeNames[i]],".html"))  
+      
+    }
     #plotly::orca(p, windows_filename(paste0(data["moleculeNames",i], data["adducts",i]," in ",data["RegionName",i],".png")))
     windows_filename(paste0(data["moleculeNames",i], data["adducts",i]," in ",data["RegionName",i],".html"))
     }
@@ -684,7 +744,86 @@ imaging_Spatial_Quant<-function(
       message("plot_each_metabolites")
     #p_names=parLapply(cl=autoStopCluster(makeCluster(4)),which(moleculeNames!=""),plotly_for_region_with_ID,data,moleculeNames)
     p_names=bplapply(which(moleculeNames!=""),plotly_for_region_with_ID,data,moleculeNames,BPPARAM=BPPARAM)
-    zip("Result_lipid.zip", c(as.character(p_names), "lib"))}
+    zip("Result_lipid.zip", c(as.character(p_names), "lib"))
+    }
+    
+    plotly_for_SUM_region_with_ID<-function(i,data,moleculeNames,output_statice=T){
+      library(dplyr)
+      library(plotly)
+      library(stringr)
+      if (!require("processx")) install.packages("processx")
+      windows_filename<- function(stringX){
+        stringX<-stringr::str_remove_all(stringX,"[><*?:\\/\\\\]")
+        stringX<-gsub("\"", "", stringX)
+        return(stringX)}
+      
+      candidatelist<-data[,data["moleculeNames",]==moleculeNames[i]]
+      region_list<-as.vector(t(candidatelist)[,"RegionName"])
+      candidatelist<-cbind(candidatelist,Class=data[,"Class"])
+      candidatelist_p=candidatelist[candidatelist$Class=="",]
+      candidatelist_e=candidatelist[candidatelist$Class!="",]
+      
+      p <- plot_ly(data=candidatelist, x =~x , y = ~y, name = moleculeNames[i], type = 'scatter', mode = 'markers')
+      
+      x <- as.numeric(as.character(as.numeric(data$Class[which(data$Class!="")])))
+      y <- as.numeric(as.character(data[which(data$Class!=""),moleculeNames[i]]))
+      #plot(x,y)
+      
+      fit3 <- lm( y~poly(as.numeric(as.character(x)),3) )
+      
+      fitx=seq(min(x), max(x), length=1000)
+      
+      fitdata=as.data.frame(stats::predict(fit3, data.frame(x = fitx), interval="confidence"))
+      newdata=data.frame(x=x,y=y)
+      
+      p <-  p %>%
+        add_lines(x=unique(fitx),y=unique(fitdata$fit), name = 'Poly Fit', mode = 'lines',inherit=FALSE) %>%  
+        add_lines(x=unique(fitx),y=unique(fitdata$lwr), name = 'Poly Fit lwr', mode = 'lines',inherit=FALSE, line = list(color="grey", dash = 'dash')) %>% 
+        add_lines(x=unique(fitx),y=unique(fitdata$upr), name = 'Poly Fit upr', mode = 'lines',inherit=FALSE, line = list(color="grey", dash = 'dash')) %>% 
+        #add_trace(lowess(x,y,iter=6)$y, name = 'Moving average', mode = 'lines') %>%   
+        layout(title = moleculeNames[i],
+               xaxis = list(title = "Age"),
+               yaxis = list (title = "Conc."),
+               showlegend = TRUE)
+      
+      p <- plot_ly(data=data, x =as.numeric(data$Class[which(data$Class!="")]) , y = data[which(data$Class!=""),moleculeNames[i]], name = data["moleculeNames",moleculeNames[i]], type = 'scatter', mode = 'markers') %>%
+        #add_trace(y =lowess(factor(data$Class[which(data$Class!="")],levels = sort(as.numeric(data$Class[which(data$Class!="")]))),as.numeric(as.character(data[[moleculeNames[i]]][which(data$Class!="")])),iter=3)$y, name = 'Moving average', mode = 'lines') %>%   
+        add_trace(y =lowess(as.numeric(data$Class[which(data$Class!="")]),as.numeric(as.character(data[[moleculeNames[i]]][which(data$Class!="")])),iter=3)$y, name = 'Moving average', mode = 'lines') %>%   
+        
+        layout(title = paste(data["moleculeNames",data["moleculeNames",moleculeNames[i]]], data["adducts",moleculeNames[i]]," in ",data["RegionName",moleculeNames[i]]),
+               xaxis = list(title = "Cases"),
+               yaxis = list (title = "Relative Conc."),
+               showlegend = FALSE)
+      
+      
+      #link=api_create(p, filename = paste(case_info[i,"ID"], case_info[i,"adducts"],"in",case_info[i,"Name"]))
+      
+      #plotly_IMAGE(p, format = "png", out_file = windows_filename(paste0(data["moleculeNames",i], data["adducts",i],"in",data["RegionName",i],".png")))
+      ##png(windows_filename(paste0(data["moleculeNames",i], data["adducts",i]," in ",data["RegionName",i],".png")))
+      #p
+      #dev.off()      
+      if (output_statice){
+        
+        orca(p, file = windows_filename(paste0(data["moleculeNames",moleculeNames[i]],".png"))) 
+        windows_filename(paste0(data["moleculeNames",moleculeNames[i]],".png"))
+      }else{
+        htmlwidgets::saveWidget(as_widget(p), windows_filename(paste0(data["moleculeNames",moleculeNames[i]],".html")), selfcontained = F, libdir = "lib")
+        windows_filename(paste0(data["moleculeNames",moleculeNames[i]],".html"))  
+        
+      }
+      #plotly::orca(p, windows_filename(paste0(data["moleculeNames",i], data["adducts",i]," in ",data["RegionName",i],".png")))
+      windows_filename(paste0(data["moleculeNames",i], data["adducts",i]," in ",data["RegionName",i],".html"))
+    }
+    
+    moleculeNames=unique(as.vector(t(data)[,"moleculeNames"]))
+    moleculeNames=moleculeNames[moleculeNames!=""]
+    
+    if(plot_each_metabolites){
+      message("plot_each_metabolites")
+      #p_names=parLapply(cl=autoStopCluster(makeCluster(4)),which(moleculeNames!=""),plotly_for_region_with_ID,data,moleculeNames)
+      p_names=bplapply(which(moleculeNames!=""),plotly_for_SUM_region_with_ID,data,moleculeNames,BPPARAM=BPPARAM)
+      zip("Result_lipid.zip", c(as.character(p_names), "lib"))
+    }
     
     Spectrum_summary_tran_tran=as.data.frame(t(Spectrum_summary_tran),stringsAsFactors = FALSE)
     #Spectrum_summary_tran_tran=Spectrum_summary_tran_tran[which(rownames(Spectrum_summary_tran_tran)!="Class"),which(Spectrum_summary_tran_tran["Class",]!="")]
@@ -708,7 +847,7 @@ imaging_Spatial_Quant<-function(
     data=data[which(rownames(data)!="ClusterID"),]
     data$Class=Spectrum_summary_tran$Class[which('&'(Spectrum_summary_tran$Class!="",Spectrum_summary_tran$Class!=" "))]
     
-    Sys.setenv("PATH" = paste(paste(unique(str_split(Sys.getenv("PATH"),.Platform$path.sep)[[1]]), sep = .Platform$path.sep,collapse = .Platform$path.sep), "C:/ProgramData/Anaconda3/orca_app", sep = .Platform$path.sep))
+    Sys.setenv("PATH" = paste(paste(unique(str_split(Sys.getenv("PATH"),.Platform$path.sep)[[1]]), sep = .Platform$path.sep,collapse = .Platform$path.sep), "C:/Anaconda/orca_app", sep = .Platform$path.sep))
       
     plotly_for_region_with_ClusterID<-function(i,data,output_statice=F){
       library(dplyr)
@@ -894,10 +1033,10 @@ imaging_Spatial_Quant<-function(
     
     colnames(case_info)=c("RegionRank","moleculeNames","adducts","mz","orgID","RegionName")
     #case_info=merge(case_info,unique(Meta_feature_list[,c("moleculeNames","Name")]),all.x=T,all.y=F)
-    case_info$Name=case_info$moleculeNames
-    case_info$ClusterID=case_info$Name
+    case_info$ClusterID=case_info$moleculeNames
+    case_info$ClusterID=case_info$ClusterID
     if (Cluster_level=="High"){
-      a=data.table(str_split(case_info$Name," ",simplify = T))
+      a=data.table(str_split(case_info$ClusterID," ",simplify = T))
       case_info$ClusterID=a$V1
     }
     rownames(case_info)=case_info$orgID
@@ -918,10 +1057,13 @@ imaging_Spatial_Quant<-function(
   #Plot cluster images across the datafiles
   if(plot_cluster_image){
     Protein_feature_list=fread(paste(workdir,"/Summary folder/Protein_feature_summary_sl.csv",sep=""))
-    if (!is.null(rotateimg)){rotateimg=read.csv(rotateimg,stringsAsFactors = F)}
+    #Protein_feature_list=merge(Protein_feature_list,Meta_feature_list[,c("moleculeNames","Pathway")],by="moleculeNames",allow.cartesian=TRUE)
+    #Protein_feature_list$Pathway=Protein_feature_list$Pathway.y
+     if (!is.null(rotateimg)){rotateimg=read.csv(rotateimg,stringsAsFactors = F)}
     for (i in 1:length(datafile)){
       rotate=rotateimg[rotateimg$filenames==datafile[i],"rotation"]
-      rotate=as.numeric(rotate)
+      if(is.null(rotate)) rotate=0
+      rotate= as.numeric(rotate)
     imdata=Load_Cardinal_imaging(datafile[i],preprocessing = F,resolution = ppm,rotate = rotate,attach.only=F)
     
     
@@ -933,8 +1075,8 @@ imaging_Spatial_Quant<-function(
            cluster_image_cardinal_allinone,
            imdata=imdata,
            SMPLIST=Protein_feature_list,
-           ppm=ppm,ClusterID_colname="Name",
-           componentID_colname="FA",
+           ppm=ppm,ClusterID_colname=ClusterID_colname,
+           componentID_colname="moleculeNames",
            plot_layout="line",
            Component_plot_threshold=1,
            plot_style=plot_style)
@@ -947,7 +1089,7 @@ imaging_Spatial_Quant<-function(
              cluster_image_cardinal_allinone,
              imdata=NULL,
              SMPLIST=Protein_feature_list,
-             ppm=ppm,ClusterID_colname="Name",
+             ppm=ppm,ClusterID_colname=ClusterID_colname,
              componentID_colname="FA",
              plot_layout="line",
              Component_plot_threshold=1,
@@ -1002,13 +1144,31 @@ imaging_Spatial_Quant<-function(
 
   if(plot_cluster_image_grid){
     Protein_feature_list=fread(paste(workdir,"/Summary folder/Protein_feature_summary_sl.csv",sep=""))
+    Protein_feature_list$Pathway=NULL
+    Protein_feature_list=merge(Protein_feature_list,Meta_feature_list[,c("moleculeNames","Pathway")],by="moleculeNames",allow.cartesian=TRUE)
     if (!is.null(rotateimg)){rotateimg=read.csv(rotateimg,stringsAsFactors = F)}
     imdata=list()
     combinedimdata=NULL
-    register(SerialParam())
+    #register(SerialParam())
+    if (is.null(mzrange)){
+      message("Detecting mz range...")
+      for (i in 1:length(datafile)){
+        rotate=rotateimg[rotateimg$filenames==datafile[i],"rotation"]
+        if(is.null(rotate)) rotate=0
+        rotate= as.numeric(rotate)
+      imdata[[i]]=Load_Cardinal_imaging(datafile[i],preprocessing = F,resolution = ppm*2,rotate = rotate,attach.only=F,as="MSImagingExperiment")
+      mzrangetemp=range(imdata[[1]]@featureData@mz)
+      if (is.null(mzrange)) {mzrange=mzrangetemp}else{
+       if (mzrange[1]<mzrangetemp[1]){mzrange[1]<-mzrangetemp[1]}
+        if (mzrange[2]<mzrangetemp[2]){mzrange[2]<-mzrangetemp[2]}
+      }
+      
+      }
+    }
     for (i in 1:length(datafile)){
       
       rotate=rotateimg[rotateimg$filenames==datafile[i],"rotation"]
+      if(is.null(rotate)) rotate=0
       rotate=as.numeric(rotate)
       imdata[[i]]=Load_Cardinal_imaging(datafile[i],preprocessing = F,resolution = ppm*2,rotate = rotate,attach.only=F,as="MSImagingExperiment",mzrange=mzrange)
       #imdata[[i]]@elementMetadata@coord=imdata[[i]]@elementMetadata@coord[,c("x","y")]
@@ -1030,17 +1190,36 @@ imaging_Spatial_Quant<-function(
     
     if (dir.exists(outputfolder)==FALSE){dir.create(outputfolder)}
     setwd(outputfolder)
+    Protein_feature_list=as.data.frame(Protein_feature_list)
+    if(is.null(Protein_feature_list$Formula)){Protein_feature_list$Formula=Protein_feature_list$formular}
     
-    lapply(unique(Protein_feature_list$Name),
+    clusterID=unique(Protein_feature_list[,ClusterID_colname])
+    
+    lapply(clusterID,
+           cluster_image_grid,
+           imdata=imdata,
+           SMPLIST=Protein_feature_list,
+           ppm=ppm,
+           ClusterID_colname=ClusterID_colname,
+           Component_plot_threshold=2,
+           componentID_colname="moleculeNames",
+           plot_layout="line",
+           export_Header_table=F,
+           plot_style="fleximaging")
+    
+    lapply(clusterID,
            cluster_image_grid,
            imdata=NULL,
            SMPLIST=Protein_feature_list,
-           ppm=ppm,ClusterID_colname="Name",
-           componentID_colname="FA",
+           ppm=ppm,
+           ClusterID_colname=ClusterID_colname,
+           Component_plot_threshold=2,
+           componentID_colname="moleculeNames",
            plot_layout="line",
-           Component_plot_threshold=1,
-           export_Header_table=T)
+           export_Header_table=T,
+           plot_style="fleximaging")
     
+
     
 
     Pngclusterkmean=NULL

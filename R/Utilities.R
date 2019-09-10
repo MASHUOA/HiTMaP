@@ -559,8 +559,8 @@ cluster_image_grid<-function(clusterID,
         temp_cluster_png=tempfile(pattern = "file", tmpdir = tempdir(), fileext = ".png")
         temp_component_png=list()
         if (plot_layout=="line"){
-          png(temp_cluster_png,width = 5,height = 5 * length( levels(run(imdata))), bg = "black",units = "in",res = 300)
-          par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(length( levels(run(imdata))),1),
+          png(temp_cluster_png,width = 5,height = 5 * length( levels(Cardinal::run(imdata))), bg = "black",units = "in",res = 300)
+          par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(length( levels(Cardinal::run(imdata))),1),
           #par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(1,(length(candidateunique)+1)),
               bty="n",pty="s",xaxt="n",
               yaxt="n",
@@ -584,7 +584,7 @@ cluster_image_grid<-function(clusterID,
               smooth.image = smooth.image ,
               superpose=TRUE,normalize.image="linear",
               plusminus=median(ppm*candidateunique/1000000),
-              layout=c( length(levels(run(imdata))),1))
+              layout=c( length(levels(Cardinal::run(imdata))),1))
         print(clusterimg)
         
         dev.off()
@@ -604,18 +604,18 @@ cluster_image_grid<-function(clusterID,
                 key=F,
                 xlab=NULL,
                 ylab=NULL,
-                layout=c( length(levels(run(imdata))),1)
+                layout=c( length(levels(Cardinal::run(imdata))),1)
                 #xlim=c(0,50),
                 #ylim=c(0,40)
           )
         temp_component_png[[i]]=tempfile(pattern = "file", tmpdir = tempdir(), fileext = ".png")
-        png(temp_component_png[[i]],width = 5,height = 5 * length( levels(run(imdata))), bg = "black",units = "in",res = 300)
-        par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(length( levels(run(imdata))),1),
+        png(temp_component_png[[i]],width = 5,height = 5 * length( levels(Cardinal::run(imdata))), bg = "black",units = "in",res = 300)
+        par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(length( levels(Cardinal::run(imdata))),1),
             #par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(1,(length(candidateunique)+1)),
             bty="n",pty="s",xaxt="n",
             yaxt="n",
             no.readonly = TRUE,ann=FALSE)  
-        print(componentimg[[i]])
+       try(tryCatch(print(componentimg[[i]])),silent = T)
         dev.off()
           #componentname=unique(candidate[[componentID_colname]][candidate$mz==as.numeric(candidateunique[i])])
           #for (component in componentname){
@@ -650,23 +650,24 @@ cluster_image_grid<-function(clusterID,
   }
   
   if(export_Header_table){
-    candidate_unique_table=unique(candidate[,c("mz","FA","Formula","moleculeNames" , "adduct")])
+    candidate_unique_table=unique(candidate[,c("mz",componentID_colname,"Formula","moleculeNames" , "adduct")])
     Header_table<-NULL
     Header_table$mz=candidateunique
     Header_table<-data.frame(Header_table)
     Header_table=base::merge(Header_table,candidate_unique_table,all.x=T,by="mz",all.y=F)
+    Header_table=Header_table[order(as.character(Header_table$mz)),]
     #Header_table$ID=candidate[[componentID_colname]][candidate$mz==as.numeric(candidateunique)]
     #componentnames=unique(Header_table[[componentID_colname]][Header_table$mz==as.numeric(candidateunique[i])])
     p <- plot_ly(
       type = 'table',
       columnwidth = 20,
       header = list(
-        values = c(paste0("<b>","Cluster","</b>"),Header_table$FA),
+        values = c(paste0("<b>","Cluster","</b>"),Header_table[,componentID_colname]),
         colspan = I(30),
         align = c('center'),
         line = list(width = 1, color = 'black'),
         fill = list(color = "grey"),
-        font = list(family = "Arial", size = 15, color = "white")
+        font = list(family = "Arial", size = c(15,9+6/(width(Header_table[,componentID_colname])/7)), color = "white")
       ),
       cells = list(
         values = cbind(
@@ -695,7 +696,7 @@ cluster_image_grid<-function(clusterID,
     
     
     
-    orca(p, file = windows_filename(paste0(clusterID,"header.png")),width=120*(nrow(Header_table))+200,height=540) 
+    orca(p, file = windows_filename(paste0(clusterID,"_header.png")),width=120*(nrow(Header_table))+200,height=540) 
     
   }
   
@@ -706,7 +707,7 @@ cluster_image_grid<-function(clusterID,
 
 orca_initial<-function(){
   
-Sys.setenv("PATH" = paste(paste(unique(str_split(Sys.getenv("PATH"),.Platform$path.sep)[[1]]), sep = .Platform$path.sep,collapse = .Platform$path.sep), "C:/ProgramData/Anaconda3/orca_app", sep = .Platform$path.sep))
+Sys.setenv("PATH" = paste(paste(unique(str_split(Sys.getenv("PATH"),.Platform$path.sep)[[1]]), sep = .Platform$path.sep,collapse = .Platform$path.sep), "C:/Anaconda/orca_app", sep = .Platform$path.sep))
   
   
 }
