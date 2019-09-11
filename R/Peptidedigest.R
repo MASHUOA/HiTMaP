@@ -2087,7 +2087,7 @@ if(PMFsearch){
     
     colnames(peaklist)<-c("m.z","intensities")
     
-    deconv_peaklist<-isopattern_ppm_filter_peaklist(peaklist,ppm=ppm)
+    deconv_peaklist<-isopattern_ppm_filter_peaklist(peaklist,ppm=ppm,threshold=threshold)
     
     message(paste(nrow(deconv_peaklist),"mz features found in the spectrum") )
     #MassSpecWavelet_fun(peaklist = peaklist)
@@ -2179,6 +2179,8 @@ if(PMFsearch){
       }
       
       Peptide_plot_list_rank=rank_mz_feature(Peptide_plot_list,mz_feature=deconv_peaklist,BPPARAM = BPPARAM)
+      #Peptide_plot_list_rank=Peptide_plot_list
+      #Peptide_plot_list_rank$Rank=1
       #Peptide_plot_list_rank=Peptide_plot_list_rank[Peptide_plot_list_rank$Rank<=Rank,]
       Peptide_plot_list_rank<-Peptide_plot_list_rank[,c("mz","Peptide","adduct","formula","isdecoy","Intensity","moleculeNames","Region","Score",        
                                                         "mz_align","Rank")]
@@ -3123,7 +3125,7 @@ protein_scoring<-function(Protein_feature_list,Peptide_plot_list_rank,BPPARAM = 
     peptides<-unique(Protein_feature_list_rank$Peptide[Protein_feature_list_rank$Protein==x])
     if (class(protein_seq)!="try-error"){
      if (length(peptides)==1){
-       width(peptides)/width(protein_seq)
+       width(as.character(peptides))/width(as.character(protein_seq))
      } else if (length(peptides)>=2){
        return(peptide_map_to_protein(peptides = peptides, protein_seq = protein_seq,map_type = "grep"))
      }
@@ -3171,9 +3173,9 @@ peptide_map_to_protein<-function(peptides, protein_seq ,map_type="grep"){
   cov <- as.vector(cov)
   cov_len<-length(which(cov==1))
   
-  coverage_percentage=cov_len/width(protein_seq)
+  coverage_percentage=cov_len/width(as.character(protein_seq))
   }else if (map_type=="grep"){
-    s1=(peptides)
+    s1=as.character(peptides)
     s2=as.character(protein_seq)
     palign2 <- sapply(s1,regexpr , s2)
     coverage_ranges<-IRanges(start = palign2,end = palign2+width(s1)-1,width = width(s1))
@@ -3221,7 +3223,19 @@ seq.cov <- function(x,plot_coverage=F){
   return(cov_len)
 }
 
-isopattern_ppm_filter_peaklist<-function(pattern,ppm){
+pick.peaks <- function(peaklist, ppm) {
+  span.width <- ppm * 2 + 1
+  loc.max <- span.width + 1 -
+    apply(embed(peaklist, span.width), 1, which.max)
+  loc.max[loc.max == 1 | loc.max == span.width] <- NA
+  
+  pks <- loc.max + 0:(length(loc.max)-1)
+  unique(pks[!is.na(pks)])
+}
+
+isopattern_ppm_filter_peaklist<-function(pattern,ppm,threshold=0.001){
+  
+  org_feature=nrow(pattern)
   
   pattern_ppm=as.numeric(as.character(pattern[,1]))
   
@@ -3248,7 +3262,12 @@ isopattern_ppm_filter_peaklist<-function(pattern,ppm){
     }
     
   }
+  
+  filtered_pattern<-filtered_pattern[filtered_pattern$intensities>=max(filtered_pattern$intensities)*threshold,]
+  
   rownames(filtered_pattern)=1:nrow(filtered_pattern)
+  
+  message(paste("Origional Features:",org_feature,"Filtered Features:",nrow(filtered_pattern)))
   
   return(filtered_pattern)
 }

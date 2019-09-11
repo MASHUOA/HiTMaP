@@ -104,7 +104,7 @@ Protein_feature_list_fun<-function(workdir=getwd(),
                                    Decoy_adducts=c("M+He","M+Ne","M+Ar","M+Kr","M+Xe","M+Rn"),
                                    Decoy_mode=c("adducts","elements","isotope"),
                                    Decoy_search=T,
-                                   mzrange=c(500,4000),
+                                   mzrange=c(700,4000),
                                    output_candidatelist=T,
                                    use_previous_candidates=F){
   library(Biostrings)
