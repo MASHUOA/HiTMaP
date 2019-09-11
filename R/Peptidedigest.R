@@ -227,13 +227,7 @@ imaging_identification<-function(
     
   }
   
-  if(Spectrum_validate){
-    install.packages("OrgMassSpecR")
-    require(OrgMassSpecR)
-    Protein_feature_summary<-read.csv(paste(workdir,"/Summary folder",sep=""))
-    
-    SpectrumSimilarity
-  }
+
   if(plot_cluster_image_grid){
     Protein_feature_list=fread(paste(workdir,"/Summary folder/Protein_feature_summary_sl.csv",sep=""))
     if (!is.null(rotateimg)){rotateimg=read.csv(rotateimg,stringsAsFactors = F)}
