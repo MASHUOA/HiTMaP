@@ -2300,19 +2300,19 @@ if(PMFsearch){
       #message(head(peaklist))
       #message(head(isotopes))
       
-      Peptide_plot_list_Score=bplapply(Peptide_plot_list$formula,SCORE_PMF,peaklist=peaklist,isotopes=isotopes,score_method=score_method,charge = 1,ppm=ppm,BPPARAM = BPPARAM)
+      Peptide_plot_list$Score=unlist(bplapply(Peptide_plot_list$formula,SCORE_PMF,peaklist=peaklist,isotopes=isotopes,score_method=score_method,charge = 1,ppm=ppm,BPPARAM = BPPARAM))
       #testscore=lapply("C50H77N11O10S1Na1",SCORE_PMF,score_method=score_method,peaklist=peaklist,isotopes=isotopes,charge = 1,ppm=ppm)
       #Peptide_plot_list_Score=lapply(testdf$formula,SCORE_PMF,peaklist=peaklist,isotopes=isotopes,score_method=score_method,charge = 1,ppm=ppm)
       #Peptide_plot_list_Score_decoyisotope=bplapply(Peptide_plot_list$formula,SCORE_PMF,peaklist=peaklist,isotopes=decoy_isotopes,score_method=score_method,charge = 1,ppm=ppm,BPPARAM = BPPARAM)
       #Peptide_plot_list_Score_decoyisotope_N=bplapply(Peptide_plot_list$formula,SCORE_PMF,peaklist=peaklist,isotopes=decoy_isotopes_N,score_method=score_method,charge = 1,ppm=ppm,BPPARAM = BPPARAM)
       
       #Peptide_plot_list_Score=bplapply(Peptide_plot_list$formula,SCORE_PMF,peaklist,BPPARAM = BPPARAM)
-      Peptide_plot_list_Score=unlist(Peptide_plot_list_Score)
+      
       #Peptide_plot_list_Score_decoyisotope=unlist(Peptide_plot_list_Score_decoyisotope)
       #Peptide_plot_list_decoy=Peptide_plot_list
       #Peptide_plot_list_decoy$isdecoy=1
       #Peptide_plot_list_decoy$Score=Peptide_plot_list_Score_decoyisotope
-      Peptide_plot_list$Score=Peptide_plot_list_Score
+      
        #Peptide_plot_list_Score_frame=do.call(rbind,Peptide_plot_list_Score)
       #Peptide_plot_list<-rbind(Peptide_plot_list,Peptide_plot_list_decoy)
       if (Decoy_search && ("isotope" %in% Decoy_mode)){
@@ -2989,7 +2989,9 @@ FDR_cutoff_plot<-function(Peptide_plot_list,FDR_cutoff=0.1,FDR_strip=500,plot_fd
   
   if (!is.null(outputdir) && plot_fdr){
     png(paste0(outputdir,"/Matching_Score_vs_mz.png"))
-    p<-ggplot(data=Peptide_plot_list,aes(x=mz,y=Score,color=isdecoy)) + geom_point(size=1,alpha=1/round(nrow(Peptide_plot_list)/1000)) + 
+    alpha=1/round(nrow(Peptide_plot_list)/1000)
+    if (alpha==Inf ) alpha=1
+    p<-ggplot(data=Peptide_plot_list,aes(x=mz,y=Score,color=isdecoy)) + geom_point(size=1,alpha=alpha) + 
       ggtitle("Matching score vs mz") +
       xlab("mz") + ylab("Matching score") + labs(fill = "isdecoy")+ theme(axis.text.x = element_text(angle=45))
     print(p)
