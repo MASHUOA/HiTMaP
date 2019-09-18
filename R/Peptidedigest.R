@@ -1456,15 +1456,7 @@ Peptide_Feature_Summary_data_table_para<- function(Proteins,peplist,pimlist,pimr
   tempdf1
 }
 
-Peptide_Summary_para<- function(Proteins,peplist){
-  
-  tempdf1<- NULL
-  for (Peptides in  1: length(peplist[[Proteins]])){
-    tempdf1<- rbind(tempdf1,c(names(peplist)[Proteins],peplist[[Proteins]][Peptides]))
-  }
 
-  tempdf1
-}
 
 Peptide_Feature_Summary_data_table_fast<- function(peplist,pimlist,pimresultlist,Peptide_feature_list, mode="append"){
   print("Peptide Feature Summary")

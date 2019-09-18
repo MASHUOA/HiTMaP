@@ -163,7 +163,7 @@ Protein_feature_list_fun<-function(workdir=getwd(),
   }
   
   for (i in 1:length(Digestion_site)){
-    
+    message(paste("Testing fasta sequances for degestion site:",Digestion_site[i]))
     if (Digestion_site[i]==""){Digestion_site[i]="J"}
     
     peplist_option<-cleave(as.character(list_of_protein_sequence),custom=Digestion_site[i], missedCleavages=missedCleavages)
@@ -176,15 +176,15 @@ Protein_feature_list_fun<-function(workdir=getwd(),
     
     
     
-    pimlist<-bplapply(peplist_option,function(x){
+    pimlist<-lapply(peplist_option,function(x){
     AA<-rep(0,26)
-    protViz::parentIonMass(x,fixmod=AA)},BPPARAM = BPPARAM)
+    protViz::parentIonMass(x,fixmod=AA)})
     
     
     
     peplist_option<-peplist_option[duplicated(names(peplist_option))==FALSE]
     
-    message(paste("Testing fasta sequances..."))
+    
     
     peplist_option<-peplist_option[names(peplist_option) %in% names(pimlist) ==TRUE]
     
@@ -217,17 +217,22 @@ Protein_feature_list_fun<-function(workdir=getwd(),
   #tempdf<-parLapply(cl=cl,  1: length(names(peplist)), Peptide_Summary_para,peplist)
   #bplapply()
   message(paste("Generated",length(peplist),"Proteins in total. Computing exact masses..."))
-  tempdf<-bplapply( 1: length(names(peplist)), Peptide_Summary_para,peplist,BPPARAM = BPPARAM)
-  tempdf <- do.call("rbind", tempdf)
-  colnames(tempdf)<-c("Protein","Peptide")
+  #tempdf<-bplapply( 1: length((peplist)), Peptide_Summary_para,peplist,BPPARAM = BPPARAM)
+  #tempdf<-lapply( 1: length((peplist)), Peptide_Summary_para,peplist)
+  #tempdf <- do.call("rbind", tempdf)
+  #colnames(tempdf)<-c("Protein","Peptide")
   
-  tempdf<-as.data.frame(tempdf)
+  tempdf<-data.frame(Protein=rep(names(peplist),unname(unlist(lapply(peplist,length)))),Peptide=unname(unlist(peplist)))
+  
+  #do.call()
+  
+  #
   
   tempdf$Protein<-as.character(tempdf$Protein)
   tempdf$Peptide<-as.character(tempdf$Peptide)
-
-  tempdf<-tempdf[-grep("X",tempdf$Peptide),]
-  tempdf<-tempdf[-grep("U",tempdf$Peptide),]
+  tempdf<-as.data.frame(tempdf)
+  if (length(grep("X",tempdf$Peptide))!=0)  tempdf<-tempdf[-grep("X",tempdf$Peptide),]
+  if (length(grep("U",tempdf$Peptide))!=0)  tempdf<-tempdf[-grep("U",tempdf$Peptide),]
   
   tempdf$pepmz <- as.numeric(parentIonMass(tempdf$Peptide,fixmod=AA)- 1.007276 )
   tempdf<-tempdf[`&`(tempdf$pepmz>=mzrange[1],tempdf$pepmz<=mzrange[2]),]
@@ -986,4 +991,14 @@ ConvertPeptide<-function (sequence, output = "elements")
     codes <- sapply(peptideVector, FindCode)
     return(paste(codes, collapse = ""))
   }
+}
+
+Peptide_Summary_para<- function(Proteins,peplist){
+  
+  tempdf1<- NULL
+  for (Peptides in  1: length(peplist[[Proteins]])){
+    tempdf1<- rbind(tempdf1,c(names(peplist)[Proteins],peplist[[Proteins]][Peptides]))
+  }
+  
+  tempdf1
 }
