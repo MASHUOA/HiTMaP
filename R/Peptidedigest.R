@@ -2962,7 +2962,7 @@ FDR_cutoff_plot<-function(Peptide_plot_list,FDR_cutoff=0.1,FDR_strip=500,plot_fd
     target_decoy<-factor(ifelse(Peptide_plot_list$isdecoy==1,"Decoy","Tagret"))
     Peptide_plot_list_plot$target_decoy=target_decoy
     png(paste0(outputdir,"/Peptide_Score_histogram.png"))
-    p<-ggplot(data=Peptide_plot_list_plot,aes(x=Score,color=target_decoy, fill=target_decoy)) + 
+    p<-ggplot(data=Peptide_plot_list_plot,aes(x=Peptide_plot_list_plot$Score,color=Peptide_plot_list_plot$target_decoy, fill=Peptide_plot_list_plot$target_decoy)) + 
       geom_histogram( fill="white",alpha=0.5, bins = 50, position="Dodge")  +
       ggtitle("Peptide score vs Counts") +
       xlab("Score") + ylab("Counts") + labs(fill = "Is_Decoy") + theme_classic() #+ facet_grid(target_decoy ~ .)
@@ -2974,10 +2974,10 @@ FDR_cutoff_plot<-function(Peptide_plot_list,FDR_cutoff=0.1,FDR_strip=500,plot_fd
     mu <- Peptide_plot_list_plot %>% group_by(target_decoy) %>% summarize(mean=mean(Score)) 
     
     png(paste0(outputdir,"/Peptide_Score_histogram.png"))
-    p<-ggplot(Peptide_plot_list_plot, aes(x=Score, color=target_decoy, fill=target_decoy)) +
+    p<-ggplot(Peptide_plot_list_plot, aes(x=Peptide_plot_list_plot$Score, color=Peptide_plot_list_plot$target_decoy, fill=Peptide_plot_list_plot$target_decoy)) +
       geom_histogram(aes(y=..density..), position="Dodge", alpha=0.5, bins = 50)+
       geom_density(alpha=0.6)+
-      geom_vline(data=mu, aes(xintercept=mean, color=target_decoy), linetype="dashed")+
+      geom_vline(data=mu, aes(xintercept=mu$mean, color=mu$target_decoy), linetype="dashed")+
       ggtitle("Peptide score vs Counts") +
       xlab("Score") + ylab("Counts") + 
       #scale_color_manual(values=c("#999999", "#E69F00", "#56B4E9"))+
