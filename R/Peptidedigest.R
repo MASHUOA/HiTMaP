@@ -59,6 +59,7 @@ imaging_identification<-function(
                Decoy_search=T,
                Decoy_adducts=c("M+ACN+H","M+IsoProp+H","M+DMSO+H","M+Co","M+Ag","M+Cu","M+He","M+Ne","M+Ar","M+Kr","M+Xe","M+Rn"),
                Decoy_mode = "isotope",
+               adjust_score = F,
                PMF_analysis=TRUE,
                Bypass_generate_spectrum=F,
                Protein_feature_summary=TRUE,
@@ -116,7 +117,8 @@ imaging_identification<-function(
                                                  output_candidatelist=output_candidatelist,
                                                  use_previous_candidates=use_previous_candidates
                                                  )
-
+  list_of_protein_sequence<-get("list_of_protein_sequence", envir = .GlobalEnv)
+  Index_of_protein_sequence<-get("Index_of_protein_sequence", envir = .GlobalEnv)
   
   if (!is.null(rotateimg)){rotateimg=read.csv(rotateimg,stringsAsFactors = F)}
   
@@ -139,7 +141,8 @@ imaging_identification<-function(
                                                   score_method = score_method,
                                                   Protein_feature_list=Protein_feature_list,
                                                   Decoy_mode=Decoy_mode,
-                                                  Decoy_search=Decoy_search)
+                                                  Decoy_search=Decoy_search,
+                                                  adjust_score=adjust_score)
   
   }
   #Summarize the peptide list
@@ -1953,6 +1956,7 @@ PMF_Cardinal_Datafilelist<-function(datafile,Peptide_Summary_searchlist,
                                     Protein_feature_list=NULL,
                                     Decoy_mode="",
                                     Decoy_search=T,
+                                    adjust_score=T,
                                     ...){
   library(data.table)
   library(Cardinal)
@@ -2345,11 +2349,12 @@ if(PMFsearch){
       
       #group_by(c("Protein","isdecoy"))  %>%  summarize(sum("Intensity"))
       
-      write.csv(Peptide_plot_list_rank,paste0(datafile[z] ," ID/",SPECTRUM_batch,"/Peptide_1st_ID_score_rank",score_method,".csv"),row.names = F)
-      Score_cutoff= FDR_cutoff_plot(Peptide_plot_list_rank,FDR_cutoff=0.1,plot_fdr=T,outputdir=paste0(datafile[z] ," ID/",SPECTRUM_batch),adjust_score = F)
+      write.csv(Peptide_plot_list_rank,paste0(datafile[z] ," ID/",SPECTRUM_batch,"/Peptide_1st_ID_score_rank_",score_method,".csv"),row.names = F)
+      if (adjust_score==F){
+      Score_cutoff= FDR_cutoff_plot(Peptide_plot_list_rank,FDR_cutoff=0.1,plot_fdr=T,outputdir=paste0(datafile[z] ," ID/",SPECTRUM_batch),adjust_score = adjust_score)
       Peptide_plot_list_2nd=Peptide_plot_list_rank[((Peptide_plot_list_rank$Score>=Score_cutoff)&(!is.na(Peptide_plot_list_rank$Intensity))&(Peptide_plot_list_rank$isdecoy==0)),]
-      if (nrow(Peptide_plot_list_2nd)==0){
-        Score_cutoff= FDR_cutoff_plot(Peptide_plot_list_rank,FDR_cutoff=0.1,plot_fdr=T,outputdir=paste0(datafile[z] ," ID/",SPECTRUM_batch),adjust_score = T)
+      }else{
+        Score_cutoff= FDR_cutoff_plot(Peptide_plot_list_rank,FDR_cutoff=0.1,plot_fdr=T,outputdir=paste0(datafile[z] ," ID/",SPECTRUM_batch),adjust_score = adjust_score)
         Peptide_plot_list_2nd=Score_cutoff[[2]]
         Score_cutoff=Score_cutoff[[1]]
         Peptide_plot_list_2nd=Peptide_plot_list_2nd[((Peptide_plot_list_2nd$Score>=Score_cutoff)&(!is.na(Peptide_plot_list_2nd$Intensity))&(Peptide_plot_list_2nd$isdecoy==0)),]
@@ -2961,30 +2966,24 @@ FDR_cutoff_plot<-function(Peptide_plot_list,FDR_cutoff=0.1,FDR_strip=500,plot_fd
   
   #unique_fomula_ID<-unique(Peptide_plot_list[,c("mz","formula","isdecoy","Intensity","Score")])
   
-  
-  #Peptide_plot_list=unique_fomula_ID
-  
-  if (!is.null(outputdir) && plot_fdr){
-    
-    
-    plot_fdr_histogram<-function(Peptide_plot_list,plot_name="target-decoy",outputdir=outputdir){
+      plot_fdr_histogram<-function(Peptide_plot_list,plot_name="target-decoy",outputdir=outputdir){
     library(dplyr)
     if (nrow(Peptide_plot_list)!=0) {
           Peptide_plot_list_plot<-Peptide_plot_list[,c("isdecoy","Score")]
     target_decoy<-factor(ifelse(Peptide_plot_list$isdecoy==1,"Decoy","Tagret"))
     Peptide_plot_list_plot$target_decoy=target_decoy
-    png(paste0(outputdir,"/Peptide_Score_histogram_",plot_name,".png"))
-    p<-ggplot(data=Peptide_plot_list_plot,aes(x=Peptide_plot_list_plot$Score,color=Peptide_plot_list_plot$target_decoy, fill=Peptide_plot_list_plot$target_decoy)) + 
+    if(F){ png(paste0(outputdir,"/Peptide_Score_histogram_",plot_name,".png"))
+    p<-ggplot(data=Peptide_plot_list_plot,aes(x=Peptide_plot_list_plot$Score,color=target_decoy, fill=target_decoy)) + 
       geom_histogram( fill="white",alpha=0.5, bins = 50, position="Dodge")  +
       ggtitle("Peptide score vs Counts") +
       xlab("Score") + ylab("Counts") + labs(fill = "Is_Decoy") + theme_classic() #+ facet_grid(target_decoy ~ .)
     print(p)
-    dev.off() 
+    dev.off() }
     
     mu <- Peptide_plot_list_plot %>% group_by(target_decoy) %>% summarize(mean=mean(Score)) 
     
     png(paste0(outputdir,"/Peptide_Score_histogram_",plot_name,".png"))
-    p<-ggplot(Peptide_plot_list_plot, aes(x=Peptide_plot_list_plot$Score, color=Peptide_plot_list_plot$target_decoy, fill=Peptide_plot_list_plot$target_decoy)) +
+    p<-ggplot(Peptide_plot_list_plot, aes(x=Peptide_plot_list_plot$Score, color=target_decoy, fill=target_decoy)) +
       geom_histogram(aes(y=..density..), position="Dodge", alpha=0.5, bins = 50)+
       geom_density(alpha=0.6)+
       geom_vline(data=mu, aes(xintercept=mu$mean, color=mu$target_decoy), linetype="dashed")+
@@ -3006,6 +3005,12 @@ FDR_cutoff_plot<-function(Peptide_plot_list,FDR_cutoff=0.1,FDR_strip=500,plot_fd
     dev.off() 
     }
     }
+  #Peptide_plot_list=unique_fomula_ID
+  
+  if (!is.null(outputdir) && plot_fdr){
+    
+    
+
     plot_fdr_histogram(Peptide_plot_list,outputdir=outputdir)
     
   }
@@ -3055,6 +3060,7 @@ FDR_cutoff_plot<-function(Peptide_plot_list,FDR_cutoff=0.1,FDR_strip=500,plot_fd
   }
   
   if(adjust_score){
+    
     Peptide_plot_list_sep<-Peptide_plot_list_output[Peptide_plot_list_output$isdecoy==0,]
     Peptide_plot_list_sep_d<-Peptide_plot_list_output[Peptide_plot_list_output$isdecoy==1,]
     Peptide_plot_list_mer<-merge(Peptide_plot_list_sep,Peptide_plot_list_sep_d,by=names(Peptide_plot_list_sep)[!names(Peptide_plot_list_sep) %in% c("isdecoy","Score" ,"Rank")])
@@ -3067,6 +3073,26 @@ FDR_cutoff_plot<-function(Peptide_plot_list,FDR_cutoff=0.1,FDR_strip=500,plot_fd
     Peptide_plot_list_adj$isdecoy<-as.factor(Peptide_plot_list_adj$isdecoy)
     plot_fdr_histogram(Peptide_plot_list_adj,plot_name = "adj",outputdir=outputdir)
     Peptide_plot_list<-Peptide_plot_list_adj
+    
+    
+    plot(density(Peptide_plot_list_adj$Score[Peptide_plot_list_adj$isdecoy==0]))
+    den<-density(Peptide_plot_list_adj$Score[Peptide_plot_list_adj$isdecoy==0])
+    find_modes<- function(x) {
+      modes <- NULL
+      for ( i in 2:(length(x)-1) ){
+        if ( (x[i] > x[i-1]) & (x[i] > x[i+1]) ) {
+          modes <- c(modes,i)
+        }
+      }
+      if ( length(modes) == 0 ) {
+        modes = 'This is a monotonic distribution'
+      }
+      return(modes)
+    }
+    mymodes_indices <- find_modes(den$y) 
+    den$x[find_modes(den$y)]
+    
+    mm<-resolve_multi_modes(Peptide_plot_list_adj$Score[Peptide_plot_list_adj$isdecoy==0],adjust = 2)
     
     unique_fomula_ID<-unique(Peptide_plot_list[,c("mz","formula","isdecoy","Intensity","Score")])
     target_score<-unique_fomula_ID$Score[unique_fomula_ID$isdecoy!=1]
@@ -3095,7 +3121,7 @@ FDR_cutoff_plot<-function(Peptide_plot_list,FDR_cutoff=0.1,FDR_strip=500,plot_fd
     df$FDR_m.av<-rollmean(df$FDR, 3,fill = list(0, NaN, NaN))
     #df$logscore=log(df$breaks)
     
-    Score_cutoff<-min(df$breaks[(df$FDR_m.av<=FDR_cutoff)==T],na.rm = T)
+    Score_cutoff<-max(as.numeric(mm$modes))-0.75
     
     if (!is.null(outputdir) && plot_fdr){
       
@@ -3173,6 +3199,7 @@ FDR_cutoff_plot<-function(Peptide_plot_list,FDR_cutoff=0.1,FDR_strip=500,plot_fd
 
 plot_matching_score<-function(Peptide_plot_list,peaklist,charge,ppm,outputdir=getwd()){
   library(enviPat)
+  library(dplyr)
   data("isotopes")
   decoy_isotopes=isotopes
   decoy_isotopes[decoy_isotopes$isotope=="13C",]=data.frame(element="C",isotope="11C",mass=10.99664516,aboudance=0.0107,ratioC=0,stringsAsFactors = F)
@@ -3186,8 +3213,9 @@ plot_matching_score<-function(Peptide_plot_list,peaklist,charge,ppm,outputdir=ge
   decoy_isotopes[decoy_isotopes$isotope=="35S",]=data.frame(element="S",isotope="29S",mass=28.94414146,aboudance=0,ratioC=3,stringsAsFactors = F)
   decoy_isotopes[decoy_isotopes$isotope=="36S",]=data.frame(element="S",isotope="28S",mass=27.97706058,aboudance=0.0001,ratioC=3,stringsAsFactors = F)
   if (dir.exists(outputdir)==FALSE){dir.create(outputdir)}
-  Peptide_plot_list1=Peptide_plot_list
+  #Peptide_plot_list1=Peptide_plot_list
   Peptide_plot_list=Peptide_plot_list[!is.na(Peptide_plot_list$Intensity),]
+  Peptide_plot_list=Peptide_plot_list %>% group_by(.dots = c("formula","isdecoy","adduct")) %>% summarise(Peptide=paste(Peptide,collapse = "_"))
   for (i in 1:nrow(Peptide_plot_list)){
   if(Peptide_plot_list$isdecoy[i]==0){
     SCORE_PMF(Peptide_plot_list$formula[i],peaklist,isotopes=isotopes,threshold=0.01,charge=charge,ppm=ppm,print.graphic=T,output.list=F,outputfile=paste0(outputdir,"/",Peptide_plot_list$Peptide[i]," ",Peptide_plot_list$adduct[i]," ",ifelse(Peptide_plot_list$isdecoy[i]==0,"target","decoy"),".png"))
@@ -3825,4 +3853,42 @@ PMF_Cardinal_Datafilelist_quant<-function (datafile, Peptide_Summary_searchlist,
                 row.names = F)
     }
   }
+}
+
+resolve_multi_modes<-function(mm,adjust=0.25){
+  
+  
+  library(dplyr)
+  library(tidyr)
+  get.modes2 <- function(x,adjust,signifi,from,to) {  
+    den <- density(x, kernel=c("gaussian"),adjust=adjust,from=from,to=to)
+    den.s <- smooth.spline(den$x, den$y, all.knots=TRUE, spar=0.1)
+    s.1 <- predict(den.s, den.s$x, deriv=1)
+    s.0 <- predict(den.s, den.s$x, deriv=0)
+    den.sign <- sign(s.1$y)
+    a<-c(1,1+which(diff(den.sign)!=0))
+    b<-rle(den.sign)$values
+    df<-data.frame(a,b)
+    df = df[which(df$b %in% -1),]
+    modes<-s.1$x[df$a]
+    density<-s.0$y[df$a]
+    df2<-data.frame(modes,density)
+    df2$sig<-signif(df2$density,signifi)
+    df2<-df2[with(df2, order(-sig)), ] 
+    #print(df2)
+    df<-as.data.frame(df2 %>% 
+                        mutate(m = min_rank(desc(sig)) ) %>% #, count = sum(n)) %>% 
+                        group_by(m) %>% 
+                        summarize(a = paste(format(round(modes,2),nsmall=2), collapse = ',')) %>%
+                        spread(m, a, sep = ''))
+    colnames(df)<-paste0("m",1:length(colnames(df)))
+    return(df)
+  }
+  mmdf<-data.frame(mm=mm)
+  library(ggplot2)
+  #0.25 defines the number of peaks.
+  p<-ggplot(mmdf,aes(mm)) + geom_density(adjust=adjust) + xlim((min(mm)-1),(max(mm)+1) )
+  #2 defines ties
+  modes<-get.modes2(mm,adjust=adjust,2,min(mm)-1,max(mm)+1)
+  return(list(p=p,modes=modes))
 }

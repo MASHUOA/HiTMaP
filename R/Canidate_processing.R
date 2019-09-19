@@ -148,6 +148,8 @@ Protein_feature_list_fun<-function(workdir=getwd(),
   
   assign("list_of_protein_sequence", list_of_protein_sequence, envir=.GlobalEnv) 
   
+  list_of_protein_sequence<<-list_of_protein_sequence
+  
   Index_of_protein_sequence$Degestion=""
   
   peplist<-list()
