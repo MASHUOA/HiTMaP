@@ -119,7 +119,7 @@ Protein_feature_list_fun<-function(workdir=getwd(),
   library(stringr)
   setwd(workdir)
   
-  if(use_previous_candidates!=T){
+  
   Decoy_adducts=Decoy_adducts[!(Decoy_adducts %in% adducts)]
   Decoy_adducts=Decoy_adducts[1:length(adducts)]
   list_of_protein_sequence <- readAAStringSet(database,
@@ -149,7 +149,7 @@ Protein_feature_list_fun<-function(workdir=getwd(),
   assign("list_of_protein_sequence", list_of_protein_sequence, envir=.GlobalEnv) 
   
   list_of_protein_sequence<<-list_of_protein_sequence
-  
+  if(use_previous_candidates!=T){
   Index_of_protein_sequence$Degestion=""
   
   peplist<-list()
