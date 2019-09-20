@@ -16,7 +16,6 @@
 #' @import tidyr
 #' @import randomForest
 #' @import rfviz
-#' @import ggpubr
 #' @import extrafont
 #' @import mzR
 #' @import xcms
@@ -25,9 +24,7 @@
 #' @import KEGGREST
 #' @import RColorBrewer
 #' @import rgl
-#' @import mixOmics
-#' @import plyr
-#' @import flux
+#' @import dplyr
 #' @import tkrplot
 #' @import multtest
 #' @import XML
@@ -43,13 +40,11 @@
 #' @import ggplot2
 #' @import rcdk
 #' @import magick
-#' @import OrgMassSpecR
 #' @import enviPat
 #' @import grid
 #' @import ggplot2
 #' @import zoo
 #' @import FTICRMS
-#' @import KEGGREST
 #' @import OrgMassSpecR
 #' @importFrom stats na.omit runif
 #' @importFrom utils download.file modifyList packageVersion read.table tail
