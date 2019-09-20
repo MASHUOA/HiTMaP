@@ -28,7 +28,6 @@
 #' @import multtest
 #' @import XML
 #' @import CAMERA
-#' @import qvalue
 #' @import doParallel
 #' @import BiocManager
 #' @import pacman
