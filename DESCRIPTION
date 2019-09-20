@@ -63,7 +63,12 @@ Imports:
     FTICRMS,
     KEGGREST,
     OrgMassSpecR,
-    enviPat
+    enviPat,
+    rgl,
+    tkrplot,
+    multtest,
+    XML,
+    BiocManager
 VignetteBuilder: knitr
 Suggests: 
     knitr,

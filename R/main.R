@@ -31,10 +31,8 @@
 #' @import doParallel
 #' @import BiocManager
 #' @import pacman
-#' @import backports
 #' @import BiocParallel
 #' @import spdep
-#' @import deldir
 #' @import ggplot2
 #' @import rcdk
 #' @import magick

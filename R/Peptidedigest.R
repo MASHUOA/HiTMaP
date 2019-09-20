@@ -1,9 +1,6 @@
 
 #initiallization
 
-require("pacman")
-library(tcltk)
-
 Filters <- matrix(c( "imzml file", ".imzML",
                      "Text", ".txt", "All files", "*"),
                   3, 2, byrow = TRUE)
