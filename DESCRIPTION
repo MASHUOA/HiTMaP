@@ -61,7 +61,8 @@ Imports:
     spdep,
     zoo,
     FTICRMS,
-    KEGGREST
+    KEGGREST,
+    OrgMassSpecR
 VignetteBuilder: knitr
 Suggests: 
     knitr,
