@@ -12,7 +12,6 @@
 #' @keywords package
 #' @import tcltk
 #' @import Rcpp
-#' @import openxlsx
 #' @import tidyr
 #' @import randomForest
 #' @import rfviz
