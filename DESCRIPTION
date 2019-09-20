@@ -69,7 +69,8 @@ Imports:
     multtest,
     XML,
     BiocManager,
-    randomForest
+    randomForest,
+    rfviz
 VignetteBuilder: knitr
 Suggests: 
     knitr,
