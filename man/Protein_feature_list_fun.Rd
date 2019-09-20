@@ -8,7 +8,7 @@ Protein_feature_list_fun(workdir = getwd(), database,
   Digestion_site = "[G]", missedCleavages = 0:1, adducts = c("M+H",
   "M+NH4", "M+Na"), BPPARAM = bpparam(), Decoy_adducts = c("M+He",
   "M+Ne", "M+Ar", "M+Kr", "M+Xe", "M+Rn"), Decoy_mode = c("adducts",
-  "elements", "isotope"), Decoy_search = T, mzrange = c(500, 4000),
+  "elements", "isotope"), Decoy_search = T, mzrange = c(700, 4000),
   output_candidatelist = T, use_previous_candidates = F)
 }
 \arguments{

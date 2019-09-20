@@ -8,8 +8,8 @@ imaging_Spatial_Quant(datafile = tk_choose.files(filter =
   matrix(c("imzml file", ".imzML", "Text", ".txt", "All files", "*"), 3, 2,
   byrow = TRUE), caption =
   "Choose single or multiple file(s) for analysis"), threshold = 0,
-  ppm = 5, Quant_list = "lipid candidates manual.csv",
-  adducts = c("M-H", "M+Cl"), cal.mz = T, mzlist_bypass = F,
+  ppm = 2.5, Quant_list = "Metabolites of Interest.csv",
+  adducts = c("M-H", "M+Cl"), cal.mz = F, mzlist_bypass = T,
   PMF_analysis = TRUE, Protein_feature_summary = T,
   plot_cluster_image = T, plot_style = "fleximaging",
   Peptide_feature_summary = T, plot_ion_image = FALSE,
@@ -20,9 +20,10 @@ imaging_Spatial_Quant(datafile = tk_choose.files(filter =
   caption = "Choose Virtual segmentation rank info file"),
   Spectrum_feature_summary = T, Region_feature_summary = T,
   Region_feature_analysis = T, plot_each_metabolites = T,
-  Cluster_level = "High", Region_feature_analysis_bar_plot = T,
-  norm_datafiles = T, norm_Type = "Median", mzrang = NULL,
-  BPPARAM = bpparam(), rotateimg = NULL, ...)
+  Cluster_level = "High", ClusterID_colname = "Name",
+  Region_feature_analysis_bar_plot = T, norm_datafiles = T,
+  norm_Type = "Median", mzrange = NULL, BPPARAM = bpparam(),
+  rotateimg = NULL, ...)
 }
 \arguments{
 \item{threshold}{specify the intensities threshold (0 to 1 in percentage)to report a identified molecule}

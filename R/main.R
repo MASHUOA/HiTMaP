@@ -49,6 +49,7 @@
 #' @import ggplot2
 #' @import zoo
 #' @import FTICRMS
+#' @import KEGGREST
 #' @importFrom stats na.omit runif
 #' @importFrom utils download.file modifyList packageVersion read.table tail
 #' @import S4Vectors

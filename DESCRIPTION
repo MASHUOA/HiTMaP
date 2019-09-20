@@ -60,7 +60,8 @@ Imports:
     S4Vectors,
     spdep,
     zoo,
-    FTICRMS
+    FTICRMS,
+    KEGGREST
 VignetteBuilder: knitr
 Suggests: 
     knitr,
