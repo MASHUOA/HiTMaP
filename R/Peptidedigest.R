@@ -334,7 +334,7 @@ imaging_identification<-function(
 #'
 #' This is a spatial quantitation function for maldi imaging data set
 #' this function will read the candidate list file and generate quantification result
-#' @param datafile
+#' @param datafile specify the imzML data files
 #' @param threshold specify the intensities threshold (0 to 1 in percentage)to report a identified molecule 
 #' @param ppm the mz tolerance (in ppm) for peak integration
 #' @param Quant_list the quantifiaction candidate list, spatial quantification will go through every datafile and collect the ion intensities for each listed component

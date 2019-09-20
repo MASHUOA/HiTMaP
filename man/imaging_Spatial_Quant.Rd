@@ -26,6 +26,8 @@ imaging_Spatial_Quant(datafile = tk_choose.files(filter =
   rotateimg = NULL, ...)
 }
 \arguments{
+\item{datafile}{specify the imzML data files}
+
 \item{threshold}{specify the intensities threshold (0 to 1 in percentage)to report a identified molecule}
 
 \item{ppm}{the mz tolerance (in ppm) for peak integration}

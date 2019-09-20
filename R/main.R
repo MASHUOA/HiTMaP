@@ -8,7 +8,7 @@
 #' @docType package
 #' @name Metwork
 #' @author George GUO \email{George.GUO@@auckland.ac.nz}
-#' @references 
+#' @references TBD
 #' @keywords package
 #' @import tcltk
 #' @import Rcpp
@@ -18,8 +18,6 @@
 #' @import extrafont
 #' @import mzR
 #' @import xcms
-#' @import svDialogs
-#' @import svGUI
 #' @import KEGGREST
 #' @import RColorBrewer
 #' @import rgl
