@@ -70,7 +70,8 @@ Imports:
     XML,
     BiocManager,
     randomForest,
-    rfviz
+    rfviz,
+    rcdk
 VignetteBuilder: knitr
 Suggests: 
     knitr,
