@@ -68,7 +68,8 @@ Imports:
     tkrplot,
     multtest,
     XML,
-    BiocManager
+    BiocManager,
+    randomForest
 VignetteBuilder: knitr
 Suggests: 
     knitr,
