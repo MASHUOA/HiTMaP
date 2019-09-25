@@ -11,13 +11,8 @@
 #' @references TBD
 #' @keywords package
 #' @import tcltk
-#' @import Rcpp
-#' @import tidyr
-#' @import randomForest
 #' @import rfviz
 #' @import extrafont
-#' @import mzR
-#' @import xcms
 #' @import KEGGREST
 #' @import RColorBrewer
 #' @import rgl
@@ -25,24 +20,16 @@
 #' @import tkrplot
 #' @import multtest
 #' @import XML
-#' @import CAMERA
 #' @import doParallel
 #' @import BiocManager
 #' @import pacman
 #' @import BiocParallel
-#' @import spdep
-#' @import ggplot2
-#' @import rcdk
 #' @import magick
 #' @import enviPat
 #' @import grid
 #' @import ggplot2
-#' @import zoo
-#' @import FTICRMS
-#' @import OrgMassSpecR
 #' @importFrom stats na.omit runif
 #' @importFrom utils download.file modifyList packageVersion read.table tail
-#' @import S4Vectors
 
 
 
