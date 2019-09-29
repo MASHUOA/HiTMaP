@@ -496,7 +496,8 @@ cluster_image_grid<-function(clusterID,
         pngfile<-image_trim(pngfile)
         image_write(pngfile,outputpng)
         
-      }else if (plot_style=="rainbow"){
+      }
+      else if (plot_style=="rainbow"){
         
         outputpngsum=paste(getwd(),"\\",windows_filename(substr(clusterID, 1, 10)),"_cluster_plot_sum",'.png',sep="")
         
@@ -550,7 +551,8 @@ cluster_image_grid<-function(clusterID,
         #image_write(pngfile,outputpngsum)
         
         
-      }else if(plot_style=="fleximaging"){
+      }
+      else if(plot_style=="fleximaging"){
         
         ##################################
         darkmode()
@@ -595,19 +597,18 @@ cluster_image_grid<-function(clusterID,
         for (i in 1:length(candidateunique)){
           #image(imdata, mz=candidateunique[i], col=mycol[i], superpose=F,normalize.image="linear")
           col.regions <- gradient.colors(100, start="black", end=levels(mycol)[i])
-        componentimg[[i]]=image(imdata, mz=candidateunique[i], 
-                contrast.enhance=contrast.enhance,
-                smooth.image = smooth.image,#smooth.image ,
-                col.regions=intensity.colors_customize1(),
-                normalize.image="none",
-                plusminus=ppm*candidateunique[i]/1000000,
-                key=F,
-                xlab=NULL,
-
-                layout=c( length(levels(Cardinal::run(imdata))),1)
-                #xlim=c(0,50),
-                #ylim=c(0,40)
-          )
+        
+          componentimg[[i]]=image(imdata, mz=candidateunique[i], 
+                                      contrast.enhance=contrast.enhance,
+                                      smooth.image = smooth.image,
+                                      col.regions=intensity.colors_customize1(),
+                                      normalize.image="none",
+                                      plusminus=round(ppm*candidateunique[i]/1000000,digits = 4),
+                                      key=F,
+                                      xlab=NULL,
+                                      layout=c( length(levels(Cardinal::run(imdata))),1)
+                                      )
+        
         temp_component_png[[i]]=tempfile(pattern = "file", tmpdir = tempdir(), fileext = ".png")
 
         png(temp_component_png[[i]],width = 5,height = 5 * length( levels(Cardinal::run(imdata))), bg = "black",units = "in",res = 300)

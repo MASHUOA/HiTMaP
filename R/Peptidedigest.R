@@ -233,6 +233,10 @@ imaging_identification<-function(
 
   if(plot_cluster_image_grid){
     Protein_feature_list=fread(paste(workdir,"/Summary folder/Protein_feature_summary_sl.csv",sep=""))
+    Protein_feature_list=merge(Protein_feature_list,Index_of_protein_sequence[,c("recno","desc")],by.x="Protein",by.y="recno",sort=F)
+    Protein_feature_list_crystallin<-Protein_feature_list[grepl("crystallin",Protein_feature_list$desc,ignore.case = T),]
+    Protein_feature_list_crystallin$Protein=as.character(Protein_feature_list_crystallin$desc)
+    Protein_feature_list=Protein_feature_list_crystallin
     if (!is.null(rotateimg)){rotateimg=read.csv(rotateimg,stringsAsFactors = F)}
     imdata=list()
     combinedimdata=NULL
@@ -277,7 +281,6 @@ imaging_identification<-function(
     imdata=combinedimdata
     
     outputfolder=paste(workdir,"/Summary folder/cluster Ion images/",sep="")
-    
     if (dir.exists(outputfolder)==FALSE){dir.create(outputfolder)}
     setwd(outputfolder)
     
@@ -289,7 +292,27 @@ imaging_identification<-function(
            componentID_colname="Peptide",
            plot_layout="line",
            Component_plot_threshold=4,
-           export_Header_table=F)
+           export_Header_table=F,
+           plot_style="fleximaging")
+    
+    outputfolder=paste(workdir,"/Summary folder/cluster Ion images/unique/",sep="")
+    if (dir.exists(outputfolder)==FALSE){dir.create(outputfolder)}
+    setwd(outputfolder)
+    
+    Protein_feature_list_unique=Protein_feature_list %>% group_by(mz) %>% summarise(num=length(unique(Protein)))
+    Protein_feature_list_unique_mz<-Protein_feature_list_unique$mz[Protein_feature_list_unique$num==1]
+    Protein_feature_list_trimmed<-Protein_feature_list[Protein_feature_list$mz %in% Protein_feature_list_unique_mz, ]
+    lapply(unique(Protein_feature_list_trimmed$Protein),
+           cluster_image_grid,
+           imdata=imdata,
+           SMPLIST=Protein_feature_list_trimmed,
+           ppm=ppm,ClusterID_colname=ClusterID_colname,
+           componentID_colname="Peptide",
+           plot_layout="line",
+           Component_plot_threshold=1,
+           export_Header_table=F,
+           plot_style="fleximaging")
+    
     
     
     lapply(unique(Protein_feature_list$Protein),
@@ -1954,6 +1977,7 @@ PMF_Cardinal_Datafilelist<-function(datafile,Peptide_Summary_searchlist,
                                     Decoy_mode="",
                                     Decoy_search=T,
                                     adjust_score=T,
+                                    plot_matching_score_t=F,
                                     ...){
   library(data.table)
   library(Cardinal)
@@ -2358,7 +2382,9 @@ if(PMFsearch){
         Peptide_plot_list_2nd=Peptide_plot_list_2nd[((Peptide_plot_list_2nd$Score>=Score_cutoff)&(!is.na(Peptide_plot_list_2nd$Intensity))&(Peptide_plot_list_2nd$isdecoy==0)),]
         }
       write.csv(Peptide_plot_list_2nd,paste0(datafile[z] ," ID/",SPECTRUM_batch,"/Peptide_2nd_ID_score_rank",score_method,"_Rank_above_",Rank,".csv"),row.names = F)
-      plot_matching_score(Peptide_plot_list_2nd,peaklist,charge=1,ppm,outputdir=paste0(datafile[z] ," ID/",SPECTRUM_batch,"/ppm"))
+      if (plot_matching_score_t){
+        (plot_matching_score(Peptide_plot_list_2nd,peaklist,charge=1,ppm,outputdir=paste0(datafile[z] ," ID/",SPECTRUM_batch,"/ppm")))
+        }
       Peptide_plot_list_2nd$mz=as.numeric(as.character(Peptide_plot_list_2nd$mz))
       
       Protein_feature_result<-protein_scoring(Protein_feature_list,Peptide_plot_list_2nd,BPPARAM = BPPARAM)
@@ -3199,9 +3225,10 @@ FDR_cutoff_plot<-function(Peptide_plot_list,FDR_cutoff=0.1,FDR_strip=500,plot_fd
 }
 
 plot_matching_score<-function(Peptide_plot_list,peaklist,charge,ppm,outputdir=getwd()){
+  message("plot matching isotopic pattern")
   library(enviPat)
   library(dplyr)
-  Peptide_plot_list=data_test_rename(Peptide_plot_list,c("formula","isdecoy","adduct"))
+  Peptide_plot_list=data_test_rename(c("formula","isdecoy","adduct"),Peptide_plot_list)
   data("isotopes")
   decoy_isotopes=isotopes
   decoy_isotopes[decoy_isotopes$isotope=="13C",]=data.frame(element="C",isotope="11C",mass=10.99664516,aboudance=0.0107,ratioC=0,stringsAsFactors = F)
@@ -3219,6 +3246,7 @@ plot_matching_score<-function(Peptide_plot_list,peaklist,charge,ppm,outputdir=ge
   Peptide_plot_list=Peptide_plot_list[!is.na(Peptide_plot_list$Intensity),]
   Peptide_plot_list=Peptide_plot_list %>% group_by(.dots = c("formula","isdecoy","adduct")) %>% summarise(Peptide=paste(Peptide,collapse = "_"))
   for (i in 1:nrow(Peptide_plot_list)){
+    i
   if(Peptide_plot_list$isdecoy[i]==0){
     SCORE_PMF(Peptide_plot_list$formula[i],peaklist,isotopes=isotopes,threshold=0.01,charge=charge,ppm=ppm,print.graphic=T,output.list=F,outputfile=paste0(outputdir,"/",Peptide_plot_list$formula[i]," ",Peptide_plot_list$adduct[i]," ",ifelse(Peptide_plot_list$isdecoy[i]==0,"target","decoy"),".png"))
     }else{
