@@ -3432,11 +3432,13 @@ protein_scoring<-function(Protein_feature_list,Peptide_plot_list_rank,BPPARAM = 
   list_of_protein_sequence<-get("list_of_protein_sequence", envir = .GlobalEnv)
   Index_of_protein_sequence<-get("Index_of_protein_sequence", envir = .GlobalEnv)
   #Proteinlist=sum_pro_int$Protein
-  sum_pro_coverage <- unlist(bplapply(unique(sum_pro_int$Protein), function(x,Protein_feature_list_rank,list_of_protein_sequence,Index_of_protein_sequence,peptide_map_to_protein){
+  query_protein=sum_pro_int[,c("Protein","isdecoy")]
+  query_protein_list=  split(query_protein, seq(nrow(query_protein)))
+  sum_pro_coverage <- unlist(bplapply(query_protein_list, function(x,Protein_feature_list_rank,list_of_protein_sequence,Index_of_protein_sequence,peptide_map_to_protein){
     #proteinid=Index_of_protein_sequence$desc[Index_of_protein_sequence$recno==x]
     #message(proteinid)
-    protein_seq<-try(list_of_protein_sequence[x],silent = T)
-    peptides<-unique(Protein_feature_list_rank$Peptide[Protein_feature_list_rank$Protein==x])
+    protein_seq<-try(list_of_protein_sequence[x$Protein],silent = T)
+    peptides<-unique(Protein_feature_list_rank$Peptide[`&`(Protein_feature_list_rank$Protein==x$Protein,Protein_feature_list_rank$isdecoy==x$isdecoy)])
     if (class(protein_seq)!="try-error"){
      if (length(peptides)==1){
        width(as.character(peptides))/width(as.character(protein_seq))
@@ -3447,7 +3449,7 @@ protein_scoring<-function(Protein_feature_list,Peptide_plot_list_rank,BPPARAM = 
     }else{return(1)}
   },Protein_feature_list_rank=Protein_feature_list_rank,list_of_protein_sequence=list_of_protein_sequence,Index_of_protein_sequence=Index_of_protein_sequence,peptide_map_to_protein=peptide_map_to_protein,BPPARAM = BPPARAM))
   
-  sum_pro_coverage=data.frame(Protein=unique(sum_pro_int$Protein),peptide_coverage=sum_pro_coverage)
+  sum_pro_coverage=data.frame(Protein=(sum_pro_int$Protein),isdecoy=sum_pro_int$isdecoy,peptide_coverage=sum_pro_coverage)
   
   #sum_pro_pep_count<-merge(sum_pro_pep_count,sum_pro_pep_count_thero,by=c("Protein","isdecoy"),all.x=T)
   sum_pro_pep_count<-merge(sum_pro_pep_count,sum_pro_coverage,sort=F)
