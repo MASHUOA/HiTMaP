@@ -2391,7 +2391,7 @@ if(PMFsearch){
       #Index_of_protein_sequence<-get("Index_of_protein_sequence", envir = .GlobalEnv)
       #Protein_feature_result<-merge(Protein_feature_result,Index_of_protein_sequence[,c("recno","desc")],by.x="Protein",by.y = "recno",sort = F)
       
-      #Protein_feature_result<-protein_scoring(Protein_feature_list,Peptide_plot_list_rank,BPPARAM = BPPARAM)
+      Protein_feature_result<-protein_scoring(Protein_feature_list,Peptide_plot_list_rank,BPPARAM = BPPARAM)
       
       Protein_feature_result=Protein_feature_result[!grepl("Uncharacterized",Protein_feature_result$desc,ignore.case = T),]
       Score_cutoff_protein= FDR_cutoff_plot_protein(Protein_feature_result,FDR_cutoff=0.1,plot_fdr=T,outputdir=paste0(datafile[z] ," ID/",SPECTRUM_batch),adjust_score = F)
