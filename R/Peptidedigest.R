@@ -2374,12 +2374,12 @@ if(PMFsearch){
       Peptide_plot_list_rank<-read.csv(paste0(datafile[z] ," ID/",SPECTRUM_batch,"/Peptide_1st_ID_score_rank_",score_method,".csv"),stringsAsFactors = F)
       if (adjust_score==F){
       Score_cutoff= FDR_cutoff_plot(Peptide_plot_list_rank,FDR_cutoff=0.1,plot_fdr=T,outputdir=paste0(datafile[z] ," ID/",SPECTRUM_batch),adjust_score = adjust_score)
-      Peptide_plot_list_2nd=Peptide_plot_list_rank[((Peptide_plot_list_rank$Score>=Score_cutoff)&(!is.na(Peptide_plot_list_rank$Intensity))&(Peptide_plot_list_rank$isdecoy==0)),]
+      Peptide_plot_list_2nd=Peptide_plot_list_rank[((Peptide_plot_list_rank$Score>=Score_cutoff)&(!is.na(Peptide_plot_list_rank$Intensity))),]
       }else{
         Score_cutoff= FDR_cutoff_plot(Peptide_plot_list_rank,FDR_cutoff=0.1,plot_fdr=T,outputdir=paste0(datafile[z] ," ID/",SPECTRUM_batch),adjust_score = adjust_score)
         Peptide_plot_list_2nd=Score_cutoff[[2]]
         Score_cutoff=Score_cutoff[[1]]
-        Peptide_plot_list_2nd=Peptide_plot_list_2nd[((Peptide_plot_list_2nd$Score>=Score_cutoff)&(!is.na(Peptide_plot_list_2nd$Intensity))&(Peptide_plot_list_2nd$isdecoy==0)),]
+        Peptide_plot_list_2nd=Peptide_plot_list_2nd[((Peptide_plot_list_2nd$Score>=Score_cutoff)&(!is.na(Peptide_plot_list_2nd$Intensity))),]
         }
       write.csv(Peptide_plot_list_2nd,paste0(datafile[z] ," ID/",SPECTRUM_batch,"/Peptide_2nd_ID_score_rank",score_method,"_Rank_above_",Rank,".csv"),row.names = F)
       if (plot_matching_score_t){
@@ -2388,16 +2388,18 @@ if(PMFsearch){
       Peptide_plot_list_2nd$mz=as.numeric(as.character(Peptide_plot_list_2nd$mz))
       
       Protein_feature_result<-protein_scoring(Protein_feature_list,Peptide_plot_list_2nd,BPPARAM = BPPARAM)
-      Index_of_protein_sequence<-get("Index_of_protein_sequence", envir = .GlobalEnv)
-      Protein_feature_result<-merge(Protein_feature_result,Index_of_protein_sequence[,c("recno","desc")],by.x="Protein",by.y = "recno",sort = F)
+      #Index_of_protein_sequence<-get("Index_of_protein_sequence", envir = .GlobalEnv)
+      #Protein_feature_result<-merge(Protein_feature_result,Index_of_protein_sequence[,c("recno","desc")],by.x="Protein",by.y = "recno",sort = F)
       
       #Protein_feature_result<-protein_scoring(Protein_feature_list,Peptide_plot_list_rank,BPPARAM = BPPARAM)
+      
+      Protein_feature_result=Protein_feature_result[!grepl("Uncharacterized",Protein_feature_result$desc,ignore.case = T),]
       Score_cutoff_protein= FDR_cutoff_plot_protein(Protein_feature_result,FDR_cutoff=0.1,plot_fdr=T,outputdir=paste0(datafile[z] ," ID/",SPECTRUM_batch),adjust_score = F)
-      Protein_feature_result_cutoff=Protein_feature_result[((Protein_feature_result$Score>=Score_cutoff_protein)&(!is.na(Protein_feature_result$Intensity))&(Protein_feature_result$isdecoy==0)),]
+      Protein_feature_result_cutoff=Protein_feature_result[((Protein_feature_result$Proscore>=Score_cutoff_protein)&(!is.na(Protein_feature_result$Intensity))&(Protein_feature_result$isdecoy==0)),]
       
       
       write.csv(Protein_feature_result,paste0(datafile[z] ," ID/",SPECTRUM_batch,"/Protein_ID_score_rank_",score_method,".csv"),row.names = F)
-      write.csv(Protein_feature_result_cutoff,paste("Protein_segment_PMF_RESULT",SPECTRUM_batch,".csv"),row.names = F)
+      write.csv(Protein_feature_result_cutoff,paste0(datafile[z] ," ID/","Protein_segment_PMF_RESULT_",SPECTRUM_batch,".csv"),row.names = F)
     } 
     
     Plot_PMF_all(Peptide_plot_list_2nd,peaklist=peaklist,threshold=threshold,savename)
@@ -2851,7 +2853,7 @@ mz_feature_list<-Peptide_Summary_searchlist_mz[Peptide_Summary_searchlist_mz$Int
 return(mz_feature_list)
 }
 
-FDR_cutoff_plot_protein<-function(Protein_feature_result,FDR_cutoff=0.1,plot_fdr=T,outputdir=paste0(datafile[z] ," ID/",SPECTRUM_batch),adjust_score = F){
+FDR_cutoff_plot_protein<-function(Protein_feature_result,FDR_cutoff=0.1,plot_fdr=T,outputdir=paste0(datafile[z] ," ID/",SPECTRUM_batch),FDR_strip=500,adjust_score = F){
   
   library(ggplot2)
   library(data.table)
@@ -3414,8 +3416,8 @@ spec_peakdetect<-function(x){
 protein_scoring<-function(Protein_feature_list,Peptide_plot_list_rank,BPPARAM = bpparam()){
   
   library(dplyr)
-  
-  
+  library(data.table)
+  Protein_feature_list<-as.data.table(Protein_feature_list)
   
   Protein_feature_list_rank=merge(Protein_feature_list,Peptide_plot_list_rank,by=c("mz","Peptide","adduct","formula","isdecoy"))
   
@@ -3452,7 +3454,7 @@ protein_scoring<-function(Protein_feature_list,Peptide_plot_list_rank,BPPARAM = 
   sum_pro_coverage=data.frame(Protein=(sum_pro_int$Protein),isdecoy=sum_pro_int$isdecoy,peptide_coverage=sum_pro_coverage)
   
   #sum_pro_pep_count<-merge(sum_pro_pep_count,sum_pro_pep_count_thero,by=c("Protein","isdecoy"),all.x=T)
-  sum_pro_pep_count<-merge(sum_pro_pep_count,sum_pro_coverage,sort=F)
+  sum_pro_pep_count<-merge(sum_pro_pep_count,sum_pro_coverage,by=c("Protein","isdecoy"),sort=F)
   
   #sum_pro_pep_count$peptide_coverage=sum_pro_pep_count$peptide_count/sum_pro_pep_count$peptide_count_thero
   
