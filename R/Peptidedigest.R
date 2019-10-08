@@ -1997,10 +1997,11 @@ PMF_Cardinal_Datafilelist<-function(datafile,Peptide_Summary_searchlist,
   }else{rotate=rep(0,length(datafile))}
   
   if (missing(Protein_feature_list)){
-    get("Protein_feature_list", envir = .GlobalEnv)
-    
-    message(unique(Protein_feature_list$isdecoy))
+    Protein_feature_list=get("Protein_feature_list", envir = .GlobalEnv)
+      message(unique(Protein_feature_list$isdecoy))
   }
+  
+
   #mycol <- color.map(map =c("black", "blue", "green", "yellow", "red","#FF00FF","white"), n = 100)
   #mycol <- colorRampPalette(c("black", "blue", "green", "yellow", "red","#FF00FF","white"))
   #mycol <- gradient.colors(100, start="white", end="blue")
