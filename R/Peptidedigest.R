@@ -1976,6 +1976,7 @@ PMF_Cardinal_Datafilelist<-function(datafile,Peptide_Summary_searchlist,
                                     Decoy_search=T,
                                     adjust_score=T,
                                     plot_matching_score_t=F,
+                                    Protein_feature_list,
                                     ...){
   library(data.table)
   library(Cardinal)
