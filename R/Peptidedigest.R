@@ -136,7 +136,6 @@ imaging_identification<-function(
                                                   BPPARAM = BPPARAM,
                                                   Bypass_generate_spectrum=Bypass_generate_spectrum,
                                                   score_method = score_method,
-                                                  Protein_feature_list=Protein_feature_list,
                                                   Decoy_mode=Decoy_mode,
                                                   Decoy_search=Decoy_search,
                                                   adjust_score=adjust_score)
@@ -1973,7 +1972,6 @@ PMF_Cardinal_Datafilelist<-function(datafile,Peptide_Summary_searchlist,
                                     scoring=T,
                                     score_method="balanced-SQRT",
                                     Rank=3,
-                                    Protein_feature_list=NULL,
                                     Decoy_mode="",
                                     Decoy_search=T,
                                     adjust_score=T,
@@ -1999,6 +1997,8 @@ PMF_Cardinal_Datafilelist<-function(datafile,Peptide_Summary_searchlist,
   
   if (missing(Protein_feature_list)){
     get("Protein_feature_list", envir = .GlobalEnv)
+    
+    message(unique(Protein_feature_list$isdecoy))
   }
   #mycol <- color.map(map =c("black", "blue", "green", "yellow", "red","#FF00FF","white"), n = 100)
   #mycol <- colorRampPalette(c("black", "blue", "green", "yellow", "red","#FF00FF","white"))
@@ -2394,7 +2394,6 @@ if(PMFsearch){
       
       Protein_feature_result=Protein_feature_result[!grepl("Uncharacterized",Protein_feature_result$desc,ignore.case = T),]
       message(unique(Protein_feature_result$isdecoy))
-      message(unique(Protein_feature_list$isdecoy))
       message(unique(Peptide_plot_list_rank$isdecoy))
       Score_cutoff_protein= FDR_cutoff_plot_protein(Protein_feature_result,FDR_cutoff=0.1,plot_fdr=T,outputdir=paste0(datafile[z] ," ID/",SPECTRUM_batch),adjust_score = F)
       Protein_feature_result_cutoff=Protein_feature_result[((Protein_feature_result$Proscore>=Score_cutoff_protein)&(!is.na(Protein_feature_result$Intensity))&(Protein_feature_result$isdecoy==0)),]
