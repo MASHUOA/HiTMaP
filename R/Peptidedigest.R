@@ -3248,7 +3248,6 @@ plot_matching_score<-function(Peptide_plot_list,peaklist,charge,ppm,outputdir=ge
   Peptide_plot_list=Peptide_plot_list[!is.na(Peptide_plot_list$Intensity),]
   Peptide_plot_list=Peptide_plot_list %>% group_by(.dots = c("formula","isdecoy","adduct")) %>% summarise(Peptide=paste(Peptide,collapse = "_"))
   for (i in 1:nrow(Peptide_plot_list)){
-    i
   if(Peptide_plot_list$isdecoy[i]==0){
     SCORE_PMF(Peptide_plot_list$formula[i],peaklist,isotopes=isotopes,threshold=0.01,charge=charge,ppm=ppm,print.graphic=T,output.list=F,outputfile=paste0(outputdir,"/",Peptide_plot_list$formula[i]," ",Peptide_plot_list$adduct[i]," ",ifelse(Peptide_plot_list$isdecoy[i]==0,"target","decoy"),".png"))
     }else{
@@ -3423,7 +3422,9 @@ protein_scoring<-function(Protein_feature_list,Peptide_plot_list_rank,BPPARAM = 
   
   sum_pro_int<-Protein_feature_list_rank %>% group_by(.dots=c("Protein","isdecoy")) %>% summarize(Intensity=mean(Intensity)) 
   
-  sum_pro_score<-Protein_feature_list_rank %>% group_by(.dots=c("Protein","isdecoy")) %>% summarize(Score=mean(Score)) 
+  sum_pro_score<-Protein_feature_list_rank %>% group_by(.dots=c("Protein","isdecoy")) %>% summarize(Score=mean(Score*log(Intensity))/mean(log(Intensity)))
+  
+  #sum_pro_score<-Protein_feature_list_rank %>% group_by(.dots=c("Protein","isdecoy")) %>% summarize(Score=sum(Score))
   
   sum_pro_pep_count<-Protein_feature_list_rank %>% group_by(.dots=c("Protein","isdecoy")) %>% summarize(peptide_count=length(unique(Peptide))) 
   
