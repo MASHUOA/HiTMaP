@@ -1996,17 +1996,16 @@ PMF_Cardinal_Datafilelist<-function(datafile,Peptide_Summary_searchlist,
     },rotate)
     rotate=unlist(rotatedegrees)
   }else{rotate=rep(0,length(datafile))}
+  
+  if (missing(Protein_feature_list)){
+    get("Protein_feature_list", envir = .GlobalEnv)
+  }
   #mycol <- color.map(map =c("black", "blue", "green", "yellow", "red","#FF00FF","white"), n = 100)
   #mycol <- colorRampPalette(c("black", "blue", "green", "yellow", "red","#FF00FF","white"))
   #mycol <- gradient.colors(100, start="white", end="blue")
   
   #imdata <- readImzML(name, folder, attach.only=FALSE,as="MSImageSet",resolution=10, units="ppm")
-  if (Decoy_search && ("isotope" %in% Decoy_mode)){
-    Protein_feature_list_decoy<-Protein_feature_list[Protein_feature_list$isdecoy==0,]
-    #Protein_feature_list_decoy
-    Protein_feature_list_decoy$isdecoy=1
-    Protein_feature_list<<-rbind(Protein_feature_list[Protein_feature_list$isdecoy==0,],Protein_feature_list_decoy)
-  }
+
   
   Peptide_Summary_file<-Peptide_Summary_searchlist  
   for (z in 1:length(datafile)){
@@ -2387,13 +2386,16 @@ if(PMFsearch){
         }
       Peptide_plot_list_2nd$mz=as.numeric(as.character(Peptide_plot_list_2nd$mz))
       
-      Protein_feature_result<-protein_scoring(Protein_feature_list,Peptide_plot_list_2nd,BPPARAM = BPPARAM)
+      #Protein_feature_result<-protein_scoring(Protein_feature_list,Peptide_plot_list_2nd,BPPARAM = BPPARAM)
       #Index_of_protein_sequence<-get("Index_of_protein_sequence", envir = .GlobalEnv)
       #Protein_feature_result<-merge(Protein_feature_result,Index_of_protein_sequence[,c("recno","desc")],by.x="Protein",by.y = "recno",sort = F)
       
       Protein_feature_result<-protein_scoring(Protein_feature_list,Peptide_plot_list_rank,BPPARAM = BPPARAM)
       
       Protein_feature_result=Protein_feature_result[!grepl("Uncharacterized",Protein_feature_result$desc,ignore.case = T),]
+      message(unique(Protein_feature_result$isdecoy))
+      message(unique(Protein_feature_list$isdecoy))
+      message(unique(Peptide_plot_list_rank$isdecoy))
       Score_cutoff_protein= FDR_cutoff_plot_protein(Protein_feature_result,FDR_cutoff=0.1,plot_fdr=T,outputdir=paste0(datafile[z] ," ID/",SPECTRUM_batch),adjust_score = F)
       Protein_feature_result_cutoff=Protein_feature_result[((Protein_feature_result$Proscore>=Score_cutoff_protein)&(!is.na(Protein_feature_result$Intensity))&(Protein_feature_result$isdecoy==0)),]
       

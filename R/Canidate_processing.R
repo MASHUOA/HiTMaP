@@ -377,6 +377,15 @@ Protein_feature_list_fun<-function(workdir=getwd(),
     }else{stop("Can not find the previously established candidate list.")}
     
   }
+  
+  if (Decoy_search && ("isotope" %in% Decoy_mode)){
+    Protein_feature_list_decoy<-Protein_Summary[Protein_Summary$isdecoy==0,]
+    #Protein_feature_list_decoy
+    Protein_feature_list_decoy$isdecoy=1
+    Protein_feature_list<<-rbind(Protein_Summary[Protein_Summary$isdecoy==0,],Protein_feature_list_decoy)
+    
+  }
+  
   return(Protein_Summary)
 }
 
