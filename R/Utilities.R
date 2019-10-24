@@ -411,6 +411,7 @@ cluster_image_grid<-function(clusterID,
                                           ClusterID_colname="Protein",
                                           componentID_colname="Peptide",
                                           Component_plot_threshold=2,
+                                          Component_plot_coloure=c("mono","as.cluster"),
                                           smooth.image="gaussian",
                                           contrast.enhance = "suppression",
                                           colorpallet="Set1",
@@ -603,11 +604,15 @@ cluster_image_grid<-function(clusterID,
         for (i in 1:length(candidateunique)){
           #image(imdata, mz=candidateunique[i], col=mycol[i], superpose=F,normalize.image="linear")
           col.regions <- gradient.colors(100, start="black", end=levels(mycol)[i])
-        
+          if  (Component_plot_coloure=="mono"){
+            col.regions=intensity.colors_customize1()
+          }else if(Component_plot_coloure=="as.cluster"){
+            col.regions=gradient.colors(100, start="black", end=levels(mycol)[i])
+          }
           componentimg[[i]]=image(imdata, mz=candidateunique[i], 
                                       contrast.enhance=contrast.enhance,
                                       smooth.image = smooth.image,
-                                      col.regions=intensity.colors_customize1(),
+                                      col.regions=col.regions,
                                       normalize.image="none",
                                       plusminus=round(ppm*candidateunique[i]/1000000,digits = 4),
                                       key=F,
@@ -659,8 +664,7 @@ cluster_image_grid<-function(clusterID,
   }
   
   if(export_Header_table){
-
-    candidate_unique_table=unique(candidate[,c("mz",componentID_colname,"Formula","moleculeNames" , "adduct")])
+    candidate_unique_table=unique(candidate[,c("mz",componentID_colname,"formula","adduct")])
 
     Header_table<-NULL
     Header_table$mz=candidateunique

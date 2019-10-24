@@ -311,7 +311,8 @@ imaging_identification<-function(
            plot_layout="line",
            Component_plot_threshold=1,
            export_Header_table=F,
-           plot_style="fleximaging")
+           plot_style="fleximaging",
+           Component_plot_coloure="as.cluster")
     
     
     
@@ -347,7 +348,7 @@ imaging_identification<-function(
     image_write(Pngclustervseg, paste0(outputfolder,"datafiles_vseg.png"))
   }
   
-  
+  message("Workflow done.")
 }
 
 
@@ -3433,7 +3434,7 @@ protein_scoring<-function(Protein_feature_list,Peptide_plot_list_rank,scoretype=
   
   sum_pro_score<-Protein_feature_list_rank %>% group_by(.dots=c("Protein","isdecoy")) %>% summarize(Score=sum(Score*log(Intensity))/mean(log(Intensity)))
        
-  }else if(scortype=="mean"){
+  }else if(scoretype=="mean"){
     
     sum_pro_int<-Protein_feature_list_rank %>% group_by(.dots=c("Protein","isdecoy")) %>% summarize(Intensity=mean(Intensity)) 
     
