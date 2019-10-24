@@ -14,7 +14,12 @@ Load_Cardinal_imaging<-function(datafile=tk_choose.files(filter = Filters,
   workdir<-base::dirname(datafiles) 
   name <-gsub(base::dirname(datafiles),"",datafiles)
   folder<-base::dirname(datafiles)
-  imdata <- readImzML(name, folder, attach.only=attach.only,as=as,resolution=resolution, units="ppm",rotate = rotate,BPPARAM=BPPARAM,mass.range=mzrange)
+  if (rotate==0){
+    imdata <- Cardinal::readImzML(name, folder, attach.only=attach.only,as=as,resolution=resolution, units="ppm",BPPARAM=BPPARAM,mass.range=mzrange)
+    
+  }else  {
+    imdata <- readImzML(name, folder, attach.only=attach.only,as=as,resolution=resolution, units="ppm",rotate = rotate,BPPARAM=BPPARAM,mass.range=mzrange)
+  }
   if (preprocessing){
     imdata <- try(batchProcess(imdata, normalize=FALSE, smoothSignal=TRUE, reduceBaseline=list(method = "median",blocks=500, fun=min, spar=1),
                                peakPick=list(SNR=12), peakAlign=TRUE,BPPARAM=BPPARAM))
@@ -411,7 +416,8 @@ cluster_image_grid<-function(clusterID,
                                           colorpallet="Set1",
                                           plot_layout="grid",
                                           export_Header_table=F,
-                                          plot_style=c("fleximaging","ClusterOnly","rainbow")){
+                                          plot_style=c("fleximaging","ClusterOnly","rainbow"),
+                                          protein_coverage=F){
   #complementary(color="red", plot = TRUE, bg = "white", labcol = NULL, cex = 0.8, title = TRUE)
   windows_filename<- function(stringX){
     stringX<-stringr::str_remove_all(stringX,"[><*?:\\/\\\\]")
@@ -1420,4 +1426,8 @@ plotRanges <- function(ranged,labels=NULL,do.labs=T,skip.plot.new=F,lty="solid",
       text(x=start(ranged[cc,])/scl,y=YY[cc]+V.scale,labels=lab[cc],cex=0.6,pos=pos,offset=0,srt=srt)
     }
   }
+}
+
+recheck_peptide_score<-function(formula="AGLQFPVGR",peaklist=read.csv(paste0(getwd(),"/Spectrum 2 .csv"))){
+ peaklist 
 }

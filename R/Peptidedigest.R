@@ -52,7 +52,7 @@ imaging_identification<-function(
                Digestion_site="[GN][LI]",
                missedCleavages=0:1,
                Fastadatabase="murine_matrisome.fasta",
-               adducts=c("M+H","M+NH4","M+Na"),
+               adducts=c("M+H"),
                Decoy_search=T,
                Decoy_adducts=c("M+ACN+H","M+IsoProp+H","M+DMSO+H","M+Co","M+Ag","M+Cu","M+He","M+Ne","M+Ar","M+Kr","M+Xe","M+Rn"),
                Decoy_mode = "isotope",
@@ -77,6 +77,7 @@ imaging_identification<-function(
                output_candidatelist=T,
                use_previous_candidates=F,
                score_method="SQRTP",
+               plot_cluster_image_grid=F,
                ...
                ){
   library("pacman")
@@ -1970,7 +1971,7 @@ PMF_Cardinal_Datafilelist<-function(datafile,Peptide_Summary_searchlist,
                                     BPPARAM=bpparam(),
                                     Bypass_generate_spectrum=F,
                                     scoring=T,
-                                    score_method="balanced-SQRT",
+                                    score_method="SQRTP",
                                     Rank=3,
                                     Decoy_mode="",
                                     Decoy_search=T,
@@ -2274,8 +2275,8 @@ if(PMFsearch){
     
     message(paste(nrow(deconv_peaklist),"mz features found in the spectrum") )
     #MassSpecWavelet_fun(peaklist = peaklist)
-    mz_feature_list<-Do_PMF_search(deconv_peaklist,Peptide_Summary_searchlist,BPPARAM=BPPARAM,ppm = ppm)
-    
+    #mz_feature_list<-Do_PMF_search(deconv_peaklist,Peptide_Summary_searchlist,BPPARAM=BPPARAM,ppm = ppm)
+    mz_feature_list<-Do_PMF_search(peaklist,Peptide_Summary_searchlist,BPPARAM=BPPARAM,ppm = ppm)
     mz_feature_list<-unique(mz_feature_list)
     
     message("Iterating peptide information...")
@@ -2393,15 +2394,18 @@ if(PMFsearch){
       #Protein_feature_result<-merge(Protein_feature_result,Index_of_protein_sequence[,c("recno","desc")],by.x="Protein",by.y = "recno",sort = F)
       
       Protein_feature_result<-protein_scoring(Protein_feature_list,Peptide_plot_list_rank,BPPARAM = BPPARAM)
+      Protein_feature_list_rank<-Protein_feature_result[[2]]
+      Protein_feature_result<-Protein_feature_result[[1]]
       
       Protein_feature_result=Protein_feature_result[!grepl("Uncharacterized",Protein_feature_result$desc,ignore.case = T),]
       message(unique(Protein_feature_result$isdecoy))
       message(unique(Peptide_plot_list_rank$isdecoy))
       Score_cutoff_protein= FDR_cutoff_plot_protein(Protein_feature_result,FDR_cutoff=0.1,plot_fdr=T,outputdir=paste0(datafile[z] ," ID/",SPECTRUM_batch),adjust_score = F)
       Protein_feature_result_cutoff=Protein_feature_result[((Protein_feature_result$Proscore>=Score_cutoff_protein)&(!is.na(Protein_feature_result$Intensity))&(Protein_feature_result$isdecoy==0)),]
-      
+      Protein_feature_list_rank_cutoff<-Protein_feature_list_rank[Protein_feature_list_rank$Protein %in% Protein_feature_result_cutoff$Protein,]
       
       write.csv(Protein_feature_result,paste0(datafile[z] ," ID/",SPECTRUM_batch,"/Protein_ID_score_rank_",score_method,".csv"),row.names = F)
+      write.csv(Protein_feature_list_rank_cutoff,paste0(datafile[z] ," ID/","Peptide_segment_PMF_RESULT_",SPECTRUM_batch,".csv"),row.names = F)
       write.csv(Protein_feature_result_cutoff,paste0(datafile[z] ," ID/","Protein_segment_PMF_RESULT_",SPECTRUM_batch,".csv"),row.names = F)
     } 
     
@@ -2409,8 +2413,8 @@ if(PMFsearch){
     #uniques_intensity<-unique(Peptide_plot_list_2nd[,c("mz","Intensity")])
     #uniques_intensity<-uniques_intensity[uniques_intensity$Intensity>0,]
 
-    write.csv(Peptide_plot_list_2nd,paste("Peptide_segment_PMF_RESULT",SPECTRUM_batch,".csv"),row.names = F)
-    write.csv(peaklist,paste("Spectrum",SPECTRUM_batch,".csv"),row.names = F)
+    #write.csv(Peptide_plot_list_2nd,paste("Peptide_segment_PMF_RESULT",SPECTRUM_batch,".csv"),row.names = F)
+    write.csv(peaklist,paste0(datafile[z] ," ID/",SPECTRUM_batch,"/Spectrum.csv"),row.names = F)
     #Peptide_Summary_file$Intensity<-Peptide_Summary_file$Intensity+unlist(parLapply(cl=cl,Peptide_Summary_file$mz,intensity_sum_para,uniques_intensity))
     #Peptide_Summary_file$Intensity<-Peptide_Summary_file$Intensity+unlist(bplapply(Peptide_Summary_file$mz,intensity_sum_para,uniques_intensity,BPPARAM = BPPARAM))
    #Peptide_Summary_file$Intensity<-Peptide_Summary_file$Intensity+unlist(bplapply(Peptide_Summary_file$mz,intensity_sum_para,uniques_intensity,BPPARAM = BPPARAM))
@@ -3415,7 +3419,7 @@ spec_peakdetect<-function(x){
   summarySpectra(spectra[10:20])
 }
 
-protein_scoring<-function(Protein_feature_list,Peptide_plot_list_rank,BPPARAM = bpparam()){
+protein_scoring<-function(Protein_feature_list,Peptide_plot_list_rank,scortype=c("sum","mean"),BPPARAM = bpparam()){
   
   library(dplyr)
   library(data.table)
@@ -3423,9 +3427,19 @@ protein_scoring<-function(Protein_feature_list,Peptide_plot_list_rank,BPPARAM = 
   
   Protein_feature_list_rank=merge(Protein_feature_list,Peptide_plot_list_rank,by=c("mz","Peptide","adduct","formula","isdecoy"))
   
+  if (scortype=="sum"){
+
   sum_pro_int<-Protein_feature_list_rank %>% group_by(.dots=c("Protein","isdecoy")) %>% summarize(Intensity=mean(Intensity)) 
   
-  sum_pro_score<-Protein_feature_list_rank %>% group_by(.dots=c("Protein","isdecoy")) %>% summarize(Score=mean(Score*log(Intensity))/mean(log(Intensity)))
+  sum_pro_score<-Protein_feature_list_rank %>% group_by(.dots=c("Protein","isdecoy")) %>% summarize(Score=sum(Score*log(Intensity))/mean(log(Intensity)))
+       
+  }else if(scortype=="mean"){
+    
+    sum_pro_int<-Protein_feature_list_rank %>% group_by(.dots=c("Protein","isdecoy")) %>% summarize(Intensity=mean(Intensity)) 
+    
+    sum_pro_score<-Protein_feature_list_rank %>% group_by(.dots=c("Protein","isdecoy")) %>% summarize(Score=mean(Score*log(Intensity))/mean(log(Intensity)))
+    
+  }
   
   #sum_pro_score<-Protein_feature_list_rank %>% group_by(.dots=c("Protein","isdecoy")) %>% summarize(Score=sum(Score))
   
@@ -3468,11 +3482,13 @@ protein_scoring<-function(Protein_feature_list,Peptide_plot_list_rank,BPPARAM = 
   
   Protein_feature_result$Intensity_norm<-Protein_feature_result$Intensity/mean(Protein_feature_result$Intensity)
   
-  Protein_feature_result$Proscore=( Protein_feature_result$Score) * Protein_feature_result$peptide_coverage
+  Protein_feature_result$Proscore=( Protein_feature_result$Score) * Protein_feature_result$peptide_coverage * Protein_feature_result$Intensity_norm
   
   Protein_feature_result=merge(Protein_feature_result,Index_of_protein_sequence[,c("recno","desc")],by.x="Protein",by.y="recno",all.x=T)
+  Protein_feature_list_rank=merge(Protein_feature_list_rank,Index_of_protein_sequence[,c("recno","desc")],by.x="Protein",by.y="recno",all.x=T)
+  #write.csv(Protein_feature_list_rank,"Protein_feature_list_rank.csv",row.names = F)
   
-  return(Protein_feature_result)
+  return(list(Protein_feature_result,Protein_feature_list_rank))
 }
 
 peptide_map_to_protein<-function(peptides, protein_seq ,map_type="grep"){

@@ -106,6 +106,7 @@ Protein_feature_list_fun<-function(workdir=getwd(),
                                    Decoy_search=T,
                                    mzrange=c(700,4000),
                                    output_candidatelist=T,
+                                   Modifications=list(fixed=NULL,variable=NULL),
                                    use_previous_candidates=F){
   library(Biostrings)
   library(cleaver)
@@ -150,6 +151,9 @@ Protein_feature_list_fun<-function(workdir=getwd(),
   
   list_of_protein_sequence<<-list_of_protein_sequence
   if(use_previous_candidates!=T){
+    
+
+  
   Index_of_protein_sequence$Degestion=""
   
   peplist<-list()
@@ -166,6 +170,7 @@ Protein_feature_list_fun<-function(workdir=getwd(),
   
   for (i in 1:length(Digestion_site)){
     message(paste("Testing fasta sequances for degestion site:",Digestion_site[i]))
+    
     if (Digestion_site[i]==""){Digestion_site[i]="J"}
     
     peplist_option<-cleave(as.character(list_of_protein_sequence),custom=Digestion_site[i], missedCleavages=missedCleavages)
@@ -244,6 +249,20 @@ Protein_feature_list_fun<-function(workdir=getwd(),
   
   message(paste("Generating peptide formula..."))
   peptide_symbol=bplapply(tempdf$Peptide,ConvertPeptide,BPPARAM = BPPARAM)
+  
+  if (!is.null(Modifications$fixed)){
+    mod.df<-Peptide_modification(retrive_ID = Modifications$fixed)
+    if(length(unique(mod.df$full_name))==length(Modifications$fixed)){
+    message(paste(unique(mod.df$full_name),"found in unimod DB",sep=" ",collapse = ", "))
+    peptide_symbol=bplapply(mod.df,convert_peptide_adduct_list,peptide_symbol,BPPARAM = BPPARAM,adductslist=adductslist)
+    }else{
+    message(paste("warning:",
+                  Modifications$fixed[`&`((Modifications$fixed %in% unique(mod.df$code_name))==F , (Modifications$fixed %in% unique(mod.df$record_id) )==F)],
+                  "not found in unimod DB. Please check the unimod DB again. Any Charactor string that matches code name or number that matches mod ID will be OKAY.",sep=" ",collapse = ", "))
+    }
+    
+    }
+  
   message(paste("Generating peptide formula with adducts:",paste(adducts,collapse = " ")))
   peptides_symbol_adducts=bplapply(adducts,convert_peptide_adduct_list,peptide_symbol,BPPARAM = BPPARAM,adductslist=adductslist)
   
@@ -379,10 +398,12 @@ Protein_feature_list_fun<-function(workdir=getwd(),
   }
   
   if (Decoy_search && ("isotope" %in% Decoy_mode)){
+    message("attaching decoy IDs in isotope mode...")
     Protein_feature_list_decoy<-Protein_Summary[Protein_Summary$isdecoy==0,]
     #Protein_feature_list_decoy
     Protein_feature_list_decoy$isdecoy=1
-    Protein_feature_list<<-rbind(Protein_Summary[Protein_Summary$isdecoy==0,],Protein_feature_list_decoy)
+    Protein_Summary<-rbind(Protein_Summary[Protein_Summary$isdecoy==0,],Protein_feature_list_decoy)
+    Protein_feature_list<<-Protein_Summary
     
   }
   
@@ -666,6 +687,223 @@ convert_peptide_adduct<-function(peptide,adductsname,multiplier=c(1,1),adductsli
   }
 
   return(paste0(names(formula_with_adducts),formula_with_adducts,collapse = ""))
+  
+}
+
+
+convert_peptide_fixmod<-function(mod.df,peptide_symbol,pep_sequence){
+  library(rcdk)
+  library(OrgMassSpecR)
+  library(stringr)
+  library(Biostrings)
+  
+  
+  
+  
+  ConvertPeptide<-function (sequence, output = "elements") {
+    peptideVector <- strsplit(sequence, split = "")[[1]]
+    if (output == "elements") {
+      FindElement <- function(residue) {
+        element<-c(C = 0, H = 0, N = 0, O = 0, S = 0)
+        switch(residue,
+               A={element <- c(C = 3, H = 5, N = 1, O = 1, S = 0)},
+               R={element <- c(C = 6, H = 12, N = 4, O = 1, S = 0)},
+               N={element <- c(C = 4, H = 6, N = 2, O = 2, S = 0)},
+               D={element <- c(C = 4, H = 5, N = 1, O = 3, S = 0)},
+               E={element <- c(C = 5, H = 7, N = 1, O = 3, S = 0)},
+               Q={element <- c(C = 5, H = 8, N = 2, O = 2, S = 0)},
+               G={element <- c(C = 2, H = 3, N = 1, O = 1, S = 0)},
+               H={element <- c(C = 6, H = 7, N = 3, O = 1, S = 0)},
+               I={element <- c(C = 6, H = 11, N = 1, O = 1, S = 0)},
+               L={element <- c(C = 6, H = 11, N = 1, O = 1, S = 0)},
+               K={element <- c(C = 6, H = 12, N = 2, O = 1, S = 0)},
+               M={element <- c(C = 5, H = 9, N = 1, O = 1, S = 1)},
+               F={element <- c(C = 9, H = 9, N = 1, O = 1, S = 0)},
+               P={element <- c(C = 5, H = 7, N = 1, O = 1, S = 0)},
+               S={element <- c(C = 3, H = 5, N = 1, O = 2, S = 0)},
+               T={element <- c(C = 4, H = 7, N = 1, O = 2, S = 0)},
+               W={element <- c(C = 11, H = 10, N = 2, O = 1, S = 0)},
+               Y={element <- c(C = 9, H = 9, N = 1, O = 2, S = 0)},
+               V={element <- c(C = 5, H = 9, N = 1, O = 1, S = 0)},
+               C={element <- c(C = 3, H = 5, N = 1, O = 1, S = 1)},
+               Z={element <- c(C = 3, H = 3, N = 1, O = 1, S = 1)})
+        
+        return(element)
+      }
+      resultsVector <- c(C = 0, H = 0, N = 0, O = 0, S = 0)
+      for (i in 1:length(peptideVector)) {
+        resultsVector <- FindElement(peptideVector[i]) + 
+          resultsVector
+      }
+      resultsVector <- resultsVector + c(C = 0, H = 2, N = 0, 
+                                         O = 1, S = 0)
+      return(as.list(resultsVector))
+    }
+    if (output == "3letter") {
+      FindCode <- function(residue) {
+        if (residue == "A") 
+          let <- "Ala"
+        if (residue == "R") 
+          let <- "Arg"
+        if (residue == "N") 
+          let <- "Asn"
+        if (residue == "D") 
+          let <- "Asp"
+        if (residue == "C") 
+          let <- "Cys"
+        if (residue == "E") 
+          let <- "Glu"
+        if (residue == "Q") 
+          let <- "Gln"
+        if (residue == "G") 
+          let <- "Gly"
+        if (residue == "H") 
+          let <- "His"
+        if (residue == "I") 
+          let <- "Ile"
+        if (residue == "L") 
+          let <- "Leu"
+        if (residue == "K") 
+          let <- "Lys"
+        if (residue == "M") 
+          let <- "Met"
+        if (residue == "F") 
+          let <- "Phe"
+        if (residue == "P") 
+          let <- "Pro"
+        if (residue == "S") 
+          let <- "Ser"
+        if (residue == "T") 
+          let <- "Thr"
+        if (residue == "W") 
+          let <- "Trp"
+        if (residue == "Y") 
+          let <- "Tyr"
+        if (residue == "V") 
+          let <- "Val"
+        return(let)
+      }
+      codes <- sapply(peptideVector, FindCode)
+      return(paste(codes, collapse = ""))
+    }
+  }
+  merge_atoms<-function(atoms,addelements,check_merge=T,mode=c("add","ded"),multiplier=c(1,1)){
+    
+    atomsorg=atoms
+    
+    if (missing(mode)) mode="add"
+    
+    if (mode=="ded"){
+      for (x in names(addelements)){
+        addelements[[x]]=-addelements[[x]]
+      }
+    }
+    
+    for (x in names(addelements)){
+      if (is.null(atoms[[x]])){
+        atoms[[x]]=addelements[[x]]
+      }else {
+        atoms[[x]]=(atoms[[x]]*multiplier[1]) + (addelements[[x]]*multiplier[2])
+      } 
+    }
+    
+    if (check_merge==F){
+      for (x in names(atoms)){
+        if (atoms[[x]]<0){
+          stop("add atoms failed due to incorrect number of",x)
+        } 
+      }
+      
+    }
+    return(as.list(atoms))
+    
+  }
+  
+  get_atoms<-function(Symbol){
+    #form = "C5H11BrO" 
+    if (Symbol!=""){
+      ups = c(gregexpr("[[:upper:]]", Symbol)[[1]], nchar(Symbol) + 1) 
+      seperated = sapply(1:(length(ups)-1), function(x) substr(Symbol, ups[x], ups[x+1] - 1)) 
+      elements =  gsub("[[:digit:]]", "", seperated) 
+      elements =  gsub(" ", "", elements)
+      elements =  gsub("\\)", "", elements)
+      elements =  gsub("\\(", "", elements)
+      elements =  gsub("-", "", elements)
+      nums = gsub("[[:alpha:]]", "", seperated) 
+      nums = gsub(" ", "", nums) 
+      nums = gsub("\\(", "", nums) 
+      nums = gsub("\\)", "", nums) 
+      ans = data.frame(elements = as.character(elements), num = as.numeric(ifelse(nums == "", 1, nums)), stringsAsFactors = FALSE)
+      list<-as.list(ans$num)
+      names(list)=ans$elements
+      return(list)
+    }else{return(NULL)}
+  }
+  
+  #if (missing(multiplier)){
+  #  multiplier[1]= as.numeric(as.character(adductslist[adductslist$Name==adductsname,"Mult"]))
+  #  multiplier[2]=1
+  #}
+  
+  mod.df.list <- split(mod.df, seq(nrow(mod.df)))
+  multiplier_for_mod<-function(x,pep_sequence){
+    if(x$position_key==2){
+      #multiplier_pep<-lapply(pep_sequence,grepl,x$one_letter)
+      multiplier_pep<-str_locate_all(pep_sequence,x$one_letter)
+      multiplier_pep<-sapply(multiplier_pep,nrow)
+      return(multiplier_pep)
+    } else if(x$position_key %in% c(3,4)){
+      multiplier_pep=rep(1,length(pep_sequence))
+      return(multiplier_pep)
+    } else if(x$position_key %in% c(5)){
+      message("Protein N-term modification selected")
+      list_of_protein_sequence<-get("list_of_protein_sequence", envir = .GlobalEnv)
+      multiplier_pep=rep(0,length(pep_sequence))
+      map_res<-sapply(list_of_protein_sequence,str_locate_all,pep_sequence)
+      map_res_found<-sapply(1:length(pep_sequence),function(x,map_res){
+        map_resdf<-(do.call(rbind,map_res[x,]))
+        if (1 %in% map_resdf[,"start"]){
+          if (sum(map_resdf[,"start"]!=1)>0){
+            return(c(1,1))
+          }else{return(c(1,0))}
+        }else{return(c(0,0))}
+      },map_res)
+      map_res_found<-t(map_res_found)
+      multiplier_pep<-map_res_found[,1]
+    } else if(x$position_key %in% c(6)){
+      message("Protein C-term modification selected")
+      list_of_protein_sequence<-get("list_of_protein_sequence", envir = .GlobalEnv)
+      multiplier_pep=rep(0,length(pep_sequence))
+      map_res<-sapply(list_of_protein_sequence,str_locate_all,pep_sequence)
+      pro_end<-sapply(list_of_protein_sequence,length)
+      map_res_found<-sapply(1:length(pep_sequence),function(x,map_res,pro_end){
+        map_resdf<-do.call(rbind,map_res[x,])
+        pro_label<-rep(pro_end,sapply(map_res[x,],nrow))
+        map_resdf[,"end"]==pro_label
+        if (sum(map_resdf[,"end"]==pro_label)>=1){
+          if (sum(map_resdf[,"end"]!=pro_label)>0){
+            return(c(1,1))
+          }else{return(c(1,0))}
+        }else{return(c(0,0))}
+      },map_res,pro_end)
+      map_res_found<-t(map_res_found)
+      multiplier_pep<-map_res_found[,1]
+    }
+    
+  }
+  
+  formula_mod<-lapply(mod.df$composition,get_atoms)
+  
+  multiplier<-lapply(mod.df.list,multiplier_for_mod,pep_sequence=pep_sequence)
+  
+  #formula<-ConvertPeptide(peptide)
+  for (fixmod in 1:nrow(mod.df)){
+    for (formula in 1:length(peptide_symbol)){
+    peptide_symbol[[formula]]<-merge_atoms(peptide_symbol[[formula]],formula_mod[[fixmod]],check_merge = F,mode = "add", multiplier = c(1,multiplier[[fixmod]][formula]))
+    }
+  }
+  
+  return(peptide_symbol)
   
 }
 
@@ -1012,4 +1250,57 @@ Peptide_Summary_para<- function(Proteins,peplist){
   }
   
   tempdf1
+}
+
+Peptide_modification<-function(retrive_ID=NULL,update_unimod=F){
+  library(protViz)
+  library(XML)
+  if(!exists("unimod.df",envir = globalenv())){
+      #try(data("unimod.list",package = "HiTMaP"))
+  
+  if(update_unimod){
+  message("Updating unimod database...")
+  unimodurl <- url("http://www.unimod.org/xml/unimod_tables.xml")
+  unimod.list <- XML::xmlToList(
+    XML::xmlParse(
+      scan(unimodurl, what = character())))
+    save(unimod.list,file =paste0(path.package("HiTMaP"), "/data/unimod.list.rda"))
+  try(data("unimod.list",package = "HiTMaP"))
+  }
+  
+  
+  unimod.df<-lapply(unimod.list, function(x){
+    x<-unname(x)
+    x<-data.frame(do.call('rbind', lapply(x, function(y) y[match(names(x[[1]]), names(y))])),stringsAsFactors = F)
+    if (".attrs" %in% colnames(x)) {
+      attrs_tb<-data.frame(do.call('rbind', lapply(x$.attrs, function(y) y[match(names(x$.attrs[[1]]), names(y))])),stringsAsFactors = F)
+      x<-cbind(x,attrs_tb)}
+    return(x)
+    })
+  
+  unimod.df <<-unimod.df
+  
+  }else{
+    
+    unimod.df <- get("unimod.df",envir = globalenv())
+    
+  }
+  
+  if (!is.null(retrive_ID)){
+    return_mod.df<-lapply(retrive_ID,function(x,unimod.df){
+    if (is.na(as.numeric(x))){
+      unimod.df$modifications[unimod.df$modifications$code_name==as.character(x),]
+    }else{
+      unimod.df$modifications[unimod.df$modifications$record_id==as.numeric(x),]
+    }
+    
+    },unimod.df)
+    
+    return_mod.df=do.call(rbind,return_mod.df)
+    
+    return_mod.df=merge(return_mod.df,unimod.df$specificity,by.x="record_id",by.y="mod_key",all.x=T)
+    return_mod.df=return_mod.df[return_mod.df$hidden==0,]
+    return(return_mod.df)
+  }
+
 }
