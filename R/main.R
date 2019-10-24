@@ -12,7 +12,7 @@
 #' @keywords package
 #' @import tcltk
 #' @import extrafont
-#' @import dplyr
+#' @import S4Vectors
 #' @import multtest
 #' @import XML
 #' @import doParallel
