@@ -3485,6 +3485,8 @@ protein_scoring<-function(Protein_feature_list,Peptide_plot_list_rank,scoretype=
   
   Protein_feature_result$Proscore=( Protein_feature_result$Score) * Protein_feature_result$peptide_coverage * Protein_feature_result$Intensity_norm
   
+  Protein_feature_result$Protein=as.numeric(Protein_feature_result$Protein)
+  Protein_feature_list_rank$Protein=as.numeric(Protein_feature_list_rank$Protein)
   Protein_feature_result=merge(Protein_feature_result,Index_of_protein_sequence[,c("recno","desc")],by.x="Protein",by.y="recno",all.x=T)
   Protein_feature_list_rank=merge(Protein_feature_list_rank,Index_of_protein_sequence[,c("recno","desc")],by.x="Protein",by.y="recno",all.x=T)
   #write.csv(Protein_feature_list_rank,"Protein_feature_list_rank.csv",row.names = F)
