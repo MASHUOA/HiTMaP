@@ -11,23 +11,14 @@
 #' @references TBD
 #' @keywords package
 #' @import tcltk
-#' @import rfviz
 #' @import extrafont
-#' @import KEGGREST
-#' @import RColorBrewer
-#' @import rgl
 #' @import dplyr
-#' @import tkrplot
 #' @import multtest
 #' @import XML
 #' @import doParallel
 #' @import BiocManager
 #' @import pacman
 #' @import BiocParallel
-#' @import magick
-#' @import enviPat
-#' @import grid
-#' @import ggplot2
 #' @importFrom stats na.omit runif
 #' @importFrom utils download.file modifyList packageVersion read.table tail
 
