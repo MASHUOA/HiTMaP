@@ -9,7 +9,8 @@ Protein_feature_list_fun(workdir = getwd(), database,
   "M+NH4", "M+Na"), BPPARAM = bpparam(), Decoy_adducts = c("M+He",
   "M+Ne", "M+Ar", "M+Kr", "M+Xe", "M+Rn"), Decoy_mode = c("adducts",
   "elements", "isotope"), Decoy_search = T, mzrange = c(700, 4000),
-  output_candidatelist = T, use_previous_candidates = F)
+  output_candidatelist = T, Modifications = list(fixed = NULL, variable
+  = NULL), use_previous_candidates = F)
 }
 \arguments{
 \item{workdir}{the folder that contains fasta file}

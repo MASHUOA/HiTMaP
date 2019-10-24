@@ -4,13 +4,13 @@
 \alias{imaging_identification}
 \title{imaging_identification}
 \usage{
-imaging_identification(datafile, threshold = 0.001, ppm = 5,
+imaging_identification(datafile, threshold = 0.005, ppm = 5,
   mode = c("Proteomics", "Metabolomics"), Digestion_site = "[GN][LI]",
   missedCleavages = 0:1, Fastadatabase = "murine_matrisome.fasta",
-  adducts = c("M+H", "M+NH4", "M+Na"), Decoy_search = T,
-  Decoy_adducts = c("M+ACN+H", "M+IsoProp+H", "M+DMSO+H", "M+Co", "M+Ag",
-  "M+Cu", "M+He", "M+Ne", "M+Ar", "M+Kr", "M+Xe", "M+Rn"),
-  Decoy_mode = "isotope", adjust_score = F, PMF_analysis = TRUE,
+  adducts = c("M+H"), Decoy_search = T, Decoy_adducts = c("M+ACN+H",
+  "M+IsoProp+H", "M+DMSO+H", "M+Co", "M+Ag", "M+Cu", "M+He", "M+Ne",
+  "M+Ar", "M+Kr", "M+Xe", "M+Rn"), Decoy_mode = "isotope",
+  adjust_score = F, PMF_analysis = TRUE,
   Bypass_generate_spectrum = F, Protein_feature_summary = TRUE,
   plot_cluster_image = TRUE, ClusterID_colname = "Protein",
   Peptide_feature_summary = TRUE, plot_ion_image = FALSE,
@@ -19,7 +19,8 @@ imaging_identification(datafile, threshold = 0.001, ppm = 5,
   Virtual_segmentation = FALSE, Virtual_segmentation_rankfile = NULL,
   rotateimg = NULL, Region_feature_summary = F,
   Spectrum_validate = T, output_candidatelist = T,
-  use_previous_candidates = F, score_method = "SQRTP", ...)
+  use_previous_candidates = F, score_method = "SQRTP",
+  plot_cluster_image_grid = F, ...)
 }
 \arguments{
 \item{threshold}{specify the intensities threshold (0 to 1 in percentage)to report a identified molecule}
