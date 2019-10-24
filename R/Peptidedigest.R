@@ -2393,7 +2393,7 @@ if(PMFsearch){
       #Index_of_protein_sequence<-get("Index_of_protein_sequence", envir = .GlobalEnv)
       #Protein_feature_result<-merge(Protein_feature_result,Index_of_protein_sequence[,c("recno","desc")],by.x="Protein",by.y = "recno",sort = F)
       
-      Protein_feature_result<-protein_scoring(Protein_feature_list,Peptide_plot_list_rank,BPPARAM = BPPARAM)
+      Protein_feature_result<-protein_scoring(Protein_feature_list,Peptide_plot_list_rank,BPPARAM = BPPARAM,scoretype="mean")
       Protein_feature_list_rank<-Protein_feature_result[[2]]
       Protein_feature_result<-Protein_feature_result[[1]]
       
@@ -3419,7 +3419,7 @@ spec_peakdetect<-function(x){
   summarySpectra(spectra[10:20])
 }
 
-protein_scoring<-function(Protein_feature_list,Peptide_plot_list_rank,scortype=c("sum","mean"),BPPARAM = bpparam()){
+protein_scoring<-function(Protein_feature_list,Peptide_plot_list_rank,scoretype=c("sum","mean"),BPPARAM = bpparam()){
   
   library(dplyr)
   library(data.table)
@@ -3427,7 +3427,7 @@ protein_scoring<-function(Protein_feature_list,Peptide_plot_list_rank,scortype=c
   
   Protein_feature_list_rank=merge(Protein_feature_list,Peptide_plot_list_rank,by=c("mz","Peptide","adduct","formula","isdecoy"))
   
-  if (scortype=="sum"){
+  if (scoretype=="sum"){
 
   sum_pro_int<-Protein_feature_list_rank %>% group_by(.dots=c("Protein","isdecoy")) %>% summarize(Intensity=mean(Intensity)) 
   
