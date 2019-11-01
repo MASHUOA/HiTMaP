@@ -405,20 +405,22 @@ cluster_image_cardinal_allinone<-function(clusterID,
 }
 
 cluster_image_grid<-function(clusterID,
-                                          SMPLIST,
-                                          ppm=20,
-                                          imdata=Load_Cardinal_imaging(datafile[i],preprocessing = F,resolution = ppm),
-                                          ClusterID_colname="Protein",
-                                          componentID_colname="Peptide",
-                                          Component_plot_threshold=2,
-                                          Component_plot_coloure=c("mono","as.cluster"),
-                                          smooth.image="gaussian",
-                                          contrast.enhance = "suppression",
-                                          colorpallet="Set1",
-                                          plot_layout="grid",
-                                          export_Header_table=F,
-                                          plot_style=c("fleximaging","ClusterOnly","rainbow"),
-                                          protein_coverage=F){
+                             SMPLIST,
+                             ppm=20,
+                             imdata=Load_Cardinal_imaging(datafile[i],preprocessing = F,resolution = ppm),
+                             ClusterID_colname="Protein",
+                             componentID_colname="Peptide",
+                             Component_plot_threshold=2,
+                             Component_plot_coloure=c("mono","as.cluster"),
+                             smooth.image="gaussian",
+                             contrast.enhance = "suppression",
+                             colorpallet="Set1",
+                             plot_layout="grid",
+                             export_Header_table=F,
+                             export_footer_table=F,
+                             combine_header_footer=F,
+                             plot_style=c("fleximaging","ClusterOnly","rainbow"),
+                             protein_coverage=F){
   #complementary(color="red", plot = TRUE, bg = "white", labcol = NULL, cex = 0.8, title = TRUE)
   windows_filename<- function(stringX){
     stringX<-stringr::str_remove_all(stringX,"[><*?:\\/\\\\]")
@@ -533,7 +535,7 @@ cluster_image_grid<-function(clusterID,
               contrast.enhance = contrast.enhance,
               smooth.image = smooth.image ,
               superpose=TRUE,normalize.image="linear",
-              plusminus=median(ppm*candidateunique/1000000))
+              plusminus=round(median(ppm*candidateunique/1000000),digits = 4))
         
         for (i in 1:length(candidateunique)){
           #image(imdata, mz=candidateunique[i], col=mycol[i], superpose=F,normalize.image="linear")
@@ -591,9 +593,8 @@ cluster_image_grid<-function(clusterID,
               contrast.enhance = contrast.enhance,
               smooth.image = smooth.image ,
               superpose=TRUE,normalize.image="linear",
-              plusminus=median(ppm*candidateunique/1000000),
-
-              layout=c( length(levels(Cardinal::run(imdata))),1))
+              plusminus=round(mean(ppm*candidateunique/1000000),digits = 4),
+              layout=c(length(levels(Cardinal::run(imdata))),1))
         print(clusterimg)
         
         dev.off()
@@ -715,7 +716,17 @@ cluster_image_grid<-function(clusterID,
     
   }
   
-  
+  if(export_footer_table){
+      prosequence<-list_of_protein_sequence[ClusterID]
+      
+      candidate_unique_table=unique(candidate[,c(ClusterID_colname,componentID_colname)])
+      
+      png(windows_filename(paste0(clusterID,"_footer.png")),width=120*(nrow(Header_table))+200,height=540)
+      plot(1:10,1:10,type='n',frame.plot=F,axes=F,xlab="",ylab="")
+      text(10,10,as.character(prosequence))
+      
+      dev.off()
+    }
   
   
 }}

@@ -2402,14 +2402,15 @@ if(PMFsearch){
       Protein_feature_result<-Protein_feature_result[[1]]
       
       #Protein_feature_result=Protein_feature_result[!grepl("Uncharacterized",Protein_feature_result$desc,ignore.case = T),]
-      message(unique(Protein_feature_result$isdecoy))
-      message(unique(Peptide_plot_list_rank$isdecoy))
+      #message(unique(Protein_feature_result$isdecoy))
+      #message(unique(Peptide_plot_list_rank$isdecoy))
       Score_cutoff_protein= FDR_cutoff_plot_protein(Protein_feature_result,FDR_cutoff=0.1,plot_fdr=T,outputdir=paste0(datafile[z] ," ID/",SPECTRUM_batch),adjust_score = F)
       Protein_feature_result_cutoff=Protein_feature_result[((Protein_feature_result$Proscore>=Score_cutoff_protein)&(!is.na(Protein_feature_result$Intensity))&(Protein_feature_result$isdecoy==0)),]
       Protein_feature_list_rank_cutoff<-Protein_feature_list_rank[Protein_feature_list_rank$Protein %in% Protein_feature_result_cutoff$Protein,]
-      
+      Protein_feature_list_rank_cutoff<-Protein_feature_list_rank_cutoff[Protein_feature_list_rank_cutoff$isdecoy==0,]
       write.csv(Protein_feature_result,paste0(datafile[z] ," ID/",SPECTRUM_batch,"/Protein_ID_score_rank_",score_method,".csv"),row.names = F)
       write.csv(Protein_feature_list_rank_cutoff,paste0(datafile[z] ," ID/","Peptide_segment_PMF_RESULT_",SPECTRUM_batch,".csv"),row.names = F)
+      Peptide_plot_list_2nd=Protein_feature_list_rank_cutoff
       write.csv(Protein_feature_result_cutoff,paste0(datafile[z] ," ID/","Protein_segment_PMF_RESULT_",SPECTRUM_batch,".csv"),row.names = F)
     } 
     
@@ -2422,7 +2423,7 @@ if(PMFsearch){
     #Peptide_Summary_file$Intensity<-Peptide_Summary_file$Intensity+unlist(parLapply(cl=cl,Peptide_Summary_file$mz,intensity_sum_para,uniques_intensity))
     #Peptide_Summary_file$Intensity<-Peptide_Summary_file$Intensity+unlist(bplapply(Peptide_Summary_file$mz,intensity_sum_para,uniques_intensity,BPPARAM = BPPARAM))
    #Peptide_Summary_file$Intensity<-Peptide_Summary_file$Intensity+unlist(bplapply(Peptide_Summary_file$mz,intensity_sum_para,uniques_intensity,BPPARAM = BPPARAM))
-    
+    Peptide_plot_list_2nd$Region<-SPECTRUM_batch
     Peptide_Summary_file_regions<-rbind(Peptide_Summary_file_regions,Peptide_plot_list_2nd)
     #return(list(Peptide_Summary_file,Peptide_Summary_file_regions))
     }
@@ -2430,11 +2431,11 @@ if(PMFsearch){
         
     #PMF_result_file=parallel::parLapply(cl,names(x),PMFsearch_para,x,imdata,name,ppm,cl,Peptide_Summary_file,Peptide_Summary_file_regions)
     
-  if(is.null(Peptide_Summary_file$Peptide)){Peptide_Summary_file$Peptide=Peptide_Summary_file$moleculeNames}
-  if(is.null(Peptide_Summary_file$moleculeNames)){Peptide_Summary_file$moleculeNames=Peptide_Summary_file$Peptide}
+  if(is.null(Peptide_Summary_file_regions$Peptide)){Peptide_Summary_file_regions$Peptide=Peptide_Summary_file_regions$moleculeNames}
+  if(is.null(Peptide_Summary_file_regions$moleculeNames)){Peptide_Summary_file_regions$moleculeNames=Peptide_Summary_file_regions$Peptide}
   
-  Peptide_Summary_file<-Peptide_regions_Summary_fun(Peptide_Summary_file_regions)
-  write.csv(Peptide_Summary_file,"Peptide_Summary_file.csv",row.names = F)
+  #Peptide_Summary_file<-Peptide_regions_Summary_fun(Peptide_Summary_file_regions)
+  #write.csv(Peptide_Summary_file,"Peptide_Summary_file.csv",row.names = F)
   write.csv(Peptide_Summary_file_regions,"Peptide_region_file.csv",row.names = F)
   }
   
@@ -2976,9 +2977,19 @@ FDR_cutoff_plot_protein<-function(Protein_feature_result,FDR_cutoff=0.1,plot_fdr
     Protein_feature_result_plot<-Protein_feature_result[,c("isdecoy","Proscore","Score")]
     target_decoy<-factor(ifelse(Protein_feature_result$isdecoy==1,"Decoy","Tagret"))
     Protein_feature_result_plot$target_decoy=target_decoy
+    
+    x <- Protein_feature_result_plot$Proscore
+    h<-hist(x, breaks=10, col="red", xlab="Miles Per Gallon",
+            main="Histogram with Normal Curve")
+    xfit<-seq(min(x),max(x),length=40)
+    yfit<-dnorm(xfit,mean=mean(x),sd=sd(x))
+    yfit <- yfit*diff(h$mids[1:2])*length(x)
+    lines(xfit, yfit, col="blue", lwd=2)
+    quantile(x, c(0.99))
+             
     png(paste0(outputdir,"/PROTEIN_Score_histogram.png"))
     p<-ggplot(data=Protein_feature_result_plot,aes(x=Proscore,color=target_decoy, fill=target_decoy)) + geom_histogram( fill="white",alpha=0.5, bins = 200, position="identity")  +
-      ggtitle("Protein score vs Counts") +
+      ggtitle("Protein score vs Counts") + xlim(-0.05,quantile(Protein_feature_result_plot$Proscore, c(0.97))) +
       xlab("Protein score") + ylab("Counts") + labs(fill = "Is_Decoy") + theme_classic() #+ facet_grid(target_decoy ~ .)
     print(p)
     dev.off() 
