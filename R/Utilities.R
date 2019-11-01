@@ -1435,3 +1435,15 @@ plotRanges <- function(ranged,labels=NULL,do.labs=T,skip.plot.new=F,lty="solid",
 recheck_peptide_score<-function(formula="AGLQFPVGR",peaklist=read.csv(paste0(getwd(),"/Spectrum 2 .csv"))){
  peaklist 
 }
+
+IAnnotatedDataFrame<-function (data, varMetadata, dimLabels = c("pixelNames", 
+                                           "pixelColumns"), ...) 
+{
+  reqLabelTypes <- c("dim", "sample", "pheno")
+  if (missing(data)) 
+    data <- data.frame(sample = factor())
+  if (missing(varMetadata)) 
+    varMetadata <- data.frame(labelType = factor(rep(NA, ncol(data)), levels = reqLabelTypes), row.names = names(data))
+  Cardinal:::IAnnotatedDataFrame(data = data, varMetadata = varMetadata, 
+                       dimLabels = dimLabels)
+}

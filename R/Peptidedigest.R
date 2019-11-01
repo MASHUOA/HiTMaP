@@ -1614,12 +1614,12 @@ Plot_PMF_all<-function(Protein_feature_list,peaklist,threshold=threshold,savenam
   Protein_feature_list<-Protein_feature_list[Protein_feature_list$Intensity>=max(Protein_feature_list$Intensity)*threshold,]
   Protein_feature_list<-unique(Protein_feature_list[,c( "mz" ,"Intensity","adduct","moleculeNames")])
   sp<-ggplot2::ggplot(plotpeaklist, size=1 ,aes(x=m.z, y=intensities,xend=m.z,yend=rep(0,length(plotpeaklist[,2])))) +  geom_segment()
-    df<- data.frame("mz" = Protein_feature_list$mz,"mzend" = Protein_feature_list$mz, "yintercept" = rep(0,length(Protein_feature_list$mz)), "intensities" = Protein_feature_list$Intensity,"moleculeNames"=Protein_feature_list$moleculeNames)
+    df<- data.frame("mz" = Protein_feature_list$mz,"mzend" = Protein_feature_list$mz, "yintercept" = rep(0,length(Protein_feature_list$mz)), "intensities" = Protein_feature_list$Intensity,"moleculeNames"=as.factor(Protein_feature_list$moleculeNames))
     
     colnames(df)<-c("mz","mzend","yintercept","intensities","moleculeNames")
     df<-df[df[,"intensities"]>0,]  
     png(paste(getwd(),savename,"PMF spectrum match",'.png',sep=""),width = 1980,height = 1080)
-    tempsp<-sp+ggtitle(paste("PMF spectrum","\nNormalized intensities:")) +geom_segment(aes(x = as.numeric(mz), y = as.numeric(yintercept), xend = as.numeric(mzend), yend = as.numeric(intensities), colour =moleculeNames),lineend = "round", data = df,size = 1,show.legend=FALSE)
+    tempsp<-sp+ggtitle(paste("PMF spectrum","\nNormalized intensities:")) +geom_segment(aes(x = as.numeric(mz), y = as.numeric(yintercept), xend = as.numeric(mzend), yend = as.numeric(intensities), colour =moleculeNames),lineend = "round", data = df,size = 1,show.legend=F)
     print(tempsp)
     dev.off()
   
@@ -2015,10 +2015,12 @@ PMF_Cardinal_Datafilelist<-function(datafile,Peptide_Summary_searchlist,
   for (z in 1:length(datafile)){
 
   Peptide_Summary_file$Intensity<-rep(0,nrow(Peptide_Summary_file))
-  
-  imdata <- Load_Cardinal_imaging(datafile[z],preprocessing = F,attach.only = T,resolution = 200,rotate = rotate[z],as="MSImageSet",BPPARAM = BPPARAM)
   name <-gsub(base::dirname(datafile[z]),"",datafile[z])
   folder<-base::dirname(datafile[z])
+  imdata <- Load_Cardinal_imaging(datafile[z],preprocessing = F,attach.only = T,resolution = 200,rotate = rotate[z],as="MSImageSet",BPPARAM = BPPARAM)
+  ##imdata <- Cardinal::readMSIData(datafile[z],  attach.only=T,as="MSImageSet",resolution=200, units="ppm",BPPARAM=BPPARAM,mass.range=mzrange)
+  
+  
   coordata=imdata@pixelData@data
   if (dir.exists(paste0(datafile[z] ," ID"))==FALSE){dir.create(paste0(datafile[z] ," ID"))}
   setwd(paste0(datafile[z] ," ID")) 
@@ -2255,7 +2257,7 @@ if(PMFsearch){
     #cl=makeCluster(8)
     Peptide_Summary_file_regions<-data.frame()
     message(paste("PMFsearch",name))
-    message(paste( "region",names(x),sep=" ",collapse = "\n"))
+    message(paste( "region",names(x),"Found.",sep=" ",collapse = "\n"))
     for (SPECTRUM_batch in names(x)){
       if (dir.exists(paste0(datafile[z] ," ID/",SPECTRUM_batch,"/"))==FALSE){dir.create(paste0(datafile[z] ," ID/",SPECTRUM_batch,"/"))}
     #PMFsearch_para<-function(SPECTRUM_batch,x,imdata,name,ppm,cl,Peptide_Summary_file,Peptide_Summary_file_regions){
@@ -2387,7 +2389,8 @@ if(PMFsearch){
       write.csv(Peptide_plot_list_2nd,paste0(datafile[z] ," ID/",SPECTRUM_batch,"/Peptide_2nd_ID_score_rank",score_method,"_Rank_above_",Rank,".csv"),row.names = F)
       if (plot_matching_score_t){
         (plot_matching_score(Peptide_plot_list_2nd,peaklist,charge=1,ppm,outputdir=paste0(datafile[z] ," ID/",SPECTRUM_batch,"/ppm")))
-        }
+      }
+      Peptide_plot_list_rank$mz=as.numeric(as.character(Peptide_plot_list_rank$mz))
       Peptide_plot_list_2nd$mz=as.numeric(as.character(Peptide_plot_list_2nd$mz))
       
       #Protein_feature_result<-protein_scoring(Protein_feature_list,Peptide_plot_list_2nd,BPPARAM = BPPARAM)
@@ -2398,7 +2401,7 @@ if(PMFsearch){
       Protein_feature_list_rank<-Protein_feature_result[[2]]
       Protein_feature_result<-Protein_feature_result[[1]]
       
-      Protein_feature_result=Protein_feature_result[!grepl("Uncharacterized",Protein_feature_result$desc,ignore.case = T),]
+      #Protein_feature_result=Protein_feature_result[!grepl("Uncharacterized",Protein_feature_result$desc,ignore.case = T),]
       message(unique(Protein_feature_result$isdecoy))
       message(unique(Peptide_plot_list_rank$isdecoy))
       Score_cutoff_protein= FDR_cutoff_plot_protein(Protein_feature_result,FDR_cutoff=0.1,plot_fdr=T,outputdir=paste0(datafile[z] ," ID/",SPECTRUM_batch),adjust_score = F)
@@ -3420,13 +3423,207 @@ spec_peakdetect<-function(x){
   summarySpectra(spectra[10:20])
 }
 
-protein_scoring<-function(Protein_feature_list,Peptide_plot_list_rank,scoretype=c("sum","mean"),BPPARAM = bpparam()){
+protein_scoring<-function(Protein_feature_list,Peptide_plot_list_rank,scoretype=c("sum","mean"),BPPARAM = bpparam(),protein_nr_grouping=T){
   
   library(dplyr)
   library(data.table)
   Protein_feature_list<-as.data.table(Protein_feature_list)
   
   Protein_feature_list_rank=merge(Protein_feature_list,Peptide_plot_list_rank,by=c("mz","Peptide","adduct","formula","isdecoy"))
+  if (protein_nr_grouping){
+  protein_nr<-function(Protein_feature_list_rank){
+    library(igraph)
+    library(Biostrings)
+    
+    
+      
+    
+      protein_ids=unique(Protein_feature_list_rank$Protein)
+      
+      peptide_links<-Protein_feature_list_rank  %>% group_by(.dots=c("Peptide")) %>% summarize(Protein=paste(unique(Protein),collapse = ","))
+      protein_links<-Protein_feature_list_rank  %>% group_by(.dots=c("Protein")) %>% summarise(Peptide=list(unique(Peptide)))
+      
+      matched_proteins<-lapply(protein_ids,function(x,Protein_feature_list_rank,peptide_links){
+        
+        testvectors=unique(Protein_feature_list_rank$Peptide[Protein_feature_list_rank$Protein==x])
+        
+        matched_proteins<-peptide_links$Protein[peptide_links$Peptide %in% testvectors]
+        
+        matched_proteins<-strsplit(matched_proteins,",")
+        
+        if (length(matched_proteins)>1){
+          
+          matched_proteins_ol<-Reduce(intersect,matched_proteins)
+          
+        }else if (length(matched_proteins)==1){matched_proteins_ol<-matched_proteins[[1]]}
+        
+        matched_proteins_ol
+        
+      },Protein_feature_list_rank,peptide_links)
+      
+      names(matched_proteins)<-protein_ids
+      
+      protein_links$test_list_length<-unlist(lapply(protein_links$Peptide,length))
+      
+      matched_proteins_dup<-matched_proteins[duplicated(matched_proteins)]
+      
+      matched_proteins_final<-matched_proteins[!duplicated(matched_proteins)]
+      
+      message("Iterating Protein information...")
+      
+      matched_proteins_final_hP<-BiocParallel::bplapply(names(matched_proteins_final),function(x,protein_links){
+
+        test_length<- protein_links$test_list_length[protein_links$Protein==as.numeric(x)]+1
+        
+        test_peptides<-protein_links$Peptide[protein_links$Protein==as.numeric(x)][[1]]
+        
+        protein_t_within<-protein_links[protein_links$test_list_length>=test_length,]
+        findhigher=NA
+         
+        if (nrow(protein_t_within)>0){
+          for (test_peptide_list in 1:length(protein_t_within$Peptide)){
+          
+          if (length(intersect(test_peptides,protein_t_within$Peptide[test_peptide_list][[1]]))==length(test_peptides)){
+            findhigher=protein_t_within$Protein[test_peptide_list]
+            break
+          }
+          
+        }
+         
+        }
+        #test_list_length_name<-matched_proteins[names(test_list_length[test_list_length>=test_length])]
+        #test_list_length<-lapply(matched_proteins,length)
+        
+       return(findhigher)
+       
+      },protein_links,BPPARAM = BPPARAM)
+
+      matched_proteins_final_hP<-unlist(matched_proteins_final_hP)
+      
+      unique_protein<-names(matched_proteins_final[is.na(matched_proteins_final_hP)])
+      
+      if (F){
+        
+      matched_proteins_final_hiP<-lapply(names(matched_proteins_final),function(x,matched_proteins_final){
+        
+        if (length(matched_proteins_final[[x]])>1){
+          
+          test_prot<-matched_proteins_final[[x]][matched_proteins_final[[x]]!=x]
+          
+          find_node<-function(test_prot,matched_proteins_final){
+            repeat{
+             if(length(test_prot)==0){break} 
+                    
+             test_prot_temp_final<-NULL
+             test_prot_temp_last_final<-test_prot
+            for ( test_prot_temp in test_prot){
+              test_prot_temp_temp<-matched_proteins_final[[test_prot_temp]][matched_proteins_final[[test_prot_temp]]!=test_prot_temp]
+              if (length(test_prot_temp_temp)>0){
+                test_prot_temp_final<-c(test_prot_temp_final,test_prot_temp_temp)
+              }else{
+                test_prot_temp_last_final<-test_prot_temp_last_final[test_prot_temp_last_final!=test_prot_temp]
+              }
+            }
+            test_prot=test_prot_temp_final
+            message(test_prot)
+            message(test_prot_temp_last_final)
+            }
+            test_prot_temp_last_final
+            }
+     
+          find_node<-function(test_prot,matched_proteins_final){
+            
+            min_node<-length(matched_proteins_final[[test_prot]])
+            
+            test_prot
+            
+            test_prot_temp_final<-NULL
+            test_prot_temp_last_final<-test_prot
+            for ( test_prot_temp in test_prot){
+              length_node<-length(matched_proteins_final[[test_prot_temp]])}
+            
+            repeat{
+              
+              if(length(test_prot)==0){break} 
+              
+              test_prot_temp_final<-NULL
+              test_prot_temp_last_final<-test_prot
+              for ( test_prot_temp in test_prot){
+                length_node<-length(matched_proteins_final[[test_prot_temp]])
+                
+                test_prot_temp_temp<-matched_proteins_final[[test_prot_temp]][matched_proteins_final[[test_prot_temp]]!=test_prot_temp]
+                test_prot_temp_temp<-test_prot_temp_temp[test_prot_temp_temp %in% names(matched_proteins_final)]
+                
+                
+                if (length(test_prot_temp_temp)>0){
+                  test_prot_temp_final<-c(test_prot_temp_final,test_prot_temp_temp)
+                }else{
+                  test_prot_temp_last_final<-test_prot_temp_last_final[test_prot_temp_last_final!=test_prot_temp]
+                }
+              }
+              test_prot=test_prot_temp_final
+              message(test_prot)
+              message(test_prot_temp_last_final)
+            }
+            test_prot_temp_last_final
+          }
+          
+          find_node("1",matched_proteins_final)
+          
+          
+          
+          
+          
+          high_pro<-lapply(test_prot,function(y,x,matched_proteins_final){
+            if(length(matched_proteins_final[[y]][matched_proteins_final[[y]]!=y])>=1){
+              returnstr<-matched_proteins_final[[y]][!(matched_proteins_final[[y]] %in% matched_proteins_final[[x]])]
+              
+            }else{returnstr<-NA}
+            
+          },x,matched_proteins_final)
+          
+          high_pro<-high_pro[!is.na(high_pro)]
+          
+          if (length(high_pro)>=1){
+            high_pro
+          }else{NA}
+          
+        }else{NA}
+        
+      },matched_proteins_final) 
+        
+      protein_id_link<-sapply(protein_id, function(x,Protein_feature_list_rank){
+      unique(Protein_feature_list_rank$Peptide[Protein_feature_list_rank$Protein==x])
+    },Protein_feature_list_rank)
+    
+      names(protein_id_link)<-protein_id
+      
+      protein_id_link_ND<-sapply(protein_id, function(x,protein_id_link){
+        x=as.character(x)
+        protein_id_link[[as.character(x)]]
+        
+        lapply(protein_id_link,function(y,x,listx){
+          
+          if (names(y)!=x) {
+            length(intersect(listx,y))==length(listx)
+          }
+          
+        },x,protein_id_link[[as.character(x)]])
+        
+      },protein_id_link)
+      
+      protein_links<-Protein_feature_list_rank  %>% group_by(.dots=c("Protein")) %>% summarize(Peptide=paste(unique(Peptide),collapse = ","))
+  
+      }
+      
+      return(unique_protein)
+    
+  }
+  Protein_feature_list_rank_ID<-protein_nr(Protein_feature_list_rank)
+  Protein_feature_list_rank<-Protein_feature_list_rank[Protein_feature_list_rank$Protein %in% Protein_feature_list_rank_ID,]
+  
+  }
+  
   
   if (scoretype=="sum"){
 
@@ -3470,12 +3667,12 @@ protein_scoring<-function(Protein_feature_list,Peptide_plot_list_rank,scoretype=
     }else{return(1)}
   },Protein_feature_list_rank=Protein_feature_list_rank,list_of_protein_sequence=list_of_protein_sequence,Index_of_protein_sequence=Index_of_protein_sequence,peptide_map_to_protein=peptide_map_to_protein,BPPARAM = BPPARAM))
   
-  sum_pro_coverage=data.frame(Protein=(sum_pro_int$Protein),isdecoy=sum_pro_int$isdecoy,peptide_coverage=sum_pro_coverage)
+  sum_pro_coverage=data.frame(Protein=(sum_pro_int$Protein),isdecoy=sum_pro_int$isdecoy,Protein_coverage=sum_pro_coverage)
   
   #sum_pro_pep_count<-merge(sum_pro_pep_count,sum_pro_pep_count_thero,by=c("Protein","isdecoy"),all.x=T)
   sum_pro_pep_count<-merge(sum_pro_pep_count,sum_pro_coverage,by=c("Protein","isdecoy"),sort=F)
   
-  #sum_pro_pep_count$peptide_coverage=sum_pro_pep_count$peptide_count/sum_pro_pep_count$peptide_count_thero
+  #sum_pro_pep_count$Protein_coverage=sum_pro_pep_count$peptide_count/sum_pro_pep_count$peptide_count_thero
   
   Protein_feature_result<-merge(sum_pro_int,sum_pro_score,by=c("Protein","isdecoy"))
   
@@ -3483,7 +3680,7 @@ protein_scoring<-function(Protein_feature_list,Peptide_plot_list_rank,scoretype=
   
   Protein_feature_result$Intensity_norm<-Protein_feature_result$Intensity/mean(Protein_feature_result$Intensity)
   
-  Protein_feature_result$Proscore=( Protein_feature_result$Score) * Protein_feature_result$peptide_coverage * Protein_feature_result$Intensity_norm
+  Protein_feature_result$Proscore=( Protein_feature_result$Score) * Protein_feature_result$Protein_coverage * Protein_feature_result$Intensity_norm
   
   Protein_feature_result$Protein=as.numeric(Protein_feature_result$Protein)
   Protein_feature_list_rank$Protein=as.numeric(Protein_feature_list_rank$Protein)

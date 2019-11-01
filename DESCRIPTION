@@ -71,7 +71,8 @@ Imports:
     BiocManager,
     randomForest,
     rfviz,
-    rcdk
+    rcdk,
+    igraph
 VignetteBuilder: knitr
 Suggests: 
     knitr,
