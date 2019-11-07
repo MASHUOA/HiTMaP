@@ -73,7 +73,8 @@ Imports:
     rfviz,
     rcdk,
     igraph,
-    colorspace
+    colorspace,
+    UniProt.ws
 VignetteBuilder: knitr
 Suggests: 
     knitr,

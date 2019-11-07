@@ -1,16 +1,60 @@
 ---
-title: "R Notebook"
+title: "HiTMaP An R package of High-resolution Informatics Toolbox for Maldi-imaging Proteomics"
 output:
   html_document:
     df_print: paged
 ---
 
-This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+This is an tutorial for use of HiTMaP (An R package of High-resolution Informatics Toolbox for Maldi-imaging Proteomics). To access the software use the installation codes as below: 
 
-Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+```{r Install the package, eval=FALSE, message=TRUE, warning=TRUE, include=FALSE}
+#install the git package
+install.packages("devtools")
+Sys.setenv(R_REMOTES_NO_ERRORS_FROM_WARNINGS=T)
+library(devtools)
+install_github("guoguodigit/HiTMaP",auth_token ="a124a067ed1c84f8fd577c972845573922f1bb0f",force=T)
+library(HiTMaP)
+```
 
-```{r}
-plot(cars)
+Now the HiTMaP is upon running. you could build the candidate list of your target proteome by using the function as below:
+
+```{r message=TRUE, warning=FALSE}
+#creat candidate list
+library(HiTMaP)
+
+imaging_identification(
+#==============Choose the imzml raw data file(s) to process  make sure the fasta file in the same folder
+               datafile,
+               threshold=0.005, 
+               ppm=5,
+               mode="Proteomics",
+               Digestion_site="[GN][LI]",
+               missedCleavages=0:1,
+               Fastadatabase="murine_matrisome.fasta",
+               adducts=c("M+H"),
+               Decoy_search=TRUE,
+               Decoy_mode = "isotope",
+               adjust_score = F,
+               PMF_analysis=TRUE,
+               Bypass_generate_spectrum=F,
+               Protein_feature_summary=TRUE,
+               plot_cluster_image=TRUE,
+               ClusterID_colname="Protein",
+               Peptide_feature_summary=TRUE,
+               plot_ion_image=FALSE,
+               parallel=detectCores(),
+               spectra_segments_per_file=5,
+               spatialKMeans=TRUE,
+               Smooth_range=1,
+               Virtual_segmentation=FALSE,
+               Virtual_segmentation_rankfile=NULL,
+               rotateimg=NULL,
+               Region_feature_summary=F,
+               Spectrum_validate=T,
+               output_candidatelist=T,
+               use_previous_candidates=F,
+               score_method="SQRTP",
+               plot_cluster_image_grid=F)
 ```
 
 Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
