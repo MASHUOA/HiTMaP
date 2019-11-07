@@ -3479,15 +3479,50 @@ protein_scoring<-function(Protein_feature_list,Peptide_plot_list_rank,scoretype=
 
   #sum_pro_score<-Protein_feature_list_rank %>% group_by(.dots=c("Protein","isdecoy")) %>% summarize(Score=sum(Score))
   
-  sum_pro_pep_count<-Protein_feature_list_rank %>% group_by(.dots=c("Protein","isdecoy")) %>% summarize(peptide_count=length(unique(Peptide))) 
-    
-    Protein_feature_list_rank<-merge(Protein_feature_list_rank,sum_pro_pep_count,by=C("Protein","isdecoy"))
+
     
     #Protein_feature_list_rank$Peptide_align<-Protein_feature_list_rank$Peptide
     message("perform Peptide feature grouping...")
     
     if(prioritize_protein){
       
+      if (scoretype=="sum"){
+        
+        sum_pro_int<-Protein_feature_list_rank %>% group_by(.dots=c("Protein","isdecoy")) %>% summarize(Intensity=mean(Intensity)) 
+        
+        sum_pro_score<-Protein_feature_list_rank %>% group_by(.dots=c("Protein","isdecoy")) %>% summarize(Score=sum(Score*log(Intensity))/mean(log(Intensity)))
+        
+      }else if(scoretype=="mean")    {
+        
+        sum_pro_int<-Protein_feature_list_rank %>% group_by(.dots=c("Protein","isdecoy")) %>% summarize(Intensity=mean(Intensity)) 
+        
+        sum_pro_score<-Protein_feature_list_rank %>% group_by(.dots=c("Protein","isdecoy")) %>% summarize(Score=mean(Score*log(Intensity))/mean(log(Intensity)))
+        
+      }
+        sum_pro_pep_count<-Protein_feature_list_rank %>% group_by(.dots=c("Protein","isdecoy")) %>% summarize(peptide_count=length(unique(Peptide))) 
+  list_of_protein_sequence<-get("list_of_protein_sequence", envir = .GlobalEnv)
+  Index_of_protein_sequence<-get("Index_of_protein_sequence", envir = .GlobalEnv)
+  #Proteinlist=sum_pro_int$Protein
+  query_protein=sum_pro_int[,c("Protein","isdecoy")]
+  query_protein_list=  split(query_protein, seq(nrow(query_protein)))
+  sum_pro_coverage <- unlist(bplapply(query_protein_list, function(x,Protein_feature_list_rank,list_of_protein_sequence,Index_of_protein_sequence,peptide_map_to_protein){
+    #proteinid=Index_of_protein_sequence$desc[Index_of_protein_sequence$recno==x]
+    #message(proteinid)
+    protein_seq<-try(list_of_protein_sequence[x$Protein],silent = T)
+    peptides<-unique(Protein_feature_list_rank$Peptide[`&`(Protein_feature_list_rank$Protein==x$Protein,Protein_feature_list_rank$isdecoy==x$isdecoy)])
+    if (class(protein_seq)!="try-error"){
+      if (length(peptides)==1){
+        width(as.character(peptides))/width(as.character(protein_seq))
+      } else if (length(peptides)>=2){
+        return(peptide_map_to_protein(peptides = peptides, protein_seq = protein_seq,map_type = "grep"))
+      }
+      
+    }else{return(1)}
+  },Protein_feature_list_rank=Protein_feature_list_rank,list_of_protein_sequence=list_of_protein_sequence,Index_of_protein_sequence=Index_of_protein_sequence,peptide_map_to_protein=peptide_map_to_protein,BPPARAM = BPPARAM))
+  sum_pro_coverage=data.frame(Protein=(sum_pro_int$Protein),isdecoy=sum_pro_int$isdecoy,Protein_coverage=sum_pro_coverage)
+  sum_pro_pep_count<-merge(sum_pro_pep_count,sum_pro_coverage,by=c("Protein","isdecoy"),sort=F)
+  
+    Protein_feature_list_rank<-merge(Protein_feature_list_rank,sum_pro_pep_count,by=c("Protein","isdecoy"))
     mz_max_peptide<-Protein_feature_list_rank %>% group_by(mz) %>% summarize(Protein_coverage=max(Protein_coverage))
     
     Protein_feature_list_rank_trim<-merge(mz_max_peptide,Protein_feature_list_rank,by=c("mz","Protein_coverage"))
@@ -3765,7 +3800,6 @@ protein_scoring<-function(Protein_feature_list,Peptide_plot_list_rank,scoretype=
      
     }else{return(1)}
   },Protein_feature_list_rank=Protein_feature_list_rank,list_of_protein_sequence=list_of_protein_sequence,Index_of_protein_sequence=Index_of_protein_sequence,peptide_map_to_protein=peptide_map_to_protein,BPPARAM = BPPARAM))
-  
   sum_pro_coverage=data.frame(Protein=(sum_pro_int$Protein),isdecoy=sum_pro_int$isdecoy,Protein_coverage=sum_pro_coverage)
   
   #sum_pro_pep_count<-merge(sum_pro_pep_count,sum_pro_pep_count_thero,by=c("Protein","isdecoy"),all.x=T)
