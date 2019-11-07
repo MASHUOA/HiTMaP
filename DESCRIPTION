@@ -72,7 +72,8 @@ Imports:
     randomForest,
     rfviz,
     rcdk,
-    igraph
+    igraph,
+    colorspace
 VignetteBuilder: knitr
 Suggests: 
     knitr,

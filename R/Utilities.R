@@ -432,6 +432,7 @@ cluster_image_grid<-function(clusterID,
   Sys.setenv("PATH" = paste(paste(unique(str_split(Sys.getenv("PATH"),.Platform$path.sep)[[1]]), sep = .Platform$path.sep,collapse = .Platform$path.sep), "C:/ProgramData/Anaconda3/orca_app", sep = .Platform$path.sep))
   library(grid)
   library(plotly)
+  library(dplyr)
   #rotate the image
   #imdata@pixelData@data<-rotatetmp
   
@@ -442,13 +443,17 @@ cluster_image_grid<-function(clusterID,
   candidate=SMPLIST[SMPLIST[[ClusterID_colname]]==clusterID,]
   #candidate=candidate[order(as.character())]
   candidateunique=as.numeric(as.character(unique(candidate[,"mz"])))
+  library("viridis")
+    mycol9up<-viridis(length(candidateunique))
   if (length(candidateunique)>9){
+    
     candidate.dt <- data.table(candidate)
     candidatet=candidate.dt[,list(Intensity=sum(Intensity)), by='mz']
     candidatet=candidatet[order(-candidatet$Intensity)]
     selections=as.numeric(t(candidatet[1:9,"mz"]))
     candidate=candidate[candidate$mz %in% selections,]
     candidateunique=as.numeric(unique(candidate[,"mz"]))
+    
     candidateunique=candidateunique[order(as.character(candidateunique))]
     mycol <- factor(RColorBrewer::brewer.pal(length(candidateunique),colorpallet))
     mycol <- factor(mycol,levels(mycol)) 
@@ -463,14 +468,15 @@ cluster_image_grid<-function(clusterID,
     mycol <- factor(mycol,levels(mycol)) 
   }
   
-  
+  mycol=mycol[order(mycol)]
   
   if (length(candidateunique)>=Component_plot_threshold){
     
     if (is.null(imdata)){
       message("No imaging data")
       
-    }else{
+    }else
+      {
       
       
       
@@ -609,11 +615,13 @@ cluster_image_grid<-function(clusterID,
             col.regions=intensity.colors_customize1()
           }else if(Component_plot_coloure=="as.cluster"){
             col.regions=gradient.colors(100, start="black", end=levels(mycol)[i])
+            col=levels(mycol)[i]
           }
           componentimg[[i]]=image(imdata, mz=candidateunique[i], 
                                       contrast.enhance=contrast.enhance,
                                       smooth.image = smooth.image,
-                                      col.regions=col.regions,
+                                      #col.regions=col.regions,
+                                      col=col.regions,
                                       normalize.image="none",
                                       plusminus=round(ppm*candidateunique[i]/1000000,digits = 4),
                                       key=F,
@@ -717,19 +725,99 @@ cluster_image_grid<-function(clusterID,
   }
   
   if(export_footer_table){
-      prosequence<-list_of_protein_sequence[ClusterID]
+    library(colorspace)
+    library(stringr)
+    library(ggplot2)
+    prosequence<-list_of_protein_sequence[clusterID]
+      candidate_unique_table=unique(candidate[,c(ClusterID_colname,componentID_colname,"Intensity","mz")])
+      component_int<-candidate_unique_table %>% group_by_at((componentID_colname)) %>% summarise(int=sum(Intensity))
+      component_int$int<-component_int$int/max(component_int$int)
       
-      candidate_unique_table=unique(candidate[,c(ClusterID_colname,componentID_colname)])
+      s1=as.character(component_int$Peptide)
+      s2=as.character(prosequence)
+
+      palign2 <- sapply(s1,regexpr , s2)
+      width_com<-str_length(s1)
+      component_int$start=palign2
+      component_int$end=component_int$start+width_com-1
+      component_int<-merge(component_int,unique(candidate_unique_table[,c(componentID_colname,"mz")]),by=componentID_colname)
+      component_int<-component_int[order(as.character(component_int$mz)),]
+      if (nrow(component_int)<=9){
+       component_int$mycol<-levels(mycol)[1:nrow(component_int)] 
+      }else{
+        component_int$mycol<-mycol9up
+      }
       
-      png(windows_filename(paste0(clusterID,"_footer.png")),width=120*(nrow(Header_table))+200,height=540)
-      plot(1:10,1:10,type='n',frame.plot=F,axes=F,xlab="",ylab="")
-      text(10,10,as.character(prosequence))
+      
+      
+      
+      transcolor<-rgb(0, 0, 0, max = 255, alpha = 0)
+      pro_length<-unname(width(s2))
+      pro_int<-rep(0,pro_length)
+      pro_col<-rep(transcolor,pro_length)
+      for(y in 1:nrow(component_int)){
+        for( t in component_int$start[y]:component_int$end[y]){
+          #pro_col[t]<-mixcolor(component_int$int[y]/(pro_int[t]+component_int$int[y]), col2RGB(pro_col[t]), col2RGB(component_int$mycol[y]))
+          mixedcolor<-colorRamp(colors=c(pro_col[t],component_int$mycol[y]),  space ="rgb",
+                    interpolate = "linear")(component_int$int[y]/(pro_int[t]+component_int$int[y]))
+          pro_col[t]<-rgb(mixedcolor[,1],mixedcolor[,2],mixedcolor[,3], maxColorValue = 255)
+          pro_int[t]<-pro_int[t]+component_int$int[y]
+        }
+      }
+      
+      ncharrow<-ceiling(width(s2)/length(candidateunique)/6)
+      ncharw<-floor(width(s2)/ncharrow)
+      component_int_plot<-data.frame(site=1:pro_length,int=pro_int,col=pro_col)
+      component_int_plot$x<-(component_int_plot$site-1) %% ncharw
+      component_int_plot$y<--((component_int_plot$site-1) %/% ncharw)
+      component_int_plot$char<-str_sub(s2,start = component_int_plot$site,end = component_int_plot$site)
+      
+      
+      if(F){p<-ggplot(component_int_plot, aes(x=site, y=int,fill=col)) + geom_area() + theme(legend.position="none") + ggtitle("Plot of length \n by dose") +
+        theme(
+          plot.title = element_text(color="red", size=14, face="bold.italic"),
+          axis.title.x = element_text(color="blue", size=14, face="bold"),
+          axis.title.y = element_text(color="#993333", size=14, face="bold")
+        )}
+      png(windows_filename(paste0(clusterID,"_footer.png")),width = 5*length(candidateunique),height = 5*ceiling(ncharrow/10),units = "in",res = 300)
+
+      p <- ggplot(component_int_plot, aes(x, y, label = char))+ geom_label(fill=component_int_plot$col,family = "mono",size=20)+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
+                                                                                                                               axis.text.y=element_blank(),axis.ticks=element_blank(),
+                                                                                                                               axis.title.x=element_blank(),
+                                                                                                                               axis.title.y=element_blank(),legend.position="none",
+                                                                                                                               panel.background=element_blank(),panel.border=element_blank(),panel.grid.major=element_blank(),
+                                                                                                                               panel.grid.minor=element_blank(),plot.background=element_blank())
+      
+      p
+      dev.off()
+      if(F){
+              wrap_strings <- function(vector_of_strings,width){as.character(sapply(vector_of_strings,FUN=function(x){paste(strwrap(x,width=width), collapse="\n")}))}
+      
+      plot(component_int_plot$site,component_int_plot$int,col=component_int_plot$col)
+      title(bquote(wrap_strings(s2,50)),col.main="black",cex.main=0.25,adj  = 0,line = -1) 
+      
+      
+      for (components in 1:nrow(component_int)){
+        pep_start<-component_int$start[components]
+        pep_end<-component_int$end[components]
+        pep_body<-str_sub(s2,pep_start,pep_end)
+        if(pep_start==1){
+          title(bquote(.(pep_body)*phantom(.(str_sub(s2,pep_end+1,pro_length)))),col.main=component_int$mycol[components],cex.main=0.25,adj  = 0,line = -1)
+        }else if(pep_end==pro_length){
+          title(bquote(phantom(.(str_sub(s2,1,pep_start-1)))*.(pep_body)),col.main=component_int$mycol[components],cex.main=0.25,adj  = 0,line = -1)
+        }else{
+          title(bquote(phantom(.(str_sub(s2,1,pep_start-1)))*.(pep_body)*phantom(.(str_sub(s2,pep_end+1,pro_length)))),col.main=component_int$mycol[components],cex.main=0.25,adj  = 0,line = -1)
+        }
+      }
       
       dev.off()
+      }
+
     }
   
   
-}}
+  }
+  }
 
 orca_initial<-function(){
   
@@ -1458,3 +1546,10 @@ IAnnotatedDataFrame<-function (data, varMetadata, dimLabels = c("pixelNames",
   Cardinal:::IAnnotatedDataFrame(data = data, varMetadata = varMetadata, 
                        dimLabels = dimLabels)
 }
+
+col2RGB<-function(x){
+  library(colorspace)
+  x_RGB<-t(as.numeric(col2rgb(x)))
+  return(RGB(x_RGB))
+}
+rgb2hex <- function(r,g,b) sprintf('#%s',paste(as.hexmode(c(r,g,b)),collapse = ''))
