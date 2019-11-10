@@ -270,9 +270,9 @@ imaging_identification<-function(
   if(plot_cluster_image_grid){
     Protein_feature_list=fread(file=paste(workdir,"/Summary folder/Protein_Summary.csv",sep=""))
     #Protein_feature_list=merge(Protein_feature_list,Index_of_protein_sequence[,c("recno","desc")],by.x="Protein",by.y="recno",sort=F)
-    Protein_feature_list_crystallin<-Protein_feature_list[grepl("crystallin",Protein_feature_list$desc,ignore.case = T),]
+    #Protein_feature_list_crystallin<-Protein_feature_list[grepl("crystallin",Protein_feature_list$desc,ignore.case = T),]
     #Protein_feature_list_crystallin$Protein=as.character(Protein_feature_list_crystallin$desc)
-    Protein_feature_list=Protein_feature_list_crystallin
+    #Protein_feature_list=Protein_feature_list_crystallin
     Protein_feature_list=as.data.frame(Protein_feature_list)
     #Protein_feature_list$Protein<-Protein_feature_list$desc
     
