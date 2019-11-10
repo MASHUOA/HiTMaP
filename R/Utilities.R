@@ -429,6 +429,8 @@ cluster_image_grid<-function(clusterID,
     return(stringX)
     
   }
+  library(stringr)
+  library(data.table)
   Sys.setenv("PATH" = paste(paste(unique(str_split(Sys.getenv("PATH"),.Platform$path.sep)[[1]]), sep = .Platform$path.sep,collapse = .Platform$path.sep), "C:/ProgramData/Anaconda3/orca_app", sep = .Platform$path.sep))
   library(grid)
   library(plotly)
