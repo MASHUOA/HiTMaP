@@ -53,6 +53,7 @@ imaging_identification<-function(
                missedCleavages=0:1,
                Fastadatabase="murine_matrisome.fasta",
                adducts=c("M+H"),
+               Modifications=list(fixed=NULL,variable=NULL),
                Decoy_search=T,
                Decoy_adducts=c("M+ACN+H","M+IsoProp+H","M+DMSO+H","M+Co","M+Ag","M+Cu","M+He","M+Ne","M+Ar","M+Kr","M+Xe","M+Rn"),
                Decoy_mode = "isotope",
@@ -61,7 +62,7 @@ imaging_identification<-function(
                Bypass_generate_spectrum=F,
                Protein_feature_summary=TRUE,
                plot_cluster_image=TRUE,
-
+               componentID_colname="Peptide",
                ClusterID_colname="Protein",
                Peptide_feature_summary=TRUE,
                plot_ion_image=FALSE,
@@ -71,7 +72,7 @@ imaging_identification<-function(
                Smooth_range=1,
                Virtual_segmentation=FALSE,
                Virtual_segmentation_rankfile=NULL,
-               rotateimg=NULL,
+               Rotate_IMG=NULL,
                Region_feature_summary=F,
                Spectrum_validate=T,
                output_candidatelist=T,
@@ -113,12 +114,13 @@ imaging_identification<-function(
                                                  Decoy_search=Decoy_search,
                                                  Decoy_mode = Decoy_mode,
                                                  output_candidatelist=output_candidatelist,
-                                                 use_previous_candidates=use_previous_candidates
+                                                 use_previous_candidates=use_previous_candidates,
+                                                 Modifications=Modifications
                                                  )
   list_of_protein_sequence<-get("list_of_protein_sequence", envir = .GlobalEnv)
   Index_of_protein_sequence<-get("Index_of_protein_sequence", envir = .GlobalEnv)
   
-  if (!is.null(rotateimg)){rotateimg=read.csv(rotateimg,stringsAsFactors = F)}
+  if (!is.null(Rotate_IMG)){Rotate_IMG=read.csv(Rotate_IMG,stringsAsFactors = F)}
   
   if(PMF_analysis){
   message(paste("Protein_feature_list was selected as database",spectra_segments_per_file,threshold,ppm,PMF_analysis,Virtual_segmentation,
@@ -128,7 +130,7 @@ imaging_identification<-function(
   Peptide_Summary_file<-PMF_Cardinal_Datafilelist(datafile, 
                                                   Peptide_Summary_searchlist,
                                                   SPECTRUM_for_average=spectra_segments_per_file,
-                                                  threshold=threshold,rotate = rotateimg,
+                                                  threshold=threshold,rotate = Rotate_IMG,
                                                   ppm=ppm,
                                                   spatialKMeans=spatialKMeans,
                                                   PMFsearch = PMF_analysis,
@@ -145,35 +147,69 @@ imaging_identification<-function(
   #Summarize the peptide list
   #Summarize the protein and peptide list across the datafiles
   if(Protein_feature_summary){
+    Peptide_Summary_file<-NULL
+    Protein_Summary_file<-NULL
   for (i in 1:length(datafile)){
   datafilename<-gsub(paste(workdir,"/",sep=""),"",gsub(".imzML", "", datafile[i]))
   currentdir<-paste0(datafile[i] ," ID")
   
   setwd(paste(currentdir,sep=""))
   
-  Peptide_Summary_file<-fread("Peptide_Summary_file.csv",select=c("Peptide","mz","Intensity","adduct","moleculeNames"))
-  Peptide_feature_list<-Peptide_Summary_file[Peptide_Summary_file$Intensity>=max(Peptide_Summary_file$Intensity)*threshold,]
-  write.csv(Peptide_feature_list,"Peptide_feature_list.csv")
-  uniques_intensity<-unique(Peptide_Summary_file[,c("mz","Intensity")])
-  Protein_feature_list$Intensity<-NULL
+  Peptide_Summary_file<-fread("Peptide_region_file.csv",select=c("Peptide","mz","Intensity","adduct","moleculeNames","Score","charge","formula","Region","Protein","desc"))
+  Peptide_Summary_file$Source<-datafile[i]
+  Protein_Summary_file<-rbind(Protein_Summary_file,Peptide_Summary_file)
+  #Peptide_feature_list<-Peptide_Summary_file[Peptide_Summary_file$Intensity>=max(Peptide_Summary_file$Intensity)*threshold,]
+  #write.csv(Peptide_feature_list,"Peptide_feature_list.csv")
+  #Peptide_Summary_file<-unique(Peptide_Summary_file)
+  #uniques_intensity<-unique(Peptide_Summary_file[,c("mz","Intensity")])
+  #Protein_feature_list$Intensity<-NULL
   #Protein_feature_list$Intensity<-unlist(parLapply(cl=autoStopCluster(makeCluster(parallel)),Protein_feature_list$mz,intensity_sum_para,uniques_intensity))
-  message("Iterating protein information")
-  Protein_feature_list=merge(Protein_feature_list,uniques_intensity,by="mz")
+  #message("Iterating protein information")
+  #Protein_feature_list=merge(Protein_feature_list,uniques_intensity,by="mz")
   
   #Protein_feature_list$Intensity<-unlist(bplapply(Protein_feature_list$mz,intensity_sum_para,uniques_intensity,BPPARAM=BPPARAM))
-  Protein_feature_list=Protein_feature_list[Protein_feature_list$Intensity>(threshold*max(Protein_feature_list$Intensity)),]
-  write.csv(Protein_feature_list,"Cluster.csv")
+  #Protein_feature_list=Protein_feature_list[Protein_feature_list$Intensity>(threshold*max(Protein_feature_list$Intensity)),]
+  #write.csv(Protein_feature_list,"Cluster.csv")
   } 
+    message("Protein feature summary...Done.")
     if (dir.exists(paste(workdir,"/Summary folder",sep=""))==FALSE){dir.create(paste(workdir,"/Summary folder",sep=""))}
-    Protein_feature_summary_all_files_new(datafile,workdir,threshold = threshold)
+    write.csv(Protein_Summary_file,paste(workdir,"/Summary folder/Protein_Summary.csv",sep=""),row.names = F)
+    #Protein_feature_summary_all_files_new(datafile,workdir,threshold = threshold)
+    
   }
   
  
     
   if(Peptide_feature_summary){
-      print("Peptide_feature_summary")
+    Peptide_Summary_file<-NULL
+    Peptide_Summary_file_a<-NULL
+    for (i in 1:length(datafile)){
+      datafilename<-gsub(paste(workdir,"/",sep=""),"",gsub(".imzML", "", datafile[i]))
+      currentdir<-paste0(datafile[i] ," ID")
+      
+      setwd(paste(currentdir,sep=""))
+      
+      Peptide_Summary_file<-fread("Peptide_region_file.csv",select=c("Peptide","mz","Intensity","adduct","moleculeNames","Score","charge","formula","Region"))
+      Peptide_Summary_file$Source<-datafile[i]
+      Peptide_Summary_file_a<-rbind(Peptide_Summary_file_a,Peptide_Summary_file)
+      #Peptide_feature_list<-Peptide_Summary_file[Peptide_Summary_file$Intensity>=max(Peptide_Summary_file$Intensity)*threshold,]
+      #write.csv(Peptide_feature_list,"Peptide_feature_list.csv")
+      #Peptide_Summary_file<-unique(Peptide_Summary_file)
+      #uniques_intensity<-unique(Peptide_Summary_file[,c("mz","Intensity")])
+      #Protein_feature_list$Intensity<-NULL
+      #Protein_feature_list$Intensity<-unlist(parLapply(cl=autoStopCluster(makeCluster(parallel)),Protein_feature_list$mz,intensity_sum_para,uniques_intensity))
+      #message("Iterating protein information")
+      #Protein_feature_list=merge(Protein_feature_list,uniques_intensity,by="mz")
+      
+      #Protein_feature_list$Intensity<-unlist(bplapply(Protein_feature_list$mz,intensity_sum_para,uniques_intensity,BPPARAM=BPPARAM))
+      #Protein_feature_list=Protein_feature_list[Protein_feature_list$Intensity>(threshold*max(Protein_feature_list$Intensity)),]
+      #write.csv(Protein_feature_list,"Cluster.csv")
+    }
+    Peptide_Summary_file_a<-unique(Peptide_Summary_file_a)
+      message("Peptide feature summary...Done.")
       if (dir.exists(paste(workdir,"/Summary folder",sep=""))==FALSE){dir.create(paste(workdir,"/Summary folder",sep=""))}
-      Peptide_feature_summary_all_files_new(datafile,workdir,threshold = threshold)
+      write.csv(Peptide_Summary_file_a,paste(workdir,"/Summary folder/Peptide_Summary.csv",sep=""),row.names = F)
+      #Peptide_feature_summary_all_files_new(datafile,workdir,threshold = threshold)
       }
 
   if(plot_ion_image){
@@ -232,7 +268,7 @@ imaging_identification<-function(
   
 
   if(plot_cluster_image_grid){
-    Protein_feature_list=fread(paste(workdir,"/Summary folder/Protein_feature_summary_sl.csv",sep=""))
+    Protein_feature_list=fread(file=paste(workdir,"/Summary folder/Protein_Summary.csv",sep=""))
     #Protein_feature_list=merge(Protein_feature_list,Index_of_protein_sequence[,c("recno","desc")],by.x="Protein",by.y="recno",sort=F)
     Protein_feature_list_crystallin<-Protein_feature_list[grepl("crystallin",Protein_feature_list$desc,ignore.case = T),]
     #Protein_feature_list_crystallin$Protein=as.character(Protein_feature_list_crystallin$desc)
@@ -240,7 +276,7 @@ imaging_identification<-function(
     Protein_feature_list=as.data.frame(Protein_feature_list)
     #Protein_feature_list$Protein<-Protein_feature_list$desc
     
-    if (!is.null(rotateimg)){rotateimg=read.csv(rotateimg,stringsAsFactors = F)}
+    if (!is.null(Rotate_IMG)){Rotate_IMG=read.csv(Rotate_IMG,stringsAsFactors = F)}
     imdata=list()
     combinedimdata=NULL
     #register(SerialParam())      
@@ -248,7 +284,7 @@ imaging_identification<-function(
         mzrange=NULL
         testrange=c(0,0)
         for (i in 1:length(datafile)){
-          rotate=rotateimg[rotateimg$filenames==datafile[i],"rotation"]
+          rotate=Rotate_IMG[Rotate_IMG$filenames==datafile[i],"rotation"]
           rotate=as.numeric(rotate)
           if (length(rotate)==0){rotate=0}
           imdata[[i]]=Load_Cardinal_imaging(datafile[i],preprocessing = F,resolution = ppm*2,rotate = rotate,attach.only=F,as="MSImagingExperiment",mzrange=mzrange)
@@ -264,7 +300,7 @@ imaging_identification<-function(
     } 
     
     for (i in 1:length(datafile)){
-      rotate=rotateimg[rotateimg$filenames==datafile[i],"rotation"]
+      rotate=Rotate_IMG[Rotate_IMG$filenames==datafile[i],"rotation"]
       rotate=as.numeric(rotate)
       if (length(rotate)==0){rotate=0}
       #if (length(datafile)==1){
@@ -296,7 +332,7 @@ imaging_identification<-function(
            imdata=imdata,
            SMPLIST=Protein_feature_list,
            ppm=ppm,ClusterID_colname=ClusterID_colname,
-           componentID_colname="Peptide",
+           componentID_colname=componentID_colname,
            plot_layout="line",
            Component_plot_threshold=4,
            export_Header_table=F,
@@ -316,6 +352,7 @@ imaging_identification<-function(
            export_footer_table=T,
            plot_style="fleximaging",
            Component_plot_coloure="as.cluster")
+    
     outputfolder=paste(workdir,"/Summary folder/cluster Ion images/unique/",sep="")
     if (dir.exists(outputfolder)==FALSE){dir.create(outputfolder)}
     setwd(outputfolder)
@@ -451,7 +488,7 @@ imaging_Spatial_Quant<-function(
   norm_Type="Median",
   mzrange=NULL,
   BPPARAM=bpparam(),
-  rotateimg=NULL,
+  Rotate_IMG=NULL,
   ...
 ){
   library(pacman)
@@ -470,11 +507,11 @@ imaging_Spatial_Quant<-function(
   BiocParallel::bpworkers(BPPARAM)=parallel
   bpprogressbar(BPPARAM)=TRUE
   
-  if (is.null(rotateimg)){
-    rotateimg$filenames=datafile;rotateimg$rotation=rep(0,length(datafile))
-    rotateimg=as.data.frame(rotateimg)
-    write.csv(rotateimg,"image_rotation.csv",row.names = F)
-    rotateimg=paste0(workdir,"/image_rotation.csv")
+  if (is.null(Rotate_IMG)){
+    Rotate_IMG$filenames=datafile;Rotate_IMG$rotation=rep(0,length(datafile))
+    Rotate_IMG=as.data.frame(Rotate_IMG)
+    write.csv(Rotate_IMG,"image_rotation.csv",row.names = F)
+    Rotate_IMG=paste0(workdir,"/image_rotation.csv")
   }
   
   message(paste(try(detectCores()), "Cores detected,",parallel, "threads will be used for computing"))
@@ -1103,9 +1140,9 @@ imaging_Spatial_Quant<-function(
 
     #Protein_feature_list=merge(Protein_feature_list,Meta_feature_list[,c("moleculeNames","Pathway")],by="moleculeNames",allow.cartesian=TRUE)
     #Protein_feature_list$Pathway=Protein_feature_list$Pathway.y
-     if (!is.null(rotateimg)){rotateimg=read.csv(rotateimg,stringsAsFactors = F)}
+     if (!is.null(Rotate_IMG)){Rotate_IMG=read.csv(Rotate_IMG,stringsAsFactors = F)}
     for (i in 1:length(datafile)){
-      rotate=rotateimg[rotateimg$filenames==datafile[i],"rotation"]
+      rotate=Rotate_IMG[Rotate_IMG$filenames==datafile[i],"rotation"]
       if(is.null(rotate)) rotate=0
       rotate= as.numeric(rotate)
     imdata=Load_Cardinal_imaging(datafile[i],preprocessing = F,resolution = ppm,rotate = rotate,attach.only=F)
@@ -1193,14 +1230,14 @@ imaging_Spatial_Quant<-function(
 
     Protein_feature_list$Pathway=NULL
     Protein_feature_list=merge(Protein_feature_list,Meta_feature_list[,c("moleculeNames","Pathway")],by="moleculeNames",allow.cartesian=TRUE)
-    if (!is.null(rotateimg)){rotateimg=read.csv(rotateimg,stringsAsFactors = F)}
+    if (!is.null(Rotate_IMG)){Rotate_IMG=read.csv(Rotate_IMG,stringsAsFactors = F)}
     imdata=list()
     combinedimdata=NULL
     #register(SerialParam())
     if (is.null(mzrange)){
       message("Detecting mz range...")
       for (i in 1:length(datafile)){
-        rotate=rotateimg[rotateimg$filenames==datafile[i],"rotation"]
+        rotate=Rotate_IMG[Rotate_IMG$filenames==datafile[i],"rotation"]
         if(is.null(rotate)) rotate=0
         rotate= as.numeric(rotate)
       imdata[[i]]=Load_Cardinal_imaging(datafile[i],preprocessing = F,resolution = ppm*2,rotate = rotate,attach.only=F,as="MSImagingExperiment")
@@ -1214,7 +1251,7 @@ imaging_Spatial_Quant<-function(
     }
     for (i in 1:length(datafile)){
       
-      rotate=rotateimg[rotateimg$filenames==datafile[i],"rotation"]
+      rotate=Rotate_IMG[Rotate_IMG$filenames==datafile[i],"rotation"]
       if(is.null(rotate)) rotate=0
       rotate=as.numeric(rotate)
       imdata[[i]]=Load_Cardinal_imaging(datafile[i],preprocessing = F,resolution = ppm*2,rotate = rotate,attach.only=F,as="MSImagingExperiment",mzrange=mzrange)
