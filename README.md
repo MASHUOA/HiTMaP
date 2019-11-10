@@ -225,8 +225,8 @@ head(protein_pmf_result)
 ## 6                        tr|A0A3Q1MZJ9|A0A3Q1MZJ9_BOVIN Apolipoprotein A-IV OS=Bos taurus OX=9913 GN=APOA4 PE=3 SV=1
 ```
 
-*Score* in peptide result table shows the isotopic pattern matching score of the peptide.
-*Proscore* in the protein result table shows the overall estimation of identification Accuracy
+**Score** in peptide result table shows the isotopic pattern matching score of the peptide.
+**Proscore** in the protein result table shows the overall estimation of identification Accuracy
 
 A *Peptide_region_file.csv* has also been created to summarise all the IDs in this data file:
 
@@ -305,6 +305,18 @@ print(p_cluster1)
 <img src="README_files/figure-html/CLuster imaging-1.png" width="9360" />
 
 ```r
+p_cluster1<-image_read(paste0(wd,"/Summary folder/cluster Ion images/705_footer.png"))
+print(p_cluster1)
+```
+
+```
+##   format width height colorspace matte filesize density
+## 1    PNG  7500   1500       sRGB FALSE   320757 118x118
+```
+
+<img src="README_files/figure-html/CLuster imaging-2.png" width="7500" />
+
+```r
 p_cluster2<-image_read(paste0(wd,"/Summary folder/cluster Ion images/5027_cluster_plot_sum_flex.png"))
 print(p_cluster2)
 ```
@@ -314,7 +326,19 @@ print(p_cluster2)
 ## 1    PNG 15600   1560       sRGB  TRUE   299751 118x118
 ```
 
-<img src="README_files/figure-html/CLuster imaging-2.png" width="15600" />
+<img src="README_files/figure-html/CLuster imaging-3.png" width="15600" />
+
+```r
+p_cluster2<-image_read(paste0(wd,"/Summary folder/cluster Ion images/5027_footer.png"))
+print(p_cluster2)
+```
+
+```
+##   format width height colorspace matte filesize density
+## 1    PNG 13500   1500       sRGB FALSE   309251 118x118
+```
+
+<img src="README_files/figure-html/CLuster imaging-4.png" width="13500" />
 
 ```r
 p_cluster3<-image_read(paste0(wd,"/Summary folder/cluster Ion images/5479_cluster_plot_sum_flex.png"))
@@ -326,6 +350,18 @@ print(p_cluster3)
 ## 1    PNG 15600   1560       sRGB  TRUE   304278 118x118
 ```
 
-<img src="README_files/figure-html/CLuster imaging-3.png" width="15600" />
+<img src="README_files/figure-html/CLuster imaging-5.png" width="15600" />
+
+```r
+p_cluster3<-image_read(paste0(wd,"/Summary folder/cluster Ion images/5479_footer.png"))
+print(p_cluster3)
+```
+
+```
+##   format width height colorspace matte filesize density
+## 1    PNG 13500   1500       sRGB FALSE   300494 118x118
+```
+
+<img src="README_files/figure-html/CLuster imaging-6.png" width="13500" />
 
 End of the tutorial, Enjoy~

@@ -737,7 +737,7 @@ cluster_image_grid<-function(clusterID,
       
       s1=as.character(component_int$Peptide)
       s2=as.character(prosequence)
-
+      
       palign2 <- sapply(s1,regexpr , s2)
       width_com<-str_length(s1)
       component_int$start=palign2
@@ -790,8 +790,9 @@ cluster_image_grid<-function(clusterID,
                                                                                                                                panel.background=element_blank(),panel.border=element_blank(),panel.grid.major=element_blank(),
                                                                                                                                panel.grid.minor=element_blank(),plot.background=element_blank())
       
-      p
+      print(p)
       dev.off()
+      
       if(F){
               wrap_strings <- function(vector_of_strings,width){as.character(sapply(vector_of_strings,FUN=function(x){paste(strwrap(x,width=width), collapse="\n")}))}
       

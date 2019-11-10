@@ -138,8 +138,8 @@ protein_pmf_result<-read.csv(paste0(wd,"/Bovin_lens ID/Protein_segment_PMF_RESUL
 head(protein_pmf_result)
 ```
 
-*Score* in peptide result table shows the isotopic pattern matching score of the peptide.
-*Proscore* in the protein result table shows the overall estimation of identification Accuracy
+**Score** in peptide result table shows the isotopic pattern matching score of the peptide.
+**Proscore** in the protein result table shows the overall estimation of identification Accuracy
 
 A *Peptide_region_file.csv* has also been created to summarise all the IDs in this data file:
 
@@ -169,9 +169,15 @@ Now you could visualized the interest proteins and their associated peptides' di
 ```{r CLuster imaging}
 p_cluster1<-image_read(paste0(wd,"/Summary folder/cluster Ion images/705_cluster_plot_sum_flex.png"))
 print(p_cluster1)
+p_cluster1<-image_read(paste0(wd,"/Summary folder/cluster Ion images/705_footer.png"))
+print(p_cluster1)
 p_cluster2<-image_read(paste0(wd,"/Summary folder/cluster Ion images/5027_cluster_plot_sum_flex.png"))
 print(p_cluster2)
+p_cluster2<-image_read(paste0(wd,"/Summary folder/cluster Ion images/5027_footer.png"))
+print(p_cluster2)
 p_cluster3<-image_read(paste0(wd,"/Summary folder/cluster Ion images/5479_cluster_plot_sum_flex.png"))
+print(p_cluster3)
+p_cluster3<-image_read(paste0(wd,"/Summary folder/cluster Ion images/5479_footer.png"))
 print(p_cluster3)
 ```
 
