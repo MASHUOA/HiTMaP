@@ -60,6 +60,7 @@ imaging_identification<-function(
                adjust_score = F,
                PMF_analysis=TRUE,
                Bypass_generate_spectrum=F,
+               peptide_ID_filter=2,
                Protein_feature_summary=TRUE,
                plot_cluster_image=TRUE,
                componentID_colname="Peptide",
@@ -141,22 +142,25 @@ imaging_identification<-function(
                                                   score_method = score_method,
                                                   Decoy_mode=Decoy_mode,
                                                   Decoy_search=Decoy_search,
-                                                  adjust_score=adjust_score)
+                                                  adjust_score=adjust_score,
+                                                  peptide_ID_filter=peptide_ID_filter)
   
   }
   #Summarize the peptide list
   #Summarize the protein and peptide list across the datafiles
+  message("Protein_feature_summary0")
   if(Protein_feature_summary){
+    message("Protein_feature_summary0")
     Peptide_Summary_file<-NULL
     Protein_Summary_file<-NULL
   for (i in 1:length(datafile)){
   datafilename<-gsub(paste(workdir,"/",sep=""),"",gsub(".imzML", "", datafile[i]))
   currentdir<-paste0(datafile[i] ," ID")
-  
+  message("Protein_feature_summary0")
   setwd(paste(currentdir,sep=""))
   
   Peptide_Summary_file<-fread("Peptide_region_file.csv",select=c("Peptide","mz","Intensity","adduct","moleculeNames","Score","charge","formula","Region","Protein","desc"))
-  Peptide_Summary_file$Source<-datafile[i]
+  Peptide_Summary_file$Source<-datafilename
   Protein_Summary_file<-rbind(Protein_Summary_file,Peptide_Summary_file)
   #Peptide_feature_list<-Peptide_Summary_file[Peptide_Summary_file$Intensity>=max(Peptide_Summary_file$Intensity)*threshold,]
   #write.csv(Peptide_feature_list,"Peptide_feature_list.csv")
@@ -270,9 +274,9 @@ imaging_identification<-function(
   if(plot_cluster_image_grid){
     Protein_feature_list=fread(file=paste(workdir,"/Summary folder/Protein_Summary.csv",sep=""))
     #Protein_feature_list=merge(Protein_feature_list,Index_of_protein_sequence[,c("recno","desc")],by.x="Protein",by.y="recno",sort=F)
-    #Protein_feature_list_crystallin<-Protein_feature_list[grepl("crystallin",Protein_feature_list$desc,ignore.case = T),]
+    Protein_feature_list_crystallin<-Protein_feature_list[grepl("crystallin",Protein_feature_list$desc,ignore.case = T),]
     #Protein_feature_list_crystallin$Protein=as.character(Protein_feature_list_crystallin$desc)
-    #Protein_feature_list=Protein_feature_list_crystallin
+    Protein_feature_list=Protein_feature_list_crystallin
     Protein_feature_list=as.data.frame(Protein_feature_list)
     #Protein_feature_list$Protein<-Protein_feature_list$desc
     
@@ -336,7 +340,7 @@ imaging_identification<-function(
            plot_layout="line",
            Component_plot_threshold=4,
            export_Header_table=F,
-           export_footer_table=F,
+           export_footer_table=T,
            plot_style="fleximaging",
            Component_plot_coloure="as.cluster")
     
@@ -2037,6 +2041,7 @@ PMF_Cardinal_Datafilelist<-function(datafile,Peptide_Summary_searchlist,
                                     adjust_score=T,
                                     plot_matching_score_t=F,
                                     Protein_feature_list,
+                                    peptide_ID_filter=2,
                                     ...){
   library(data.table)
   library(Cardinal)
@@ -2455,7 +2460,7 @@ if(PMFsearch){
       Index_of_protein_sequence<-get("Index_of_protein_sequence", envir = .GlobalEnv)
       #Protein_feature_result<-merge(Protein_feature_result,Index_of_protein_sequence[,c("recno","desc")],by.x="Protein",by.y = "recno",sort = F)
       
-      Protein_feature_result<-protein_scoring(Protein_feature_list,Peptide_plot_list_rank,BPPARAM = BPPARAM,scoretype="mean")
+      Protein_feature_result<-protein_scoring(Protein_feature_list,Peptide_plot_list_rank,BPPARAM = BPPARAM,scoretype="mean",peptide_ID_filter=peptide_ID_filter)
       Protein_feature_list_rank<-Protein_feature_result[[2]]
       Protein_feature_result<-Protein_feature_result[[1]]
       
@@ -3499,11 +3504,13 @@ spec_peakdetect<-function(x){
   summarySpectra(spectra[10:20])
 }
 
-protein_scoring<-function(Protein_feature_list,Peptide_plot_list_rank,scoretype=c("sum","mean"),BPPARAM = bpparam(),protein_nr_grouping=T,prioritize_protein=T,compete_decoy=T){
+protein_scoring<-function(Protein_feature_list,Peptide_plot_list_rank,scoretype=c("sum","mean"),BPPARAM = bpparam(),protein_nr_grouping=T,prioritize_protein=T,compete_decoy=T,peptide_ID_filter=2){
   
   library(dplyr)
   library(data.table)
   Protein_feature_list<-as.data.table(Protein_feature_list)
+  
+  
   
   Protein_feature_list_rank=merge(Protein_feature_list,Peptide_plot_list_rank,by=c("mz","Peptide","adduct","formula","isdecoy"))
   Protein_feature_list_rank$Score=round(Protein_feature_list_rank$Score,digits = 7)
@@ -3511,8 +3518,9 @@ protein_scoring<-function(Protein_feature_list,Peptide_plot_list_rank,scoretype=
   Protein_feature_list_rank<-as.data.frame(Protein_feature_list_rank)
   
   
+  sum_pro_pep_count<-Protein_feature_list_rank %>% group_by(.dots=c("Protein","isdecoy")) %>% summarize(peptide_count=length(unique(Peptide))) 
   
-  
+  Protein_feature_list_rank<-Protein_feature_list_ranK[Protein_feature_list_rank$Protein %in% sum_pro_pep_count$Protein[sum_pro_pep_count$peptide_count>=peptide_ID_filter],]
 
   #sum_pro_score<-Protein_feature_list_rank %>% group_by(.dots=c("Protein","isdecoy")) %>% summarize(Score=sum(Score))
   

@@ -3,6 +3,11 @@ title: "HiTMaP"
 output:
   html_document: 
     keep_md: yes
+    toc: yes
+    theme: readable
+    number_sections: yes
+    df_print: tibble
+    highlight: tango
   pdf_document: default
   word_document: default
 ---
@@ -138,8 +143,10 @@ print(p)
 ```
 
 ```
+## # A tibble: 1 x 7
 ##   format width height colorspace matte filesize density
-## 1    PNG  1024    720       sRGB FALSE     9656   72x72
+##   <chr>  <int>  <int> <chr>      <lgl>    <int> <chr>  
+## 1 PNG     1024    720 sRGB       FALSE     9656 72x72
 ```
 
 <img src="README_files/figure-html/VisulazeKmean-1.png" width="1024" />
@@ -157,8 +164,10 @@ print(p_pmf)
 ```
 
 ```
+## # A tibble: 1 x 7
 ##   format width height colorspace matte filesize density
-## 1    PNG  1980   1080       sRGB FALSE    17148   72x72
+##   <chr>  <int>  <int> <chr>      <lgl>    <int> <chr>  
+## 1 PNG     1980   1080 sRGB       FALSE    17148 72x72
 ```
 
 <img src="README_files/figure-html/unnamed-chunk-1-1.png" width="1980" />
@@ -172,27 +181,17 @@ head(peptide_pmf_result)
 ```
 
 ```
-##   Protein       mz         Peptide adduct         formula isdecoy    pepmz
-## 1   10450 1040.451       GPSSECFWK    M+H  C47H66N11O14S1       0 1039.443
-## 2   10450 1450.733    NTDPITNIFYPR    M+H   C66H100N17O20       0 1449.725
-## 3   10726 1584.816 ASGCLITLDQHNGKK    M+H C66H114N21O22S1       0 1583.809
-## 4   10726 1459.706   YEYILATASADSR    M+H    C64H99N16O23       0 1458.699
-## 5   11103 1615.812  LVKGNYGFEAEFNK    M+H   C75H111N18O22       0 1614.804
-## 6   11203 1463.724   IDPSASRQGYDVR    M+H    C61H99N20O22       0 1462.716
-##   charge Intensity   moleculeNames Region     Score mz_align Rank
-## 1      1 960901.55       GPSSECFWK      3 0.9018853 1040.453    5
-## 2      1  73013.99    NTDPITNIFYPR      3 0.2122419 1450.729   17
-## 3      1  77587.51 ASGCLITLDQHNGKK      3 0.3443412 1584.813   23
-## 4      1 250623.55   YEYILATASADSR      3 1.5529821 1459.708    6
-## 5      1 252568.51  LVKGNYGFEAEFNK      3 2.2638102 1615.810   11
-## 6      1  91875.69   IDPSASRQGYDVR      3 0.6023862 1463.727   11
-##                                                                                                                 desc
-## 1                     tr|A0A3Q1LYG0|A0A3Q1LYG0_BOVIN Uncharacterized protein OS=Bos taurus OX=9913 GN=UTS2 PE=3 SV=1
-## 2                     tr|A0A3Q1LYG0|A0A3Q1LYG0_BOVIN Uncharacterized protein OS=Bos taurus OX=9913 GN=UTS2 PE=3 SV=1
-## 3         tr|A0A3Q1M3N1|A0A3Q1M3N1_BOVIN DNA excision repair protein ERCC-8 OS=Bos taurus OX=9913 GN=ERCC8 PE=4 SV=1
-## 4         tr|A0A3Q1M3N1|A0A3Q1M3N1_BOVIN DNA excision repair protein ERCC-8 OS=Bos taurus OX=9913 GN=ERCC8 PE=4 SV=1
-## 5                   tr|A0A3Q1MVY9|A0A3Q1MVY9_BOVIN Ig-like domain-containing protein OS=Bos taurus OX=9913 PE=4 SV=1
-## 6 tr|A0A3Q1LTC6|A0A3Q1LTC6_BOVIN Mitogen-activated protein kinase kinase 4 OS=Bos taurus OX=9913 GN=MAP2K4 PE=3 SV=1
+## # A tibble: 6 x 15
+##   Protein    mz Peptide adduct formula isdecoy pepmz charge Intensity
+##     <int> <dbl> <fct>   <fct>  <fct>     <int> <dbl>  <int>     <dbl>
+## 1   10450 1040. GPSSEC~ M+H    C47H66~       0 1039.      1   960902.
+## 2   10450 1451. NTDPIT~ M+H    C66H10~       0 1450.      1    73014.
+## 3   10726 1585. ASGCLI~ M+H    C66H11~       0 1584.      1    77588.
+## 4   10726 1460. YEYILA~ M+H    C64H99~       0 1459.      1   250624.
+## 5   11103 1616. LVKGNY~ M+H    C75H11~       0 1615.      1   252569.
+## 6   11203 1464. IDPSAS~ M+H    C61H99~       0 1463.      1    91876.
+## # ... with 6 more variables: moleculeNames <fct>, Region <int>,
+## #   Score <dbl>, mz_align <dbl>, Rank <int>, desc <fct>
 ```
 
 
@@ -202,31 +201,21 @@ head(protein_pmf_result)
 ```
 
 ```
-##   Protein   Proscore isdecoy Intensity     Score peptide_count
-## 1   10450 0.11276258       0  516957.8 0.5926478             2
-## 2   10726 0.07492019       0  164105.5 0.9785716             2
-## 3   11103 0.30671809       0  252568.5 2.2638102             1
-## 4   11203 0.18797348       0 1632392.8 2.0121646             2
-## 5   11209 0.07008142       0  116367.6 0.9637757             2
-## 6   11264 0.08294995       0  584037.1 0.7702205             3
-##   Protein_coverage Intensity_norm
-## 1       0.17213115      1.1053730
-## 2       0.07588076      1.0089615
-## 3       0.12962963      1.0451896
-## 4       0.07772021      1.2019852
-## 5       0.07419355      0.9800784
-## 6       0.09653465      1.1156240
-##                                                                                                                 desc
-## 1                     tr|A0A3Q1LYG0|A0A3Q1LYG0_BOVIN Uncharacterized protein OS=Bos taurus OX=9913 GN=UTS2 PE=3 SV=1
-## 2         tr|A0A3Q1M3N1|A0A3Q1M3N1_BOVIN DNA excision repair protein ERCC-8 OS=Bos taurus OX=9913 GN=ERCC8 PE=4 SV=1
-## 3                   tr|A0A3Q1MVY9|A0A3Q1MVY9_BOVIN Ig-like domain-containing protein OS=Bos taurus OX=9913 PE=4 SV=1
-## 4 tr|A0A3Q1LTC6|A0A3Q1LTC6_BOVIN Mitogen-activated protein kinase kinase 4 OS=Bos taurus OX=9913 GN=MAP2K4 PE=3 SV=1
-## 5                                     tr|E1BC32|E1BC32_BOVIN Tropomodulin 2 OS=Bos taurus OX=9913 GN=TMOD2 PE=4 SV=3
-## 6                        tr|A0A3Q1MZJ9|A0A3Q1MZJ9_BOVIN Apolipoprotein A-IV OS=Bos taurus OX=9913 GN=APOA4 PE=3 SV=1
+## # A tibble: 6 x 9
+##   Protein Proscore isdecoy Intensity Score peptide_count Protein_coverage
+##     <int>    <dbl>   <int>     <dbl> <dbl>         <int>            <dbl>
+## 1   10450   0.113        0   516958. 0.593             2           0.172 
+## 2   10726   0.0749       0   164106. 0.979             2           0.0759
+## 3   11103   0.307        0   252569. 2.26              1           0.130 
+## 4   11203   0.188        0  1632393. 2.01              2           0.0777
+## 5   11209   0.0701       0   116368. 0.964             2           0.0742
+## 6   11264   0.0829       0   584037. 0.770             3           0.0965
+## # ... with 2 more variables: Intensity_norm <dbl>, desc <fct>
 ```
 
-**Score** in peptide result table shows the isotopic pattern matching score of the peptide.
-**Proscore** in the protein result table shows the overall estimation of identification Accuracy
+**Score** in peptide result table shows the isotopic pattern matching score of the peptide. In Protein result table, it shows the intensity weighted peptide spectrum matching score.
+
+**Proscore** in the protein result table shows the overall estimation of the protein identification Accuracy
 
 A *Peptide_region_file.csv* has also been created to summarise all the IDs in this data file:
 
@@ -237,35 +226,76 @@ head(Identification_summary_table)
 ```
 
 ```
-##   Protein       mz              Peptide adduct         formula isdecoy
-## 1   10562 1734.829      IGFEEKDIAANEENR    M+H   C73H116N21O28       0
-## 2    1137 1589.818      VLGRTGSQGQCTQVR    M+H C63H113N24O22S1       0
-## 3   17261 1508.739     GLGHGYGGFGGLGFGR    M+H    C69H98N21O18       0
-## 4    1734 2220.063 LQRISQSEDEESIVGDGETK    M+H   C90H151N26O39       0
-## 5   19661 1374.713          KFPFTLEVYCK    M+H C67H100N13O16S1       0
-## 6   19661 1713.846       SIEHSGWNVWSQKR    M+H   C76H113N24O22       0
-##      pepmz charge  Intensity        moleculeNames Region     Score
-## 1 1733.822      1   74413.62      IGFEEKDIAANEENR      2 2.3401072
-## 2 1588.810      1   75190.35      VLGRTGSQGQCTQVR      2 1.7183337
-## 3 1507.732      1 3482147.03     GLGHGYGGFGGLGFGR      2 1.4175674
-## 4 2219.055      1  239087.96 LQRISQSEDEESIVGDGETK      2 3.1973421
-## 5 1373.705      1  144207.75          KFPFTLEVYCK      2 1.7398698
-## 6 1712.838      1  103318.09       SIEHSGWNVWSQKR      2 0.4101354
-##   mz_align Rank
-## 1 1734.824    2
-## 2 1589.813    1
-## 3 1508.742    5
-## 4 2220.064    1
-## 5 1374.715   10
-## 6 1713.839   22
-##                                                                                                                   desc
-## 1 tr|G3X6U5|G3X6U5_BOVIN SH3 domain-binding glutamic acid-rich-like protein OS=Bos taurus OX=9913 GN=SH3BGRL PE=3 SV=1
-## 2                              sp|Q56JX6|RS28_BOVIN 40S ribosomal protein S28 OS=Bos taurus OX=9913 GN=RPS28 PE=3 SV=1
-## 3                               tr|A0A3Q1MB50|A0A3Q1MB50_BOVIN Uncharacterized protein OS=Bos taurus OX=9913 PE=4 SV=1
-## 4                                                   sp|Q17Q87|SNN_BOVIN Stannin OS=Bos taurus OX=9913 GN=SNN PE=3 SV=1
-## 5                               tr|A0A3Q1LFU2|A0A3Q1LFU2_BOVIN Uncharacterized protein OS=Bos taurus OX=9913 PE=4 SV=1
-## 6                               tr|A0A3Q1LFU2|A0A3Q1LFU2_BOVIN Uncharacterized protein OS=Bos taurus OX=9913 PE=4 SV=1
+## # A tibble: 6 x 15
+##   Protein    mz Peptide adduct formula isdecoy pepmz charge Intensity
+##     <int> <dbl> <fct>   <fct>  <fct>     <int> <dbl>  <int>     <dbl>
+## 1   10562 1735. IGFEEK~ M+H    C73H11~       0 1734.      1    74414.
+## 2    1137 1590. VLGRTG~ M+H    C63H11~       0 1589.      1    75190.
+## 3   17261 1509. GLGHGY~ M+H    C69H98~       0 1508.      1  3482147.
+## 4    1734 2220. LQRISQ~ M+H    C90H15~       0 2219.      1   239088.
+## 5   19661 1375. KFPFTL~ M+H    C67H10~       0 1374.      1   144208.
+## 6   19661 1714. SIEHSG~ M+H    C76H11~       0 1713.      1   103318.
+## # ... with 6 more variables: moleculeNames <fct>, Region <int>,
+## #   Score <dbl>, mz_align <dbl>, Rank <int>, desc <fct>
 ```
+
+The details of protein/peptide identification process has been save to the folder named by the segmentation:
+
+
+```r
+list.dirs(paste0(wd,"/Bovin_lens ID/"), recursive=FALSE)
+```
+
+```
+## [1] "C:/Users/admgguo484/Documents/R/win-library/3.6/HiTMaP/data//Bovin_lens ID//1"
+## [2] "C:/Users/admgguo484/Documents/R/win-library/3.6/HiTMaP/data//Bovin_lens ID//2"
+## [3] "C:/Users/admgguo484/Documents/R/win-library/3.6/HiTMaP/data//Bovin_lens ID//3"
+## [4] "C:/Users/admgguo484/Documents/R/win-library/3.6/HiTMaP/data//Bovin_lens ID//4"
+## [5] "C:/Users/admgguo484/Documents/R/win-library/3.6/HiTMaP/data//Bovin_lens ID//5"
+```
+In the identification details folder, you will find a series of FDR file and plots to demonstrate the FDR model and score cutoff threshold:
+
+
+```r
+dir(paste0(wd,"/Bovin_lens ID/1/"), recursive=T)
+```
+
+```
+##  [1] "FDR.CSV"                                        
+##  [2] "FDR.png"                                        
+##  [3] "Matching_Score_vs_mz_target-decoy.png"          
+##  [4] "Peptide_1st_ID.csv"                             
+##  [5] "Peptide_1st_ID_score_rank_SQRTP.csv"            
+##  [6] "Peptide_2nd_ID_score_rankSQRTP_Rank_above_3.csv"
+##  [7] "Peptide_Score_histogram_target-decoy.png"       
+##  [8] "PROTEIN_FDR.CSV"                                
+##  [9] "protein_FDR.png"                                
+## [10] "Protein_ID_score_rank_SQRTP.csv"                
+## [11] "PROTEIN_Score_histogram.png"                    
+## [12] "Spectrum.csv"
+```
+
+In this folder, you will find the FDR plots for protein and peptide. The software will take the proscore and its FDR model to trim the final identification result.
+
+
+```r
+library(magick)
+p_FDR_peptide<-image_read(paste0(wd,"/Bovin_lens ID/3/FDR.png"))
+p_FDR_protein<-image_read(paste0(wd,"/Bovin_lens ID/3/protein_FDR.png"))
+p_FDR_peptide_his<-image_read(paste0(wd,"/Bovin_lens ID/3/Peptide_Score_histogram_target-decoy.png"))
+p_FDR_protein_his<-image_read(paste0(wd,"/Bovin_lens ID/3/PROTEIN_Score_histogram.png"))
+p_combined<-image_append(c(p_FDR_peptide,p_FDR_peptide_his,p_FDR_protein,p_FDR_protein_his))
+print(p_combined)
+```
+
+```
+## # A tibble: 1 x 7
+##   format width height colorspace matte filesize density
+##   <chr>  <int>  <int> <chr>      <lgl>    <int> <chr>  
+## 1 PNG     1920    480 sRGB       FALSE        0 72x72
+```
+
+<img src="README_files/figure-html/FDR plot-1.png" width="1920" />
 
 
 
@@ -298,70 +328,49 @@ print(p_cluster1)
 ```
 
 ```
+## # A tibble: 1 x 7
 ##   format width height colorspace matte filesize density
-## 1    PNG  9360   1560       sRGB  TRUE   173900 118x118
+##   <chr>  <int>  <int> <chr>      <lgl>    <int> <chr>  
+## 1 PNG     9360   3060 sRGB       TRUE    582848 118x118
 ```
 
 <img src="README_files/figure-html/CLuster imaging-1.png" width="9360" />
 
 ```r
-p_cluster1<-image_read(paste0(wd,"/Summary folder/cluster Ion images/705_footer.png"))
-print(p_cluster1)
-```
-
-```
-##   format width height colorspace matte filesize density
-## 1    PNG  7500   1500       sRGB FALSE   320757 118x118
-```
-
-<img src="README_files/figure-html/CLuster imaging-2.png" width="7500" />
-
-```r
+#p_cluster1<-image_read(paste0(wd,"/Summary folder/cluster Ion images/705_footer.png"))
+##print(p_cluster1)
 p_cluster2<-image_read(paste0(wd,"/Summary folder/cluster Ion images/5027_cluster_plot_sum_flex.png"))
 print(p_cluster2)
 ```
 
 ```
+## # A tibble: 1 x 7
 ##   format width height colorspace matte filesize density
-## 1    PNG 15600   1560       sRGB  TRUE   299751 118x118
+##   <chr>  <int>  <int> <chr>      <lgl>    <int> <chr>  
+## 1 PNG    15600   3060 sRGB       TRUE    676601 118x118
 ```
 
-<img src="README_files/figure-html/CLuster imaging-3.png" width="15600" />
+<img src="README_files/figure-html/CLuster imaging-2.png" width="15600" />
 
 ```r
-p_cluster2<-image_read(paste0(wd,"/Summary folder/cluster Ion images/5027_footer.png"))
-print(p_cluster2)
-```
-
-```
-##   format width height colorspace matte filesize density
-## 1    PNG 13500   1500       sRGB FALSE   309251 118x118
-```
-
-<img src="README_files/figure-html/CLuster imaging-4.png" width="13500" />
-
-```r
+#p_cluster2<-image_read(paste0(wd,"/Summary folder/cluster Ion images/5027_footer.png"))
+#print(p_cluster2)
 p_cluster3<-image_read(paste0(wd,"/Summary folder/cluster Ion images/5479_cluster_plot_sum_flex.png"))
 print(p_cluster3)
 ```
 
 ```
+## # A tibble: 1 x 7
 ##   format width height colorspace matte filesize density
-## 1    PNG 15600   1560       sRGB  TRUE   304278 118x118
+##   <chr>  <int>  <int> <chr>      <lgl>    <int> <chr>  
+## 1 PNG    15600   3060 sRGB       TRUE    673817 118x118
 ```
 
-<img src="README_files/figure-html/CLuster imaging-5.png" width="15600" />
+<img src="README_files/figure-html/CLuster imaging-3.png" width="15600" />
 
 ```r
-p_cluster3<-image_read(paste0(wd,"/Summary folder/cluster Ion images/5479_footer.png"))
-print(p_cluster3)
+#p_cluster3<-image_read(paste0(wd,"/Summary folder/cluster Ion images/5479_footer.png"))
+#print(p_cluster3)
 ```
-
-```
-##   format width height colorspace matte filesize density
-## 1    PNG 13500   1500       sRGB FALSE   300494 118x118
-```
-
-<img src="README_files/figure-html/CLuster imaging-6.png" width="13500" />
 
 End of the tutorial, Enjoy~

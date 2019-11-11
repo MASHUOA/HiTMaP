@@ -623,7 +623,7 @@ cluster_image_grid<-function(clusterID,
                                       contrast.enhance=contrast.enhance,
                                       smooth.image = smooth.image,
                                       #col.regions=col.regions,
-                                      col=col.regions,
+                                      col=col,
                                       normalize.image="none",
                                       plusminus=round(ppm*candidateunique[i]/1000000,digits = 4),
                                       key=F,
@@ -656,6 +656,7 @@ cluster_image_grid<-function(clusterID,
         pngcompfile=list()
         for (i in 1:length(candidateunique)){
           pngcompfile[[i]]<-image_read(temp_component_png[[i]])
+          #pngcompfile[[i]]<-image(temp_component_png[[i]])
           pngcompfile[[i]]<-image_border(pngcompfile[[i]], "black", "30x30")
           pngcompfile[[i]]<-image_annotate(pngcompfile[[i]],paste(unique(candidate[candidate$mz==candidateunique[i],"moleculeNames"]),candidateunique[i]),gravity = "north",size = 50,color = "white")
          
@@ -781,7 +782,9 @@ cluster_image_grid<-function(clusterID,
           axis.title.x = element_text(color="blue", size=14, face="bold"),
           axis.title.y = element_text(color="#993333", size=14, face="bold")
         )}
-      png(windows_filename(paste0(clusterID,"_footer.png")),width = 5*length(candidateunique),height = 5*ceiling(ncharrow/10),units = "in",res = 300)
+      
+      footerpng<-paste(getwd(),"\\",windows_filename(substr(clusterID, 1, 10)),"_footer.png",sep="")
+      png(footerpng,width = 5*length(candidateunique+1),height = 5*ceiling(ncharrow/10),units = "in",res = 300)
 
       p <- ggplot(component_int_plot, aes(x, y, label = char))+ geom_label(fill=component_int_plot$col,family = "mono",size=20)+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
                                                                                                                                axis.text.y=element_blank(),axis.ticks=element_blank(),
@@ -792,6 +795,17 @@ cluster_image_grid<-function(clusterID,
       
       print(p)
       dev.off()
+      
+      if(file.exists(outputpngsum)){
+        
+        clusterpng<-image_read(outputpngsum)
+        
+        footerpng<-image_read(footerpng)
+        footerpng<-image_border(footerpng, "white", "30x30")
+        clusterpng<-image_append(c(clusterpng,footerpng),stack = T)
+        
+        image_write(clusterpng,outputpngsum)
+      }
       
       if(F){
               wrap_strings <- function(vector_of_strings,width){as.character(sapply(vector_of_strings,FUN=function(x){paste(strwrap(x,width=width), collapse="\n")}))}

@@ -3,6 +3,11 @@ title: "HiTMaP"
 output:
   html_document: 
     keep_md: yes
+    toc: yes
+    theme: readable
+    number_sections: yes
+    df_print: tibble
+    highlight: tango
   pdf_document: default
   word_document: default
 ---
@@ -138,14 +143,39 @@ protein_pmf_result<-read.csv(paste0(wd,"/Bovin_lens ID/Protein_segment_PMF_RESUL
 head(protein_pmf_result)
 ```
 
-**Score** in peptide result table shows the isotopic pattern matching score of the peptide.
-**Proscore** in the protein result table shows the overall estimation of identification Accuracy
+**Score** in peptide result table shows the isotopic pattern matching score of the peptide. In Protein result table, it shows the intensity weighted peptide spectrum matching score.
+
+**Proscore** in the protein result table shows the overall estimation of the protein identification Accuracy
 
 A *Peptide_region_file.csv* has also been created to summarise all the IDs in this data file:
 
 ```{r}
 Identification_summary_table<-read.csv(paste0(wd,"/Bovin_lens ID/Peptide_region_file.csv"))
 head(Identification_summary_table)
+```
+
+The details of protein/peptide identification process has been save to the folder named by the segmentation:
+
+```{r The sub-folder in the result folder}
+list.dirs(paste0(wd,"/Bovin_lens ID/"), recursive=FALSE)
+```
+In the identification details folder, you will find a series of FDR file and plots to demonstrate the FDR model and score cutoff threshold:
+
+```{r The file in the details sub-folder}
+dir(paste0(wd,"/Bovin_lens ID/1/"), recursive=T)
+```
+
+In this folder, you will find the FDR plots for protein and peptide. The software will take the proscore and its FDR model to trim the final identification result.
+
+```{r FDR plot}
+library(magick)
+p_FDR_peptide<-image_read(paste0(wd,"/Bovin_lens ID/3/FDR.png"))
+p_FDR_protein<-image_read(paste0(wd,"/Bovin_lens ID/3/protein_FDR.png"))
+p_FDR_peptide_his<-image_read(paste0(wd,"/Bovin_lens ID/3/Peptide_Score_histogram_target-decoy.png"))
+p_FDR_protein_his<-image_read(paste0(wd,"/Bovin_lens ID/3/PROTEIN_Score_histogram.png"))
+p_combined<-image_append(c(p_FDR_peptide,p_FDR_peptide_his,p_FDR_protein,p_FDR_protein_his))
+print(p_combined)
+
 ```
 
 
@@ -169,15 +199,9 @@ Now you could visualized the interest proteins and their associated peptides' di
 ```{r CLuster imaging}
 p_cluster1<-image_read(paste0(wd,"/Summary folder/cluster Ion images/705_cluster_plot_sum_flex.png"))
 print(p_cluster1)
-p_cluster1<-image_read(paste0(wd,"/Summary folder/cluster Ion images/705_footer.png"))
-print(p_cluster1)
 p_cluster2<-image_read(paste0(wd,"/Summary folder/cluster Ion images/5027_cluster_plot_sum_flex.png"))
 print(p_cluster2)
-p_cluster2<-image_read(paste0(wd,"/Summary folder/cluster Ion images/5027_footer.png"))
-print(p_cluster2)
 p_cluster3<-image_read(paste0(wd,"/Summary folder/cluster Ion images/5479_cluster_plot_sum_flex.png"))
-print(p_cluster3)
-p_cluster3<-image_read(paste0(wd,"/Summary folder/cluster Ion images/5479_footer.png"))
 print(p_cluster3)
 ```
 
