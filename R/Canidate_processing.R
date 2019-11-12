@@ -6,7 +6,7 @@
 #' @param database the file name of candidate list
 #' @param workdir the folder that contains candidate list
 #' @param adducts  the adducts list to be used for generating the PMF search candidates
-#' @param cal.mz If set with \code{"TRUE"}, the function will recalculate the mz value according to the column named "Formula" in the \code{database} and the specified adducts.
+#' @param cal.mz If set with \code{"TRUE"}, the function will recalculate the mz value according to the column named "formula" in the \code{database} and the specified adducts.
 #' @param mzlist_bypass  Set \code{"TRUE"} if you want to bypass the mzlist generating process, the function will keep the mz and adduct as it is for the furture analysis. Be sure that the table contains "mz", "adduct" and "moleculeNames" as they are essential for later steps.
 #' @param BPPARAM parallel processing parameter for BiocParallel
 #' @return a table of candiate list
@@ -56,10 +56,10 @@ Meta_feature_list_fun<-function(database,
         }
       }else{
         
-        required_col=c("Formula")
+        required_col=c("formula")
         candidates=data_test_rename(required_col,candidates)
         
-      candidates_mass<-candidates$Formula %>% lapply(getMonomass) 
+      candidates_mass<-candidates$formula %>% lapply(getMonomass) 
       candidates$mass<-as.numeric(unlist(candidates_mass))
     }
     candidates<-candidates[duplicated(names(candidates))==FALSE]
@@ -669,8 +669,8 @@ convert_peptide_adduct<-function(peptide,adductsname,multiplier=c(1,1),adductsli
   }
   
   
-  adductsformula_add= as.character(adductslist[adductslist$Name==adductsname,"Formula_add"])
-  adductsformula_ded= as.character(adductslist[adductslist$Name==adductsname,"Formula_ded"])
+  adductsformula_add= as.character(adductslist[adductslist$Name==adductsname,"formula_add"])
+  adductsformula_ded= as.character(adductslist[adductslist$Name==adductsname,"formula_ded"])
   
   null_if_false<-function(x){if (x==FALSE){""} else{get.formula(x)@string}}
   
@@ -1050,8 +1050,8 @@ convert_peptide_adduct_list<-function(adductsname,peptide_symbol,multiplier=c(1,
      multiplier[1]= as.numeric(as.character(adductslist[adductslist$Name==adductsname,"Mult"]))
      multiplier[2]=1
    }
-  adductsformula_add= as.character(adductslist[adductslist$Name==adductsname,"Formula_add"])
-  adductsformula_ded= as.character(adductslist[adductslist$Name==adductsname,"Formula_ded"])
+  adductsformula_add= as.character(adductslist[adductslist$Name==adductsname,"formula_add"])
+  adductsformula_ded= as.character(adductslist[adductslist$Name==adductsname,"formula_ded"])
   
   null_if_false<-function(x){if (x==FALSE){""} else{get.formula(x)@string}}
   
@@ -1082,7 +1082,7 @@ convert_peptide_adduct_list<-function(adductsname,peptide_symbol,multiplier=c(1,
 #' @param database the file name of candidate list
 #' @param workdir the folder that contains candidate list
 #' @param adducts  the adducts list to be used for generating the PMF search candidates
-#' @param cal.mz If set with \code{"TRUE"}, the function will recalculate the mz value according to the column named "Formula" in the \code{database} and the specified adducts.
+#' @param cal.mz If set with \code{"TRUE"}, the function will recalculate the mz value according to the column named "formula" in the \code{database} and the specified adducts.
 #' @param mzlist_bypass  Set \code{"TRUE"} if you want to bypass the mzlist generating process, the function will keep the mz and adduct as it is for the furture analysis. Be sure that the table contains "mz", "adduct" and "moleculeNames" as they are essential for later steps.
 #' @param BPPARAM parallel processing parameter for BiocParallel
 #' @return a table of candiate list
@@ -1114,7 +1114,7 @@ get_atoms<-function(Symbol){
 #' @param database the file name of candidate list
 #' @param workdir the folder that contains candidate list
 #' @param adducts  the adducts list to be used for generating the PMF search candidates
-#' @param cal.mz If set with \code{"TRUE"}, the function will recalculate the mz value according to the column named "Formula" in the \code{database} and the specified adducts.
+#' @param cal.mz If set with \code{"TRUE"}, the function will recalculate the mz value according to the column named "formula" in the \code{database} and the specified adducts.
 #' @param mzlist_bypass  Set \code{"TRUE"} if you want to bypass the mzlist generating process, the function will keep the mz and adduct as it is for the furture analysis. Be sure that the table contains "mz", "adduct" and "moleculeNames" as they are essential for later steps.
 #' @param BPPARAM parallel processing parameter for BiocParallel
 #' @return a table of candiate list

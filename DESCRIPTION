@@ -74,7 +74,10 @@ Imports:
     rcdk,
     igraph,
     colorspace,
-    UniProt.ws
+    UniProt.ws,
+    gridExtra,
+    grid,
+    gtable
 VignetteBuilder: knitr
 Suggests: 
     knitr,

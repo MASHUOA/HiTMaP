@@ -148,15 +148,12 @@ imaging_identification<-function(
   }
   #Summarize the peptide list
   #Summarize the protein and peptide list across the datafiles
-  message("Protein_feature_summary0")
   if(Protein_feature_summary){
-    message("Protein_feature_summary0")
     Peptide_Summary_file<-NULL
     Protein_Summary_file<-NULL
   for (i in 1:length(datafile)){
   datafilename<-gsub(paste(workdir,"/",sep=""),"",gsub(".imzML", "", datafile[i]))
   currentdir<-paste0(datafile[i] ," ID")
-  message("Protein_feature_summary0")
   setwd(paste(currentdir,sep=""))
   
   Peptide_Summary_file<-fread("Peptide_region_file.csv",select=c("Peptide","mz","Intensity","adduct","moleculeNames","Score","charge","formula","Region","Protein","desc"))
@@ -552,7 +549,7 @@ imaging_Spatial_Quant<-function(
       
       setwd(paste(currentdir,sep=""))
       
-      standardcol=c("Peptide","Name","FA","Formula","mz","moleculeNames","mass","Intensity","adduct")
+      standardcol=c("Peptide","Name","FA","formula","mz","moleculeNames","mass","Intensity","adduct")
       Peptide_Summary_file<-fread("Peptide_Summary_file.csv")
       Peptide_Summary_file<-as.data.frame(Peptide_Summary_file)
       Peptide_Summary_file<-as.data.frame(Peptide_Summary_file[,c(as.character(intersect(colnames(Peptide_Summary_file),standardcol)))])
@@ -1280,7 +1277,7 @@ imaging_Spatial_Quant<-function(
     setwd(outputfolder)
 
     Protein_feature_list=as.data.frame(Protein_feature_list)
-    if(is.null(Protein_feature_list$Formula)){Protein_feature_list$Formula=Protein_feature_list$formular}
+    if(is.null(Protein_feature_list$formula)){Protein_feature_list$formula=Protein_feature_list$formular}
     
     clusterID=unique(Protein_feature_list[,ClusterID_colname])
     
@@ -3520,7 +3517,7 @@ protein_scoring<-function(Protein_feature_list,Peptide_plot_list_rank,scoretype=
   
   sum_pro_pep_count<-Protein_feature_list_rank %>% group_by(.dots=c("Protein","isdecoy")) %>% summarize(peptide_count=length(unique(Peptide))) 
   
-  Protein_feature_list_rank<-Protein_feature_list_ranK[Protein_feature_list_rank$Protein %in% sum_pro_pep_count$Protein[sum_pro_pep_count$peptide_count>=peptide_ID_filter],]
+  Protein_feature_list_rank<-Protein_feature_list_rank[Protein_feature_list_rank$Protein %in% sum_pro_pep_count$Protein[sum_pro_pep_count$peptide_count>=peptide_ID_filter],]
 
   #sum_pro_score<-Protein_feature_list_rank %>% group_by(.dots=c("Protein","isdecoy")) %>% summarize(Score=sum(Score))
   
