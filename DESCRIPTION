@@ -17,6 +17,7 @@ Packaged:
 BugReports:
 Imports: 
     pryr,
+    colortools,
     CAMERA,
     pacman,
     purrr,

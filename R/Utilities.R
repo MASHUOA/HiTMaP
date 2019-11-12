@@ -422,7 +422,8 @@ cluster_image_grid<-function(clusterID,
                              export_footer_table=F,
                              combine_header_footer=F,
                              plot_style=c("fleximaging","ClusterOnly","rainbow"),
-                             protein_coverage=F){
+                             protein_coverage=F,
+                             output_png_width_limit=1980){
   #complementary(color="red", plot = TRUE, bg = "white", labcol = NULL, cex = 0.8, title = TRUE)
   windows_filename<- function(stringX){
     stringX<-stringr::str_remove_all(stringX,"[><*?:\\/\\\\]")
@@ -431,6 +432,7 @@ cluster_image_grid<-function(clusterID,
     return(stringX)
     
   }
+  library(magick)
   library(stringr)
   library(data.table)
   Sys.setenv("PATH" = paste(paste(unique(str_split(Sys.getenv("PATH"),.Platform$path.sep)[[1]]), sep = .Platform$path.sep,collapse = .Platform$path.sep), "C:/ProgramData/Anaconda3/orca_app", sep = .Platform$path.sep))
@@ -472,6 +474,18 @@ cluster_image_grid<-function(clusterID,
     mycol <- factor(mycol,levels(mycol)) 
   }
   
+  if (length(candidateunique)>4){
+    library(colortools)
+    mycol=wheel("steelblue", num = length(candidateunique),bg = "white")
+  } else if (length(candidateunique)==4){
+    mycol=tetradic("steelblue")
+  } else if (length(candidateunique)==3){
+    mycol=splitComp("steelblue")
+  } else if (length(candidateunique)<=2){
+    mycol=complementary("steelblue")
+  }
+    
+  mycol <- as.factor(as.character(mycol))  
   mycol=mycol[order(mycol)]
   
   if (length(candidateunique)>=Component_plot_threshold){
@@ -686,7 +700,7 @@ cluster_image_grid<-function(clusterID,
       candidate_unique_table=unique(candidate[,c("mz",componentID_colname,"formula","adduct")])
     }else{
       candidate_unique_table=unique(candidate[,c(componentID_colname,"mz","formula","adduct")])
-      clustr_desc<-unique(candidate$desc)[1]
+      cluster_desc<-unique(candidate$desc)[1]
     }
     
     require(reshape2)
@@ -703,16 +717,41 @@ cluster_image_grid<-function(clusterID,
     t_Header_table<-sapply(t_Header_table,as.character)
     t_Header_table<-as.data.frame(t_Header_table)
     names(t_Header_table)<-as.character(t_Header_table[1,])
-    tt3 <- ttheme_minimal(
-      core=list(bg_params = list(fill = mycol[1:length(candidateunique)], col=NA),
-                fg_params=list(fontface=3)),
-      colhead=NULL,
-      rowhead=NULL)
+    tt3 <- ttheme_minimal()
+    header_table_op<-tableGrob(t_Header_table,theme = tt3,cols = NULL,rows=NULL)
     
-    grid.arrange(tableGrob(t_Header_table,theme = tt3),nrow=1)
+    find_cell <- function(table, row, col, name="core-fg"){
+      l <- table$layout
+      which(l$t==(row) & l$l==(col) & l$name==name)
+    }
     
+    t_Header_table<-cbind(c("ClusterID",ClusterID,str_sub(cluster_desc,end = regexpr(" ",cluster_desc)),rep("",nrow(t_Header_table)-3)),t_Header_table)
+    header_table_op<-tableGrob(t_Header_table,cols = NULL,rows=NULL)
+    for (mzfeatures in 2:(length(candidateunique)+1)){
+    for (rows in 1:nrow(t_Header_table)){
+    ind <- find_cell(header_table_op, rows, mzfeatures, "core-fg")
+    header_table_op$grobs[ind][[1]][["gp"]] <- gpar(fill=levels(mycol)[mzfeatures-1], col = levels(mycol)[mzfeatures-1], lwd=5)
+    #header_table_op$grobs[ind][[1]][["gp"]] <- gpar(fill="darkolivegreen1", col = "darkolivegreen4", lwd=5)
+    }
+    }
+    library(gtable)
+    header_table_op <- gtable_add_grob(header_table_op,
+                         grobs = rectGrob(gp = gpar(fill = NA, lwd = 2)),
+                         t = 2, b = nrow(header_table_op), l = 1, r = ncol(header_table_op))
+    header_table_op <- gtable_add_grob(header_table_op,
+                         grobs = rectGrob(gp = gpar(fill = NA, lwd = 2)),
+                         t = 1, l = 1, r = ncol(header_table_op))
+    header_table_op$widths <- rep(max(header_table_op$widths), length(header_table_op$widths))
     
-    p <- plot_ly(
+    header_file_png = windows_filename(paste0(clusterID,"_header.png"))
+    
+    png(header_file_png,width = 5*length(candidateunique+1),height = 5,units = "in",res = 300)
+    
+    grid.arrange(header_table_op,nrow=1)
+    
+    dev.off()
+    
+   if(F){ p <- plot_ly(
       type = 'table',
       columnwidth = 20,
       header = list(
@@ -750,8 +789,22 @@ cluster_image_grid<-function(clusterID,
     
     
     
-    orca(p, file = windows_filename(paste0(clusterID,"_header.png")),width=120*(nrow(Header_table))+200,height=540) 
+    orca(p, file = windows_filename(paste0(clusterID,"_header.png")),width=120*(nrow(Header_table))+200,height=540) }
     
+    if(file.exists(outputpngsum)){
+      
+      clusterpng<-image_read(outputpngsum)
+      if (image_info(clusterpng)[2]>output_png_width_limit){
+        clusterpng<-image_resize(clusterpng,paste0(output_png_width_limit,"x"))
+      }
+      header_file_png<-image_read(header_file_png)
+      header_file_png<-image_trim(header_file_png)
+      header_file_png<-image_border(header_file_png, "white", "00x70")
+      header_file_png<-image_resize(header_file_png,paste0(image_info(clusterpng)[2],"x"))
+      clusterpng<-image_append(c(header_file_png,clusterpng),stack = T)
+      
+      image_write(clusterpng,outputpngsum)
+    }
   }
   
   if(export_footer_table){
@@ -828,7 +881,8 @@ cluster_image_grid<-function(clusterID,
         clusterpng<-image_read(outputpngsum)
         
         footerpng<-image_read(footerpng)
-        footerpng<-image_border(footerpng, "white", "30x30")
+        footerpng<-image_border(footerpng, "white", "00x70")
+        footerpng<-image_resize(footerpng,paste0(image_info(clusterpng)[2],"x"))
         clusterpng<-image_append(c(clusterpng,footerpng),stack = T)
         
         image_write(clusterpng,outputpngsum)

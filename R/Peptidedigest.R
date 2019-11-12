@@ -335,24 +335,24 @@ imaging_identification<-function(
            ppm=ppm,ClusterID_colname=ClusterID_colname,
            componentID_colname=componentID_colname,
            plot_layout="line",
-           Component_plot_threshold=4,
-           export_Header_table=F,
+           export_Header_table=T,
            export_footer_table=T,
            plot_style="fleximaging",
            Component_plot_coloure="as.cluster")
     
-    lapply(unique(Protein_feature_list[,ClusterID_colname]),
+    lapply(5479,
            cluster_image_grid,
-           imdata=NULL,
+           imdata=imdata,
            SMPLIST=Protein_feature_list,
            ppm=ppm,ClusterID_colname=ClusterID_colname,
-           componentID_colname="Peptide",
+           componentID_colname=componentID_colname,
            plot_layout="line",
-           Component_plot_threshold=4,
-           export_Header_table=F,
+           export_Header_table=T,
            export_footer_table=T,
            plot_style="fleximaging",
            Component_plot_coloure="as.cluster")
+    
+    
     
     outputfolder=paste(workdir,"/Summary folder/cluster Ion images/unique/",sep="")
     if (dir.exists(outputfolder)==FALSE){dir.create(outputfolder)}
@@ -368,10 +368,10 @@ imaging_identification<-function(
            ppm=ppm,ClusterID_colname=ClusterID_colname,
            componentID_colname="Peptide",
            plot_layout="line",
-           Component_plot_threshold=1,
            export_Header_table=F,
            plot_style="fleximaging",
-           Component_plot_coloure="as.cluster")
+           Component_plot_coloure="as.cluster",
+           cluster)
     
     
     
