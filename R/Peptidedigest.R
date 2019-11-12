@@ -62,9 +62,6 @@ imaging_identification<-function(
                Bypass_generate_spectrum=F,
                peptide_ID_filter=2,
                Protein_feature_summary=TRUE,
-               plot_cluster_image=TRUE,
-               componentID_colname="Peptide",
-               ClusterID_colname="Protein",
                Peptide_feature_summary=TRUE,
                plot_ion_image=FALSE,
                parallel=detectCores(),
@@ -80,6 +77,8 @@ imaging_identification<-function(
                use_previous_candidates=F,
                score_method="SQRTP",
                plot_cluster_image_grid=F,
+               componentID_colname="Peptide",
+               ClusterID_colname="Protein",
                ...
                ){
   library("pacman")
@@ -340,7 +339,7 @@ imaging_identification<-function(
            plot_style="fleximaging",
            Component_plot_coloure="as.cluster")
     
-    lapply(5479,
+    lapply(5027,
            cluster_image_grid,
            imdata=imdata,
            SMPLIST=Protein_feature_list,

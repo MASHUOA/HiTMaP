@@ -449,33 +449,11 @@ cluster_image_grid<-function(clusterID,
   candidate=SMPLIST[SMPLIST[[ClusterID_colname]]==clusterID,]
   #candidate=candidate[order(as.character())]
   candidateunique=as.numeric(as.character(unique(candidate[,"mz"])))
-  library("viridis")
-    mycol9up<-viridis(length(candidateunique))
-  if (length(candidateunique)>9){
-    
-    candidate.dt <- data.table(candidate)
-    candidatet=candidate.dt[,list(Intensity=sum(Intensity)), by='mz']
-    candidatet=candidatet[order(-candidatet$Intensity)]
-    selections=as.numeric(t(candidatet[1:9,"mz"]))
-    candidate=candidate[candidate$mz %in% selections,]
-    candidateunique=as.numeric(unique(candidate[,"mz"]))
-    
-    candidateunique=candidateunique[order(as.character(candidateunique))]
-    mycol <- factor(RColorBrewer::brewer.pal(length(candidateunique),colorpallet))
-    mycol <- factor(mycol,levels(mycol)) 
-  }else if (length(candidateunique)<3){
-    candidateunique=candidateunique[order(as.character(candidateunique))]
-    mycol <- factor(RColorBrewer::brewer.pal(3,colorpallet))
-    mycol <- factor(mycol,levels(mycol)) 
-    
-  }else{
-    candidateunique=candidateunique[order(as.character(candidateunique))]
-    mycol <- factor(RColorBrewer::brewer.pal(length(candidateunique),colorpallet))
-    mycol <- factor(mycol,levels(mycol)) 
-  }
-  
+  candidateunique=candidateunique[order(as.character(candidateunique))]
+
+  library(colortools)
   if (length(candidateunique)>4){
-    library(colortools)
+    
     mycol=wheel("steelblue", num = length(candidateunique),bg = "white")
   } else if (length(candidateunique)==4){
     mycol=tetradic("steelblue")
@@ -725,7 +703,7 @@ cluster_image_grid<-function(clusterID,
       which(l$t==(row) & l$l==(col) & l$name==name)
     }
     
-    t_Header_table<-cbind(c("ClusterID",ClusterID,str_sub(cluster_desc,end = regexpr(" ",cluster_desc)),rep("",nrow(t_Header_table)-3)),t_Header_table)
+    t_Header_table<-cbind(c("ClusterID",clusterID,str_sub(cluster_desc,end = regexpr(" ",cluster_desc)),rep("",nrow(t_Header_table)-3)),t_Header_table)
     header_table_op<-tableGrob(t_Header_table,cols = NULL,rows=NULL)
     for (mzfeatures in 2:(length(candidateunique)+1)){
     for (rows in 1:nrow(t_Header_table)){
@@ -825,12 +803,8 @@ cluster_image_grid<-function(clusterID,
       component_int$end=component_int$start+width_com-1
       component_int<-merge(component_int,unique(candidate_unique_table[,c(componentID_colname,"mz")]),by=componentID_colname)
       component_int<-component_int[order(as.character(component_int$mz)),]
-      if (nrow(component_int)<=9){
-       component_int$mycol<-levels(mycol)[1:nrow(component_int)] 
-      }else{
-        component_int$mycol<-mycol9up
-      }
       
+      component_int$mycol<-levels(mycol)
       
       
       
