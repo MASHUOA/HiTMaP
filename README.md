@@ -167,7 +167,7 @@ print(p_pmf)
 ## # A tibble: 1 x 7
 ##   format width height colorspace matte filesize density
 ##   <chr>  <int>  <int> <chr>      <lgl>    <int> <chr>  
-## 1 PNG     1980   1080 sRGB       FALSE    17148 72x72
+## 1 PNG     1980   1080 sRGB       FALSE    17664 72x72
 ```
 
 <img src="README_files/figure-html/unnamed-chunk-1-1.png" width="1980" />
@@ -184,12 +184,12 @@ head(peptide_pmf_result)
 ## # A tibble: 6 x 15
 ##   Protein    mz Peptide adduct formula isdecoy pepmz charge Intensity
 ##     <int> <dbl> <fct>   <fct>  <fct>     <int> <dbl>  <int>     <dbl>
-## 1   10450 1040. GPSSEC~ M+H    C47H66~       0 1039.      1   960902.
-## 2   10450 1451. NTDPIT~ M+H    C66H10~       0 1450.      1    73014.
-## 3   10726 1585. ASGCLI~ M+H    C66H11~       0 1584.      1    77588.
-## 4   10726 1460. YEYILA~ M+H    C64H99~       0 1459.      1   250624.
-## 5   11103 1616. LVKGNY~ M+H    C75H11~       0 1615.      1   252569.
-## 6   11203 1464. IDPSAS~ M+H    C61H99~       0 1463.      1    91876.
+## 1   10240  902. KLGLQQ~ M+H    C39H73~       0  901.      1   346243.
+## 2   10240 1164. NAQLAV~ M+H    C50H83~       0 1163.      1    85056.
+## 3   10240 1501. MTLSPS~ M+H    C62H10~       0 1500.      1    53571.
+## 4   10309 1130. MQIVSP~ M+H    C47H81~       0 1129.      1   164320.
+## 5   10309 1038. MVGTVI~ M+H    C43H81~       0 1037.      1    84284.
+## 6   10309 1495. VSGAQH~ M+H    C58H96~       0 1494.      1    78539.
 ## # ... with 6 more variables: moleculeNames <fct>, Region <int>,
 ## #   Score <dbl>, mz_align <dbl>, Rank <int>, desc <fct>
 ```
@@ -204,12 +204,12 @@ head(protein_pmf_result)
 ## # A tibble: 6 x 9
 ##   Protein Proscore isdecoy Intensity Score peptide_count Protein_coverage
 ##     <int>    <dbl>   <int>     <dbl> <dbl>         <int>            <dbl>
-## 1   10450   0.113        0   516958. 0.593             2           0.172 
-## 2   10726   0.0749       0   164106. 0.979             2           0.0759
-## 3   11103   0.307        0   252569. 2.26              1           0.130 
-## 4   11203   0.188        0  1632393. 2.01              2           0.0777
-## 5   11209   0.0701       0   116368. 0.964             2           0.0742
-## 6   11264   0.0829       0   584037. 0.770             3           0.0965
+## 1   10240   0.0312       0    53571. 0.993             1           0.0345
+## 2   10309   0.0451       0   109047. 0.392             3           0.119 
+## 3   10370   0.0472       0   129898. 1.91              1           0.0251
+## 4   10450   0.112        0   516958. 0.593             2           0.172 
+## 5   10486   0.0498       0    73281. 0.659             3           0.0806
+## 6   10488   0.0331       0   162774. 0.495             2           0.0667
 ## # ... with 2 more variables: Intensity_norm <dbl>, desc <fct>
 ```
 
@@ -229,12 +229,12 @@ head(Identification_summary_table)
 ## # A tibble: 6 x 15
 ##   Protein    mz Peptide adduct formula isdecoy pepmz charge Intensity
 ##     <int> <dbl> <fct>   <fct>  <fct>     <int> <dbl>  <int>     <dbl>
-## 1   10562 1735. IGFEEK~ M+H    C73H11~       0 1734.      1    74414.
-## 2    1137 1590. VLGRTG~ M+H    C63H11~       0 1589.      1    75190.
-## 3   17261 1509. GLGHGY~ M+H    C69H98~       0 1508.      1  3482147.
-## 4    1734 2220. LQRISQ~ M+H    C90H15~       0 2219.      1   239088.
-## 5   19661 1375. KFPFTL~ M+H    C67H10~       0 1374.      1   144208.
-## 6   19661 1714. SIEHSG~ M+H    C76H11~       0 1713.      1   103318.
+## 1   10089 1898. LAEFLQ~ M+H    C86H12~       0 1897.      1    79843.
+## 2   10089 1117. ATAWNV~ M+H    C49H78~       0 1116.      1   801268.
+## 3   10089 2240. DLLCWE~ M+H    C104H1~       0 2239.      1   101047.
+## 4   10089  736. DFLRW   M+H    C36H50~       0  735.      1   341049.
+## 5   10237 2220. ALDNST~ M+H    C90H15~       0 2219.      1   239088.
+## 6   10237  933. QSAQES~ M+H    C36H65~       0  932.      1   187329.
 ## # ... with 6 more variables: moleculeNames <fct>, Region <int>,
 ## #   Score <dbl>, mz_align <dbl>, Rank <int>, desc <fct>
 ```
@@ -309,8 +309,11 @@ dir(wd_sum)
 ```
 
 ```
-## [1] "candidatelist.csv"   "cluster Ion images"  "Peptide_Summary.csv"
-## [4] "protein_index.csv"   "Protein_Summary.csv"
+##  [1] "Book2.csv"                      "candidatelist.csv"             
+##  [3] "cluster Ion images"             "crystalin.xlsx"                
+##  [5] "Peptide_Summary.csv"            "Peptide_summary.xls"           
+##  [7] "Protein_feature_summary_sl.csv" "protein_index.csv"             
+##  [9] "Protein_Summary.csv"            "Protein_Summary.xlsx"
 ```
 
 "candidatelist.csv" and "protein_index.csv" contains the candidates used for this project. They are output after the candidate processing while *output_candidatelist* set as TRUE, and can be used repeatedly while *use_previous_candidates* set as TRUE.
@@ -331,14 +334,12 @@ print(p_cluster1)
 ## # A tibble: 1 x 7
 ##   format width height colorspace matte filesize density
 ##   <chr>  <int>  <int> <chr>      <lgl>    <int> <chr>  
-## 1 PNG     9360   3060 sRGB       TRUE    582848 118x118
+## 1 PNG     1980   1002 sRGB       TRUE    696347 118x118
 ```
 
-<img src="README_files/figure-html/CLuster imaging-1.png" width="9360" />
+<img src="README_files/figure-html/CLuster imaging-1.png" width="1980" />
 
 ```r
-#p_cluster1<-image_read(paste0(wd,"/Summary folder/cluster Ion images/705_footer.png"))
-##print(p_cluster1)
 p_cluster2<-image_read(paste0(wd,"/Summary folder/cluster Ion images/5027_cluster_plot_sum_flex.png"))
 print(p_cluster2)
 ```
@@ -347,14 +348,12 @@ print(p_cluster2)
 ## # A tibble: 1 x 7
 ##   format width height colorspace matte filesize density
 ##   <chr>  <int>  <int> <chr>      <lgl>    <int> <chr>  
-## 1 PNG    15600   3060 sRGB       TRUE    676601 118x118
+## 1 PNG     1980    525 sRGB       TRUE    453053 118x118
 ```
 
-<img src="README_files/figure-html/CLuster imaging-2.png" width="15600" />
+<img src="README_files/figure-html/CLuster imaging-2.png" width="1980" />
 
 ```r
-#p_cluster2<-image_read(paste0(wd,"/Summary folder/cluster Ion images/5027_footer.png"))
-#print(p_cluster2)
 p_cluster3<-image_read(paste0(wd,"/Summary folder/cluster Ion images/5479_cluster_plot_sum_flex.png"))
 print(p_cluster3)
 ```
@@ -363,14 +362,9 @@ print(p_cluster3)
 ## # A tibble: 1 x 7
 ##   format width height colorspace matte filesize density
 ##   <chr>  <int>  <int> <chr>      <lgl>    <int> <chr>  
-## 1 PNG    15600   3060 sRGB       TRUE    673817 118x118
+## 1 PNG     1980    385 sRGB       TRUE    383300 118x118
 ```
 
-<img src="README_files/figure-html/CLuster imaging-3.png" width="15600" />
-
-```r
-#p_cluster3<-image_read(paste0(wd,"/Summary folder/cluster Ion images/5479_footer.png"))
-#print(p_cluster3)
-```
+<img src="README_files/figure-html/CLuster imaging-3.png" width="1980" />
 
 End of the tutorial, Enjoy~
