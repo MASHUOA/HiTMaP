@@ -4,10 +4,10 @@ output:
   html_document: 
     keep_md: yes
     toc: yes
-    theme: readable
+    theme: spacelab
     number_sections: yes
     df_print: tibble
-    highlight: tango
+    highlight: zenburn
   pdf_document: default
   word_document: default
 ---
@@ -366,5 +366,56 @@ print(p_cluster3)
 ```
 
 <img src="README_files/figure-html/CLuster imaging-3.png" width="1980" />
+
+## Session information
+
+
+```r
+sessionInfo()
+```
+
+```
+## R version 3.6.1 (2019-07-05)
+## Platform: x86_64-w64-mingw32/x64 (64-bit)
+## Running under: Windows 10 x64 (build 17134)
+## 
+## Matrix products: default
+## 
+## locale:
+## [1] LC_COLLATE=English_United States.1252 
+## [2] LC_CTYPE=English_United States.1252   
+## [3] LC_MONETARY=English_United States.1252
+## [4] LC_NUMERIC=C                          
+## [5] LC_TIME=English_United States.1252    
+## 
+## attached base packages:
+## [1] stats     graphics  grDevices utils     datasets  methods   base     
+## 
+## other attached packages:
+## [1] magick_2.2        HiTMaP_1.6.0      data.table_1.12.4 pls_2.7-2        
+## [5] lattice_0.20-38  
+## 
+## loaded via a namespace (and not attached):
+##  [1] Rcpp_1.0.2          pillar_1.4.2        compiler_3.6.1     
+##  [4] BiocManager_1.30.9  iterators_1.0.12    tools_3.6.1        
+##  [7] zeallot_0.1.0       digest_0.6.21       evaluate_0.14      
+## [10] tibble_2.1.3        png_0.1-7           pkgconfig_2.0.3    
+## [13] rlang_0.4.0         Matrix_1.2-17       foreach_1.4.7      
+## [16] cli_1.1.0           rstudioapi_0.10     yaml_2.2.0         
+## [19] parallel_3.6.1      xfun_0.10           stringr_1.4.0      
+## [22] knitr_1.25          vctrs_0.2.0         S4Vectors_0.22.1   
+## [25] stats4_3.6.1        multtest_2.40.0     grid_3.6.1         
+## [28] Biobase_2.44.0      fansi_0.4.0         tcltk_3.6.1        
+## [31] XML_3.98-1.20       survival_2.44-1.1   BiocParallel_1.18.1
+## [34] pacman_0.5.1        rmarkdown_1.16      magrittr_1.5       
+## [37] backports_1.1.5     MASS_7.3-51.4       codetools_0.2-16   
+## [40] htmltools_0.4.0     BiocGenerics_0.30.0 splines_3.6.1      
+## [43] assertthat_0.2.1    utf8_1.1.4          stringi_1.4.3      
+## [46] doParallel_1.0.15   crayon_1.3.4
+```
+
+
+
+
 
 End of the tutorial, Enjoy~

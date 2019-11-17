@@ -54,12 +54,12 @@ imaging_identification<-function(
                Fastadatabase="murine_matrisome.fasta",
                adducts=c("M+H"),
                Modifications=list(fixed=NULL,variable=NULL),
-               Decoy_search=T,
+               Decoy_search=TRUE,
                Decoy_adducts=c("M+ACN+H","M+IsoProp+H","M+DMSO+H","M+Co","M+Ag","M+Cu","M+He","M+Ne","M+Ar","M+Kr","M+Xe","M+Rn"),
                Decoy_mode = "isotope",
-               adjust_score = F,
+               adjust_score = FALSE,
                PMF_analysis=TRUE,
-               Bypass_generate_spectrum=F,
+               Bypass_generate_spectrum=FALSE,
                peptide_ID_filter=2,
                Protein_feature_summary=TRUE,
                Peptide_feature_summary=TRUE,
@@ -71,14 +71,16 @@ imaging_identification<-function(
                Virtual_segmentation=FALSE,
                Virtual_segmentation_rankfile=NULL,
                Rotate_IMG=NULL,
-               Region_feature_summary=F,
-               Spectrum_validate=T,
-               output_candidatelist=T,
-               use_previous_candidates=F,
+               Region_feature_summary=FALSE,
+               Spectrum_validate=TRUE,
+               output_candidatelist=TRUE,
+               use_previous_candidates=FALSE,
                score_method="SQRTP",
-               plot_cluster_image_grid=F,
+               plot_cluster_image_grid=FALSE,
                componentID_colname="Peptide",
                ClusterID_colname="Protein",
+               Protein_desc_of_interest=".",
+               plot_unique_component=FALSE,
                ...
                ){
   library("pacman")
@@ -270,7 +272,8 @@ imaging_identification<-function(
   if(plot_cluster_image_grid){
     Protein_feature_list=fread(file=paste(workdir,"/Summary folder/Protein_Summary.csv",sep=""))
     #Protein_feature_list=merge(Protein_feature_list,Index_of_protein_sequence[,c("recno","desc")],by.x="Protein",by.y="recno",sort=F)
-    Protein_feature_list_crystallin<-Protein_feature_list[grepl("crystallin",Protein_feature_list$desc,ignore.case = T),]
+    #Protein_feature_list_crystallin<-Protein_feature_list[grepl("crystallin",Protein_feature_list$desc,ignore.case = T),]
+    Protein_feature_list_crystallin<-Protein_feature_list[grepl(Protein_desc_of_interest,Protein_feature_list$desc,ignore.case = T),]
     #Protein_feature_list_crystallin$Protein=as.character(Protein_feature_list_crystallin$desc)
     Protein_feature_list=Protein_feature_list_crystallin
     Protein_feature_list=as.data.frame(Protein_feature_list)
@@ -339,20 +342,7 @@ imaging_identification<-function(
            plot_style="fleximaging",
            Component_plot_coloure="as.cluster")
     
-    lapply(5027,
-           cluster_image_grid,
-           imdata=imdata,
-           SMPLIST=Protein_feature_list,
-           ppm=ppm,ClusterID_colname=ClusterID_colname,
-           componentID_colname=componentID_colname,
-           plot_layout="line",
-           export_Header_table=T,
-           export_footer_table=T,
-           plot_style="fleximaging",
-           Component_plot_coloure="as.cluster")
-    
-    
-    
+    if (plot_unique_component){
     outputfolder=paste(workdir,"/Summary folder/cluster Ion images/unique/",sep="")
     if (dir.exists(outputfolder)==FALSE){dir.create(outputfolder)}
     setwd(outputfolder)
@@ -363,26 +353,16 @@ imaging_identification<-function(
     lapply(unique(Protein_feature_list_trimmed$Protein),
            cluster_image_grid,
            imdata=imdata,
-           SMPLIST=Protein_feature_list_trimmed,
-           ppm=ppm,ClusterID_colname=ClusterID_colname,
-           componentID_colname="Peptide",
-           plot_layout="line",
-           export_Header_table=F,
-           plot_style="fleximaging",
-           Component_plot_coloure="as.cluster",
-           cluster)
-    
-    
-    
-    lapply(unique(Protein_feature_list$Protein),
-           cluster_image_grid,
-           imdata=NULL,
            SMPLIST=Protein_feature_list,
            ppm=ppm,ClusterID_colname=ClusterID_colname,
-           componentID_colname="Peptide",
+           componentID_colname=componentID_colname,
            plot_layout="line",
-           Component_plot_threshold=4,
-           export_Header_table=T)
+           export_Header_table=T,
+           export_footer_table=T,
+           plot_style="fleximaging",
+           Component_plot_coloure="as.cluster")}
+    
+
     
     Pngclusterkmean=NULL
     Pngclustervseg=NULL
@@ -2320,8 +2300,10 @@ if(PMFsearch){
     for (SPECTRUM_batch in names(x)){
       if (dir.exists(paste0(datafile[z] ," ID/",SPECTRUM_batch,"/"))==FALSE){dir.create(paste0(datafile[z] ," ID/",SPECTRUM_batch,"/"))}
     #PMFsearch_para<-function(SPECTRUM_batch,x,imdata,name,ppm,cl,Peptide_Summary_file,Peptide_Summary_file_regions){
-    imdata_ed <- batchProcess(imdata, normalize=FALSE, smoothSignal=F, reduceBaseline=F,
-                           peakPick=T, peakAlign=FALSE, pixel=pixels(imdata)[unlist(x[SPECTRUM_batch])])
+    if(ppm<25){imdata_ed <- batchProcess(imdata, normalize=FALSE, smoothSignal=F, reduceBaseline=F,
+                           peakPick=T, peakAlign=FALSE, pixel=pixels(imdata)[unlist(x[SPECTRUM_batch])])}
+    if(ppm>=25){imdata_ed <- batchProcess(imdata, normalize=FALSE, smoothSignal=T, reduceBaseline=T,
+                                           peakPick=T, peakAlign=FALSE, pixel=pixels(imdata)[unlist(x[SPECTRUM_batch])])}
     #selectedpixel<-get_coord_info(names(pixels(imdata)[unlist(x[SPECTRUM_batch])]))
 
     if(class(imdata_ed)=="MSImageSet"){

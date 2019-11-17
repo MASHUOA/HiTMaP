@@ -4,10 +4,10 @@ output:
   html_document: 
     keep_md: yes
     toc: yes
-    theme: readable
+    theme: spacelab
     number_sections: yes
     df_print: tibble
-    highlight: tango
+    highlight: zenburn
   pdf_document: default
   word_document: default
 ---
@@ -204,5 +204,15 @@ print(p_cluster2)
 p_cluster3<-image_read(paste0(wd,"/Summary folder/cluster Ion images/5479_cluster_plot_sum_flex.png"))
 print(p_cluster3)
 ```
+
+## Session information
+
+```{r}
+sessionInfo()
+```
+
+
+
+
 
 End of the tutorial, Enjoy~
