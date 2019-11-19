@@ -165,10 +165,12 @@ In the identification details folder, you will find a series of FDR file and plo
 dir(paste0(wd,"/Bovin_lens ID/1/"), recursive=T)
 ```
 
-In this folder, you will find the FDR plots for protein and peptide. The software will take the proscore and its FDR model to trim the final identification result.
+In this folder, you will find the FDR plots for protein and peptide. The software will take the proscore and its FDR model to trim the final identification result. The *1st_unique_peptide_vs_mz_feature* is a plot that could tell you the number of peptide candidates have been matched to the mz features in the first round run.You can also access the peptide spectrum match (first MS dimension) data via the "/ppm" subfolder.
 
-```{r FDR plot}
+```{r FDR plot, message=FALSE}
 library(magick)
+p_peptide_vs_mz_feature<-image_read(paste0(wd,"/Bovin_lens ID/3/1st_unique_peptide_vs_mz_feature.png"))
+print(p_peptide_vs_mz_feature)
 p_FDR_peptide<-image_read(paste0(wd,"/Bovin_lens ID/3/FDR.png"))
 p_FDR_protein<-image_read(paste0(wd,"/Bovin_lens ID/3/protein_FDR.png"))
 p_FDR_peptide_his<-image_read(paste0(wd,"/Bovin_lens ID/3/Peptide_Score_histogram_target-decoy.png"))
