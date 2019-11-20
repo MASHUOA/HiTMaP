@@ -68,11 +68,12 @@ imaging_identification(
 #==============Summarise the protein and peptide features across the project the result can be found at the summary folder
                Protein_feature_summary=TRUE,
                Peptide_feature_summary=TRUE,
-               Region_feature_summary=FALSE,
+               Region_feature_summary=TRUE,
 #==============The decoy mode: could be one of the "adducts", "elements" or "isotope"
                plot_cluster_image_grid=FALSE,
                ClusterID_colname="Protein",
                componentID_colname="Peptide",
+               Protein_desc_of_interest="Crystallin",
                Rotate_IMG=NULL,
                )
 ```
@@ -275,12 +276,12 @@ dir(paste0(wd,"/Bovin_lens ID/1/"), recursive=T)
 ## [12] "Spectrum.csv"
 ```
 
-In this folder, you will find the FDR plots for protein and peptide. The software will take the proscore and its FDR model to trim the final identification result. The *1st_unique_peptide_vs_mz_feature* is a plot that could tell you the number of peptide candidates have been matched to the mz features in the first round run.
+In this folder, you will find the FDR plots for protein and peptide. The software will take the proscore and its FDR model to trim the final identification result. The *1st_unique_peptide_vs_mz_feature* is a plot that could tell you the number of peptide candidates have been matched to the mz features in the first round run.You can also access the peptide spectrum match (first MS dimension) data via the "/ppm" subfolder.
 
 
 ```r
 library(magick)
-p_peptide_vs_mz_feature<-image_read(paste0(wd,"/Bovin_lens ID/3/1st_unique_peptide_vs_mz_feature.png"))
+p_peptide_vs_mz_feature<-image_read(paste0(wd,"/Bovin_lens ID/3/unique_peptide_ranking_vs_mz_feature.png"))
 print(p_peptide_vs_mz_feature)
 ```
 
@@ -288,7 +289,7 @@ print(p_peptide_vs_mz_feature)
 ## # A tibble: 1 x 7
 ##   format width height colorspace matte filesize density
 ##   <chr>  <int>  <int> <chr>      <lgl>    <int> <chr>  
-## 1 PNG      960    480 sRGB       FALSE     5113 72x72
+## 1 PNG      960    480 sRGB       FALSE    14772 72x72
 ```
 
 <img src="README_files/figure-html/FDR plot-1.png" width="960" />
