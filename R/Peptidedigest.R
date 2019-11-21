@@ -2467,7 +2467,7 @@ if(PMFsearch){
       write.csv(Protein_feature_list_rank_cutoff,paste0(datafile[z] ," ID/","Peptide_segment_PMF_RESULT_",SPECTRUM_batch,".csv"),row.names = F)
       
       if (plot_matching_score_t){
-        (plot_matching_score(Protein_feature_list_rank_cutoff,peaklist,charge=1,ppm,outputdir=paste0(datafile[z] ," ID/",SPECTRUM_batch,"/ppm")))
+        try(plot_matching_score(Protein_feature_list_rank_cutoff,peaklist,charge=1,ppm,outputdir=paste0(datafile[z] ," ID/",SPECTRUM_batch,"/ppm")))
       }
       png(paste0(datafile[z] ," ID/",SPECTRUM_batch,"/unique_peptide_ranking_vs_mz_feature",".png"),width = 960,height = 480)
       sp<-ggplot2::ggplot(Peptide_plot_list_rank, aes(x=mz,fill=as.factor(Peptide_plot_list_rank$Rank))) +  geom_bar(stat = "bin",bins = 100) +
@@ -2749,7 +2749,7 @@ SCORE_PMF<-function(formula,peaklist,isotopes=NULL,threshold=2.5,charge=1,ppm=5,
       #sum( u*v)
       #similarity_score <- as.vector((u %*% v) / (sqrt(sum(u^2)) * sqrt(sum(v^2)))) 
       
-      similarity_score <- -log(as.vector(sqrt(sum(((u-v))^2)) / (sqrt(sum(u^2)) * sqrt(sum(v^2)))))
+      similarity_score <- -log(as.vector(sqrt(sum(((u-v))^2) / (sum(u^2) * sum(v^2)))))
       match_score <- log(sum(`&`(alignment$intensity.top>0,alignment$intensity.bottom>0))/sum(alignment$intensity.top>0))
       #similarity_score <- -log(as.vector(sqrt(sum(((u-v))^2)) ))
       similarity_score <- similarity_score + match_score
@@ -3087,7 +3087,7 @@ FDR_cutoff_plot<-function(Peptide_plot_list,FDR_cutoff=0.1,FDR_strip=500,plot_fd
   plot_fdr_histogram<-function(Peptide_plot_list,plot_name="target-decoy",outputdir=outputdir){
     library(dplyr)
     if (nrow(Peptide_plot_list)!=0) {
-          Peptide_plot_list_plot<-Peptide_plot_list[,c("isdecoy","Score")]
+    Peptide_plot_list_plot<-Peptide_plot_list[,c("isdecoy","Score")]
     target_decoy<-factor(ifelse(Peptide_plot_list_plot$isdecoy==0,"Target","Decoy"),levels = c("Target","Decoy"))
     Peptide_plot_list_plot$target_decoy=target_decoy
     Peptide_plot_list$target_decoy=target_decoy
@@ -3117,7 +3117,7 @@ FDR_cutoff_plot<-function(Peptide_plot_list,FDR_cutoff=0.1,FDR_strip=500,plot_fd
     png(paste0(outputdir,"/Matching_Score_vs_mz_",plot_name,".png"))
     alpha=1/round(nrow(Peptide_plot_list_plot)/10000)
     if (alpha==Inf ) alpha=1
-    p<-ggplot(data=Peptide_plot_list,aes(x=mz,y=Score,col=target_decoy)) + geom_point(size=1,alpha=1/100) + 
+    p<-ggplot(data=Peptide_plot_list,aes(x=mz,y=Score,colour=target_decoy)) + geom_point(size=1,alpha=1/100,aes(colour = target_decoy)) + 
       ggtitle("Matching score vs mz") +
       xlab("mz") + ylab("Matching score") + labs(fill = "isdecoy")+ theme(axis.text.x = element_text(angle=45))
     print(p)
@@ -3337,9 +3337,9 @@ plot_matching_score<-function(Peptide_plot_list,peaklist,charge,ppm,outputdir=ge
   Peptide_plot_list=Peptide_plot_list %>% group_by(.dots = c("formula","isdecoy","adduct")) %>% summarise(Peptide=paste(Peptide,collapse = "_"))
   for (i in 1:nrow(Peptide_plot_list)){
   if(Peptide_plot_list$isdecoy[i]==0){
-    SCORE_PMF(Peptide_plot_list$formula[i],peaklist,isotopes=isotopes,threshold=0.01,charge=charge,ppm=ppm,print.graphic=T,output.list=F,outputfile=paste0(outputdir,"/",Peptide_plot_list$formula[i]," ",Peptide_plot_list$adduct[i]," ",ifelse(Peptide_plot_list$isdecoy[i]==0,"target","decoy"),".png"))
+    try(SCORE_PMF(Peptide_plot_list$formula[i],peaklist,isotopes=isotopes,threshold=0.01,charge=charge,ppm=ppm,print.graphic=T,output.list=F,outputfile=paste0(outputdir,"/",Peptide_plot_list$formula[i]," ",Peptide_plot_list$adduct[i]," ",ifelse(Peptide_plot_list$isdecoy[i]==0,"target","decoy"),".png")))
     }else{
-    SCORE_PMF(Peptide_plot_list$formula[i],peaklist,isotopes=decoy_isotopes,threshold=0.01,charge=charge,ppm=ppm,print.graphic=T,output.list=F,outputfile=paste0(outputdir,"/",Peptide_plot_list$formula[i]," ",Peptide_plot_list$adduct[i]," ",ifelse(Peptide_plot_list$isdecoy[i]==0,"target","decoy"),".png"))
+    try(SCORE_PMF(Peptide_plot_list$formula[i],peaklist,isotopes=decoy_isotopes,threshold=0.01,charge=charge,ppm=ppm,print.graphic=T,output.list=F,outputfile=paste0(outputdir,"/",Peptide_plot_list$formula[i]," ",Peptide_plot_list$adduct[i]," ",ifelse(Peptide_plot_list$isdecoy[i]==0,"target","decoy"),".png")))
   }
   }
   

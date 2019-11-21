@@ -144,9 +144,15 @@ protein_pmf_result<-read.csv(paste0(wd,"/Bovin_lens ID/Protein_segment_PMF_RESUL
 head(protein_pmf_result)
 ```
 
+## Scoring system for protein and peptide
 **Score** in peptide result table shows the isotopic pattern matching score of the peptide. In Protein result table, it shows the intensity weighted peptide spectrum matching score.
 
+$Score=\log(Observed\_Peak/Theoritical\_peak)-\log(\sqrt{\frac{\sum_{x = 1}^{n} (Theoritical\_intensity_x-Observed\_intensity_x)^2}{\sum_{x = 1}^{n} (Theoritical\_intensity_x)^2(Observed\_intensity_x)^2}}$
+
+
 **Proscore** in the protein result table shows the overall estimation of the protein identification Accuracy
+
+$Proscore=\frac{\sum_{x = 1}^{n}(Score_x*log(Intensity_x))}{mean(log(Intensity))}*Protein\_coverage*Normalized\_intensity$
 
 A *Peptide_region_file.csv* has also been created to summarise all the IDs in this data file:
 
@@ -166,7 +172,7 @@ In the identification details folder, you will find a series of FDR file and plo
 dir(paste0(wd,"/Bovin_lens ID/1/"), recursive=T)
 ```
 
-In this folder, you will find the FDR plots for protein and peptide. The software will take the proscore and its FDR model to trim the final identification result. The *1st_unique_peptide_vs_mz_feature* is a plot that could tell you the number of peptide candidates have been matched to the mz features in the first round run.You can also access the peptide spectrum match (first MS dimension) data via the "/ppm" subfolder.
+In this folder, you will find the FDR plots for protein and peptide. The software will take the proscore and its FDR model to trim the final identification result. The *unique_peptide_ranking_vs_mz_feature.png* is a plot that could tell you the number of peptide candidates have been matched to the mz features in the first round run.You can also access the peptide spectrum match (first MS dimension) data via the "/ppm" subfolder.
 
 ```{r FDR plot, message=FALSE}
 library(magick)
@@ -181,7 +187,14 @@ print(p_combined)
 
 ```
 
+you will also find a *Matching_Score_vs_mz* plots for further investigation on peptide matching quality. 
 
+```{r p_Matching_Score_vs_mz plot, message=FALSE}
+library(magick)
+p_Matching_Score_vs_mz<-image_read(paste0(wd,"/Bovin_lens ID/3/Matching_Score_vs_mz_target-decoy.png"))
+print(p_Matching_Score_vs_mz)
+
+```
 
 ## Identification summary and cluster imaging
 

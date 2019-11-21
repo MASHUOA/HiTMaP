@@ -214,9 +214,15 @@ head(protein_pmf_result)
 ## # ... with 2 more variables: Intensity_norm <dbl>, desc <fct>
 ```
 
+## Scoring system for protein and peptide
 **Score** in peptide result table shows the isotopic pattern matching score of the peptide. In Protein result table, it shows the intensity weighted peptide spectrum matching score.
 
+$Score=\log(Observed\_Peak/Theoritical\_peak)-\log(\sqrt{\frac{\sum_{x = 1}^{n} (Theoritical\_intensity_x-Observed\_intensity_x)^2}{\sum_{x = 1}^{n} (Theoritical\_intensity_x)^2(Observed\_intensity_x)^2}}$
+
+
 **Proscore** in the protein result table shows the overall estimation of the protein identification Accuracy
+
+$Proscore=\frac{\sum_{x = 1}^{n}(Score_x*log(Intensity_x))}{mean(log(Intensity))}*Protein\_coverage*Normalized\_intensity$
 
 A *Peptide_region_file.csv* has also been created to summarise all the IDs in this data file:
 
@@ -276,7 +282,7 @@ dir(paste0(wd,"/Bovin_lens ID/1/"), recursive=T)
 ## [12] "Spectrum.csv"
 ```
 
-In this folder, you will find the FDR plots for protein and peptide. The software will take the proscore and its FDR model to trim the final identification result. The *1st_unique_peptide_vs_mz_feature* is a plot that could tell you the number of peptide candidates have been matched to the mz features in the first round run.You can also access the peptide spectrum match (first MS dimension) data via the "/ppm" subfolder.
+In this folder, you will find the FDR plots for protein and peptide. The software will take the proscore and its FDR model to trim the final identification result. The *unique_peptide_ranking_vs_mz_feature.png* is a plot that could tell you the number of peptide candidates have been matched to the mz features in the first round run.You can also access the peptide spectrum match (first MS dimension) data via the "/ppm" subfolder.
 
 
 ```r
@@ -307,12 +313,28 @@ print(p_combined)
 ## # A tibble: 1 x 7
 ##   format width height colorspace matte filesize density
 ##   <chr>  <int>  <int> <chr>      <lgl>    <int> <chr>  
-## 1 PNG     1920    480 sRGB       FALSE        0 72x72
+## 1 PNG     2239    550 sRGB       FALSE        0 72x72
 ```
 
-<img src="README_files/figure-html/FDR plot-2.png" width="1920" />
+<img src="README_files/figure-html/FDR plot-2.png" width="2239" />
+
+you will also find a *Matching_Score_vs_mz* plots for further investigation on peptide matching quality. 
 
 
+```r
+library(magick)
+p_Matching_Score_vs_mz<-image_read(paste0(wd,"/Bovin_lens ID/3/Matching_Score_vs_mz_target-decoy.png"))
+print(p_Matching_Score_vs_mz)
+```
+
+```
+## # A tibble: 1 x 7
+##   format width height colorspace matte filesize density
+##   <chr>  <int>  <int> <chr>      <lgl>    <int> <chr>  
+## 1 PNG      480    480 sRGB       FALSE    62832 72x72
+```
+
+<img src="README_files/figure-html/p_Matching_Score_vs_mz plot-1.png" width="480" />
 
 ## Identification summary and cluster imaging
 
@@ -324,11 +346,8 @@ dir(wd_sum)
 ```
 
 ```
-##  [1] "Book2.csv"                      "candidatelist.csv"             
-##  [3] "cluster Ion images"             "crystalin.xlsx"                
-##  [5] "Peptide_Summary.csv"            "Peptide_summary.xls"           
-##  [7] "Protein_feature_summary_sl.csv" "protein_index.csv"             
-##  [9] "Protein_Summary.csv"            "Protein_Summary.xlsx"
+## [1] "candidatelist.csv"    "cluster Ion images"   "Peptide_Summary.csv" 
+## [4] "protein_index.csv"    "Protein_Summary.csv"  "Protein_Summary.xlsx"
 ```
 
 "candidatelist.csv" and "protein_index.csv" contains the candidates used for this project. They are output after the candidate processing while *output_candidatelist* set as TRUE, and can be used repeatedly while *use_previous_candidates* set as TRUE.
