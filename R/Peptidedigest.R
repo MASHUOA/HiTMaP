@@ -2345,7 +2345,7 @@ if(PMFsearch){
     #Peptide_Summary_file$Intensity<-Peptide_Summary_file$Intensity+Peptide_Summary_searchlist$Intensity
     #Peptide_plot_list<-Peptide_Summary_searchlist[Peptide_Summary_searchlist$Intensity>0,]
     
-    Peptide_plot_list<-Peptide_Summary_searchlist
+    Peptide_plot_list<-Peptide_Summary_searchlist[Peptide_Summary_searchlist$Intensity>0,]
     #Peptide_plot_list<-unique(Peptide_plot_list)
     Peptide_plot_list$formula<-as.character(Peptide_plot_list$formula)
     if(is.null(Peptide_plot_list$moleculeNames)){Peptide_plot_list$moleculeNames=Peptide_plot_list$Peptide}
@@ -3104,7 +3104,7 @@ FDR_cutoff_plot<-function(Peptide_plot_list,FDR_cutoff=0.1,FDR_strip=500,plot_fd
     png(paste0(outputdir,"/Peptide_Score_histogram_",plot_name,".png"))
     p<-ggplot(Peptide_plot_list_plot, aes(x=Peptide_plot_list_plot$Score, color=target_decoy, fill=target_decoy)) +
       geom_histogram(aes(y=..density..), position="Dodge", alpha=0.5, bins = 50)+
-      geom_density(alpha=0.6)+
+      geom_density(alpha=0.6)+ xlim(quantile(Peptide_plot_list_plot$Score, c(0.005,0.995)))+
       geom_vline(data=mu, aes(xintercept=mu$mean, color=mu$target_decoy), linetype="dashed")+
       ggtitle("Peptide score vs Counts") +
       xlab("Score") + ylab("Counts") + 
@@ -3117,7 +3117,7 @@ FDR_cutoff_plot<-function(Peptide_plot_list,FDR_cutoff=0.1,FDR_strip=500,plot_fd
     png(paste0(outputdir,"/Matching_Score_vs_mz_",plot_name,".png"))
     alpha=1/round(nrow(Peptide_plot_list_plot)/10000)
     if (alpha==Inf ) alpha=1
-    p<-ggplot(data=Peptide_plot_list,aes(x=mz,y=Score,color=target_decoy)) + geom_point(size=1,alpha=1/100) + 
+    p<-ggplot(data=Peptide_plot_list,aes(x=mz,y=Score,col=target_decoy)) + geom_point(size=1,alpha=1/100) + 
       ggtitle("Matching score vs mz") +
       xlab("mz") + ylab("Matching score") + labs(fill = "isdecoy")+ theme(axis.text.x = element_text(angle=45))
     print(p)
@@ -3127,8 +3127,6 @@ FDR_cutoff_plot<-function(Peptide_plot_list,FDR_cutoff=0.1,FDR_strip=500,plot_fd
   #Peptide_plot_list=unique_fomula_ID
   
   if (!is.null(outputdir) && plot_fdr){
-    
-    
 
     plot_fdr_histogram(Peptide_plot_list,outputdir=outputdir)
     
