@@ -125,8 +125,8 @@ imaging_identification<-function(
   if (!is.null(Rotate_IMG)){Rotate_IMG=read.csv(Rotate_IMG,stringsAsFactors = F)}
   
   if(PMF_analysis){
-  message(paste("Protein_feature_list was selected as database",spectra_segments_per_file,threshold,ppm,PMF_analysis,Virtual_segmentation,
-                "\nVirtual_segmentation_rankfile",Virtual_segmentation_rankfile,"\nBypass_generate_spectrum",Bypass_generate_spectrum))
+  message(paste(Fastadatabase,"was selected as database","\nAssumming", spectra_segments_per_file,"regions in the image.","\nSpectrum intensity threshold:",threshold,"\nmz tolerance",ppm,"ppm","\nPerform manual segmentation:",Virtual_segmentation,
+                "\nManual segmentation def file",Virtual_segmentation_rankfile,"\nBypass spectrum generation:",Bypass_generate_spectrum))
   Peptide_Summary_searchlist<-unique(Protein_feature_list[,c("Peptide","mz","adduct","formula","isdecoy")])
   
   Peptide_Summary_file<-PMF_Cardinal_Datafilelist(datafile, 
@@ -278,11 +278,12 @@ imaging_identification<-function(
     num_of_interest<-numeric(0)
     for (interest_desc in Protein_desc_of_interest){
       Protein_feature_list_interest<-rbind(Protein_feature_list_interest,Protein_feature_list[grepl(paste0(" ",interest_desc),Protein_feature_list$desc,ignore.case = T),])
-      num_of_interest[interest_desc]<-nrow(unique(Protein_feature_list[grepl(paste0(" ",interest_desc),Protein_feature_list$desc,ignore.case = T),"Protein"]))
+      Protein_feature_list_interest<-rbind(Protein_feature_list_interest,Protein_feature_list[grepl(paste0("-",interest_desc),Protein_feature_list$desc,ignore.case = T),])
+      num_of_interest[interest_desc]<-nrow(unique(Protein_feature_list[grepl(paste0(" ",interest_desc),Protein_feature_list$desc,ignore.case = T),"Protein"]))+nrow(unique(Protein_feature_list[grepl(paste0("-",interest_desc),Protein_feature_list$desc,ignore.case = T),]))
         }
     #Protein_feature_list_crystallin$Protein=as.character(Protein_feature_list_crystallin$desc)
     Protein_feature_list=Protein_feature_list_interest
-    message(paste(num_of_interest,"Protein(s) found with annotations of interest",Protein_desc_of_interest,collapse = "\n"))     
+    message(paste(num_of_interest,"Protein(s) found with annotations of interest:",Protein_desc_of_interest,collapse = "\n"))     
     }
 
     Protein_feature_list=as.data.frame(Protein_feature_list)
@@ -1662,7 +1663,7 @@ Plot_PMF_all<-function(Protein_feature_list,peaklist,threshold=threshold,savenam
   plotpeaklist<-plotpeaklist[plotpeaklist[,2]>0,]
   Protein_feature_list<-Protein_feature_list[Protein_feature_list$Intensity>=max(Protein_feature_list$Intensity)*threshold,]
   Protein_feature_list<-unique(Protein_feature_list[,c( "mz" ,"Intensity","adduct","moleculeNames")])
-  sp<-ggplot2::ggplot(plotpeaklist, size=1 ,aes(x=m.z, y=intensities,xend=m.z,yend=rep(0,length(plotpeaklist[,2])))) +  geom_segment()
+  sp<-ggplot2::ggplot(plotpeaklist, size=1 ,aes(x=m.z, y=intensities,xend=m.z,yend=rep(0,length(plotpeaklist[,2])))) +  geom_segment() +theme_classic()
     df<- data.frame("mz" = Protein_feature_list$mz,"mzend" = Protein_feature_list$mz, "yintercept" = rep(0,length(Protein_feature_list$mz)), "intensities" = Protein_feature_list$Intensity,"moleculeNames"=as.factor(Protein_feature_list$moleculeNames))
     
     colnames(df)<-c("mz","mzend","yintercept","intensities","moleculeNames")
@@ -2479,7 +2480,7 @@ if(PMFsearch){
       write.csv(Protein_feature_result,paste0(datafile[z] ," ID/",SPECTRUM_batch,"/Protein_ID_score_rank_",score_method,".csv"),row.names = F)
       write.csv(Protein_feature_list_rank_cutoff,paste0(datafile[z] ," ID/","Peptide_segment_PMF_RESULT_",SPECTRUM_batch,".csv"),row.names = F)
       
-      if (plot_matching_score_t){
+      if (plot_matching_score_t && nrow(Protein_feature_list_rank_cutoff)!=0){
         try(plot_matching_score(Protein_feature_list_rank_cutoff,peaklist,charge=1,ppm,outputdir=paste0(datafile[z] ," ID/",SPECTRUM_batch,"/ppm")))
       }
       png(paste0(datafile[z] ," ID/",SPECTRUM_batch,"/unique_peptide_ranking_vs_mz_feature",".png"),width = 960,height = 480)
@@ -3348,13 +3349,16 @@ plot_matching_score<-function(Peptide_plot_list,peaklist,charge,ppm,outputdir=ge
   #Peptide_plot_list1=Peptide_plot_list
   Peptide_plot_list=Peptide_plot_list[!is.na(Peptide_plot_list$Intensity),]
   Peptide_plot_list=Peptide_plot_list %>% group_by(.dots = c("formula","isdecoy","adduct")) %>% summarise(Peptide=paste(Peptide,collapse = "_"))
-  for (i in 1:nrow(Peptide_plot_list)){
+  if(nrow(Peptide_plot_list)!=0){
+     for (i in 1:nrow(Peptide_plot_list)){
   if(Peptide_plot_list$isdecoy[i]==0){
     try(SCORE_PMF(Peptide_plot_list$formula[i],peaklist,isotopes=isotopes,threshold=0.01,charge=charge,ppm=ppm,print.graphic=T,output.list=F,outputfile=paste0(outputdir,"/",Peptide_plot_list$formula[i]," ",Peptide_plot_list$adduct[i]," ",ifelse(Peptide_plot_list$isdecoy[i]==0,"target","decoy"),".png")))
     }else{
     try(SCORE_PMF(Peptide_plot_list$formula[i],peaklist,isotopes=decoy_isotopes,threshold=0.01,charge=charge,ppm=ppm,print.graphic=T,output.list=F,outputfile=paste0(outputdir,"/",Peptide_plot_list$formula[i]," ",Peptide_plot_list$adduct[i]," ",ifelse(Peptide_plot_list$isdecoy[i]==0,"target","decoy"),".png")))
   }
+  } 
   }
+
   
   
 }

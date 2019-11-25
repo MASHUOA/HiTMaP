@@ -38,10 +38,15 @@ Now the HiTMaP is upon running. You could build the candidate list of your targe
 ```r
 #creat candidate list
 library(HiTMaP)
+#set project folder that contains imzML, .ibd and fasta files
+wd=paste0(file.path(path.package(package="HiTMaP")),"/data/")
+#set a series of imzML files to be processed
+datafile=c("Bovin_lens")
+
 
 imaging_identification(
 #==============Choose the imzml raw data file(s) to process  make sure the fasta file in the same folder
-               datafile=paste(file.path(path.package(package="HiTMaP")),"/data/Bovin_lens.imzML", sep=""),
+               datafile=paste0(wd,datafile),
                threshold=0.005, 
                ppm=5,
 #==============specify the digestion enzyme specificity
@@ -69,11 +74,11 @@ imaging_identification(
                Protein_feature_summary=TRUE,
                Peptide_feature_summary=TRUE,
                Region_feature_summary=TRUE,
-#==============The decoy mode: could be one of the "adducts", "elements" or "isotope"
+#==============The parameters for Cluster imaging. Specify the annotations of interest, the program will perform a case-insensitive search on the result file, extract the protein(s) of interest and plot them in the cluster imaging mode
                plot_cluster_image_grid=FALSE,
                ClusterID_colname="Protein",
                componentID_colname="Peptide",
-               Protein_desc_of_interest="Crystallin",
+               Protein_desc_of_interest=c("Crystallin","Actin"),
                Rotate_IMG=NULL,
                )
 ```
@@ -88,7 +93,9 @@ In this example, the project folder will be:
 
 ```r
 library(HiTMaP)
-wd=paste(file.path(path.package(package="HiTMaP")),"/data/", sep="")
+wd=paste0(file.path(path.package(package="HiTMaP")),"/data/")
+#set a series of imzML files to be processed
+datafile=c("Bovin_lens")
 wd
 ```
 
@@ -139,7 +146,7 @@ library(magick)
 ```
 
 ```r
-p<-image_read(paste0(wd,"/Bovin_lens ID/spatialKMeans_image_plot.png"))
+p<-image_read(paste0(wd,datafile," ID/spatialKMeans_image_plot.png"))
 print(p)
 ```
 
@@ -160,7 +167,7 @@ you could locate the PMF spectrum matching plot of each individual region.
 
 ```r
 library(magick)
-p_pmf<-image_read(paste0(wd,"/Bovin_lens ID/Bovin_lens 3PMF spectrum match.png"))
+p_pmf<-image_read(paste0(wd,datafile," ID/Bovin_lens 3PMF spectrum match.png"))
 print(p_pmf)
 ```
 
@@ -177,7 +184,7 @@ list of Peptides and proteins of each region has also been created so that you m
 
 
 ```r
-peptide_pmf_result<-read.csv(paste0(wd,"/Bovin_lens ID/Peptide_segment_PMF_RESULT_3.csv"))
+peptide_pmf_result<-read.csv(paste0(wd,datafile," ID/Peptide_segment_PMF_RESULT_3.csv"))
 head(peptide_pmf_result)
 ```
 
@@ -197,7 +204,7 @@ head(peptide_pmf_result)
 
 
 ```r
-protein_pmf_result<-read.csv(paste0(wd,"/Bovin_lens ID/Protein_segment_PMF_RESULT_3.csv"))
+protein_pmf_result<-read.csv(paste0(wd,datafile," ID/Protein_segment_PMF_RESULT_3.csv"))
 head(protein_pmf_result)
 ```
 
@@ -228,7 +235,7 @@ A *Peptide_region_file.csv* has also been created to summarise all the IDs in th
 
 
 ```r
-Identification_summary_table<-read.csv(paste0(wd,"/Bovin_lens ID/Peptide_region_file.csv"))
+Identification_summary_table<-read.csv(paste0(wd,datafile," ID/Peptide_region_file.csv"))
 head(Identification_summary_table)
 ```
 
@@ -250,21 +257,21 @@ The details of protein/peptide identification process has been save to the folde
 
 
 ```r
-list.dirs(paste0(wd,"/Bovin_lens ID/"), recursive=FALSE)
+list.dirs(paste0(wd,datafile," ID/"), recursive=FALSE)
 ```
 
 ```
-## [1] "C:/Users/admgguo484/Documents/R/win-library/3.6/HiTMaP/data//Bovin_lens ID//1"
-## [2] "C:/Users/admgguo484/Documents/R/win-library/3.6/HiTMaP/data//Bovin_lens ID//2"
-## [3] "C:/Users/admgguo484/Documents/R/win-library/3.6/HiTMaP/data//Bovin_lens ID//3"
-## [4] "C:/Users/admgguo484/Documents/R/win-library/3.6/HiTMaP/data//Bovin_lens ID//4"
-## [5] "C:/Users/admgguo484/Documents/R/win-library/3.6/HiTMaP/data//Bovin_lens ID//5"
+## [1] "C:/Users/admgguo484/Documents/R/win-library/3.6/HiTMaP/data/Bovin_lens ID//1"
+## [2] "C:/Users/admgguo484/Documents/R/win-library/3.6/HiTMaP/data/Bovin_lens ID//2"
+## [3] "C:/Users/admgguo484/Documents/R/win-library/3.6/HiTMaP/data/Bovin_lens ID//3"
+## [4] "C:/Users/admgguo484/Documents/R/win-library/3.6/HiTMaP/data/Bovin_lens ID//4"
+## [5] "C:/Users/admgguo484/Documents/R/win-library/3.6/HiTMaP/data/Bovin_lens ID//5"
 ```
 In the identification details folder, you will find a series of FDR file and plots to demonstrate the FDR model and score cutoff threshold:
 
 
 ```r
-dir(paste0(wd,"/Bovin_lens ID/1/"), recursive=T)
+dir(paste0(wd,datafile," ID/1/"), recursive=T)
 ```
 
 ```
@@ -287,7 +294,7 @@ In this folder, you will find the FDR plots for protein and peptide. The softwar
 
 ```r
 library(magick)
-p_peptide_vs_mz_feature<-image_read(paste0(wd,"/Bovin_lens ID/3/unique_peptide_ranking_vs_mz_feature.png"))
+p_peptide_vs_mz_feature<-image_read(paste0(wd,datafile," ID/3/unique_peptide_ranking_vs_mz_feature.png"))
 print(p_peptide_vs_mz_feature)
 ```
 
@@ -301,10 +308,10 @@ print(p_peptide_vs_mz_feature)
 <img src="README_files/figure-html/FDR plot-1.png" width="960" />
 
 ```r
-p_FDR_peptide<-image_read(paste0(wd,"/Bovin_lens ID/3/FDR.png"))
-p_FDR_protein<-image_read(paste0(wd,"/Bovin_lens ID/3/protein_FDR.png"))
-p_FDR_peptide_his<-image_read(paste0(wd,"/Bovin_lens ID/3/Peptide_Score_histogram_target-decoy.png"))
-p_FDR_protein_his<-image_read(paste0(wd,"/Bovin_lens ID/3/PROTEIN_Score_histogram.png"))
+p_FDR_peptide<-image_read(paste0(wd,datafile," ID/3/FDR.png"))
+p_FDR_protein<-image_read(paste0(wd,datafile," ID/3/protein_FDR.png"))
+p_FDR_peptide_his<-image_read(paste0(wd,datafile," ID/3/Peptide_Score_histogram_target-decoy.png"))
+p_FDR_protein_his<-image_read(paste0(wd,datafile," ID/3/PROTEIN_Score_histogram.png"))
 p_combined<-image_append(c(p_FDR_peptide,p_FDR_peptide_his,p_FDR_protein,p_FDR_protein_his))
 print(p_combined)
 ```
@@ -323,7 +330,7 @@ you will also find a *Matching_Score_vs_mz* plots for further investigation on p
 
 ```r
 library(magick)
-p_Matching_Score_vs_mz<-image_read(paste0(wd,"/Bovin_lens ID/3/Matching_Score_vs_mz_target-decoy.png"))
+p_Matching_Score_vs_mz<-image_read(paste0(wd,datafile," ID/3/Matching_Score_vs_mz_target-decoy.png"))
 print(p_Matching_Score_vs_mz)
 ```
 

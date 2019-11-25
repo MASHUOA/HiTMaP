@@ -90,9 +90,9 @@ In this example, the project folder will be:
 
 ```{r locate the project folder, message=FALSE, warning=FALSE}
 library(HiTMaP)
-wd=paste0(file.path(path.package(package="HiTMaP")),"/data/")
+wd=paste0("Y:\\MALDI\\George\\bltryp\\")
 #set a series of imzML files to be processed
-datafile=c("Bovin_lens")
+datafile=c("bl_tryp")
 wd
 
 ```
@@ -135,7 +135,7 @@ you could locate the PMF spectrum matching plot of each individual region.
 
 ```{r}
 library(magick)
-p_pmf<-image_read(paste0(wd,datafile," ID/Bovin_lens 3PMF spectrum match.png"))
+p_pmf<-image_read(paste0(wd,datafile," ID/",datafile," 3PMF spectrum match.png"))
 print(p_pmf)
 ```
 
@@ -222,9 +222,9 @@ Now you could visualized the interest proteins and their associated peptides' di
 ```{r CLuster imaging}
 p_cluster1<-image_read(paste0(wd,"/Summary folder/cluster Ion images/705_cluster_imaging.png"))
 print(p_cluster1)
-p_cluster2<-image_read(paste0(wd,"/Summary folder/cluster Ion images/5027_cluster_imaging.png"))
+p_cluster2<-image_read(paste0(wd,"/Summary folder/cluster Ion images/35666_cluster_imaging.png"))
 print(p_cluster2)
-p_cluster3<-image_read(paste0(wd,"/Summary folder/cluster Ion images/5479_cluster_imaging.png"))
+p_cluster3<-image_read(paste0(wd,"/Summary folder/cluster Ion images/791_cluster_imaging.png"))
 print(p_cluster3)
 ```
 
