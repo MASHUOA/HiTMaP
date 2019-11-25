@@ -231,7 +231,6 @@ cluster_image_cardinal_allinone<-function(clusterID,
     
     }else if (plot_style=="rainbow"){
     
-    outputpngsum=paste(getwd(),"\\",windows_filename(substr(clusterID, 1, 10)),"_cluster_plot_sum",'.png',sep="")
     
     
     if (plot_layout=="line"){
@@ -287,7 +286,6 @@ cluster_image_cardinal_allinone<-function(clusterID,
     
     ##################################
     
-    outputpngsum=paste(getwd(),"\\",windows_filename(substr(clusterID, 1, 10)),"_cluster_plot_sum_flex",'.png',sep="")
     
     
     if (plot_layout=="line"){
@@ -441,6 +439,7 @@ cluster_image_grid<-function(clusterID,
   library(dplyr)
   #rotate the image
   #imdata@pixelData@data<-rotatetmp
+  outputpngsum=paste(getwd(),"\\",windows_filename(substr(clusterID, 1, 15)),"_cluster_imaging",'.png',sep="")
   
   
   SMPLIST=as.data.frame(SMPLIST)
@@ -448,9 +447,10 @@ cluster_image_grid<-function(clusterID,
   #message(outputpng)
   candidate=SMPLIST[SMPLIST[[ClusterID_colname]]==clusterID,]
   #candidate=candidate[order(as.character())]
+  candidate_u<- candidate %>% group_by(mz) %>% summarise(Peptide=Peptide[1])
   candidateunique=as.numeric(as.character(unique(candidate[,"mz"])))
   candidateunique=candidateunique[order(as.character(candidateunique))]
-
+  candidate<-merge(data.frame(candidate_u),candidate,by=c("mz","Peptide"),sort=F)
   library(colortools)
   if (length(candidateunique)>4){
     
@@ -510,8 +510,6 @@ cluster_image_grid<-function(clusterID,
       }
       else if (plot_style=="rainbow"){
         
-        outputpngsum=paste(getwd(),"\\",windows_filename(substr(clusterID, 1, 10)),"_cluster_plot_sum",'.png',sep="")
-        
         
         if (plot_layout=="line"){
           png(outputpngsum,width = 5*((length(candidateunique)+1)),height = 5, bg = "black",units = "in",res = 75)
@@ -568,7 +566,6 @@ cluster_image_grid<-function(clusterID,
         ##################################
         darkmode()
         tmp_dir <- tempdir()
-        outputpngsum=paste(getwd(),"\\",windows_filename(substr(clusterID, 1, 10)),"_cluster_plot_sum_flex",'.png',sep="")
         temp_cluster_png=tempfile(pattern = "file", tmpdir = tempdir(), fileext = ".png")
         temp_component_png=list()
         if (plot_layout=="line"){
@@ -775,6 +772,7 @@ cluster_image_grid<-function(clusterID,
       if (image_info(clusterpng)[2]>output_png_width_limit){
         clusterpng<-image_resize(clusterpng,paste0(output_png_width_limit,"x"))
       }
+      header_file_pngfile<-header_file_png
       header_file_png<-image_read(header_file_png)
       header_file_png<-image_trim(header_file_png)
       header_file_png<-image_border(header_file_png, "white", "00x70")
@@ -782,6 +780,7 @@ cluster_image_grid<-function(clusterID,
       clusterpng<-image_append(c(header_file_png,clusterpng),stack = T)
       
       image_write(clusterpng,outputpngsum)
+      try(file.remove(header_file_pngfile))
     }
   }
   
@@ -789,7 +788,16 @@ cluster_image_grid<-function(clusterID,
     library(colorspace)
     library(stringr)
     library(ggplot2)
-    prosequence<-list_of_protein_sequence[clusterID]
+    
+    if(is.null(candidate$desc)){
+      candidate_unique_table=unique(candidate[,c("mz",componentID_colname,"formula","adduct")])
+      cluster_desc=ClusterID
+    }else{
+      candidate_unique_table=unique(candidate[,c(componentID_colname,"mz","formula","adduct")])
+      cluster_desc<-unique(candidate$desc)[1]
+    }
+    
+      prosequence<-list_of_protein_sequence[clusterID]
       candidate_unique_table=unique(candidate[,c(ClusterID_colname,componentID_colname,"Intensity","mz")])
       component_int<-candidate_unique_table %>% group_by_at((componentID_colname)) %>% summarise(int=sum(Intensity))
       component_int$int<-component_int$int/max(component_int$int)
@@ -822,7 +830,7 @@ cluster_image_grid<-function(clusterID,
         }
       }
       
-      ncharrow<-ceiling(width(s2)/length(candidateunique)/6)
+      ncharrow<-ceiling(width(s2)/length(candidateunique)/5)
       ncharw<-floor(width(s2)/ncharrow)
       component_int_plot<-data.frame(site=1:pro_length,int=pro_int,col=pro_col)
       component_int_plot$x<-(component_int_plot$site-1) %% ncharw
@@ -839,13 +847,15 @@ cluster_image_grid<-function(clusterID,
       
       footerpng<-paste(getwd(),"\\",windows_filename(substr(clusterID, 1, 10)),"_footer.png",sep="")
       png(footerpng,width = 5*length(candidateunique+1),height = 5*ceiling(ncharrow/10),units = "in",res = 300)
-
-      p <- ggplot(component_int_plot, aes(x, y, label = char))+ geom_label(fill=component_int_plot$col,family = "mono",size=20)+ theme(axis.line=element_blank(),axis.text.x=element_blank(),
-                                                                                                                               axis.text.y=element_blank(),axis.ticks=element_blank(),
-                                                                                                                               axis.title.x=element_blank(),
-                                                                                                                               axis.title.y=element_blank(),legend.position="none",
-                                                                                                                               panel.background=element_blank(),panel.border=element_blank(),panel.grid.major=element_blank(),
-                                                                                                                               panel.grid.minor=element_blank(),plot.background=element_blank())
+      par(oma=c(0, 0, 0, 0),mar=c(1, 0, 0, 0))
+      p <- ggplot(component_int_plot, aes(x, y, label = char)) + 
+        geom_label(fill=component_int_plot$col,family = "mono",size=20) + 
+        theme(axis.line=element_blank(),axis.text.x=element_blank(),
+              axis.text.y=element_blank(),axis.ticks=element_blank(),
+              axis.title.y=element_blank(),legend.position="none",
+              panel.background=element_blank(),panel.border=element_blank(),panel.grid.major=element_blank(),
+              panel.grid.minor=element_blank(),plot.background=element_blank()) +
+              xlab(cluster_desc) + ylim(min(component_int_plot$y)-0.4,max(component_int_plot$y)+0.4)
       
       print(p)
       dev.off()
@@ -853,13 +863,14 @@ cluster_image_grid<-function(clusterID,
       if(file.exists(outputpngsum)){
         
         clusterpng<-image_read(outputpngsum)
-        
+        footerpngfile<-footerpng
         footerpng<-image_read(footerpng)
         footerpng<-image_border(footerpng, "white", "00x70")
         footerpng<-image_resize(footerpng,paste0(image_info(clusterpng)[2],"x"))
         clusterpng<-image_append(c(clusterpng,footerpng),stack = T)
         
         image_write(clusterpng,outputpngsum)
+        try(file.remove(footerpngfile))
       }
       
       if(F){

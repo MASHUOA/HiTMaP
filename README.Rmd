@@ -67,11 +67,11 @@ imaging_identification(
                Protein_feature_summary=TRUE,
                Peptide_feature_summary=TRUE,
                Region_feature_summary=TRUE,
-#==============The decoy mode: could be one of the "adducts", "elements" or "isotope"
+#==============The parameters for Cluster imaging. Specify the annotations of interest, the program will perform a case-insensitive search on the result file, extract the protein(s) of interest and plot them in the cluster imaging mode
                plot_cluster_image_grid=FALSE,
                ClusterID_colname="Protein",
                componentID_colname="Peptide",
-               Protein_desc_of_interest="Crystallin",
+               Protein_desc_of_interest=c("Crystallin","Actin"),
                Rotate_IMG=NULL,
                )
 ```
@@ -213,11 +213,11 @@ dir(wd_sum)
 Now you could visualized the interest proteins and their associated peptides' distribution via cluster imaging function.
 
 ```{r CLuster imaging}
-p_cluster1<-image_read(paste0(wd,"/Summary folder/cluster Ion images/705_cluster_plot_sum_flex.png"))
+p_cluster1<-image_read(paste0(wd,"/Summary folder/cluster Ion images/705_cluster_imaging.png"))
 print(p_cluster1)
-p_cluster2<-image_read(paste0(wd,"/Summary folder/cluster Ion images/5027_cluster_plot_sum_flex.png"))
+p_cluster2<-image_read(paste0(wd,"/Summary folder/cluster Ion images/5027_cluster_imaging.png"))
 print(p_cluster2)
-p_cluster3<-image_read(paste0(wd,"/Summary folder/cluster Ion images/5479_cluster_plot_sum_flex.png"))
+p_cluster3<-image_read(paste0(wd,"/Summary folder/cluster Ion images/5479_cluster_imaging.png"))
 print(p_cluster3)
 ```
 

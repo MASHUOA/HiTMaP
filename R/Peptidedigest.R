@@ -46,7 +46,7 @@ Filters <- matrix(c( "imzml file", ".imzML",
 imaging_identification<-function(
 #==============Choose the imzml raw data file(s) to process  make sure the fasta file in the same folder
                datafile,
-               threshold=0.005, 
+               threshold=0.01, 
                ppm=5,
                mode=c("Proteomics","Metabolomics"),
                Digestion_site="[GN][LI]",
@@ -270,12 +270,21 @@ imaging_identification<-function(
   
 
   if(plot_cluster_image_grid){
-    Protein_feature_list=fread(file=paste(workdir,"/Summary folder/Protein_Summary.csv",sep=""))
+    Protein_feature_list=fread(file=paste(workdir,"/Summary folder/Protein_Summary.csv",sep=""),stringsAsFactors = F)
     #Protein_feature_list=merge(Protein_feature_list,Index_of_protein_sequence[,c("recno","desc")],by.x="Protein",by.y="recno",sort=F)
     #Protein_feature_list_crystallin<-Protein_feature_list[grepl("crystallin",Protein_feature_list$desc,ignore.case = T),]
-    Protein_feature_list_crystallin<-Protein_feature_list[grepl(Protein_desc_of_interest,Protein_feature_list$desc,ignore.case = T),]
+    if (Protein_desc_of_interest!="."){
+    Protein_feature_list_interest<-NULL
+    num_of_interest<-numeric(0)
+    for (interest_desc in Protein_desc_of_interest){
+      Protein_feature_list_interest<-rbind(Protein_feature_list_interest,Protein_feature_list[grepl(paste0(" ",interest_desc),Protein_feature_list$desc,ignore.case = T),])
+      num_of_interest[interest_desc]<-nrow(unique(Protein_feature_list[grepl(paste0(" ",interest_desc),Protein_feature_list$desc,ignore.case = T),"Protein"]))
+        }
     #Protein_feature_list_crystallin$Protein=as.character(Protein_feature_list_crystallin$desc)
-    Protein_feature_list=Protein_feature_list_crystallin
+    Protein_feature_list=Protein_feature_list_interest
+    message(paste(num_of_interest,"Protein(s) found with annotations of interest",Protein_desc_of_interest,collapse = "\n"))     
+    }
+
     Protein_feature_list=as.data.frame(Protein_feature_list)
     #Protein_feature_list$Protein<-Protein_feature_list$desc
     
@@ -363,7 +372,7 @@ imaging_identification<-function(
            Component_plot_coloure="as.cluster")}
     
 
-    
+    if(F){
     Pngclusterkmean=NULL
     Pngclustervseg=NULL
     for (i in 1:length(datafile)){
@@ -384,7 +393,9 @@ imaging_identification<-function(
     } 
     image_write(Pngclusterkmean, paste0(outputfolder,"datafiles_kmean.png"))
     image_write(Pngclustervseg, paste0(outputfolder,"datafiles_vseg.png"))
-  }
+    }
+    }
+
   
   message("Workflow done.")
 }
@@ -2041,7 +2052,9 @@ PMF_Cardinal_Datafilelist<-function(datafile,Peptide_Summary_searchlist,
     Protein_feature_list=get("Protein_feature_list", envir = .GlobalEnv)
       message(unique(Protein_feature_list$isdecoy))
   }
-  
+  if (Decoy_search && ("isotope" %in% Decoy_mode)){
+    Peptide_Summary_searchlist<-Peptide_Summary_searchlist[Peptide_Summary_searchlist$isdecoy==0,]
+  }
 
   #mycol <- color.map(map =c("black", "blue", "green", "yellow", "red","#FF00FF","white"), n = 100)
   #mycol <- colorRampPalette(c("black", "blue", "green", "yellow", "red","#FF00FF","white"))

@@ -360,7 +360,7 @@ Now you could visualized the interest proteins and their associated peptides' di
 
 
 ```r
-p_cluster1<-image_read(paste0(wd,"/Summary folder/cluster Ion images/705_cluster_plot_sum_flex.png"))
+p_cluster1<-image_read(paste0(wd,"/Summary folder/cluster Ion images/705_cluster_imaging.png"))
 print(p_cluster1)
 ```
 
@@ -374,7 +374,7 @@ print(p_cluster1)
 <img src="README_files/figure-html/CLuster imaging-1.png" width="1980" />
 
 ```r
-p_cluster2<-image_read(paste0(wd,"/Summary folder/cluster Ion images/5027_cluster_plot_sum_flex.png"))
+p_cluster2<-image_read(paste0(wd,"/Summary folder/cluster Ion images/5027_cluster_imaging.png"))
 print(p_cluster2)
 ```
 
@@ -388,7 +388,7 @@ print(p_cluster2)
 <img src="README_files/figure-html/CLuster imaging-2.png" width="1980" />
 
 ```r
-p_cluster3<-image_read(paste0(wd,"/Summary folder/cluster Ion images/5479_cluster_plot_sum_flex.png"))
+p_cluster3<-image_read(paste0(wd,"/Summary folder/cluster Ion images/5479_cluster_imaging.png"))
 print(p_cluster3)
 ```
 
