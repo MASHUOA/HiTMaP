@@ -57,6 +57,7 @@ imaging_identification<-function(
                Decoy_search=TRUE,
                Decoy_adducts=c("M+ACN+H","M+IsoProp+H","M+DMSO+H","M+Co","M+Ag","M+Cu","M+He","M+Ne","M+Ar","M+Kr","M+Xe","M+Rn"),
                Decoy_mode = "isotope",
+               mzrange=c(700,4000),
                adjust_score = FALSE,
                PMF_analysis=TRUE,
                Bypass_generate_spectrum=FALSE,
@@ -117,8 +118,10 @@ imaging_identification<-function(
                                                  Decoy_mode = Decoy_mode,
                                                  output_candidatelist=output_candidatelist,
                                                  use_previous_candidates=use_previous_candidates,
-                                                 Modifications=Modifications
+                                                 Modifications=Modifications,
+                                                 mzrange=mzrange
                                                  )
+  
   list_of_protein_sequence<-get("list_of_protein_sequence", envir = .GlobalEnv)
   Index_of_protein_sequence<-get("Index_of_protein_sequence", envir = .GlobalEnv)
   
@@ -2051,7 +2054,7 @@ PMF_Cardinal_Datafilelist<-function(datafile,Peptide_Summary_searchlist,
   
   if (missing(Protein_feature_list)){
     Protein_feature_list=get("Protein_feature_list", envir = .GlobalEnv)
-      message(unique(Protein_feature_list$isdecoy))
+      message("Got Protein_feature_list from global environment.")
   }
   if (Decoy_search && ("isotope" %in% Decoy_mode)){
     Peptide_Summary_searchlist<-Peptide_Summary_searchlist[Peptide_Summary_searchlist$isdecoy==0,]
@@ -2328,13 +2331,14 @@ if(PMFsearch){
     #peaklist<-peaklist[peaklist$mean>0,]
     
     colnames(peaklist)<-c("m.z","intensities")
-    peaklist<-peaklist[peaklist$intensities>(max(peaklist$intensities)*threshold),]
+    peaklist<-peaklist[peaklist$intensities>0,]
+    peaklist_pmf<-peaklist[peaklist$intensities>(max(peaklist$intensities)*threshold),]
     deconv_peaklist<-isopattern_ppm_filter_peaklist(peaklist,ppm=ppm,threshold=threshold)
     
     message(paste(nrow(deconv_peaklist),"mz features found in the spectrum") )
     #MassSpecWavelet_fun(peaklist = peaklist)
     #mz_feature_list<-Do_PMF_search(deconv_peaklist,Peptide_Summary_searchlist,BPPARAM=BPPARAM,ppm = ppm)
-    mz_feature_list<-Do_PMF_search(peaklist,Peptide_Summary_searchlist,BPPARAM=BPPARAM,ppm = ppm)
+    mz_feature_list<-Do_PMF_search(peaklist_pmf,Peptide_Summary_searchlist,BPPARAM=BPPARAM,ppm = ppm)
     mz_feature_list<-unique(mz_feature_list)
     
     message("Iterating peptide information...")
@@ -2466,7 +2470,9 @@ if(PMFsearch){
       #Protein_feature_result=Protein_feature_result[!grepl("Uncharacterized",Protein_feature_result$desc,ignore.case = T),]
       #message(unique(Protein_feature_result$isdecoy))
       #message(unique(Peptide_plot_list_rank$isdecoy))
+      if (nrow(Protein_feature_result)!=0){
       Score_cutoff_protein= FDR_cutoff_plot_protein(Protein_feature_result,FDR_cutoff=0.1,plot_fdr=T,outputdir=paste0(datafile[z] ," ID/",SPECTRUM_batch),adjust_score = F)
+          }else{Score_cutoff_protein=0}
       Protein_feature_result_cutoff=Protein_feature_result[((Protein_feature_result$Proscore>=Score_cutoff_protein)&(!is.na(Protein_feature_result$Intensity))&(Protein_feature_result$isdecoy==0)),]
       
       Protein_feature_list_rank=merge(Protein_feature_list[Protein_feature_list$Protein %in% Protein_feature_result_cutoff$Protein,],Peptide_plot_list_rank,by=c("mz","Peptide","adduct","formula","isdecoy"))
@@ -2500,10 +2506,13 @@ if(PMFsearch){
 
     #write.csv(Peptide_plot_list_2nd,paste("Peptide_segment_PMF_RESULT",SPECTRUM_batch,".csv"),row.names = F)
     write.csv(peaklist,paste0(datafile[z] ," ID/",SPECTRUM_batch,"/Spectrum.csv"),row.names = F)
+    #peaklist<-read.csv(paste0(datafile[z] ," ID/",SPECTRUM_batch,"/Spectrum.csv"),stringsAsFactors = F)
     #Peptide_Summary_file$Intensity<-Peptide_Summary_file$Intensity+unlist(parLapply(cl=cl,Peptide_Summary_file$mz,intensity_sum_para,uniques_intensity))
     #Peptide_Summary_file$Intensity<-Peptide_Summary_file$Intensity+unlist(bplapply(Peptide_Summary_file$mz,intensity_sum_para,uniques_intensity,BPPARAM = BPPARAM))
    #Peptide_Summary_file$Intensity<-Peptide_Summary_file$Intensity+unlist(bplapply(Peptide_Summary_file$mz,intensity_sum_para,uniques_intensity,BPPARAM = BPPARAM))
+    if (nrow(Peptide_plot_list_2nd)!=0){
     Peptide_plot_list_2nd$Region<-SPECTRUM_batch
+    }
     Peptide_Summary_file_regions<-rbind(Peptide_Summary_file_regions,Peptide_plot_list_2nd)
     #return(list(Peptide_Summary_file,Peptide_Summary_file_regions))
     }
@@ -2699,7 +2708,7 @@ SCORE_PMF<-function(formula,peaklist,isotopes=NULL,threshold=2.5,charge=1,ppm=5,
   if (is.null(isotopes)){data("isotopes")}
   
   
-  
+  formula<-as.character(formula)
   Spectrum_scoring <- function(spec.top, spec.bottom, t = 0.25, b = 0, top.label = NULL, 
                                bottom.label = NULL, xlim = c(50, 1200), x.threshold = 0, print.alignment = FALSE,
                                print.graphic = F, output.list = F,score_method="SQRT",Peak_intensity=0,outputfile=NULL) {
@@ -2897,6 +2906,7 @@ SCORE_PMF<-function(formula,peaklist,isotopes=NULL,threshold=2.5,charge=1,ppm=5,
     algo=1,
     verbose = F
   )
+  #message(formula)
   #message(pattern)
   pattern=pattern[[formula]]
   pattern=isopattern_ppm_filter(pattern = pattern[,1:2], ppm=ppm)
@@ -3534,7 +3544,14 @@ protein_scoring<-function(Protein_feature_list,Peptide_plot_list_rank,scoretype=
   sum_pro_pep_count<-Protein_feature_list_rank %>% group_by(.dots=c("Protein","isdecoy")) %>% summarize(peptide_count=length(unique(Peptide))) 
   
   Protein_feature_list_rank<-Protein_feature_list_rank[Protein_feature_list_rank$Protein %in% sum_pro_pep_count$Protein[sum_pro_pep_count$peptide_count>=peptide_ID_filter],]
-
+  if(nrow(Protein_feature_list_rank)==0){
+    df <- data.frame(matrix(ncol = 12, nrow = 0))
+    x <- c("Protein","isdecoy","Intensity","Score","peptide_count","Protein_coverage","Protein_coverage.Protein","Protein_coverage.isdecoy",
+           "Protein_coverage.Protein_coverage","Intensity_norm","Proscore","desc")
+    colnames(df) <- x
+    
+    return(list(df,Protein_feature_list_rank))
+    }
   #sum_pro_score<-Protein_feature_list_rank %>% group_by(.dots=c("Protein","isdecoy")) %>% summarize(Score=sum(Score))
   
   list_of_protein_sequence<-get("list_of_protein_sequence", envir = .GlobalEnv)

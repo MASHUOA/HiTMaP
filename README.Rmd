@@ -68,6 +68,7 @@ imaging_identification(
                Virtual_segmentation_rankfile=NULL,
 #==============Set the Score method for hi-resolution isotopic pattern matching
                score_method="SQRTP",
+               peptide_ID_filter=2,
 #==============Summarise the protein and peptide features across the project the result can be found at the summary folder
                Protein_feature_summary=TRUE,
                Peptide_feature_summary=TRUE,
