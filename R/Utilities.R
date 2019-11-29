@@ -1636,3 +1636,19 @@ col2RGB<-function(x){
   return(RGB(x_RGB))
 }
 rgb2hex <- function(r,g,b) sprintf('#%s',paste(as.hexmode(c(r,g,b)),collapse = ''))
+
+get_protein_from_interest_desc<-function(Protein_desc_of_interest){
+  Index_of_protein_sequence<-get("Index_of_protein_sequence", envir = .GlobalEnv)
+  if (Protein_desc_of_interest!="."){
+    Protein_feature_list_interest<-NULL
+    for (interest_desc in Protein_desc_of_interest){
+      Protein_feature_list_interest<-rbind(Protein_feature_list_interest,Index_of_protein_sequence[grepl(paste0(" ",interest_desc),Index_of_protein_sequence$desc,ignore.case = T),])
+      Protein_feature_list_interest<-rbind(Protein_feature_list_interest,Index_of_protein_sequence[grepl(paste0("-",interest_desc),Index_of_protein_sequence$desc,ignore.case = T),])
+    }
+    #Protein_feature_list_crystallin$Protein=as.character(Protein_feature_list_crystallin$desc)
+    return(unique(Protein_feature_list_interest$recno))
+  }else{
+    return(unique(Index_of_protein_sequence$recno))
+    }
+  
+}

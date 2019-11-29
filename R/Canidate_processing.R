@@ -397,7 +397,7 @@ Protein_feature_list_fun<-function(workdir=getwd(),
     
   }
   
-  if (Decoy_search && ("isotope" %in% Decoy_mode)){
+  if(F){if (Decoy_search && ("isotope" %in% Decoy_mode)){
     message("attaching decoy IDs in isotope mode...")
     if(is.null(Protein_Summary$isdecoy)){
       Protein_Summary$isdecoy=0
@@ -409,7 +409,7 @@ Protein_feature_list_fun<-function(workdir=getwd(),
     Protein_Summary<-rbind(Protein_Summary[Protein_Summary$isdecoy==0,],Protein_feature_list_decoy)
     Protein_feature_list<<-Protein_Summary
     message("attaching decoy IDs in isotope mode...Done")
-  }
+  }}
   
   return(Protein_Summary)
 }

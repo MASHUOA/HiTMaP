@@ -218,6 +218,14 @@ dir(wd_sum)
 
 **Note**: 90$^\circ$, 180$^\circ$ and 270$^\circ$ are recommended for image rotation. You may find an example CSV file in the library/HiTMaP/data folder.
 
+```{r summary table}
+library(dplyr)
+Protein_desc_of_interest<-c("Crystallin","Actin")
+Protein_Summary_tb<-read.csv(paste(file.path(path.package(package="HiTMaP")),"/data/Summary folder","/Protein_Summary.csv", sep=""),stringsAsFactors = F)
+
+```
+
+
 Now you could visualized the interest proteins and their associated peptides' distribution via cluster imaging function.
 
 ```{r CLuster imaging}

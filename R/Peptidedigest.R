@@ -107,6 +107,8 @@ imaging_identification<-function(
   
   message(paste(Fastadatabase, "was selected as data base", "candidates will be generated through",mode[1] ,"mode" ))
   
+  
+  
   Protein_feature_list<-Protein_feature_list_fun(workdir=workdir,
                                                  database=Fastadatabase,
                                                  Digestion_site=Digestion_site,
@@ -147,7 +149,8 @@ imaging_identification<-function(
                                                   Decoy_mode=Decoy_mode,
                                                   Decoy_search=Decoy_search,
                                                   adjust_score=adjust_score,
-                                                  peptide_ID_filter=peptide_ID_filter)
+                                                  peptide_ID_filter=peptide_ID_filter,
+                                                  Protein_desc_of_interest=Protein_desc_of_interest)
   
   }
   #Summarize the peptide list
@@ -2033,6 +2036,7 @@ PMF_Cardinal_Datafilelist<-function(datafile,Peptide_Summary_searchlist,
                                     plot_matching_score_t=T,
                                     Protein_feature_list,
                                     peptide_ID_filter=2,
+                                    Protein_desc_of_interest=".",
                                     ...){
   library(data.table)
   library(Cardinal)
@@ -2087,7 +2091,7 @@ PMF_Cardinal_Datafilelist<-function(datafile,Peptide_Summary_searchlist,
      #cl=autoStopCluster(makeCluster(6))
 
   
-  if (spatialKMeans){
+  if (spatialKMeans && SPECTRUM_for_average!=1){
     set.seed(1)
     message(paste0("spatialKMeans computing for ",name))
   skm <- spatialKMeans(imdata, r=Smooth_range, k=SPECTRUM_for_average, method="adaptive")
@@ -2302,7 +2306,7 @@ PMF_Cardinal_Datafilelist<-function(datafile,Peptide_Summary_searchlist,
 
   x=1:length(pixels(imdata))
   x=split(x, sort(x%%1)) 
-    
+  names(x)="1"
     
   } 
   
@@ -2310,7 +2314,7 @@ if(PMFsearch){
     imdata <- Load_Cardinal_imaging(datafile[z],preprocessing = F,resolution = ppm,rotate = rotate[z],as="MSImageSet")
     if (dir.exists(paste0(datafile[z] ," ID"))==FALSE){dir.create(paste0(datafile[z] ," ID"))}
     setwd(paste0(datafile[z] ," ID"))
-    #cl=makeCluster(8)
+    #cl=makeCluster(8)SPECTRUM_for_average
     Peptide_Summary_file_regions<-data.frame()
     message(paste("PMFsearch",name))
     message(paste( "region",names(x),"Found.",sep=" ",collapse = "\n"))
@@ -2386,7 +2390,7 @@ if(PMFsearch){
       data(isotopes)
       
       
-      Peptide_plot_list<-read.csv(paste0(datafile[z] ," ID/",SPECTRUM_batch,"/Peptide_1st_ID.csv"),stringsAsFactors = F)
+      #Peptide_plot_list<-read.csv(paste0(datafile[z] ," ID/",SPECTRUM_batch,"/Peptide_1st_ID.csv"),stringsAsFactors = F)
       #message("Scoring peptide...")
       #message(head(Peptide_plot_list$formula))
       #message(head(peaklist))
@@ -2697,7 +2701,7 @@ Pathway_overview_graphite<-function(){
   
 }
 
-SCORE_PMF<-function(formula,peaklist,isotopes=NULL,threshold=2.5,charge=1,ppm=5,print.graphic=F,output.list=F,outputfile=NULL,score_method="SQRT"){
+SCORE_PMF<-function(formula,peaklist,isotopes=NULL,threshold=2.5,charge=1,ppm=5,print.graphic=F,output.list=F,outputfile=NULL,score_method="SQRTP"){
   library(rcdk)
   library(rcdklibs)
   library(OrgMassSpecR)
@@ -2821,8 +2825,14 @@ SCORE_PMF<-function(formula,peaklist,isotopes=NULL,threshold=2.5,charge=1,ppm=5,
       plot.new()
       plot.window(xlim = xlim, ylim = c(-125, 125))
       ticks <- c(-100, -50, 0, 50, 100)
-      for(i in 1:length(top_plot$mz)) lines(rep(top_plot$mz[i], 2), c(0, top_plot$intensity[i]*100), col = "blue")
-      for(i in 1:length(bottom_plot$mz)) lines(rep(bottom_plot$mz[i], 2), c(0, -bottom_plot$intensity[i]*100), col = "red")
+      for(i in 1:length(top_plot$mz)) {
+        lines(rep(top_plot$mz[i], 2), c(0, top_plot$intensity[i]*100), col = "blue")
+        points(top_plot$mz[i],top_plot$intensity[i]*100, col = "darkblue")
+        }
+      for(i in 1:length(bottom_plot$mz)) {
+        lines(rep(bottom_plot$mz[i], 2), c(0, -bottom_plot$intensity[i]*100), col = "red")
+        points(bottom_plot$mz[i],-bottom_plot$intensity[i]*100, col = "darkred")
+        }
       axis(2, at = ticks, labels = abs(ticks), pos = xlim[1], ylab = "Intensity")
       axis(1, pos = -125)
       lines(xlim, c(0,0))
@@ -2862,6 +2872,7 @@ SCORE_PMF<-function(formula,peaklist,isotopes=NULL,threshold=2.5,charge=1,ppm=5,
   }
   
   isopattern_ppm_filter<-function(pattern,ppm){
+
     
     pattern_ppm=as.numeric(as.character(pattern[,1]))
     
@@ -2910,7 +2921,11 @@ SCORE_PMF<-function(formula,peaklist,isotopes=NULL,threshold=2.5,charge=1,ppm=5,
   #message(pattern)
   pattern=pattern[[formula]]
   pattern=isopattern_ppm_filter(pattern = pattern[,1:2], ppm=ppm)
-  
+  if (ppm>=25) {
+    instrument_ppm=15
+  }else{
+    instrument_ppm=3
+  }
   #monomass=pattern[1,1]
   #m_1_pattern=data.frame("m/z"=pattern[1,1]-(1.003354840/ifelse(charge==0,1,abs(charge))),abundance=0)
   #colnames(m_1_pattern)=colnames(pattern[,1:2])
@@ -2924,6 +2939,11 @@ SCORE_PMF<-function(formula,peaklist,isotopes=NULL,threshold=2.5,charge=1,ppm=5,
   #message(spectrumintensity)
   spectrum=data.frame(mz=pattern[,1],Intensity=spectrumintensity)
   Peak_intensity<-max(spectrum$Intensity)
+  
+  #spectrum<-lapply(1:nrow(pattern), function(x,pattern,peaklist,ppm,instrument_ppm){
+  #  peaklist[between(peaklist$m.z,pattern[x,1]*(1-(ppm+instrument_ppm)/2/1000000),pattern[x,1]*(1+(ppm+instrument_ppm)/2/1000000)),]
+  #},pattern,peaklist,ppm,instrument_ppm)
+  #spectrum<-do.call(rbind,spectrum)
   #message(head(spectrum))
   #message(c(min(range(pattern[,1],na.rm = T))-1," ",max(range(pattern[,1],na.rm = T))+1))
   score=Spectrum_scoring(spec.top = pattern,spec.bottom = spectrum,b=0,t=mean(pattern[,1])*ppm/1000000,top.label = "Theoretical",score_method=score_method,bottom.label = "Observed spectrum",xlim = c(min(range(pattern[,1],na.rm = T))-1,max(range(pattern[,1],na.rm = T))+1),output.list=output.list,print.graphic = print.graphic,outputfile = outputfile,Peak_intensity=Peak_intensity)
@@ -3984,7 +4004,7 @@ pick.peaks <- function(peaklist, ppm) {
 }
 
 isopattern_ppm_filter_peaklist<-function(pattern,ppm,threshold=0.001){
-  
+
   org_feature=nrow(pattern)
   
   pattern_ppm=as.numeric(as.character(pattern[,1]))
