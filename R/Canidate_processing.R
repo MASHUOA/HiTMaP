@@ -410,7 +410,7 @@ Protein_feature_list_fun<-function(workdir=getwd(),
     Protein_feature_list<<-Protein_Summary
     message("attaching decoy IDs in isotope mode...Done")
   }}
-  
+  Protein_feature_list<<-Protein_Summary
   return(Protein_Summary)
 }
 
