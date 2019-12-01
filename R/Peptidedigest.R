@@ -2436,7 +2436,7 @@ if(PMFsearch){
       Peptide_plot_list_decoy<-merge(Peptide_plot_list_decoy,formula_score,by="formula")
       Peptide_plot_list<-rbind(Peptide_plot_list,Peptide_plot_list_decoy)
       }
-      
+      Peptide_plot_list$mz<-as.numeric(as.character(Peptide_plot_list$mz))
       Peptide_plot_list_rank=rank_mz_feature(Peptide_plot_list,mz_feature=peaklist,BPPARAM = BPPARAM)
       #Peptide_plot_list_rank=Peptide_plot_list
       #Peptide_plot_list_rank$Rank=1
