@@ -2444,8 +2444,8 @@ if(PMFsearch){
       #Peptide_plot_list_rank=Peptide_plot_list
       #Peptide_plot_list_rank$Rank=1
       #Peptide_plot_list_rank=Peptide_plot_list_rank[Peptide_plot_list_rank$Rank<=Rank,]
-      Peptide_plot_list_rank<-Peptide_plot_list_rank[,c("mz","Peptide","adduct","formula","isdecoy","Intensity","moleculeNames","Region","Score",        
-                                                        "mz_align","Rank")]
+      Peptide_plot_list_rank<-unique(Peptide_plot_list_rank[,c("mz","Peptide","adduct","formula","isdecoy","Intensity","moleculeNames","Region","Score",        
+                                                        "mz_align","Rank")])
       
       
       #group_by(c("Protein","isdecoy"))  %>%  summarize(sum("Intensity"))
@@ -3075,12 +3075,12 @@ FDR_cutoff_plot_protein<-function(Protein_feature_result,FDR_cutoff=0.1,plot_fdr
     
     png(paste0(outputdir,"/protein_FDR.png"))
     plot.new()
-    plot(df$breaks, df$FDR,            # plot the data 
+    try(plot(df$breaks, df$FDR_m.av,            # plot the data 
          main="FDR plot",  # main title 
          xlab="Matching Proscore",        # x−axis label 
-         ylab="FDR")   # y−axis label 
-    lines(df$breaks, df$FDR_m.av)
-    abline(v=Proscore_cutoff)
+         ylab="FDR"))   # y−axis label 
+    try(lines(df$breaks, df$FDR_m.av))
+    try(abline(v=Proscore_cutoff))
     dev.off()  
     
     write.csv(df,paste0(outputdir,"/PROTEIN_FDR.CSV"),row.names = F)  
@@ -3103,7 +3103,7 @@ FDR_cutoff_plot_protein<-function(Protein_feature_result,FDR_cutoff=0.1,plot_fdr
              
     png(paste0(outputdir,"/PROTEIN_Score_histogram.png"))
     p<-ggplot(data=Protein_feature_result_plot,aes(x=Proscore,color=target_decoy, fill=target_decoy)) + geom_histogram( fill="white",alpha=0.5, bins = 200)  +
-      ggtitle("Protein score vs Counts") + xlim(-0.05,quantile(Protein_feature_result_plot$Proscore, c(0.99))) +
+      ggtitle("Protein score vs Counts") + xlim(-0.05,max(quantile(Protein_feature_result_plot$Proscore, c(0.99)),Proscore_cutoff+0.05)) +
       xlab("Protein score") + ylab("Counts") + labs(fill = "Is_Decoy") + theme_classic()+ geom_vline(xintercept = Proscore_cutoff)  #+ facet_grid(target_decoy ~ .)
     print(p)
     dev.off() 
@@ -3550,7 +3550,7 @@ spec_peakdetect<-function(x){
   summarySpectra(spectra[10:20])
 }
 
-protein_scoring<-function(Protein_feature_list,Peptide_plot_list_rank,scoretype=c("sum","mean"),BPPARAM = bpparam(),protein_nr_grouping=T,prioritize_protein=T,compete_decoy=F,peptide_ID_filter=2){
+protein_scoring<-function(Protein_feature_list,Peptide_plot_list_rank,scoretype=c("sum","mean"),BPPARAM = bpparam(),protein_nr_grouping=T,prioritize_protein=T,compete_decoy=T,peptide_ID_filter=2){
   
   library(dplyr)
   library(data.table)
