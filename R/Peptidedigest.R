@@ -82,6 +82,7 @@ imaging_identification<-function(
                ClusterID_colname="Protein",
                Protein_desc_of_interest=".",
                plot_unique_component=FALSE,
+               FDR_cutoff=0.1,
                ...
                ){
   library("pacman")
@@ -150,7 +151,8 @@ imaging_identification<-function(
                                                   Decoy_search=Decoy_search,
                                                   adjust_score=adjust_score,
                                                   peptide_ID_filter=peptide_ID_filter,
-                                                  Protein_desc_of_interest=Protein_desc_of_interest)
+                                                  Protein_desc_of_interest=Protein_desc_of_interest,
+                                                  FDR_cutoff= FDR_cutoff)
   
   }
   #Summarize the peptide list
@@ -2037,6 +2039,7 @@ PMF_Cardinal_Datafilelist<-function(datafile,Peptide_Summary_searchlist,
                                     Protein_feature_list,
                                     peptide_ID_filter=2,
                                     Protein_desc_of_interest=".",
+                                    FDR_cutoff=0.1,
                                     ...){
   library(data.table)
   library(Cardinal)
@@ -2453,10 +2456,10 @@ if(PMFsearch){
       write.csv(Peptide_plot_list_rank,paste0(datafile[z] ," ID/",SPECTRUM_batch,"/Peptide_1st_ID_score_rank_",score_method,".csv"),row.names = F)
       Peptide_plot_list_rank<-read.csv(paste0(datafile[z] ," ID/",SPECTRUM_batch,"/Peptide_1st_ID_score_rank_",score_method,".csv"),stringsAsFactors = F)
       if (adjust_score==F){
-      Score_cutoff= FDR_cutoff_plot(Peptide_plot_list_rank,FDR_cutoff=0.1,plot_fdr=T,outputdir=paste0(datafile[z] ," ID/",SPECTRUM_batch),adjust_score = adjust_score)
+      Score_cutoff= FDR_cutoff_plot(Peptide_plot_list_rank,FDR_cutoff=FDR_cutoff,plot_fdr=T,outputdir=paste0(datafile[z] ," ID/",SPECTRUM_batch),adjust_score = adjust_score)
       Peptide_plot_list_2nd=Peptide_plot_list_rank[((Peptide_plot_list_rank$Score>=Score_cutoff)&(!is.na(Peptide_plot_list_rank$Intensity))),]
       }else{
-        Score_cutoff= FDR_cutoff_plot(Peptide_plot_list_rank,FDR_cutoff=0.1,plot_fdr=T,outputdir=paste0(datafile[z] ," ID/",SPECTRUM_batch),adjust_score = adjust_score)
+        Score_cutoff= FDR_cutoff_plot(Peptide_plot_list_rank,FDR_cutoff=FDR_cutoff,plot_fdr=T,outputdir=paste0(datafile[z] ," ID/",SPECTRUM_batch),adjust_score = adjust_score)
         Peptide_plot_list_2nd=Score_cutoff[[2]]
         Score_cutoff=Score_cutoff[[1]]
         Peptide_plot_list_2nd=Peptide_plot_list_2nd[((Peptide_plot_list_2nd$Score>=Score_cutoff)&(!is.na(Peptide_plot_list_2nd$Intensity))),]
@@ -2478,7 +2481,7 @@ if(PMFsearch){
       #message(unique(Protein_feature_result$isdecoy))
       #message(unique(Peptide_plot_list_rank$isdecoy))
       if (nrow(Protein_feature_result)!=0){
-      Score_cutoff_protein= FDR_cutoff_plot_protein(Protein_feature_result,FDR_cutoff=0.1,plot_fdr=T,outputdir=paste0(datafile[z] ," ID/",SPECTRUM_batch),adjust_score = F)
+      Score_cutoff_protein= FDR_cutoff_plot_protein(Protein_feature_result,FDR_cutoff=FDR_cutoff,plot_fdr=T,outputdir=paste0(datafile[z] ," ID/",SPECTRUM_batch),adjust_score = F)
           }else{Score_cutoff_protein=0}
       Protein_feature_result_cutoff=Protein_feature_result[((Protein_feature_result$Proscore>=Score_cutoff_protein)&(!is.na(Protein_feature_result$Intensity))&(Protein_feature_result$isdecoy==0)),]
       
@@ -2580,7 +2583,7 @@ if(PMFsearch){
             Peptide_plot_list_Score=unlist(Peptide_plot_list_Score)
             #Peptide_plot_list_Score_frame=do.call(rbind,Peptide_plot_list_Score)
             Peptide_plot_list$Score=Peptide_plot_list_Score
-            FDR_cutoff=0.1
+           
             Score_cutoff= FDR_cutoff_plot(Peptide_plot_list,FDR_cutoff=FDR_cutoff,FDR_strip=0.002,plot_fdr=T,outputdir=paste0(datafile[z] ," ID/",SPECTRUM_batch))
             
             Peptide_plot_list=Peptide_plot_list[Peptide_plot_list$Score>=Score_cutoff,]
