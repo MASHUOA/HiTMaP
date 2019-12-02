@@ -1445,7 +1445,7 @@ Build_adduct_list<-function(){
 
 rank_mz_feature<-function(Peptide_plot_list,mz_feature,BPPARAM=bpparam()){
   
-  
+  Peptide_plot_list<-as.data.frame(Peptide_plot_list)
   
   library(data.table)
   
@@ -1455,7 +1455,7 @@ rank_mz_feature<-function(Peptide_plot_list,mz_feature,BPPARAM=bpparam()){
   
   mz_align<-sapply(mz,function(x,mz_feature){
     
-    mz_feature$m.z[which.min(abs(mz_feature$m.z-x))]
+    round(mz_feature$m.z[which.min(abs(mz_feature$m.z-x))],digits = 4)
     
   },mz_feature)
   
@@ -1467,7 +1467,7 @@ rank_mz_feature<-function(Peptide_plot_list,mz_feature,BPPARAM=bpparam()){
   
   message(paste("Ranking mz feature:",length(unique(Peptide_plot_list$mz)), "unique candidates mz,",length(unique(Peptide_plot_list$mz_align)),"aligned mz feature"))
   
-  Peptide_plot_list_rank<-bplapply(mz,function(x,Peptide_plot_list){
+  if(F){Peptide_plot_list_rank<-bplapply(mz,function(x,Peptide_plot_list){
     
     randklist <- Peptide_plot_list[Peptide_plot_list$mz_align==x,]
     
@@ -1475,12 +1475,37 @@ rank_mz_feature<-function(Peptide_plot_list,mz_feature,BPPARAM=bpparam()){
     
     return(randklist)
     
-  },Peptide_plot_list,BPPARAM=BPPARAM)
+  },Peptide_plot_list,BPPARAM=BPPARAM)}
+  
+  library(pbapply)  
+  
+  Peptide_plot_list_rank<-pblapply(cl = NULL, X=mz,FUN = function(x,Peptide_plot_list){
+    #message(x)
+    randklist <- Peptide_plot_list[Peptide_plot_list$mz_align==x,]
+    ranking=as.numeric(factor(randklist$Score,levels=sort(unique(randklist$Score),decreasing = T)))
+    randklist$Rank<- ranking
+    #message(ranking)
+    return(randklist)
+    
+  },Peptide_plot_list=Peptide_plot_list)
+  
+  if(F){Peptide_plot_list_rank_temp<-NULL
+  randklist<-list()
+  for (x in mz[1:10]){
+    randklist[[x]] <- Peptide_plot_list[Peptide_plot_list$mz_align==x,]
+    ranking=as.numeric(factor(randklist[[x]]$Score,levels=sort(unique(randklist[[x]]$Score),decreasing = T)))
+    randklist[[x]]$Rank<- ranking
+  }
+  Peptide_plot_list_rank_temp<-do.call(rbind,randklist)
+  #Peptide_plot_list 
+  identical(Peptide_plot_list_rank_temp,Peptide_plot_list_rank)}
   
   Peptide_plot_list_rank<-do.call(rbind,Peptide_plot_list_rank)
   
   return(Peptide_plot_list_rank)
+  
 }
+
 
 plotRanges <- function(ranged,labels=NULL,do.labs=T,skip.plot.new=F,lty="solid", alt.y=NULL,
                        v.lines=FALSE,ylim=NULL,xlim=NULL,scl=c("b","Kb","Mb","Gb"),
