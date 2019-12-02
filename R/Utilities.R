@@ -1487,7 +1487,7 @@ rank_mz_feature<-function(Peptide_plot_list,mz_feature,BPPARAM=bpparam()){
     #message(ranking)
     return(randklist)
     
-  },Peptide_plot_list=Peptide_plot_list)
+  },Peptide_plot_list=Peptide_plot_list[,c("mz_align","Score")])
   
   if(F){Peptide_plot_list_rank_temp<-NULL
   randklist<-list()
@@ -1501,6 +1501,8 @@ rank_mz_feature<-function(Peptide_plot_list,mz_feature,BPPARAM=bpparam()){
   identical(Peptide_plot_list_rank_temp,Peptide_plot_list_rank)}
   
   Peptide_plot_list_rank<-do.call(rbind,Peptide_plot_list_rank)
+  
+  Peptide_plot_list_rank<-merge(Peptide_plot_list_rank,Peptide_plot_list,by=c("mz_align","Score"))
   
   return(Peptide_plot_list_rank)
   

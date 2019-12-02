@@ -2435,6 +2435,9 @@ if(PMFsearch){
       Peptide_plot_list_decoy$Score<-NULL
       Peptide_plot_list_decoy<-merge(Peptide_plot_list_decoy,formula_score,by="formula")
       Peptide_plot_list<-rbind(Peptide_plot_list,Peptide_plot_list_decoy)
+      Protein_feature_list_decoy<-Protein_feature_list[Protein_feature_list$isdecoy==0,]
+      Protein_feature_list_decoy$isdecoy=1
+      Protein_feature_list=rbind(Protein_feature_list[Protein_feature_list$isdecoy==0,],Protein_feature_list_decoy)
       }
       Peptide_plot_list$mz<-as.numeric(as.character(Peptide_plot_list$mz))
       Peptide_plot_list_rank=rank_mz_feature(Peptide_plot_list,mz_feature=deconv_peaklist,BPPARAM = BPPARAM)
@@ -3547,7 +3550,7 @@ spec_peakdetect<-function(x){
   summarySpectra(spectra[10:20])
 }
 
-protein_scoring<-function(Protein_feature_list,Peptide_plot_list_rank,scoretype=c("sum","mean"),BPPARAM = bpparam(),protein_nr_grouping=T,prioritize_protein=T,compete_decoy=T,peptide_ID_filter=2){
+protein_scoring<-function(Protein_feature_list,Peptide_plot_list_rank,scoretype=c("sum","mean"),BPPARAM = bpparam(),protein_nr_grouping=T,prioritize_protein=T,compete_decoy=F,peptide_ID_filter=2){
   
   library(dplyr)
   library(data.table)
@@ -3616,7 +3619,8 @@ protein_scoring<-function(Protein_feature_list,Peptide_plot_list_rank,scoretype=
   },Protein_feature_list_rank=Protein_feature_list_rank,list_of_protein_sequence=list_of_protein_sequence,Index_of_protein_sequence=Index_of_protein_sequence,peptide_map_to_protein=peptide_map_to_protein,BPPARAM = BPPARAM))
   sum_pro_coverage=data.frame(Protein=(sum_pro_int$Protein),isdecoy=sum_pro_int$isdecoy,Protein_coverage=sum_pro_coverage)
   sum_pro_pep_count<-merge(sum_pro_pep_count,sum_pro_coverage,by=c("Protein","isdecoy"),sort=F)
-  
+  Protein_feature_list_rank$peptide_count<-NULL
+  Protein_feature_list_rank$Protein_coverage<-NULL
     Protein_feature_list_rank<-merge(Protein_feature_list_rank,sum_pro_pep_count,by=c("Protein","isdecoy"))
     mz_max_peptide<-Protein_feature_list_rank %>% group_by(mz) %>% summarize(Protein_coverage=max(Protein_coverage))
     
@@ -3650,10 +3654,9 @@ protein_scoring<-function(Protein_feature_list,Peptide_plot_list_rank,scoretype=
     
     Protein_feature_list_rank<-Protein_feature_list_rank_trim
     
-    Protein_feature_list_rank$peptide_count<-NULL
-    
     }
     
+    Protein_feature_list_rank$peptide_count<-NULL
     
     sum_pro_pep_count<-Protein_feature_list_rank %>% group_by(.dots=c("Protein","isdecoy")) %>% summarize(peptide_count=length(unique(Peptide))) 
     
