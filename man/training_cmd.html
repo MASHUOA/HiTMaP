@@ -457,12 +457,25 @@ summary {
 </ul>
 </div>
 
-<p>– An R package of High-resolution Informatics Toolbox for Maldi-imaging Proteomics #install package Sys.setenv(R_REMOTES_NO_ERRORS_FROM_WARNINGS=T) devtools::install_github(“guoguodigit/HiTMaP”,auth_token =“a124a067ed1c84f8fd577c972845573922f1bb0f”) library(HiTMaP) #matrisome imaging_identification(Digestion_site=“(?&lt;=[P]\w)G(?=\w)|(?&lt;=[P]\w)\w(?=L)”,Fastadatabase=“matrisome.fasta”)</p>
-<p>#Human brain low res FTICR imaging_identification(Digestion_site=“(<a href="?=%5B%5EP%5D">KR</a>)|((?&lt;=W)K(?=P))|((?&lt;=M)R(?=P))”,Fastadatabase=“uniprot-Human.fasta”,output_candidatelist=T,spectra_segments_per_file=4,use_previous_candidates=T,ppm=12.5) imaging_identification(Digestion_site=“(<a href="?=%5B%5EP%5D">KR</a>)|((?&lt;=W)K(?=P))|((?&lt;=M)R(?=P))”,Fastadatabase=“uniprot-Human.fasta”,output_candidatelist=T,spectra_segments_per_file=4,use_previous_candidates=T,ppm=12.5,PMF_analysis=F,plot_cluster_image_grid=T,Protein_desc_of_interest=“Actin”)</p>
-<p>#Bovin lens FTICR imaging_identification(Digestion_site=“(<a href="?=%5B%5EP%5D">KR</a>)|((?&lt;=W)K(?=P))|((?&lt;=M)R(?=P))”,Fastadatabase=“uniprot-Bovin.fasta”,output_candidatelist=T,spectra_segments_per_file=4,use_previous_candidates=T)</p>
-<p>#protein calibrant imaging_identification(Digestion_site=“(<a href="?=%5B%5EP%5D">KR</a>)|((?&lt;=W)K(?=P))|((?&lt;=M)R(?=P))”,Fastadatabase=“uniprot_cali.fasta”,output_candidatelist=T,spectra_segments_per_file=1,use_previous_candidates=F)</p>
-<p>#peptide calibrant imaging_identification(Digestion_site=“(<a href="?=%5B%5EP%5D">KR</a>)|((?&lt;=W)K(?=P))|((?&lt;=M)R(?=P))”,Fastadatabase=“uniprot_cali.fasta”,output_candidatelist=T,spectra_segments_per_file=1,use_previous_candidates=F,peptide_ID_filter=1)</p>
-<p>#Ultraflex data imaging_identification(Digestion_site=“(<a href="?=%5B%5EP%5D">KR</a>)|((?&lt;=W)K(?=P))|((?&lt;=M)R(?=P))”,Fastadatabase=“uniprot-bovin.fasta”,output_candidatelist=T,spectra_segments_per_file=4,use_previous_candidates=T,ppm=25,peptide_ID_filter=3) imaging_identification(Digestion_site=“(<a href="?=%5B%5EP%5D">KR</a>)|((?&lt;=W)K(?=P))|((?&lt;=M)R(?=P))”,Fastadatabase=“uniprot-Human.fasta”,output_candidatelist=T,spectra_segments_per_file=4,use_previous_candidates=F,ppm=25) imaging_identification(Digestion_site=“(<a href="?=%5B%5EP%5D">KR</a>)|((?&lt;=W)K(?=P))|((?&lt;=M)R(?=P))”,Fastadatabase=“uniprot-bovin.fasta”,output_candidatelist=T,spectra_segments_per_file=4,use_previous_candidates=F,ppm=25) imaging_identification(Digestion_site=“(<a href="?=%5B%5EP%5D">KR</a>)|((?&lt;=W)K(?=P))|((?&lt;=M)R(?=P))”,Fastadatabase=“uniprot-mus.fasta”,output_candidatelist=T,spectra_segments_per_file=4,use_previous_candidates=F,ppm=25)</p>
+<p>– An R package of High-resolution Informatics Toolbox for Maldi-imaging Proteomics</p>
+<p>#install package Sys.setenv(R_REMOTES_NO_ERRORS_FROM_WARNINGS=T)</p>
+<p>devtools::install_github(“guoguodigit/HiTMaP”,auth_token =“a124a067ed1c84f8fd577c972845573922f1bb0f”)</p>
+<p>library(HiTMaP)</p>
+<p>#matrisome imaging_identification(Digestion_site=“(?&lt;=[P]\w)G(?=\w)|(?&lt;=[P]\w)\w(?=L)”,Fastadatabase=“matrisome.fasta”,spectra_segments_per_file=3)</p>
+<p>#Human brain FTICR imaging_identification(Digestion_site=“(<a href="?=%5B%5EP%5D">KR</a>)|((?&lt;=W)K(?=P))|((?&lt;=M)R(?=P))”,Fastadatabase=“uniprot-Human.fasta”,output_candidatelist=T,spectra_segments_per_file=4,use_previous_candidates=T,ppm=12.5,Protein_desc_of_interest=c(“Histone”,“GN=MBP”,“ACTIN”))</p>
+<p>imaging_identification(Digestion_site=“(<a href="?=%5B%5EP%5D">KR</a>)|((?&lt;=W)K(?=P))|((?&lt;=M)R(?=P))”,Fastadatabase=“uniprot-Human.fasta”,output_candidatelist=T,spectra_segments_per_file=4,use_previous_candidates=T,ppm=12.5,PMF_analysis=F,plot_cluster_image_grid=T,Protein_desc_of_interest=c(“Histone”,“GN=MBP”,“ACTIN”))</p>
+<p>#Bovin lens FTICR imaging_identification(Digestion_site=“(<a href="?=%5B%5EP%5D">KR</a>)|((?&lt;=W)K(?=P))|((?&lt;=M)R(?=P))”,Fastadatabase=“uniprot-Bovin.fasta”,output_candidatelist=T,spectra_segments_per_file=4,use_previous_candidates=T,threshold=0.005)</p>
+<p>imaging_identification(Digestion_site=“(<a href="?=%5B%5EP%5D">KR</a>)|((?&lt;=W)K(?=P))|((?&lt;=M)R(?=P))”,Fastadatabase=“uniprot-Bovin.fasta”,output_candidatelist=T,spectra_segments_per_file=4,use_previous_candidates=T,peptide_ID_filter=3,threshold = 0.005)</p>
+<p>imaging_identification(Digestion_site=“(<a href="?=%5B%5EP%5D">KR</a>)|((?&lt;=W)K(?=P))|((?&lt;=M)R(?=P))”,Fastadatabase=“uniprot-Bovin.fasta”,output_candidatelist=T,spectra_segments_per_file=4,use_previous_candidates=T,peptide_ID_filter=3,threshold = 0.005,FDR_cutoff=0.05)</p>
+<p>#protein calibrant imaging_identification(Digestion_site=“(<a href="?=%5B%5EP%5D">KR</a>)|((?&lt;=W)K(?=P))|((?&lt;=M)R(?=P))”,Fastadatabase=“uniprot_cali.fasta”,output_candidatelist=T,spectra_segments_per_file=1,use_previous_candidates=F,ppm=10,Protein_desc_of_interest=“Pro_CALI”,peptide_ID_filter=3,threshold=0.005)</p>
+<p>imaging_identification(Digestion_site=“(<a href="?=%5B%5EP%5D">KR</a>)|((?&lt;=W)K(?=P))|((?&lt;=M)R(?=P))”,Fastadatabase=“3protein_cali.fasta”,output_candidatelist=T,spectra_segments_per_file=1,use_previous_candidates=F,ppm=10,Protein_desc_of_interest=“Pro_CALI”,peptide_ID_filter=3,threshold=0.005)</p>
+<p>imaging_identification(Digestion_site=“(<a href="?=%5B%5EP%5D">KR</a>)|((?&lt;=W)K(?=P))|((?&lt;=M)R(?=P))”,Fastadatabase=“uniprot_cali.fasta”,output_candidatelist=T,spectra_segments_per_file=1,use_previous_candidates=T,ppm=5,Protein_desc_of_interest=“Pro_CALI”,threshold=0.005,FDR_cutoff=0.2)</p>
+<p>#peptide calibrant imaging_identification(Digestion_site=“(<a href="?=%5B%5EP%5D">KR</a>)|((?&lt;=W)K(?=P))|((?&lt;=M)R(?=P))”,Fastadatabase=“uniprot_cali.fasta”,output_candidatelist=T,spectra_segments_per_file=1,use_previous_candidates=F,peptide_ID_filter=1,ppm=10,missedCleavages=0:5,Protein_desc_of_interest=“Pep_CALI”)</p>
+<p>imaging_identification(Digestion_site=“(<a href="?=%5B%5EP%5D">KR</a>)|((?&lt;=W)K(?=P))|((?&lt;=M)R(?=P))”,Fastadatabase=“uniprot_cali.fasta”,output_candidatelist=T,spectra_segments_per_file=1,use_previous_candidates=T,peptide_ID_filter=1,ppm=10,missedCleavages=0:5)</p>
+<p>#Ultraflex data imaging_identification(Digestion_site=“(<a href="?=%5B%5EP%5D">KR</a>)|((?&lt;=W)K(?=P))|((?&lt;=M)R(?=P))”,Fastadatabase=“uniprot-bovin.fasta”,output_candidatelist=T,spectra_segments_per_file=4,use_previous_candidates=T,ppm=25,peptide_ID_filter=3,Protein_desc_of_interest&lt;-c(“Crystallin”,“Actin”))</p>
+<p>imaging_identification(Digestion_site=“(<a href="?=%5B%5EP%5D">KR</a>)|((?&lt;=W)K(?=P))|((?&lt;=M)R(?=P))”,Fastadatabase=“uniprot-Human.fasta”,output_candidatelist=T,spectra_segments_per_file=4,use_previous_candidates=F,ppm=25,peptide_ID_filter=3,Protein_desc_of_interest&lt;-c(“Crystallin”,“Actin”))</p>
+<p>imaging_identification(Digestion_site=“(<a href="?=%5B%5EP%5D">KR</a>)|((?&lt;=W)K(?=P))|((?&lt;=M)R(?=P))”,Fastadatabase=“uniprot-bovin.fasta”,output_candidatelist=T,spectra_segments_per_file=4,use_previous_candidates=F,ppm=25)</p>
+<p>imaging_identification(Digestion_site=“(<a href="?=%5B%5EP%5D">KR</a>)|((?&lt;=W)K(?=P))|((?&lt;=M)R(?=P))”,Fastadatabase=“uniprot-mus.fasta”,output_candidatelist=T,spectra_segments_per_file=4,use_previous_candidates=F,ppm=25)</p>
 <div id="package-installation" class="section level2">
 <h2><span class="header-section-number">0.1</span> Package installation</h2>
 <p>This is an tutorial for use of HiTMaP (An R package of High-resolution Informatics Toolbox for Maldi-imaging Proteomics). To access the software use the installation codes as below:</p>
@@ -682,8 +695,7 @@ summary {
 <p>In the project summary folder, you will find four files and a sub-folder:</p>
 <div class="sourceCode" id="cb29"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb29-1" title="1">wd_sum=<span class="kw">paste</span>(<span class="kw">file.path</span>(<span class="kw">path.package</span>(<span class="dt">package=</span><span class="st">&quot;HiTMaP&quot;</span>)),<span class="st">&quot;/data/Summary folder&quot;</span>, <span class="dt">sep=</span><span class="st">&quot;&quot;</span>)</a>
 <a class="sourceLine" id="cb29-2" title="2"><span class="kw">dir</span>(wd_sum)</a></code></pre></div>
-<pre><code>## [1] &quot;candidatelist.csv&quot;    &quot;cluster Ion images&quot;   &quot;Peptide_Summary.csv&quot; 
-## [4] &quot;protein_index.csv&quot;    &quot;Protein_Summary.csv&quot;  &quot;Protein_Summary.xlsx&quot;</code></pre>
+<pre><code>## character(0)</code></pre>
 <p>“candidatelist.csv” and “protein_index.csv” contains the candidates used for this project. They are output after the candidate processing while <em>output_candidatelist</em> set as TRUE, and can be used repeatedly while <em>use_previous_candidates</em> set as TRUE.</p>
 <p>“Peptide_Summary.csv” and “Protein_Summary.csv” contains the table of the project identification summary. You could set the <em>plot_cluster_image_grid</em> as TRUE to enable the cluster imaging function. Please be noted that you could indicate <em>Rotate_IMG</em> with a CSV file path that indicates the rotation degree of image files.</p>
 <p><strong>Note</strong>: 90<span class="math inline">\(^\circ\)</span>, 180<span class="math inline">\(^\circ\)</span> and 270<span class="math inline">\(^\circ\)</span> are recommended for image rotation. You may find an example CSV file in the library/HiTMaP/data folder.</p>
@@ -715,7 +727,7 @@ summary {
 <div class="sourceCode" id="cb37"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb37-1" title="1"><span class="kw">sessionInfo</span>()</a></code></pre></div>
 <pre><code>## R version 3.6.1 (2019-07-05)
 ## Platform: x86_64-w64-mingw32/x64 (64-bit)
-## Running under: Windows 10 x64 (build 17134)
+## Running under: Windows 10 x64 (build 18362)
 ## 
 ## Matrix products: default
 ## 

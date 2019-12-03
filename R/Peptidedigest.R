@@ -2721,7 +2721,7 @@ SCORE_PMF<-function(formula,peaklist,isotopes=NULL,threshold=2.5,charge=1,ppm=5,
   formula<-as.character(formula)
   Spectrum_scoring <- function(spec.top, spec.bottom, t = 0.25, b = 0, top.label = NULL, 
                                bottom.label = NULL, xlim = c(50, 1200), x.threshold = 0, print.alignment = FALSE,
-                               print.graphic = F, output.list = F,score_method="SQRT",Peak_intensity=0,outputfile=NULL) {
+                               print.graphic = F, output.list = F,score_method="SQRT",Peak_intensity=0,outputfile=NULL,formula=NULL,pattern_ppm=NULL) {
     
     
     ## format spectra and normalize intensitites
@@ -2794,8 +2794,7 @@ SCORE_PMF<-function(formula,peaklist,isotopes=NULL,threshold=2.5,charge=1,ppm=5,
       
       similarity_score <- -log(as.vector(sqrt(sum(((u-v)*u)^2)) / (sqrt(sum(u^2)) * sqrt(sum(v^2))))) * log(Peak_intensity,10)
       
-    }
-    else if (score_method=="Equal-SQRT"){
+    }else if (score_method=="Equal-SQRT"){
       #score=log(v)/log(u)
       u <- alignment[,2]; v <- alignment[,3]
       score=-log(v/u)
@@ -2803,11 +2802,9 @@ SCORE_PMF<-function(formula,peaklist,isotopes=NULL,threshold=2.5,charge=1,ppm=5,
       similarity_score=-log(sum(abs(score))/length(score))
       
       #similarity_score <- as.vector((u %*% v) * length(v) / (sqrt(sum(u^2)) * sqrt(sum(v^2))) )  
-    }
-    else if (score_method=="Equal-intensity-SQRT"){
+    }    else if (score_method=="Equal-intensity-SQRT"){
       similarity_score <- as.vector((u %*% v) * length(v) / (sqrt(sum(u^2)) * sqrt(sum(v^2))*log(Peak_intensity)) )  
-    }
-    else if (score_method=="Mix-SQRT"){
+    }    else if (score_method=="Mix-SQRT"){
 
       alignment_0=ifelse(alignment==0,0,1)
       
@@ -2836,8 +2833,13 @@ SCORE_PMF<-function(formula,peaklist,isotopes=NULL,threshold=2.5,charge=1,ppm=5,
         points(top_plot$mz[i],top_plot$intensity[i]*100, col = "darkblue")
         }
       for(i in 1:length(bottom_plot$mz)) {
+        
         lines(rep(bottom_plot$mz[i], 2), c(0, -bottom_plot$intensity[i]*100), col = "red")
-        points(bottom_plot$mz[i],-bottom_plot$intensity[i]*100, col = "darkred")
+        if (bottom_plot$intensity[i]!=0){
+          points(bottom_plot$mz[i],-bottom_plot$intensity[i]*100, col = "darkred")
+        if(length(pattern_ppm$norm_ppm[pattern_ppm$mz==bottom_plot$mz[i]])==1){
+         text(bottom_plot$mz[i],-bottom_plot$intensity[i]*100-7, round(pattern_ppm$norm_ppm[pattern_ppm$mz==bottom_plot$mz[i]],digits = 1),cex=0.6,col="gray21")
+                 }}
         }
       axis(2, at = ticks, labels = abs(ticks), pos = xlim[1], ylab = "Intensity")
       axis(1, pos = -125)
@@ -2848,6 +2850,10 @@ SCORE_PMF<-function(formula,peaklist,isotopes=NULL,threshold=2.5,charge=1,ppm=5,
       plot.window(xlim = c(0, 20), ylim = c(-10, 10))
       text(10, 9, top.label)
       text(10, -9, bottom.label)
+      mtext(paste("Formula:",formula,"Score:",round(similarity_score,digits = 2),"Method:",score_method),cex=0.9)
+      if(!is.null(pattern_ppm$norm_ppm)){
+        text(pattern_ppm[,1], rep(-8.5,nrow(pattern_ppm)), pattern_ppm$norm_ppm)
+      }
       dev.off()
       #p<-magick::image_read(tempfilename)
     }
@@ -2928,9 +2934,9 @@ SCORE_PMF<-function(formula,peaklist,isotopes=NULL,threshold=2.5,charge=1,ppm=5,
   pattern=pattern[[formula]]
   pattern=isopattern_ppm_filter(pattern = pattern[,1:2], ppm=ppm)
   if (ppm>=25) {
-    instrument_ppm=15
+    instrument_ppm=50
   }else{
-    instrument_ppm=3
+    instrument_ppm=12
   }
   #monomass=pattern[1,1]
   #m_1_pattern=data.frame("m/z"=pattern[1,1]-(1.003354840/ifelse(charge==0,1,abs(charge))),abundance=0)
@@ -2941,22 +2947,43 @@ SCORE_PMF<-function(formula,peaklist,isotopes=NULL,threshold=2.5,charge=1,ppm=5,
   spectrumintensity=unlist(lapply(1:nrow(pattern), function(x,pattern,peaklist,ppm){
     PMF_spectrum_intensity<-as.numeric(peaklist[between(peaklist$m.z,pattern[x,1]*(1-ppm/1000000),pattern[x,1]*(1+ppm/1000000)),2])
     if(sum(!is.na(PMF_spectrum_intensity),length(PMF_spectrum_intensity)!=0)>1) sum(PMF_spectrum_intensity,na.rm = T) else 0
-  },pattern,peaklist,ppm))
+  },pattern,peaklist,instrument_ppm))
   #message(spectrumintensity)
   spectrum=data.frame(mz=pattern[,1],Intensity=spectrumintensity)
   Peak_intensity<-max(spectrum$Intensity)
   
-  #spectrum<-lapply(1:nrow(pattern), function(x,pattern,peaklist,ppm,instrument_ppm){
-  #  peaklist[between(peaklist$m.z,pattern[x,1]*(1-(ppm+instrument_ppm)/2/1000000),pattern[x,1]*(1+(ppm+instrument_ppm)/2/1000000)),]
-  #},pattern,peaklist,ppm,instrument_ppm)
-  #spectrum<-do.call(rbind,spectrum)
+  spectrum_pk<-lapply(1:nrow(pattern), function(x,pattern,peaklist,instrument_ppm){
+    peaklist[between(peaklist$m.z,pattern[x,1]*(1-(instrument_ppm)/2/1000000),pattern[x,1]*(1+(instrument_ppm)/2/1000000)),]
+  },pattern,peaklist,instrument_ppm)
+  spectrum_pk<-do.call(rbind,spectrum_pk)
+  spectrum_pk<-unique(spectrum_pk)
+  spectrum_pk=isopattern_ppm_filter_peaklist(pattern = spectrum_pk, ppm=instrument_ppm)
+  
+  pattern_ppm<-do.call(rbind,(lapply(1:nrow(pattern), function(x,pattern,peaklist,ppm){
+    PMF_spectrum<-peaklist[between(peaklist$m.z,pattern[x,1]*(1-ppm/1000000),pattern[x,1]*(1+ppm/1000000)),]
+    if(nrow(PMF_spectrum)==1){
+      return(data.frame(mz=pattern[x,1],delta_ppm=(PMF_spectrum[1,1]-pattern[x,1])/pattern[x,1]*1000000))
+    }
+  },pattern,spectrum_pk,ppm)))
+  pattern_ppm$norm_ppm<-pattern_ppm$delta_ppm-mean(pattern_ppm$delta_ppm)
+  ppm_error=(ppm-mean(abs(pattern_ppm$delta_ppm-mean(pattern_ppm$delta_ppm))))/ppm
+  
   #message(head(spectrum))
   #message(c(min(range(pattern[,1],na.rm = T))-1," ",max(range(pattern[,1],na.rm = T))+1))
-  score=Spectrum_scoring(spec.top = pattern,spec.bottom = spectrum,b=0,t=mean(pattern[,1])*ppm/1000000,top.label = "Theoretical",score_method=score_method,bottom.label = "Observed spectrum",xlim = c(min(range(pattern[,1],na.rm = T))-1,max(range(pattern[,1],na.rm = T))+1),output.list=output.list,print.graphic = print.graphic,outputfile = outputfile,Peak_intensity=Peak_intensity)
+  
+  
+  
+  score=Spectrum_scoring(spec.top = pattern,spec.bottom = spectrum,b=0,t=mean(pattern[,1])*ppm/1000000,top.label = "Theoretical",
+                         score_method=score_method,bottom.label = "Observed spectrum",
+                         xlim = c(min(range(pattern[,1],na.rm = T))-1,max(range(pattern[,1],na.rm = T))+1),
+                         output.list=output.list,print.graphic = print.graphic,
+                         outputfile = outputfile,
+                         Peak_intensity=Peak_intensity,
+                         formula=formula,pattern_ppm=pattern_ppm)
   #score
   #message(score)
-  
-  return(score)
+  finalscore=score*ppm_error
+  return(finalscore)
 }
 
 
@@ -3076,7 +3103,7 @@ FDR_cutoff_plot_protein<-function(Protein_feature_result,FDR_cutoff=0.1,plot_fdr
   
   if (!is.null(outputdir) && plot_fdr){
     
-    png(paste0(outputdir,"/protein_FDR.png"))
+    png(paste0(outputdir,"/Protein_FDR.png"))
     plot.new()
     try(plot(df$breaks, df$FDR_m.av,            # plot the data 
          main="FDR plot",  # main title 
