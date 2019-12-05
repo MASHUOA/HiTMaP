@@ -1269,9 +1269,10 @@ Peptide_modification<-function(retrive_ID=NULL,update_unimod=F){
     XML::xmlParse(
       scan(unimodurl, what = character())))
     save(unimod.list,file =paste0(path.package("HiTMaP"), "/data/unimod.list.rda"))
-  try(data("unimod.list",package = "HiTMaP"))
-  }
   
+  }
+    
+  data("unimod.list",package = "HiTMaP")
   
   unimod.df<-lapply(unimod.list, function(x){
     x<-unname(x)

@@ -287,7 +287,7 @@ imaging_identification<-function(
     for (interest_desc in Protein_desc_of_interest){
       Protein_feature_list_interest<-rbind(Protein_feature_list_interest,Protein_feature_list[grepl(paste0(" ",interest_desc),Protein_feature_list$desc,ignore.case = T),])
       Protein_feature_list_interest<-rbind(Protein_feature_list_interest,Protein_feature_list[grepl(paste0("-",interest_desc),Protein_feature_list$desc,ignore.case = T),])
-      num_of_interest[interest_desc]<-nrow(unique(Protein_feature_list[grepl(paste0(" ",interest_desc),Protein_feature_list$desc,ignore.case = T),"Protein"]))+nrow(unique(Protein_feature_list[grepl(paste0("-",interest_desc),Protein_feature_list$desc,ignore.case = T),]))
+      num_of_interest[interest_desc]<-nrow(unique(Protein_feature_list[grepl(paste0(" ",interest_desc),Protein_feature_list$desc,ignore.case = T),"Protein"]))+nrow(unique(Protein_feature_list[grepl(paste0("-",interest_desc),Protein_feature_list$desc,ignore.case = T),"Protein"]))
         }
     #Protein_feature_list_crystallin$Protein=as.character(Protein_feature_list_crystallin$desc)
     Protein_feature_list=Protein_feature_list_interest
@@ -2116,6 +2116,28 @@ PMF_Cardinal_Datafilelist<-function(datafile,Peptide_Summary_searchlist,
   Cardinal::plot(skm, col=brewer.pal(SPECTRUM_for_average,colorstyle), type=c('p','h'), key=FALSE,mode="withinss")
   legend("topright", legend=1:SPECTRUM_for_average, fill=brewer.pal(SPECTRUM_for_average,colorstyle), col=brewer.pal(SPECTRUM_for_average,"Paired"), bg="transparent",xpd=TRUE,cex = 1)
   dev.off()
+  library(magick)
+  skmimg<-image_read(paste(getwd(),"\\","spatialKMeans_image_plot",'.png',sep=""))
+  
+  
+  png(paste(getwd(),"\\","spatialKMeans_image_plot",'.png',sep=""),width = 1024,height = 540*(ceiling(SPECTRUM_for_average/2)))
+  withinss=skm@resultData[[1]][["withinss"]]
+  
+  withinss_mz<-skm@featureData@data[["mz"]]
+  library(ggplot2)
+  sp<-NULL
+  tempsp<-NULL
+  for (i in colnames(withinss)){
+    sp[[i]]<-ggplot2::ggplot(data=NULL, size=1 ,aes(x=withinss_mz, y=withinss[,i],xend=withinss_mz,yend=rep(0,length(withinss[,i])),colour =brewer.pal(SPECTRUM_for_average,colorstyle)[as.numeric(i)])) +  geom_segment(show.legend=F,colour =brewer.pal(SPECTRUM_for_average,colorstyle)[as.numeric(i)]) +theme_classic()
+    tempsp[[i]]<-sp[[i]]+ggtitle(paste("Mean spectrum"," Segmentation:",i)) 
+  }
+  library(gridExtra)
+  grid.arrange( grobs = tempsp,ncol=2, nrow = ceiling(SPECTRUM_for_average/2) )
+  dev.off()
+  
+  skmimg_spec<-image_read(paste(getwd(),"\\","spatialKMeans_image_plot",'.png',sep=""))
+  skmimg<-image_append(c(skmimg,skmimg_spec),stack = T)
+  image_write(skmimg,paste(getwd(),"\\","spatialKMeans_image_plot",'.png',sep=""))
   withinss=skm@resultData[[1]][["withinss"]]
   centers=skm@resultData[[1]][["centers"]]
   cluster=as.data.frame(skm@resultData[[1]][["cluster"]])
@@ -3008,7 +3030,7 @@ SCORE_PMF<-function(formula,peaklist,isotopes=NULL,threshold=2.5,charge=1,ppm=5,
   meanppm=mean(abs(pattern_ppm$norm_ppm))
   pattern_ppm$plotppm<-ifelse(abs(pattern_ppm$norm_ppm)>ppm,paste0(">",ppm),round((pattern_ppm$norm_ppm),digits = 1))
   }else{
-  meanppm= 2*instrument_ppm
+  meanppm=instrument_ppm
   }
   
   ppm_error=(1-pnorm(meanppm/ppm))
