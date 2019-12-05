@@ -133,7 +133,7 @@ imaging_identification<-function(
   if(PMF_analysis){
   message(paste(Fastadatabase,"was selected as database","\nAssumming", spectra_segments_per_file,"regions in the image.","\nSpectrum intensity threshold:",threshold,"\nmz tolerance",ppm,"ppm","\nPerform manual segmentation:",Virtual_segmentation,
                 "\nManual segmentation def file",Virtual_segmentation_rankfile,"\nBypass spectrum generation:",Bypass_generate_spectrum))
-  Peptide_Summary_searchlist<-unique(Protein_feature_list[,c("Peptide","mz","adduct","formula","isdecoy")])
+  Peptide_Summary_searchlist<-unique(Protein_feature_list)
   
   Peptide_Summary_file<-PMF_Cardinal_Datafilelist(datafile, 
                                                   Peptide_Summary_searchlist,
@@ -165,7 +165,7 @@ imaging_identification<-function(
   currentdir<-paste0(datafile[i] ," ID")
   setwd(paste(currentdir,sep=""))
   
-  Peptide_Summary_file<-fread("Peptide_region_file.csv",select=c("Peptide","mz","Intensity","adduct","moleculeNames","Score","charge","formula","Region","Protein","desc"))
+  Peptide_Summary_file<-fread("Peptide_region_file.csv")
   Peptide_Summary_file$Source<-datafilename
   Protein_Summary_file<-rbind(Protein_Summary_file,Peptide_Summary_file)
   #Peptide_feature_list<-Peptide_Summary_file[Peptide_Summary_file$Intensity>=max(Peptide_Summary_file$Intensity)*threshold,]
@@ -199,7 +199,7 @@ imaging_identification<-function(
       
       setwd(paste(currentdir,sep=""))
       
-      Peptide_Summary_file<-fread("Peptide_region_file.csv",select=c("Peptide","mz","Intensity","adduct","moleculeNames","Score","charge","formula","Region"))
+      Peptide_Summary_file<-fread("Peptide_region_file.csv")
       Peptide_Summary_file$Source<-datafile[i]
       Peptide_Summary_file_a<-rbind(Peptide_Summary_file_a,Peptide_Summary_file)
       #Peptide_feature_list<-Peptide_Summary_file[Peptide_Summary_file$Intensity>=max(Peptide_Summary_file$Intensity)*threshold,]
@@ -2401,7 +2401,10 @@ if(PMFsearch){
       
       unique_formula<-unique(Peptide_plot_list$formula)
       Peptide_plot_list_Score=unlist(bplapply(unique_formula,SCORE_PMF,peaklist=peaklist,isotopes=isotopes,score_method=score_method,charge = 1,ppm=ppm,BPPARAM = BPPARAM))
-      formula_score<-data.frame(formula=unique_formula,Score=Peptide_plot_list_Score)
+      Peptide_plot_list_Score_m=matrix(Peptide_plot_list_Score,ncol=2,nrow=length(Peptide_plot_list_Score)/2,byrow=T,dimnames = list(1:(length(Peptide_plot_list_Score)/2),
+                                                                                                                                    c("Score", "delta_ppm")))
+      Peptide_plot_list_Score_m<-as.data.frame(Peptide_plot_list_Score_m)
+      formula_score<-data.frame(formula=unique_formula,Score=Peptide_plot_list_Score_m$Score,Delta_ppm=Peptide_plot_list_Score_m$delta_ppm)
       Peptide_plot_list$Score<-NULL
       Peptide_plot_list<-merge(Peptide_plot_list,formula_score,by="formula")
       #testscore=lapply("C50H77N11O10S1Na1",SCORE_PMF,score_method=score_method,peaklist=peaklist,isotopes=isotopes,charge = 1,ppm=ppm)
@@ -2433,8 +2436,11 @@ if(PMFsearch){
       Peptide_plot_list_decoy<-Peptide_plot_list[Peptide_plot_list$isdecoy==0,]
       Peptide_plot_list_decoy$isdecoy=1
       unique_formula<-unique(Peptide_plot_list_decoy$formula)
-      Peptide_plot_list_decoy_Score=unlist(bplapply(unique_formula,SCORE_PMF,peaklist=peaklist,isotopes=decoy_isotopes,score_method=score_method,charge = 1,ppm=ppm,BPPARAM = BPPARAM))
-      formula_score<-data.frame(formula=unique_formula,Score=Peptide_plot_list_decoy_Score)
+      Peptide_plot_list_Score=unlist(bplapply(unique_formula,SCORE_PMF,peaklist=peaklist,isotopes=decoy_isotopes,score_method=score_method,charge = 1,ppm=ppm,BPPARAM = BPPARAM))
+      Peptide_plot_list_Score_m=matrix(Peptide_plot_list_Score,ncol=2,nrow=length(Peptide_plot_list_Score)/2,byrow=T,dimnames = list(1:(length(Peptide_plot_list_Score)/2),
+                                                                                                                                     c("Score", "delta_ppm")))
+      Peptide_plot_list_Score_m<-as.data.frame(Peptide_plot_list_Score_m)
+      formula_score<-data.frame(formula=unique_formula,Score=Peptide_plot_list_Score_m$Score,Delta_ppm=Peptide_plot_list_Score_m$delta_ppm)
       Peptide_plot_list_decoy$Score<-NULL
       Peptide_plot_list_decoy<-merge(Peptide_plot_list_decoy,formula_score,by="formula")
       Peptide_plot_list<-rbind(Peptide_plot_list,Peptide_plot_list_decoy)
@@ -2447,8 +2453,7 @@ if(PMFsearch){
       #Peptide_plot_list_rank=Peptide_plot_list
       #Peptide_plot_list_rank$Rank=1
       #Peptide_plot_list_rank=Peptide_plot_list_rank[Peptide_plot_list_rank$Rank<=Rank,]
-      Peptide_plot_list_rank<-unique(Peptide_plot_list_rank[,c("mz","Peptide","adduct","formula","isdecoy","Intensity","moleculeNames","Region","Score",        
-                                                        "mz_align","Rank")])
+      Peptide_plot_list_rank<-unique(Peptide_plot_list_rank)
       
       
       #group_by(c("Protein","isdecoy"))  %>%  summarize(sum("Intensity"))
@@ -3011,10 +3016,11 @@ SCORE_PMF<-function(formula,peaklist,isotopes=NULL,threshold=2.5,charge=1,ppm=5,
   if (nrow(spectrum_pk)>1 && nrow(pattern_ppm)>1 && !is.null(pattern_ppm)){
   pattern_ppm$norm_ppm<-pattern_ppm$delta_ppm-mean(pattern_ppm$delta_ppm)
   meanppm=mean(abs(pattern_ppm$norm_ppm))
-  pattern_ppm$plotppm<-ifelse(abs(pattern_ppm$norm_ppm)>ppm,paste0(">",ppm),round(abs(pattern_ppm$norm_ppm),digits = 1))
+  pattern_ppm$plotppm<-ifelse(abs(pattern_ppm$norm_ppm)>ppm,paste0(">",ppm),round((pattern_ppm$norm_ppm),digits = 1))
   }else if (nrow(spectrum_pk)==1 && nrow(pattern_ppm)==1 && !is.null(pattern_ppm)){
   pattern_ppm$norm_ppm<-pattern_ppm$delta_ppm
   meanppm=mean(abs(pattern_ppm$norm_ppm))
+  pattern_ppm$plotppm<-ifelse(abs(pattern_ppm$norm_ppm)>ppm,paste0(">",ppm),round((pattern_ppm$norm_ppm),digits = 1))
   }else{
   meanppm= 2*instrument_ppm
   }
@@ -3035,7 +3041,7 @@ SCORE_PMF<-function(formula,peaklist,isotopes=NULL,threshold=2.5,charge=1,ppm=5,
   #score
   #message(score)
   finalscore=score*ppm_error
-  return(finalscore)
+  return(as.numeric(c(finalscore,meanppm)))
 }
 
 
