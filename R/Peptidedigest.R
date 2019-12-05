@@ -2837,8 +2837,8 @@ SCORE_PMF<-function(formula,peaklist,isotopes=NULL,threshold=2.5,charge=1,ppm=5,
         lines(rep(bottom_plot$mz[i], 2), c(0, -bottom_plot$intensity[i]*100), col = "red")
         if (bottom_plot$intensity[i]!=0){
           points(bottom_plot$mz[i],-bottom_plot$intensity[i]*100, col = "darkred")
-        if(length(pattern_ppm$norm_ppm[pattern_ppm$mz==bottom_plot$mz[i]])==1){
-         text(bottom_plot$mz[i],-bottom_plot$intensity[i]*100-7, round(pattern_ppm$norm_ppm[pattern_ppm$mz==bottom_plot$mz[i]],digits = 1),cex=0.6,col="gray21")
+        if(length(pattern_ppm$plotppm[pattern_ppm$mz==bottom_plot$mz[i]])==1){
+         text(bottom_plot$mz[i],-bottom_plot$intensity[i]*100-7, pattern_ppm$plotppm[pattern_ppm$mz==bottom_plot$mz[i]],cex=0.6,col="gray21")
                  }}
         }
       axis(2, at = ticks, labels = abs(ticks), pos = xlim[1], ylab = "Intensity")
@@ -2882,9 +2882,48 @@ SCORE_PMF<-function(formula,peaklist,isotopes=NULL,threshold=2.5,charge=1,ppm=5,
     # simscore <- as.vector((u %*% v)^2 / (sum(u^2) * sum(v^2)))   # cos squared
     
   }
+  isopattern_ppm_filter_peaklist<-function(pattern,ppm,threshold=0.001,verbose=F){
+    
+    org_feature=nrow(pattern)
+    
+    pattern_ppm=as.numeric(as.character(pattern[,1]))
+    
+    pattern_ppm_delta=numeric()
+    
+    
+    filtered_pattern<-pattern[1,]
+    #filtered_pattern<-t(data.frame(filtered_pattern,stringsAsFactors = F))
+    #dim(filtered_pattern)
+    for (i in 1:(length(pattern_ppm)-1)){
+      
+      pattern_ppm_delta[i]=(pattern_ppm[i+1]-pattern_ppm[i])/pattern_ppm[i]
+      
+      if (pattern_ppm_delta[i]>(ppm/1000000)){
+        filtered_pattern<-rbind(filtered_pattern,pattern[i+1,])
+      } else {
+        #previous_iso=filtered_pattern[nrow(filtered_pattern),]
+        
+        #newline=as.data.frame(list("m/z"=(filtered_pattern[nrow(filtered_pattern),1]*filtered_pattern[nrow(filtered_pattern),2]+pattern[i+1,1]*pattern[i+1,2])/(sum(filtered_pattern[nrow(filtered_pattern),2],pattern[i+1,2])),"abundance"=filtered_pattern[nrow(filtered_pattern),2]+pattern[i+1,2]))
+        #names(newline)=c("m/z","abundance")
+        newline=c((filtered_pattern[nrow(filtered_pattern),1]*filtered_pattern[nrow(filtered_pattern),2]+pattern[i+1,1]*pattern[i+1,2])/(sum(filtered_pattern[nrow(filtered_pattern),2],pattern[i+1,2])),
+                  filtered_pattern[nrow(filtered_pattern),2]+pattern[i+1,2])
+        filtered_pattern[nrow(filtered_pattern),]<-newline
+      }
+      
+    }
+    
+    filtered_pattern<-filtered_pattern[filtered_pattern$intensities>=max(filtered_pattern$intensities)*threshold,]
+    
+    rownames(filtered_pattern)=1:nrow(filtered_pattern)
+    if(verbose==T){
+      message(paste("Origional Features:",org_feature,"Filtered Features:",nrow(filtered_pattern)))
+    }
+    
+    
+    return(filtered_pattern)
+  }
   
   isopattern_ppm_filter<-function(pattern,ppm){
-
     
     pattern_ppm=as.numeric(as.character(pattern[,1]))
     
@@ -2936,7 +2975,7 @@ SCORE_PMF<-function(formula,peaklist,isotopes=NULL,threshold=2.5,charge=1,ppm=5,
   if (ppm>=25) {
     instrument_ppm=50
   }else{
-    instrument_ppm=12
+    instrument_ppm=10
   }
   #monomass=pattern[1,1]
   #m_1_pattern=data.frame("m/z"=pattern[1,1]-(1.003354840/ifelse(charge==0,1,abs(charge))),abundance=0)
@@ -2953,21 +2992,34 @@ SCORE_PMF<-function(formula,peaklist,isotopes=NULL,threshold=2.5,charge=1,ppm=5,
   Peak_intensity<-max(spectrum$Intensity)
   
   spectrum_pk<-lapply(1:nrow(pattern), function(x,pattern,peaklist,instrument_ppm){
-    peaklist[between(peaklist$m.z,pattern[x,1]*(1-(instrument_ppm)/2/1000000),pattern[x,1]*(1+(instrument_ppm)/2/1000000)),]
+    peaklist[between(peaklist$m.z,pattern[x,1]*(1-(instrument_ppm)/1000000),pattern[x,1]*(1+(instrument_ppm)/1000000)),]
   },pattern,peaklist,instrument_ppm)
   spectrum_pk<-do.call(rbind,spectrum_pk)
   spectrum_pk<-unique(spectrum_pk)
-  spectrum_pk=isopattern_ppm_filter_peaklist(pattern = spectrum_pk, ppm=instrument_ppm)
+  if (nrow(spectrum_pk)>1){
+    spectrum_pk=isopattern_ppm_filter_peaklist(pattern = spectrum_pk, ppm=instrument_ppm)
+  }
+  
   
   pattern_ppm<-do.call(rbind,(lapply(1:nrow(pattern), function(x,pattern,peaklist,ppm){
     PMF_spectrum<-peaklist[between(peaklist$m.z,pattern[x,1]*(1-ppm/1000000),pattern[x,1]*(1+ppm/1000000)),]
     if(nrow(PMF_spectrum)==1){
       return(data.frame(mz=pattern[x,1],delta_ppm=(PMF_spectrum[1,1]-pattern[x,1])/pattern[x,1]*1000000))
     }
-  },pattern,spectrum_pk,ppm)))
-  pattern_ppm$norm_ppm<-pattern_ppm$delta_ppm-mean(pattern_ppm$delta_ppm)
-  ppm_error=(ppm-mean(abs(pattern_ppm$delta_ppm-mean(pattern_ppm$delta_ppm))))/ppm
+  },pattern,spectrum_pk,instrument_ppm)))
   
+  if (nrow(spectrum_pk)>1 && nrow(pattern_ppm)>1 && !is.null(pattern_ppm)){
+  pattern_ppm$norm_ppm<-pattern_ppm$delta_ppm-mean(pattern_ppm$delta_ppm)
+  meanppm=mean(abs(pattern_ppm$norm_ppm))
+  pattern_ppm$plotppm<-ifelse(abs(pattern_ppm$norm_ppm)>ppm,paste0(">",ppm),round(abs(pattern_ppm$norm_ppm),digits = 1))
+  }else if (nrow(spectrum_pk)==1 && nrow(pattern_ppm)==1 && !is.null(pattern_ppm)){
+  pattern_ppm$norm_ppm<-pattern_ppm$delta_ppm
+  meanppm=mean(abs(pattern_ppm$norm_ppm))
+  }else{
+  meanppm= 2*instrument_ppm
+  }
+  
+  ppm_error=(1-pnorm(meanppm/ppm))
   #message(head(spectrum))
   #message(c(min(range(pattern[,1],na.rm = T))-1," ",max(range(pattern[,1],na.rm = T))+1))
   
@@ -3415,9 +3467,9 @@ plot_matching_score<-function(Peptide_plot_list,peaklist,charge,ppm,outputdir=ge
   if(nrow(Peptide_plot_list)!=0){
      for (i in 1:nrow(Peptide_plot_list)){
   if(Peptide_plot_list$isdecoy[i]==0){
-    try(SCORE_PMF(Peptide_plot_list$formula[i],peaklist,isotopes=isotopes,threshold=0.01,charge=charge,ppm=ppm,print.graphic=T,output.list=F,outputfile=paste0(outputdir,"/",Peptide_plot_list$formula[i]," ",Peptide_plot_list$adduct[i]," ",ifelse(Peptide_plot_list$isdecoy[i]==0,"target","decoy"),".png")))
+    try(SCORE_PMF(Peptide_plot_list$formula[i],peaklist,isotopes=isotopes,charge=charge,ppm=ppm,print.graphic=T,output.list=F,outputfile=paste0(outputdir,"/",Peptide_plot_list$formula[i]," ",Peptide_plot_list$adduct[i]," ",ifelse(Peptide_plot_list$isdecoy[i]==0,"target","decoy"),".png")))
     }else{
-    try(SCORE_PMF(Peptide_plot_list$formula[i],peaklist,isotopes=decoy_isotopes,threshold=0.01,charge=charge,ppm=ppm,print.graphic=T,output.list=F,outputfile=paste0(outputdir,"/",Peptide_plot_list$formula[i]," ",Peptide_plot_list$adduct[i]," ",ifelse(Peptide_plot_list$isdecoy[i]==0,"target","decoy"),".png")))
+    try(SCORE_PMF(Peptide_plot_list$formula[i],peaklist,isotopes=decoy_isotopes,charge=charge,ppm=ppm,print.graphic=T,output.list=F,outputfile=paste0(outputdir,"/",Peptide_plot_list$formula[i]," ",Peptide_plot_list$adduct[i]," ",ifelse(Peptide_plot_list$isdecoy[i]==0,"target","decoy"),".png")))
   }
   } 
   }
@@ -4036,7 +4088,7 @@ pick.peaks <- function(peaklist, ppm) {
   unique(pks[!is.na(pks)])
 }
 
-isopattern_ppm_filter_peaklist<-function(pattern,ppm,threshold=0.001){
+isopattern_ppm_filter_peaklist<-function(pattern,ppm,threshold=0.001,verbose=T){
 
   org_feature=nrow(pattern)
   
@@ -4069,8 +4121,10 @@ isopattern_ppm_filter_peaklist<-function(pattern,ppm,threshold=0.001){
   filtered_pattern<-filtered_pattern[filtered_pattern$intensities>=max(filtered_pattern$intensities)*threshold,]
   
   rownames(filtered_pattern)=1:nrow(filtered_pattern)
+  if(verbose==T){
+    message(paste("Origional Features:",org_feature,"Filtered Features:",nrow(filtered_pattern)))
+  }
   
-  message(paste("Origional Features:",org_feature,"Filtered Features:",nrow(filtered_pattern)))
   
   return(filtered_pattern)
 }
