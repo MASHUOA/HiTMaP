@@ -2400,27 +2400,13 @@ if(PMFsearch){
       #message(head(isotopes))
       
       unique_formula<-unique(Peptide_plot_list$formula)
-      Peptide_plot_list_Score=unlist(bplapply(unique_formula,SCORE_PMF,peaklist=peaklist,isotopes=isotopes,score_method=score_method,charge = 1,ppm=ppm,BPPARAM = BPPARAM))
-      Peptide_plot_list_Score_m=matrix(Peptide_plot_list_Score,ncol=2,nrow=length(Peptide_plot_list_Score)/2,byrow=T,dimnames = list(1:(length(Peptide_plot_list_Score)/2),
-                                                                                                                                    c("Score", "delta_ppm")))
-      Peptide_plot_list_Score_m<-as.data.frame(Peptide_plot_list_Score_m)
+      Peptide_plot_list_Score=(bplapply(unique_formula,SCORE_PMF,peaklist=peaklist,isotopes=isotopes,score_method=score_method,charge = 1,ppm=ppm,BPPARAM = BPPARAM))
+      Peptide_plot_list_Score_m=as.data.frame(do.call(rbind, Peptide_plot_list_Score))
+      names(Peptide_plot_list_Score_m)<-c("Score", "delta_ppm")
       formula_score<-data.frame(formula=unique_formula,Score=Peptide_plot_list_Score_m$Score,Delta_ppm=Peptide_plot_list_Score_m$delta_ppm)
       Peptide_plot_list$Score<-NULL
       Peptide_plot_list<-merge(Peptide_plot_list,formula_score,by="formula")
-      #testscore=lapply("C50H77N11O10S1Na1",SCORE_PMF,score_method=score_method,peaklist=peaklist,isotopes=isotopes,charge = 1,ppm=ppm)
-      #Peptide_plot_list_Score=lapply(testdf$formula,SCORE_PMF,peaklist=peaklist,isotopes=isotopes,score_method=score_method,charge = 1,ppm=ppm)
-      #Peptide_plot_list_Score_decoyisotope=bplapply(Peptide_plot_list$formula,SCORE_PMF,peaklist=peaklist,isotopes=decoy_isotopes,score_method=score_method,charge = 1,ppm=ppm,BPPARAM = BPPARAM)
-      #Peptide_plot_list_Score_decoyisotope_N=bplapply(Peptide_plot_list$formula,SCORE_PMF,peaklist=peaklist,isotopes=decoy_isotopes_N,score_method=score_method,charge = 1,ppm=ppm,BPPARAM = BPPARAM)
       
-      #Peptide_plot_list_Score=bplapply(Peptide_plot_list$formula,SCORE_PMF,peaklist,BPPARAM = BPPARAM)
-      
-      #Peptide_plot_list_Score_decoyisotope=unlist(Peptide_plot_list_Score_decoyisotope)
-      #Peptide_plot_list_decoy=Peptide_plot_list
-      #Peptide_plot_list_decoy$isdecoy=1
-      #Peptide_plot_list_decoy$Score=Peptide_plot_list_Score_decoyisotope
-      
-       #Peptide_plot_list_Score_frame=do.call(rbind,Peptide_plot_list_Score)
-      #Peptide_plot_list<-rbind(Peptide_plot_list,Peptide_plot_list_decoy)
       if (Decoy_search && ("isotope" %in% Decoy_mode)){
       decoy_isotopes=isotopes
       decoy_isotopes[decoy_isotopes$isotope=="13C",]=data.frame(element="C",isotope="11C",mass=10.99664516,aboudance=0.0107,ratioC=0,stringsAsFactors = F)
@@ -2436,12 +2422,12 @@ if(PMFsearch){
       Peptide_plot_list_decoy<-Peptide_plot_list[Peptide_plot_list$isdecoy==0,]
       Peptide_plot_list_decoy$isdecoy=1
       unique_formula<-unique(Peptide_plot_list_decoy$formula)
-      Peptide_plot_list_Score=unlist(bplapply(unique_formula,SCORE_PMF,peaklist=peaklist,isotopes=decoy_isotopes,score_method=score_method,charge = 1,ppm=ppm,BPPARAM = BPPARAM))
-      Peptide_plot_list_Score_m=matrix(Peptide_plot_list_Score,ncol=2,nrow=length(Peptide_plot_list_Score)/2,byrow=T,dimnames = list(1:(length(Peptide_plot_list_Score)/2),
-                                                                                                                                     c("Score", "delta_ppm")))
-      Peptide_plot_list_Score_m<-as.data.frame(Peptide_plot_list_Score_m)
+      Peptide_plot_list_Score=(bplapply(unique_formula,SCORE_PMF,peaklist=peaklist,isotopes=decoy_isotopes,score_method=score_method,charge = 1,ppm=ppm,BPPARAM = BPPARAM))
+      Peptide_plot_list_Score_m=as.data.frame(do.call(rbind, Peptide_plot_list_Score))
+      names(Peptide_plot_list_Score_m)<-c("Score", "delta_ppm")
       formula_score<-data.frame(formula=unique_formula,Score=Peptide_plot_list_Score_m$Score,Delta_ppm=Peptide_plot_list_Score_m$delta_ppm)
       Peptide_plot_list_decoy$Score<-NULL
+      Peptide_plot_list_decoy$Delta_ppm<-NULL
       Peptide_plot_list_decoy<-merge(Peptide_plot_list_decoy,formula_score,by="formula")
       Peptide_plot_list<-rbind(Peptide_plot_list,Peptide_plot_list_decoy)
       Protein_feature_list_decoy<-Protein_feature_list[Protein_feature_list$isdecoy==0,]
@@ -3041,7 +3027,7 @@ SCORE_PMF<-function(formula,peaklist,isotopes=NULL,threshold=2.5,charge=1,ppm=5,
   #score
   #message(score)
   finalscore=score*ppm_error
-  return(as.numeric(c(finalscore,meanppm)))
+  return(as.numeric(data.frame(finalscore,meanppm)))
 }
 
 
