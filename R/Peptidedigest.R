@@ -82,7 +82,7 @@ imaging_identification<-function(
                ClusterID_colname="Protein",
                Protein_desc_of_interest=".",
                plot_unique_component=FALSE,
-               FDR_cutoff=0.1,
+               FDR_cutoff=0.05,
                ...
                ){
   library("pacman")
@@ -2388,7 +2388,7 @@ if(PMFsearch){
     Peptide_Summary_searchlist<-merge(Peptide_Summary_searchlist,mz_feature_list,by.x="mz",by.y="mz",all.x=T,sort=F)
     Peptide_Summary_searchlist$Intensity[is.na(Peptide_Summary_searchlist$Intensity)]<-0
     
-    #bplapply( mz_feature_list$mz, function(x,))
+    #bplapply(mz_feature_list$mz, function(x,))
    
     #Peptide_Summary_searchlist$Intensity<-
     #Peptide_Summary_searchlist$Intensity<-unlist(bplapply(Peptide_Summary_searchlist$mz,intensity_sum_para,mz_feature_list,BPPARAM = BPPARAM))
@@ -2724,7 +2724,7 @@ Pathway_overview_graphite<-function(){
   
 }
 
-SCORE_PMF<-function(formula,peaklist,isotopes=NULL,threshold=2.5,charge=1,ppm=5,print.graphic=F,output.list=F,outputfile=NULL,score_method="SQRTP"){
+SCORE_PMF<-function(formula,peaklist,isotopes=NULL,threshold=1,charge=1,ppm=5,print.graphic=F,output.list=F,outputfile=NULL,score_method="SQRTP"){
   library(rcdk)
   library(rcdklibs)
   library(OrgMassSpecR)
@@ -2989,13 +2989,13 @@ SCORE_PMF<-function(formula,peaklist,isotopes=NULL,threshold=2.5,charge=1,ppm=5,
   if (ppm>=25) {
     instrument_ppm=50
   }else{
-    instrument_ppm=8
+    instrument_ppm=10
   }
   #message(formula)
   #message(pattern)
   pattern=pattern[[formula]]
   pattern=isopattern_ppm_filter(pattern = pattern[,1:2], ppm=instrument_ppm)
-  
+  pattern=pattern[pattern[,2]>=2.5,]
   #monomass=pattern[1,1]
   #m_1_pattern=data.frame("m/z"=pattern[1,1]-(1.003354840/ifelse(charge==0,1,abs(charge))),abundance=0)
   #colnames(m_1_pattern)=colnames(pattern[,1:2])
@@ -3020,10 +3020,11 @@ SCORE_PMF<-function(formula,peaklist,isotopes=NULL,threshold=2.5,charge=1,ppm=5,
   }
   
   
-  pattern_ppm<-do.call(rbind,(lapply(1:nrow(pattern), function(x,pattern,peaklist,ppm){
-    PMF_spectrum<-peaklist[between(peaklist$m.z,pattern[x,1]*(1-ppm/1000000),pattern[x,1]*(1+ppm/1000000)),]
-    if(nrow(PMF_spectrum)==1){
-      return(data.frame(mz=pattern[x,1],delta_ppm=(PMF_spectrum[1,1]-pattern[x,1])/pattern[x,1]*1000000))
+  pattern_ppm<-do.call(rbind,(lapply(1:nrow(pattern), function(x,pattern,spectrum_pk,instrument_ppm){
+    PMF_spectrum<-spectrum_pk[between(spectrum_pk$m.z,pattern[x,1]*(1-instrument_ppm/1000000),pattern[x,1]*(1+instrument_ppm/1000000)),]
+    if(nrow(PMF_spectrum)>=1){
+     spectrummz<-sum(PMF_spectrum[,1]*PMF_spectrum[,2])/sum(PMF_spectrum[,2])
+      return(data.frame(mz=pattern[x,1],delta_ppm=(spectrummz-pattern[x,1])/pattern[x,1]*1000000))
     }
   },pattern,spectrum_pk,instrument_ppm)))
   
