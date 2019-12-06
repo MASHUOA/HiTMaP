@@ -177,7 +177,7 @@ list.dirs(paste0(wd,datafile," ID/"), recursive=FALSE)
 In the identification details folder, you will find a series of FDR file and plots to demonstrate the FDR model and score cutoff threshold:
 
 ```{r The file in the details sub-folder}
-dir(paste0(wd,datafile," ID/1/"), recursive=T)
+dir(paste0(wd,datafile," ID/1/"), recursive=FALSE)
 ```
 
 In this folder, you will find the FDR plots for protein and peptide. The software will take the proscore and its FDR model to trim the final identification result. The *unique_peptide_ranking_vs_mz_feature.png* is a plot that could tell you the number of peptide candidates have been matched to the mz features in the first round run.You can also access the peptide spectrum match (first MS dimension) data via the "/ppm" subfolder.
@@ -199,6 +199,7 @@ you will also find a *Matching_Score_vs_mz* plots for further investigation on p
 
 ```{r p_Matching_Score_vs_mz plot, message=FALSE}
 library(magick)
+#plot Matching_Score_vs_mz
 p_Matching_Score_vs_mz<-image_read(paste0(wd,datafile," ID/3/Matching_Score_vs_mz_target-decoy.png"))
 print(p_Matching_Score_vs_mz)
 
@@ -218,7 +219,7 @@ dir(wd_sum)
 
 **Note**: 90$^\circ$, 180$^\circ$ and 270$^\circ$ are recommended for image rotation. You may find an example CSV file in the library/HiTMaP/data folder.
 
-```{r summary table}
+```{r summary table, message=FALSE, warning=FALSE}
 library(dplyr)
 Protein_desc_of_interest<-c("Crystallin","Actin")
 Protein_Summary_tb<-read.csv(paste(file.path(path.package(package="HiTMaP")),"/data/Summary folder","/Protein_Summary.csv", sep=""),stringsAsFactors = F)
@@ -229,8 +230,8 @@ Protein_Summary_tb<-read.csv(paste(file.path(path.package(package="HiTMaP")),"/d
 Now you could visualized the interest proteins and their associated peptides' distribution via cluster imaging function.
 
 ```{r CLuster imaging}
-p_cluster1<-image_read(paste0(wd,"/Summary folder/cluster Ion images/705_cluster_imaging.png"))
-print(p_cluster1)
+#p_cluster1<-image_read(paste0(wd,"/Summary folder/cluster Ion images/705_cluster_imaging.png"))
+#print(p_cluster1)
 p_cluster2<-image_read(paste0(wd,"/Summary folder/cluster Ion images/5027_cluster_imaging.png"))
 print(p_cluster2)
 p_cluster3<-image_read(paste0(wd,"/Summary folder/cluster Ion images/5479_cluster_imaging.png"))

@@ -2110,29 +2110,33 @@ PMF_Cardinal_Datafilelist<-function(datafile,Peptide_Summary_searchlist,
   Cardinal::image(skm, col=brewer.pal(SPECTRUM_for_average,colorstyle), key=FALSE, ann=FALSE,axes=FALSE)
   legend("topright", legend=1:SPECTRUM_for_average, fill=brewer.pal(SPECTRUM_for_average,colorstyle), col=brewer.pal(SPECTRUM_for_average,"Paired"), bg="transparent",xpd=TRUE,cex = 1)
   
-  #Cardinal::plot(skm, col=brewer.pal(SPECTRUM_for_average,colorstyle), type=c('p','h'), key=FALSE)
+  #Cardinal::plot(skm, col=brewer.pal(SPECTRUM_for_average,colorstyle), type=c('p','h'), key=T)
   #Cardinal::plot(skm, col=brewer.pal(SPECTRUM_for_average,colorstyle), type=c('p','h'), key=FALSE,mode="centers")
   #Cardinal::plot(skm, col=brewer.pal(SPECTRUM_for_average,colorstyle), type=c('p','h'), key=FALSE,mode="betweenss")
-  Cardinal::plot(skm, col=brewer.pal(SPECTRUM_for_average,colorstyle), type=c('p','h'), key=FALSE,mode="withinss")
+  Cardinal::plot(skm, col=brewer.pal(SPECTRUM_for_average,colorstyle), type=c('p','h'), key=T)
+  
   legend("topright", legend=1:SPECTRUM_for_average, fill=brewer.pal(SPECTRUM_for_average,colorstyle), col=brewer.pal(SPECTRUM_for_average,"Paired"), bg="transparent",xpd=TRUE,cex = 1)
   dev.off()
   library(magick)
   skmimg<-image_read(paste(getwd(),"\\","spatialKMeans_image_plot",'.png',sep=""))
   
   
-  png(paste(getwd(),"\\","spatialKMeans_image_plot",'.png',sep=""),width = 1024,height = 540*(ceiling(SPECTRUM_for_average/2)))
-  withinss=skm@resultData[[1]][["withinss"]]
+  png(paste(getwd(),"\\","spatialKMeans_image_plot",'.png',sep=""),width = 1024,height = 480*((SPECTRUM_for_average)))
+  centers=skm@resultData[[1]][["centers"]]
   
-  withinss_mz<-skm@featureData@data[["mz"]]
+  centers_mz<-skm@featureData@data[["mz"]]
   library(ggplot2)
   sp<-NULL
-  tempsp<-NULL
-  for (i in colnames(withinss)){
-    sp[[i]]<-ggplot2::ggplot(data=NULL, size=1 ,aes(x=withinss_mz, y=withinss[,i],xend=withinss_mz,yend=rep(0,length(withinss[,i])),colour =brewer.pal(SPECTRUM_for_average,colorstyle)[as.numeric(i)])) +  geom_segment(show.legend=F,colour =brewer.pal(SPECTRUM_for_average,colorstyle)[as.numeric(i)]) +theme_classic()
-    tempsp[[i]]<-sp[[i]]+ggtitle(paste("Mean spectrum"," Segmentation:",i)) 
+  sp_plot<-NULL
+  for (region in colnames(centers)){
+    sp_plot[[region]]<-data.frame(mz=centers_mz,intensity=centers[,region])
+    sp[[region]]<-ggplot2::ggplot(data=sp_plot[[region]], size=1 ,aes(x=mz, y=intensity,xend=mz,yend=rep(0,length( sp_plot[[region]]$intensity)),colour =brewer.pal(SPECTRUM_for_average,colorstyle)[as.numeric(region)])) +
+      geom_segment(show.legend=F,colour =brewer.pal(SPECTRUM_for_average,colorstyle)[as.numeric(region)]) +
+      theme_classic() +
+      ggtitle(paste("Mean spectrum"," Segmentation:",region),)
   }
   library(gridExtra)
-  grid.arrange( grobs = tempsp,ncol=2, nrow = ceiling(SPECTRUM_for_average/2) )
+  grid.arrange( grobs = sp,ncol=1, nrow = ceiling(SPECTRUM_for_average) )
   dev.off()
   
   skmimg_spec<-image_read(paste(getwd(),"\\","spatialKMeans_image_plot",'.png',sep=""))
@@ -2981,15 +2985,17 @@ SCORE_PMF<-function(formula,peaklist,isotopes=NULL,threshold=2.5,charge=1,ppm=5,
     algo=1,
     verbose = F
   )
-  #message(formula)
-  #message(pattern)
-  pattern=pattern[[formula]]
-  pattern=isopattern_ppm_filter(pattern = pattern[,1:2], ppm=ppm)
+  
   if (ppm>=25) {
     instrument_ppm=50
   }else{
-    instrument_ppm=10
+    instrument_ppm=8
   }
+  #message(formula)
+  #message(pattern)
+  pattern=pattern[[formula]]
+  pattern=isopattern_ppm_filter(pattern = pattern[,1:2], ppm=instrument_ppm)
+  
   #monomass=pattern[1,1]
   #m_1_pattern=data.frame("m/z"=pattern[1,1]-(1.003354840/ifelse(charge==0,1,abs(charge))),abundance=0)
   #colnames(m_1_pattern)=colnames(pattern[,1:2])
@@ -3033,7 +3039,7 @@ SCORE_PMF<-function(formula,peaklist,isotopes=NULL,threshold=2.5,charge=1,ppm=5,
   meanppm=instrument_ppm
   }
   
-  ppm_error=(1-pnorm(meanppm/ppm))
+  ppm_error=abs(pnorm(meanppm/ppm)-0.5)
   #message(head(spectrum))
   #message(c(min(range(pattern[,1],na.rm = T))-1," ",max(range(pattern[,1],na.rm = T))+1))
   
@@ -3048,7 +3054,7 @@ SCORE_PMF<-function(formula,peaklist,isotopes=NULL,threshold=2.5,charge=1,ppm=5,
                          formula=formula,pattern_ppm=pattern_ppm)
   #score
   #message(score)
-  finalscore=score*ppm_error
+  finalscore=score-ppm_error
   return(as.numeric(data.frame(finalscore,meanppm)))
 }
 
