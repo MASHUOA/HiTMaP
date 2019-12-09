@@ -14,7 +14,7 @@ Meta_feature_list_fun(database, workdir = getwd(), adducts = adducts,
 
 \item{adducts}{the adducts list to be used for generating the PMF search candidates}
 
-\item{cal.mz}{If set with \code{"TRUE"}, the function will recalculate the mz value according to the column named "Formula" in the \code{database} and the specified adducts.}
+\item{cal.mz}{If set with \code{"TRUE"}, the function will recalculate the mz value according to the column named "formula" in the \code{database} and the specified adducts.}
 
 \item{BPPARAM}{parallel processing parameter for BiocParallel}
 

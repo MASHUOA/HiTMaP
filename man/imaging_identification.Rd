@@ -4,23 +4,26 @@
 \alias{imaging_identification}
 \title{imaging_identification}
 \usage{
-imaging_identification(datafile, threshold = 0.005, ppm = 5,
+imaging_identification(datafile, threshold = 0.01, ppm = 5,
   mode = c("Proteomics", "Metabolomics"), Digestion_site = "[GN][LI]",
   missedCleavages = 0:1, Fastadatabase = "murine_matrisome.fasta",
-  adducts = c("M+H"), Decoy_search = T, Decoy_adducts = c("M+ACN+H",
+  adducts = c("M+H"), Modifications = list(fixed = NULL, variable =
+  NULL), Decoy_search = TRUE, Decoy_adducts = c("M+ACN+H",
   "M+IsoProp+H", "M+DMSO+H", "M+Co", "M+Ag", "M+Cu", "M+He", "M+Ne",
   "M+Ar", "M+Kr", "M+Xe", "M+Rn"), Decoy_mode = "isotope",
-  adjust_score = F, PMF_analysis = TRUE,
-  Bypass_generate_spectrum = F, Protein_feature_summary = TRUE,
-  plot_cluster_image = TRUE, ClusterID_colname = "Protein",
-  Peptide_feature_summary = TRUE, plot_ion_image = FALSE,
-  parallel = detectCores(), spectra_segments_per_file = 5,
-  spatialKMeans = TRUE, Smooth_range = 1,
-  Virtual_segmentation = FALSE, Virtual_segmentation_rankfile = NULL,
-  rotateimg = NULL, Region_feature_summary = F,
-  Spectrum_validate = T, output_candidatelist = T,
-  use_previous_candidates = F, score_method = "SQRTP",
-  plot_cluster_image_grid = F, ...)
+  mzrange = c(700, 4000), adjust_score = FALSE, PMF_analysis = TRUE,
+  Bypass_generate_spectrum = FALSE, peptide_ID_filter = 2,
+  Protein_feature_summary = TRUE, Peptide_feature_summary = TRUE,
+  plot_ion_image = FALSE, parallel = detectCores(),
+  spectra_segments_per_file = 5, spatialKMeans = TRUE,
+  Smooth_range = 1, Virtual_segmentation = FALSE,
+  Virtual_segmentation_rankfile = NULL, Rotate_IMG = NULL,
+  Region_feature_summary = FALSE, Spectrum_validate = TRUE,
+  output_candidatelist = TRUE, use_previous_candidates = FALSE,
+  score_method = "SQRTP", plot_cluster_image_grid = FALSE,
+  componentID_colname = "Peptide", ClusterID_colname = "Protein",
+  Protein_desc_of_interest = ".", plot_unique_component = FALSE,
+  FDR_cutoff = 0.05, ...)
 }
 \arguments{
 \item{threshold}{specify the intensities threshold (0 to 1 in percentage)to report a identified molecule}
@@ -39,8 +42,6 @@ imaging_identification(datafile, threshold = 0.005, ppm = 5,
 
 \item{Protein_feature_summary}{\code{"PMF_analysis"} follow-up process that will collect all the identified peptide information and associate them with possible proteins}
 
-\item{plot_cluster_image}{\code{"Protein_feature_summary"} follow-up process that will plot the protein cluster image}
-
 \item{plot_ion_image}{\code{"Peptide_feature_summarya"} follow-up process that will plot every connponents in the \code{"peptide shortlist"}}
 
 \item{parallel}{the number of threads will be used in the PMF search, this option now only works for windows OS}
@@ -54,6 +55,8 @@ imaging_identification(datafile, threshold = 0.005, ppm = 5,
 \item{Virtual_segmentation}{set \code{"TRUE"} if you want to overide the automaitic segmentation}
 
 \item{Virtual_segmentation_rankfile}{specify a region rank file contains region information for manualy region segmentation}
+
+\item{plot_cluster_image}{\code{"Protein_feature_summary"} follow-up process that will plot the protein cluster image}
 
 \item{Peptide_feature_summarya}{\code{"PMF_analysis"} follow-up process that will summarize all datafiles identified peptides and generats a \code{"peptide shortlist"} in the result summary folder}
 }

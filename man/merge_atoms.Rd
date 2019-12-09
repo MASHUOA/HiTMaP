@@ -14,7 +14,7 @@ merge_atoms(atoms, addelements, check_merge = T, mode = c("add",
 
 \item{adducts}{the adducts list to be used for generating the PMF search candidates}
 
-\item{cal.mz}{If set with \code{"TRUE"}, the function will recalculate the mz value according to the column named "Formula" in the \code{database} and the specified adducts.}
+\item{cal.mz}{If set with \code{"TRUE"}, the function will recalculate the mz value according to the column named "formula" in the \code{database} and the specified adducts.}
 
 \item{mzlist_bypass}{Set \code{"TRUE"} if you want to bypass the mzlist generating process, the function will keep the mz and adduct as it is for the furture analysis. Be sure that the table contains "mz", "adduct" and "moleculeNames" as they are essential for later steps.}
 

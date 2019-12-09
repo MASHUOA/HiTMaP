@@ -176,7 +176,7 @@ print(p_pmf)
 ## # A tibble: 1 x 7
 ##   format width height colorspace matte filesize density
 ##   <chr>  <int>  <int> <chr>      <lgl>    <int> <chr>  
-## 1 PNG     1980   1080 sRGB       FALSE    13272 72x72
+## 1 PNG     1980   1080 sRGB       FALSE    17113 72x72
 ```
 
 <img src="README_files/figure-html/unnamed-chunk-1-1.png" width="1980" />
@@ -191,15 +191,15 @@ head(peptide_pmf_result)
 
 ```
 ## # A tibble: 6 x 16
-##   Protein    mz Peptide adduct formula isdecoy pepmz charge mz_align
-##     <int> <dbl> <fct>   <fct>  <fct>     <int> <dbl>  <int>    <dbl>
-## 1    1096  760. IPCNWK  M+H    C35H54~       0  759.      1     760.
-## 2    1096 1217. LTKSKP~ M+H    C52H94~       0 1216.      1    1217.
-## 3    1096 1449. MQTPQY~ M+H    C61H10~       0 1448.      1    1449.
-## 4    1096  874. SKPQAE~ M+H    C36H64~       0  873.      1     874.
-## 5   11628 1323. DSWTLT~ M+H    C57H92~       0 1322.      1    1323.
-## 6   11628 1432. NCRDLG~ M+H    C58H10~       0 1431.      1    1432.
-## # ... with 7 more variables: Score <dbl>, Rank <int>, Intensity <dbl>,
+##   Protein    mz Peptide adduct formula isdecoy pepmz charge mz_align Score
+##     <int> <dbl> <fct>   <fct>  <fct>     <int> <dbl>  <int>    <dbl> <dbl>
+## 1       9 1467. GGNELD~ M+H    C60H96~       0 1466.      1    1467. 0.369
+## 2       9 1323. QEDQLQ~ M+H    C55H88~       0 1322.      1    1323. 0.573
+## 3       9 1469. NEEPSS~ M+H    C62H94~       0 1468.      1    1469. 3.44 
+## 4       9 1323. QIDQKE~ M+H    C55H88~       0 1322.      1    1323. 0.573
+## 5      13 1493. MDPTDA~ M+H    C62H98~       0 1492.      1    1493. 2.43 
+## 6      13 1359. LKELEV~ M+H    C58H10~       0 1358.      1    1359. 0.542
+## # ... with 6 more variables: Rank <int>, Intensity <dbl>,
 ## #   moleculeNames <fct>, Region <int>, Delta_ppm <dbl>, desc <fct>
 ```
 
@@ -213,12 +213,12 @@ head(protein_pmf_result)
 ## # A tibble: 6 x 9
 ##   Protein Proscore isdecoy Intensity Score peptide_count Protein_coverage
 ##     <int>    <dbl>   <int>     <dbl> <dbl>         <int>            <dbl>
-## 1    1096   0.0474       0   174400. 0.474             2           0.101 
-## 2   11628   0.0783       0   287680. 0.324             3           0.235 
-## 3   11995   0.0242       0  5389531. 0.191             2           0.0995
-## 4   13004   0.0312       0   119777. 0.289             3           0.113 
-## 5    1349   0.0389       0   100481. 0.485             2           0.0848
-## 6   13621   0.0292       0   454557. 0.311             3           0.0882
+## 1   10134   0.147        0  1189179. 1.30              5           0.0978
+## 2   10204   0.179        0   167823. 0.912             4           0.198 
+## 3   10370   0.169        0   990324. 2.06              3           0.0719
+## 4   10628   0.0617       0   340804. 1.06              2           0.0553
+## 5   10691   0.125        0   442322. 1.36              3           0.0861
+## 6   10754   0.0699       0    93787. 2.31              1           0.0321
 ## # ... with 2 more variables: Intensity_norm <dbl>, desc <fct>
 ```
 
@@ -242,14 +242,14 @@ head(Identification_summary_table)
 
 ```
 ## # A tibble: 6 x 16
-##   Protein    mz Peptide adduct formula isdecoy pepmz charge mz_align  Score
-##     <int> <dbl> <fct>   <fct>  <fct>     <int> <dbl>  <int>    <dbl>  <dbl>
-## 1   27656 1164. RDFSLE~ M+H    C50H83~       0 1163.      1    1164. 0.0237
-## 2   27656 1473. FYGPAG~ M+H    C72H98~       0 1472.      1    1473. 0.645 
-## 3   27656 1517. ILLAVN~ M+H    C71H12~       0 1516.      1    1517. 0.975 
-## 4   32192 1590. VGYFGP~ M+H    C79H11~       0 1589.      1    1590. 0.911 
-## 5   32192 1837. ELQDNS~ M+H    C79H11~       0 1836.      1    1837. 0.0410
-## 6   32192 2240. NGIFSI~ M+H    C101H1~       0 2239.      1    2240. 0.0548
+##   Protein    mz Peptide adduct formula isdecoy pepmz charge mz_align Score
+##     <int> <dbl> <fct>   <fct>  <fct>     <int> <dbl>  <int>    <dbl> <dbl>
+## 1     393 1881. GMSIDQ~ M+H    C81H13~       0 1880.      1    1881. 2.56 
+## 2     393 1301. RPAEIY~ M+H    C55H90~       0 1300.      1    1301. 0.765
+## 3     393 1170. LGALWV~ M+H    C54H89~       0 1169.      1    1170. 0.224
+## 4     452 1837. DGQVIN~ M+H    C74H11~       0 1836.      1    1837. 1.72 
+## 5     452  932. LLEGEE~ M+H    C38H66~       0  931.      1     932. 1.78 
+## 6     452 2203. EMEENF~ M+H    C92H14~       0 2202.      1    2203. 0.631
 ## # ... with 6 more variables: Rank <int>, Intensity <dbl>,
 ## #   moleculeNames <fct>, Region <int>, Delta_ppm <dbl>, desc <fct>
 ```
@@ -271,7 +271,7 @@ In the identification details folder, you will find a series of FDR file and plo
 
 
 ```r
-dir(paste0(wd,datafile," ID/1/"), recursive=T)
+dir(paste0(wd,datafile," ID/1/"), recursive=FALSE)
 ```
 
 ```
@@ -282,55 +282,13 @@ dir(paste0(wd,datafile," ID/1/"), recursive=T)
 ##  [5] "Peptide_1st_ID_score_rank_SQRTP.csv"            
 ##  [6] "Peptide_2nd_ID_score_rankSQRTP_Rank_above_3.csv"
 ##  [7] "Peptide_Score_histogram_target-decoy.png"       
-##  [8] "ppm/C112H189N30O40 M+H target.png"              
-##  [9] "ppm/C122H200N33O36S1 M+H target.png"            
-## [10] "ppm/C124H207N32O31S3 M+H target.png"            
-## [11] "ppm/C29H50N11O12 M+H target.png"                
-## [12] "ppm/C30H53N10O12 M+H target.png"                
-## [13] "ppm/C32H50N11O8 M+H target.png"                 
-## [14] "ppm/C32H50N13O8 M+H target.png"                 
-## [15] "ppm/C33H56N9O8S1 M+H target.png"                
-## [16] "ppm/C35H62N13O13 M+H target.png"                
-## [17] "ppm/C38H68N17O12S1 M+H target.png"              
-## [18] "ppm/C42H69N10O13 M+H target.png"                
-## [19] "ppm/C42H69N12O12S1 M+H target.png"              
-## [20] "ppm/C42H71N12O14S1 M+H target.png"              
-## [21] "ppm/C42H72N15O15S2 M+H target.png"              
-## [22] "ppm/C45H68N11O14 M+H target.png"                
-## [23] "ppm/C45H68N15O17 M+H target.png"                
-## [24] "ppm/C46H70N15O16 M+H target.png"                
-## [25] "ppm/C49H73N12O13 M+H target.png"                
-## [26] "ppm/C49H87N14O19 M+H target.png"                
-## [27] "ppm/C49H87N16O18 M+H target.png"                
-## [28] "ppm/C49H88N13O17S1 M+H target.png"              
-## [29] "ppm/C50H82N17O19 M+H target.png"                
-## [30] "ppm/C50H86N13O17 M+H target.png"                
-## [31] "ppm/C52H86N15O17 M+H target.png"                
-## [32] "ppm/C52H88N13O17S1 M+H target.png"              
-## [33] "ppm/C52H89N14O16 M+H target.png"                
-## [34] "ppm/C52H92N17O21S1 M+H target.png"              
-## [35] "ppm/C53H82N13O17 M+H target.png"                
-## [36] "ppm/C54H84N15O17 M+H target.png"                
-## [37] "ppm/C55H84N13O18S1 M+H target.png"              
-## [38] "ppm/C55H85N16O14 M+H target.png"                
-## [39] "ppm/C55H88N17O21 M+H target.png"                
-## [40] "ppm/C55H97N20O18 M+H target.png"                
-## [41] "ppm/C58H90N15O19 M+H target.png"                
-## [42] "ppm/C61H100N17O17S1 M+H target.png"             
-## [43] "ppm/C61H99N16O20 M+H target.png"                
-## [44] "ppm/C63H100N17O21 M+H target.png"               
-## [45] "ppm/C63H100N17O21S1 M+H target.png"             
-## [46] "ppm/C63H99N18O19S1 M+H target.png"              
-## [47] "ppm/C64H96N17O17 M+H target.png"                
-## [48] "ppm/C73H110N21O20 M+H target.png"               
-## [49] "ppm/C74H122N23O24 M+H target.png"               
-## [50] "ppm/C75H111N18O21 M+H target.png"               
-## [51] "PROTEIN_FDR.CSV"                                
-## [52] "Protein_FDR.png"                                
-## [53] "Protein_ID_score_rank_SQRTP.csv"                
-## [54] "PROTEIN_Score_histogram.png"                    
-## [55] "Spectrum.csv"                                   
-## [56] "unique_peptide_ranking_vs_mz_feature.png"
+##  [8] "ppm"                                            
+##  [9] "PROTEIN_FDR.CSV"                                
+## [10] "Protein_FDR.png"                                
+## [11] "Protein_ID_score_rank_SQRTP.csv"                
+## [12] "PROTEIN_Score_histogram.png"                    
+## [13] "Spectrum.csv"                                   
+## [14] "unique_peptide_ranking_vs_mz_feature.png"
 ```
 
 In this folder, you will find the FDR plots for protein and peptide. The software will take the proscore and its FDR model to trim the final identification result. The *unique_peptide_ranking_vs_mz_feature.png* is a plot that could tell you the number of peptide candidates have been matched to the mz features in the first round run.You can also access the peptide spectrum match (first MS dimension) data via the "/ppm" subfolder.
@@ -346,7 +304,7 @@ print(p_peptide_vs_mz_feature)
 ## # A tibble: 1 x 7
 ##   format width height colorspace matte filesize density
 ##   <chr>  <int>  <int> <chr>      <lgl>    <int> <chr>  
-## 1 PNG      960    480 sRGB       FALSE    11715 72x72
+## 1 PNG      960    480 sRGB       FALSE    11738 72x72
 ```
 
 <img src="README_files/figure-html/FDR plot-1.png" width="960" />
@@ -374,6 +332,7 @@ you will also find a *Matching_Score_vs_mz* plots for further investigation on p
 
 ```r
 library(magick)
+#plot Matching_Score_vs_mz
 p_Matching_Score_vs_mz<-image_read(paste0(wd,datafile," ID/3/Matching_Score_vs_mz_target-decoy.png"))
 print(p_Matching_Score_vs_mz)
 ```
@@ -382,7 +341,7 @@ print(p_Matching_Score_vs_mz)
 ## # A tibble: 1 x 7
 ##   format width height colorspace matte filesize density
 ##   <chr>  <int>  <int> <chr>      <lgl>    <int> <chr>  
-## 1 PNG      480    480 sRGB       FALSE    39068 72x72
+## 1 PNG      480    480 sRGB       FALSE    54177 72x72
 ```
 
 <img src="README_files/figure-html/p_Matching_Score_vs_mz plot-1.png" width="480" />
@@ -410,32 +369,6 @@ dir(wd_sum)
 
 ```r
 library(dplyr)
-```
-
-```
-## 
-## Attaching package: 'dplyr'
-```
-
-```
-## The following objects are masked from 'package:data.table':
-## 
-##     between, first, last
-```
-
-```
-## The following objects are masked from 'package:stats':
-## 
-##     filter, lag
-```
-
-```
-## The following objects are masked from 'package:base':
-## 
-##     intersect, setdiff, setequal, union
-```
-
-```r
 Protein_desc_of_interest<-c("Crystallin","Actin")
 Protein_Summary_tb<-read.csv(paste(file.path(path.package(package="HiTMaP")),"/data/Summary folder","/Protein_Summary.csv", sep=""),stringsAsFactors = F)
 ```
@@ -455,7 +388,7 @@ print(p_cluster2)
 ## # A tibble: 1 x 7
 ##   format width height colorspace matte filesize density
 ##   <chr>  <int>  <int> <chr>      <lgl>    <int> <chr>  
-## 1 PNG     1980    581 sRGB       TRUE    496217 118x118
+## 1 PNG     1980    581 sRGB       TRUE    496193 118x118
 ```
 
 <img src="README_files/figure-html/CLuster imaging-1.png" width="1980" />

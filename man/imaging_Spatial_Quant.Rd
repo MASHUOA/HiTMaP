@@ -23,7 +23,7 @@ imaging_Spatial_Quant(datafile = tk_choose.files(filter =
   Cluster_level = "High", ClusterID_colname = "Name",
   Region_feature_analysis_bar_plot = T, norm_datafiles = T,
   norm_Type = "Median", mzrange = NULL, BPPARAM = bpparam(),
-  rotateimg = NULL, ...)
+  Rotate_IMG = NULL, ...)
 }
 \arguments{
 \item{datafile}{specify the imzML data files}

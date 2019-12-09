@@ -18,8 +18,8 @@
 #' @import BiocManager
 #' @import pacman
 #' @import BiocParallel
-#' @importFrom stats na.omit runif
-#' @importFrom utils download.file modifyList packageVersion read.table tail
+# @importFrom stats na.omit runif
+# @importFrom utils download.file modifyList packageVersion read.table tail
 
 
 

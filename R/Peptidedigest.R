@@ -86,10 +86,10 @@ imaging_identification<-function(
                ...
                ){
   library("pacman")
-  p_load(RColorBrewer,RCurl,bitops,magick,ggplot2,reticulate,dplyr,stringr,tcltk,
+  suppressMessages(suppressWarnings(p_load(RColorBrewer,RCurl,bitops,magick,ggplot2,reticulate,dplyr,stringr,tcltk,
          data.table,doParallel,iterators,foreach,protViz,cleaver,MALDIquant,Biostrings,
          XVector,IRanges,Cardinal,ProtGenerics,S4Vectors,stats4,EBImage,BiocParallel,
-         BiocGenerics,parallel,stats,graphics,grDevices,utils,datasets,methods)
+         BiocGenerics,parallel,stats,graphics,grDevices,datasets,methods)))
   if (missing(datafile)) {datafile=tk_choose.files(filter = matrix(c( "imzml file", ".imzML","Text", ".txt", "All files", "*"),3, 2, byrow = TRUE),
                                         caption  = "Choose single or multiple file(s) for analysis")}
   datafile<-gsub(".imzML", "", datafile)
@@ -492,10 +492,10 @@ imaging_Spatial_Quant<-function(
   ...
 ){
   library(pacman)
-  p_load(RColorBrewer,RCurl,bitops,magick,ggplot2,reticulate,dplyr,stringr,tcltk,data.table,doParallel,
+  suppressMessages(suppressWarnings(p_load(RColorBrewer,RCurl,bitops,magick,ggplot2,reticulate,dplyr,stringr,tcltk,data.table,doParallel,
          iterators,foreach,protViz,cleaver,MALDIquant,Biostrings,XVector,IRanges,Cardinal,Rdisop,
          ProtGenerics,S4Vectors,stats4,EBImage,
-         BiocParallel,BiocGenerics,parallel,stats,graphics,grDevices,utils,datasets,methods)
+         BiocParallel,BiocGenerics,parallel,stats,graphics,grDevices,utils,datasets,methods)))
   
   datafile<-gsub(".imzML", "", datafile)
   workdir<-base::dirname(datafile[1])
@@ -1639,7 +1639,7 @@ searchPMF_data_frame<-function(pimlist,spectrumlist,ppm,BPPARAM = bpparam()){
 }
 
 PlotPMFsig<-function(pimresultindex,spectrumlist,peplist,pimlist,pimresultlist, threshold=0.05){
-  library(ggplot2)
+   suppressMessages(suppressWarnings(require(ggplot2)))
   #library(ggplot)
   print("Ploting Sig PMF")
   pimresultsl<-pimresultindex[pimresultindex[,"Normalized Mean"]>threshold,]
@@ -1664,7 +1664,7 @@ PlotPMFsig<-function(pimresultindex,spectrumlist,peplist,pimlist,pimresultlist, 
 
 Plot_PMF_all<-function(Protein_feature_list,peaklist,threshold=threshold,savename=""){
   message("Ploting PMF all in one spectrum")
-  library(ggplot2)
+  suppressMessages(suppressWarnings(require(ggplot2)))
   plotpeaklist<-as.data.frame(peaklist)
   plotpeaklist[,1]<-as.numeric(plotpeaklist[,1])
   plotpeaklist[,2]<-as.numeric(plotpeaklist[,2])
@@ -2041,10 +2041,10 @@ PMF_Cardinal_Datafilelist<-function(datafile,Peptide_Summary_searchlist,
                                     Protein_desc_of_interest=".",
                                     FDR_cutoff=0.1,
                                     ...){
-  library(data.table)
-  library(Cardinal)
-  library(RColorBrewer)
-  library(stringr)
+   suppressMessages(suppressWarnings(require(data.table)))
+   suppressMessages(suppressWarnings(require(Cardinal)))
+   suppressMessages(suppressWarnings(require(RColorBrewer)))
+   suppressMessages(suppressWarnings(require(stringr)))
   if (!is.null(rotate)){
     message("Found rotation info")
     #rotatedegrees=rotate[rotate$filenames==datafile,"rotation"]
@@ -2097,7 +2097,7 @@ PMF_Cardinal_Datafilelist<-function(datafile,Peptide_Summary_searchlist,
   if (spatialKMeans && SPECTRUM_for_average!=1){
     set.seed(1)
     message(paste0("spatialKMeans computing for ",name))
-  skm <- spatialKMeans(imdata, r=Smooth_range, k=SPECTRUM_for_average, method="adaptive")
+  skm <-  suppressMessages(suppressWarnings(spatialKMeans(imdata, r=Smooth_range, k=SPECTRUM_for_average, method="adaptive")))
   message(paste0("spatialKMeans finished for ",name))
   #skm@resultData[["new"]]=skm@resultData[["r = 1, k = 5"]]
   png(paste(getwd(),"\\","spatialKMeans_image_plot",'.png',sep=""),width = 1024,height = 720)
@@ -2117,7 +2117,7 @@ PMF_Cardinal_Datafilelist<-function(datafile,Peptide_Summary_searchlist,
   
   legend("topright", legend=1:SPECTRUM_for_average, fill=brewer.pal(SPECTRUM_for_average,colorstyle), col=brewer.pal(SPECTRUM_for_average,"Paired"), bg="transparent",xpd=TRUE,cex = 1)
   dev.off()
-  library(magick)
+  suppressMessages(suppressWarnings(require(magick)))
   skmimg<-image_read(paste(getwd(),"\\","spatialKMeans_image_plot",'.png',sep=""))
   
   
@@ -2125,7 +2125,7 @@ PMF_Cardinal_Datafilelist<-function(datafile,Peptide_Summary_searchlist,
   centers=skm@resultData[[1]][["centers"]]
   
   centers_mz<-skm@featureData@data[["mz"]]
-  library(ggplot2)
+  suppressMessages(suppressWarnings(require(ggplot2)))
   sp<-NULL
   sp_plot<-NULL
   for (region in colnames(centers)){
@@ -2135,7 +2135,7 @@ PMF_Cardinal_Datafilelist<-function(datafile,Peptide_Summary_searchlist,
       theme_classic() +
       ggtitle(paste("Mean spectrum"," Segmentation:",region),)
   }
-  library(gridExtra)
+  suppressMessages(suppressWarnings(require(gridExtra)))
   grid.arrange( grobs = sp,ncol=1, nrow = ceiling(SPECTRUM_for_average) )
   dev.off()
   
@@ -2414,8 +2414,8 @@ if(PMFsearch){
     
     #Peptide_plot_list$moleculeNames<-Peptide_plot_list$Peptide
     if (scoring){
-      library(enviPat)
-      library(ggplot2)
+       suppressMessages(suppressWarnings(require(enviPat)))
+       suppressMessages(suppressWarnings(require(ggplot2)))
       data(isotopes)
       
       
@@ -2591,8 +2591,8 @@ if(PMFsearch){
           if(is.null(Peptide_plot_list$moleculeNames)){Peptide_plot_list$moleculeNames=Peptide_plot_list$Peptide}
           #Peptide_plot_list$moleculeNames<-Peptide_plot_list$Peptide
           if (scoring){
-            library(enviPat)
-            library(ggplot2)
+             suppressMessages(suppressWarnings(require(enviPat)))
+             suppressMessages(suppressWarnings(require(ggplot2)))
             data(isotopes)
             
             Peptide_plot_list_Score=bplapply(Peptide_plot_list$formula,SCORE_PMF,peaklist,isotopes)
@@ -2725,13 +2725,13 @@ Pathway_overview_graphite<-function(){
 }
 
 SCORE_PMF<-function(formula,peaklist,isotopes=NULL,threshold=1,charge=1,ppm=5,print.graphic=F,output.list=F,outputfile=NULL,score_method="SQRTP"){
-  library(rcdk)
-  library(rcdklibs)
-  library(OrgMassSpecR)
-  library(enviPat)
-  library(data.table)
-  library(rJava)
-  library(grid)
+   suppressMessages(suppressWarnings(require(rcdk)))
+   suppressMessages(suppressWarnings(require(rcdklibs)))
+   suppressMessages(suppressWarnings(require(OrgMassSpecR)))
+   suppressMessages(suppressWarnings(require(enviPat)))
+   suppressMessages(suppressWarnings(require(data.table)))
+   suppressMessages(suppressWarnings(require(rJava)))
+   suppressMessages(suppressWarnings(require(grid)))
   if (is.null(isotopes)){data("isotopes")}
   
   
@@ -2837,7 +2837,7 @@ SCORE_PMF<-function(formula,peaklist,isotopes=NULL,threshold=1,charge=1,ppm=5,pr
     ## generate plot
     
     if(print.graphic == TRUE) {
-      library(ggplot2)
+       suppressMessages(suppressWarnings(require(ggplot2)))
       #library(magick)
       #tempfilename=tempfile(pattern = "file", tmpdir = tempdir())
       tempfilename=outputfile
@@ -3083,11 +3083,11 @@ return(mz_feature_list)
 
 FDR_cutoff_plot_protein<-function(Protein_feature_result,FDR_cutoff=0.1,plot_fdr=T,outputdir=paste0(datafile[z] ," ID/",SPECTRUM_batch),FDR_strip=500,adjust_score = F){
   
-  library(ggplot2)
-  library(data.table)
-  library(dplyr)
-  library(zoo)
-  library(FTICRMS)
+   suppressMessages(suppressWarnings(require(ggplot2)))
+   suppressMessages(suppressWarnings(require(data.table)))
+   suppressMessages(suppressWarnings(require(dplyr)))
+   suppressMessages(suppressWarnings(require(zoo)))
+   suppressMessages(suppressWarnings(require(FTICRMS)))
   Protein_feature_result=data_test_rename(c("isdecoy","Proscore"),Protein_feature_result)
   
   Protein_feature_result$isdecoy<-factor(Protein_feature_result$isdecoy)
@@ -3220,11 +3220,11 @@ FDR_cutoff_plot_protein<-function(Protein_feature_result,FDR_cutoff=0.1,plot_fdr
 
 
 FDR_cutoff_plot<-function(Peptide_plot_list,FDR_cutoff=0.1,FDR_strip=500,plot_fdr=F,outputdir=NULL,adjust_score=F){
-  library(ggplot2)
-  library(data.table)
-  library(dplyr)
-  library(zoo)
-  library(FTICRMS)
+   suppressMessages(suppressWarnings(require(ggplot2)))
+   suppressMessages(suppressWarnings(require(data.table)))
+   suppressMessages(suppressWarnings(require(dplyr)))
+   suppressMessages(suppressWarnings(require(zoo)))
+   suppressMessages(suppressWarnings(require(FTICRMS)))
   Peptide_plot_list=data_test_rename(c("isdecoy","Score"),Peptide_plot_list)
   
   Peptide_plot_list$isdecoy<-factor(Peptide_plot_list$isdecoy)
@@ -3235,7 +3235,7 @@ FDR_cutoff_plot<-function(Peptide_plot_list,FDR_cutoff=0.1,FDR_strip=500,plot_fd
   #unique_fomula_ID<-unique(Peptide_plot_list[,c("mz","formula","isdecoy","Intensity","Score")])
   
   plot_fdr_histogram<-function(Peptide_plot_list,plot_name="target-decoy",outputdir=outputdir){
-    library(dplyr)
+    suppressMessages(suppressWarnings(require(dplyr)))
     if (nrow(Peptide_plot_list)!=0) {
     Peptide_plot_list_plot<-Peptide_plot_list[,c("isdecoy","Score")]
     target_decoy<-factor(ifelse(Peptide_plot_list_plot$isdecoy==0,"Target","Decoy"),levels = c("Target","Decoy"))
@@ -3466,8 +3466,8 @@ FDR_cutoff_plot<-function(Peptide_plot_list,FDR_cutoff=0.1,FDR_strip=500,plot_fd
 
 plot_matching_score<-function(Peptide_plot_list,peaklist,charge,ppm,outputdir=getwd()){
   message("plot matching isotopic pattern")
-  library(enviPat)
-  library(dplyr)
+   suppressMessages(suppressWarnings(require(enviPat)))
+   suppressMessages(suppressWarnings(require(dplyr)))
   Peptide_plot_list=data_test_rename(c("formula","isdecoy","adduct"),Peptide_plot_list)
   data("isotopes")
   decoy_isotopes=isotopes
@@ -3501,11 +3501,11 @@ plot_matching_score<-function(Peptide_plot_list,peaklist,charge,ppm,outputdir=ge
 
 Mass_defect_plot<-function(Protein_feature_list,outputdir=NULL){
   
- library(enviPat)
- library(ggplot2)
+  suppressMessages(suppressWarnings(require(enviPat)))
+  suppressMessages(suppressWarnings(require(ggplot2)))
  data("isotopes")
   isotopes$nominalmass=as.numeric(sapply(isotopes$isotope,function(x,pattern){
-    library(stringr)
+    suppressMessages(suppressWarnings(require(stringr)))
     paste0(unlist(str_extract_all(x,pattern)),collapse = "")
     },pattern="[0-9]"))
   nomi_isotopes=isotopes[isotopes$abundance>0.5,]
@@ -3592,7 +3592,7 @@ Peptide_regions_Summary_fun<-function(Peptide_Summary_file_regions){
 }
 
 MassSpecWavelet_fun<-function(peaklist,SNR.Th=3){
-  library(MassSpecWavelet)
+   suppressMessages(suppressWarnings(require(MassSpecWavelet)))
   #data("exampleMS")
   exampleMS=peaklist
   sortpeak=peaklist
@@ -3613,7 +3613,7 @@ MassSpecWavelet_fun<-function(peaklist,SNR.Th=3){
 }
 
 get_coord_info<-function(pixelinfo){
-  library(stringr)
+   suppressMessages(suppressWarnings(require(stringr)))
   #pixelinfo=names(pixels(imdata)[unlist(x[SPECTRUM_batch])])
   xinfo<-str_extract(pixelinfo,"x =.{0,4},")
   yinfo<-str_extract(pixelinfo,"y =.{0,4},")
@@ -3636,7 +3636,7 @@ get_coord_info<-function(pixelinfo){
 }
 
 spec_peakdetect<-function(x){
-  library(MALDIrppa)
+   suppressMessages(suppressWarnings(require(MALDIrppa)))
   data(spectra) # list of MassSpectra class objects
   data(type) # metadata
   # Summary of spectra features (results for 20 first mass spectra)
@@ -3655,8 +3655,8 @@ spec_peakdetect<-function(x){
 
 protein_scoring<-function(Protein_feature_list,Peptide_plot_list_rank,scoretype=c("sum","mean"),BPPARAM = bpparam(),protein_nr_grouping=T,prioritize_protein=T,compete_decoy=T,peptide_ID_filter=2){
   
-  library(dplyr)
-  library(data.table)
+   suppressMessages(suppressWarnings(require(dplyr)))
+   suppressMessages(suppressWarnings(require(data.table)))
   Protein_feature_list<-as.data.table(Protein_feature_list)
   
   
@@ -3706,7 +3706,7 @@ protein_scoring<-function(Protein_feature_list,Peptide_plot_list_rank,scoretype=
 
   query_protein=sum_pro_int[,c("Protein","isdecoy")]
   query_protein_list=  split(query_protein, seq(nrow(query_protein)))
-  sum_pro_coverage <- unlist(bplapply(query_protein_list, function(x,Protein_feature_list_rank,list_of_protein_sequence,Index_of_protein_sequence,peptide_map_to_protein){
+  sum_pro_coverage <-  suppressMessages(suppressWarnings(unlist(bplapply(query_protein_list, function(x,Protein_feature_list_rank,list_of_protein_sequence,Index_of_protein_sequence,peptide_map_to_protein){
     #proteinid=Index_of_protein_sequence$desc[Index_of_protein_sequence$recno==x]
     #message(proteinid)
     protein_seq<-try(list_of_protein_sequence[x$Protein],silent = T)
@@ -3719,7 +3719,7 @@ protein_scoring<-function(Protein_feature_list,Peptide_plot_list_rank,scoretype=
       }
       
     }else{return(1)}
-  },Protein_feature_list_rank=Protein_feature_list_rank,list_of_protein_sequence=list_of_protein_sequence,Index_of_protein_sequence=Index_of_protein_sequence,peptide_map_to_protein=peptide_map_to_protein,BPPARAM = BPPARAM))
+  },Protein_feature_list_rank=Protein_feature_list_rank,list_of_protein_sequence=list_of_protein_sequence,Index_of_protein_sequence=Index_of_protein_sequence,peptide_map_to_protein=peptide_map_to_protein,BPPARAM = BPPARAM))))
   sum_pro_coverage=data.frame(Protein=(sum_pro_int$Protein),isdecoy=sum_pro_int$isdecoy,Protein_coverage=sum_pro_coverage)
   sum_pro_pep_count<-merge(sum_pro_pep_count,sum_pro_coverage,by=c("Protein","isdecoy"),sort=F)
   Protein_feature_list_rank$peptide_count<-NULL
@@ -3770,9 +3770,9 @@ protein_scoring<-function(Protein_feature_list,Peptide_plot_list_rank,scoretype=
     
     if (protein_nr_grouping){
       protein_nr<-function(Protein_feature_list_rank){
-    library(igraph)
-    library(Biostrings)
-    library(dplyr)
+     suppressMessages(suppressWarnings(require(igraph)))
+     suppressMessages(suppressWarnings(require(Biostrings)))
+     suppressMessages(suppressWarnings(require(dplyr)))
     
       
     
@@ -3986,7 +3986,7 @@ protein_scoring<-function(Protein_feature_list,Peptide_plot_list_rank,scoretype=
   #Proteinlist=sum_pro_int$Protein
   query_protein=sum_pro_int[,c("Protein","isdecoy")]
   query_protein_list=  split(query_protein, seq(nrow(query_protein)))
-  sum_pro_coverage <- unlist(bplapply(query_protein_list, function(x,Protein_feature_list_rank,list_of_protein_sequence,Index_of_protein_sequence,peptide_map_to_protein){
+  sum_pro_coverage <-  suppressMessages(suppressWarnings(unlist(bplapply(query_protein_list, function(x,Protein_feature_list_rank,list_of_protein_sequence,Index_of_protein_sequence,peptide_map_to_protein){
     #proteinid=Index_of_protein_sequence$desc[Index_of_protein_sequence$recno==x]
     #message(proteinid)
     protein_seq<-try(list_of_protein_sequence[x$Protein],silent = T)
@@ -3999,7 +3999,7 @@ protein_scoring<-function(Protein_feature_list,Peptide_plot_list_rank,scoretype=
      }
      
     }else{return(1)}
-  },Protein_feature_list_rank=Protein_feature_list_rank,list_of_protein_sequence=list_of_protein_sequence,Index_of_protein_sequence=Index_of_protein_sequence,peptide_map_to_protein=peptide_map_to_protein,BPPARAM = BPPARAM))
+  },Protein_feature_list_rank=Protein_feature_list_rank,list_of_protein_sequence=list_of_protein_sequence,Index_of_protein_sequence=Index_of_protein_sequence,peptide_map_to_protein=peptide_map_to_protein,BPPARAM = BPPARAM))))
   sum_pro_coverage=data.frame(Protein=(sum_pro_int$Protein),isdecoy=sum_pro_int$isdecoy,Protein_coverage=sum_pro_coverage)
   
   #sum_pro_pep_count<-merge(sum_pro_pep_count,sum_pro_pep_count_thero,by=c("Protein","isdecoy"),all.x=T)
@@ -4034,9 +4034,9 @@ peptide_map_to_protein<-function(peptides, protein_seq ,map_type="grep"){
   #protein_seq=list_of_protein_sequence["sp|A2ASS6|TITIN_MOUSE Titin OS=Mus musculus OX=10090 GN=Ttn PE=1 SV=1"]
   #protein_seq=seq(protein_seq)
   #if(map_type c("grep","alignment")){map_type="grep"}
-  suppressMessages(library(IRanges))
+  suppressMessages(suppressWarnings(require(IRanges)))
   if (map_type=="alignment"){
-      suppressMessages(library(Biostrings))
+      suppressMessages(suppressWarnings(require(Biostrings)))
   
   s1=AAStringSet(peptides)
   
@@ -4071,7 +4071,7 @@ peptide_map_to_protein<-function(peptides, protein_seq ,map_type="grep"){
 }
 
 seq.cov <- function(x,plot_coverage=F){
-  suppressMessages(library(IRanges))
+  suppressMessages(suppressWarnings(require(IRanges)))
   if(!class(x)=="PairwiseAlignmentsSingleSubject"){
     message('Only supports objects from class PairwiseAlignedFixedSubject')
     stop()

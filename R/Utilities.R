@@ -15,10 +15,10 @@ Load_Cardinal_imaging<-function(datafile=tk_choose.files(filter = Filters,
   name <-gsub(base::dirname(datafiles),"",datafiles)
   folder<-base::dirname(datafiles)
   if (rotate==0){
-    imdata <- Cardinal::readImzML(name, folder, attach.only=attach.only,as=as,resolution=resolution, units="ppm",BPPARAM=BPPARAM,mass.range=mzrange)
+    imdata <-  suppressMessages(suppressWarnings(Cardinal::readImzML(name, folder, attach.only=attach.only,as=as,resolution=resolution, units="ppm",BPPARAM=BPPARAM,mass.range=mzrange)))
     
   }else  {
-    imdata <- readImzML(name, folder, attach.only=attach.only,as=as,resolution=resolution, units="ppm",rotate = rotate,BPPARAM=BPPARAM,mass.range=mzrange)
+    imdata <-  suppressMessages(suppressWarnings(readImzML(name, folder, attach.only=attach.only,as=as,resolution=resolution, units="ppm",rotate = rotate,BPPARAM=BPPARAM,mass.range=mzrange)))
   }
   if (preprocessing){
     imdata <- try(batchProcess(imdata, normalize=FALSE, smoothSignal=TRUE, reduceBaseline=list(method = "median",blocks=500, fun=min, spar=1),
@@ -430,13 +430,13 @@ cluster_image_grid<-function(clusterID,
     return(stringX)
     
   }
-  library(magick)
-  library(stringr)
-  library(data.table)
+   suppressMessages(suppressWarnings(require(magick)))
+   suppressMessages(suppressWarnings(require(stringr)))
+   suppressMessages(suppressWarnings(require(data.table)))
   Sys.setenv("PATH" = paste(paste(unique(str_split(Sys.getenv("PATH"),.Platform$path.sep)[[1]]), sep = .Platform$path.sep,collapse = .Platform$path.sep), "C:/ProgramData/Anaconda3/orca_app", sep = .Platform$path.sep))
-  library(grid)
-  library(plotly)
-  library(dplyr)
+   suppressMessages(suppressWarnings(require(grid)))
+   suppressMessages(suppressWarnings(require(plotly)))
+   suppressMessages(suppressWarnings(require(dplyr)))
   #rotate the image
   #imdata@pixelData@data<-rotatetmp
   outputpngsum=paste(getwd(),"\\",windows_filename(substr(clusterID, 1, 15)),"_cluster_imaging",'.png',sep="")
@@ -451,7 +451,7 @@ cluster_image_grid<-function(clusterID,
   candidateunique=as.numeric(as.character(unique(candidate[,"mz"])))
   candidateunique=candidateunique[order(as.character(candidateunique))]
   candidate<-merge(data.frame(candidate_u),candidate,by=c("mz","Peptide"),sort=F)
-  library(colortools)
+   suppressMessages(suppressWarnings(require(colortools)))
   if (length(candidateunique)>4){
     
     mycol=wheel("steelblue", num = length(candidateunique),bg = "white")
@@ -476,9 +476,9 @@ cluster_image_grid<-function(clusterID,
       
       
       
-      library(RColorBrewer)
-      library(Cardinal)
-      library(EBImage)
+       suppressMessages(suppressWarnings(require(RColorBrewer)))
+       suppressMessages(suppressWarnings(require(Cardinal)))
+       suppressMessages(suppressWarnings(require(EBImage)))
       #library(colortools)
       
       if (plot_style=="ClusterOnly"){
@@ -668,8 +668,8 @@ cluster_image_grid<-function(clusterID,
   
   if(export_Header_table){
     
-    library(gridExtra)
-    library(grid)
+     suppressMessages(suppressWarnings(require(gridExtra)))
+     suppressMessages(suppressWarnings(require(grid)))
     
     if(is.null(candidate$desc)){
       candidate_unique_table=unique(candidate[,c("mz",componentID_colname,"formula","adduct")])
@@ -709,7 +709,7 @@ cluster_image_grid<-function(clusterID,
     #header_table_op$grobs[ind][[1]][["gp"]] <- gpar(fill="darkolivegreen1", col = "darkolivegreen4", lwd=5)
     }
     }
-    library(gtable)
+     suppressMessages(suppressWarnings(require(gtable)))
     header_table_op <- gtable_add_grob(header_table_op,
                          grobs = rectGrob(gp = gpar(fill = NA, lwd = 2)),
                          t = 2, b = nrow(header_table_op), l = 1, r = ncol(header_table_op))
@@ -785,9 +785,9 @@ cluster_image_grid<-function(clusterID,
   }
   
   if(export_footer_table){
-    library(colorspace)
-    library(stringr)
-    library(ggplot2)
+     suppressMessages(suppressWarnings(require(colorspace)))
+     suppressMessages(suppressWarnings(require(stringr)))
+     suppressMessages(suppressWarnings(require(ggplot2)))
     
     if(is.null(candidate$desc)){
       candidate_unique_table=unique(candidate[,c("mz",componentID_colname,"formula","adduct")])
@@ -965,7 +965,7 @@ rotate_image<-function(imzdata,degree=0){
   image_rotate(image, degrees)
   plot(1:10, rnorm(10))
   
-  library(gridGraphics)
+   suppressMessages(suppressWarnings(require(gridGraphics)))
   
   grab_grob <- function(){
     grid.echo()
@@ -986,7 +986,7 @@ readImzML <- function(name, folder = getwd(), attach.only = TRUE,
                       as = c("MSImagingExperiment", "MSImageSet"), parse.only=FALSE,
                       BPPARAM = bpparam(),rotate=0, ...)
 {
-  library(Cardinal)
+   suppressMessages(suppressWarnings(require(Cardinal)))
   # check input
   dots <- list(...)
   if ( "mass.accuracy" %in% names(dots) ) {
@@ -1055,7 +1055,7 @@ metadata<-function(x){
 .readIbd <- function(file, info, outclass, attach.only,
                      mass.range, resolution, units,...)
 {
-  library(matter)
+   suppressMessages(suppressWarnings(require(matter)))
   file <- normalizePath(file)
   ibdtype <- metadata(info)[["ibd binary type"]]
   mz.ibdtype <- mzData(info)[["binary data type"]]
@@ -1292,7 +1292,7 @@ removetempfile<-function(temp_dir=tempdir(),matchword=c(".png$","^magick-"), int
 
 testcolume<-function(df,testcolnames){
   
-  library(stringr)
+   suppressMessages(suppressWarnings(require(stringr)))
   
   testcolnames=unique(testcolnames)
   
@@ -1447,7 +1447,7 @@ rank_mz_feature<-function(Peptide_plot_list,mz_feature,BPPARAM=bpparam()){
   
   Peptide_plot_list<-as.data.frame(Peptide_plot_list)
   
-  library(data.table)
+   suppressMessages(suppressWarnings(require(data.table)))
   
   mz=unique(Peptide_plot_list$mz)
   
@@ -1477,9 +1477,9 @@ rank_mz_feature<-function(Peptide_plot_list,mz_feature,BPPARAM=bpparam()){
     
   },Peptide_plot_list,BPPARAM=BPPARAM)}
   
-  library(pbapply)  
+ 
   
-  Peptide_plot_list_rank<-pblapply(cl = NULL, X=mz,FUN = function(x,Peptide_plot_list){
+  Peptide_plot_list_rank<-lapply(X=mz,FUN = function(x,Peptide_plot_list){
     #message(x)
     randklist <- Peptide_plot_list[Peptide_plot_list$mz_align==x,]
     ranking=as.numeric(factor(randklist$Score,levels=sort(unique(randklist$Score),decreasing = T)))
@@ -1658,7 +1658,7 @@ IAnnotatedDataFrame<-function (data, varMetadata, dimLabels = c("pixelNames",
 }
 
 col2RGB<-function(x){
-  library(colorspace)
+   suppressMessages(suppressWarnings(require(colorspace)))
   x_RGB<-t(as.numeric(col2rgb(x)))
   return(RGB(x_RGB))
 }

@@ -23,10 +23,10 @@ Meta_feature_list_fun<-function(database,
                                 cal.mz=TRUE,
                                 bypass=FALSE,
                                 BPPARAM=bpparam()){
-  library("Rcpp")
-  library(dplyr)
-  library(Rdisop)
-  library(Biostrings)
+   suppressMessages(suppressWarnings(require("Rcpp")))
+   suppressMessages(suppressWarnings(require(dplyr)))
+   suppressMessages(suppressWarnings(require(Rdisop)))
+   suppressMessages(suppressWarnings(require(Biostrings)))
   
   adductslist<-Build_adduct_list()
   candidates<-read.csv(paste0(workdir,"/",database),as.is = TRUE)
@@ -108,16 +108,16 @@ Protein_feature_list_fun<-function(workdir=getwd(),
                                    output_candidatelist=T,
                                    Modifications=list(fixed=NULL,variable=NULL),
                                    use_previous_candidates=F){
-  library(Biostrings)
-  library(cleaver)
-  library(protViz)
-  library(rcdk)
-  library(BiocParallel)
-  library(OrgMassSpecR)
-  library(rJava)
-  library(rcdklibs)
-  library(grid)
-  library(stringr)
+   suppressMessages(suppressWarnings(require(Biostrings)))
+   suppressMessages(suppressWarnings(require(cleaver)))
+   suppressMessages(suppressWarnings(require(protViz)))
+   suppressMessages(suppressWarnings(require(rcdk)))
+   suppressMessages(suppressWarnings(require(BiocParallel)))
+   suppressMessages(suppressWarnings(require(OrgMassSpecR)))
+   suppressMessages(suppressWarnings(require(rJava)))
+   suppressMessages(suppressWarnings(require(rcdklibs)))
+   suppressMessages(suppressWarnings(require(grid)))
+   suppressMessages(suppressWarnings(require(stringr)))
   setwd(workdir)
   
   
@@ -314,8 +314,8 @@ Protein_feature_list_fun<-function(workdir=getwd(),
   if (Decoy_search && ("elements" %in% Decoy_mode)){
     
     message(paste("Generating peptide formula with Decoy elemental composition."))
-    library(enviPat)
-    library(rcdk)
+     suppressMessages(suppressWarnings(require(enviPat)))
+     suppressMessages(suppressWarnings(require(rcdk)))
     total_target_mols<-unique(Protein_Summary$formula)
 
     target_mz=unique(round(as.numeric(Protein_Summary$mz),digits = 3))
@@ -416,8 +416,8 @@ Protein_feature_list_fun<-function(workdir=getwd(),
 
 
 vendiagram<-function(){
-  library(stringr)
-  library(tcltk)
+   suppressMessages(suppressWarnings(require(stringr)))
+   suppressMessages(suppressWarnings(require(tcltk)))
   folder1<-tkchooseDirectory()
   folder2<-tkchooseDirectory()
   Protein_feature_summary_uniport <- read.csv(paste0(as.character(paste0(folder1,collapse = " ")),"/Summary folder/Protein_feature_summary.csv"))
@@ -470,10 +470,10 @@ vendiagram<-function(){
 
 fastafile_utils<-function(){
   
-  library(Biostrings)
-  library(cleaver)
-  library(protViz)
-  library(rcdk)
+   suppressMessages(suppressWarnings(require(Biostrings)))
+   suppressMessages(suppressWarnings(require(cleaver)))
+   suppressMessages(suppressWarnings(require(protViz)))
+   suppressMessages(suppressWarnings(require(rcdk)))
   
   list_of_protein_sequence<-readAAStringSet(database,
                                             format="fasta",
@@ -535,8 +535,8 @@ fastafile_utils<-function(){
 }
 
 convert_peptide_adduct<-function(peptide,adductsname,multiplier=c(1,1),adductslist=Build_adduct_list()){
-  library(rcdk)
-  library(OrgMassSpecR)
+   suppressMessages(suppressWarnings(require(rcdk)))
+   suppressMessages(suppressWarnings(require(OrgMassSpecR)))
   ConvertPeptide<-function (sequence, output = "elements") {
     peptideVector <- strsplit(sequence, split = "")[[1]]
     if (output == "elements") {
@@ -696,10 +696,10 @@ convert_peptide_adduct<-function(peptide,adductsname,multiplier=c(1,1),adductsli
 
 
 convert_peptide_fixmod<-function(mod.df,peptide_symbol,pep_sequence){
-  library(rcdk)
-  library(OrgMassSpecR)
-  library(stringr)
-  library(Biostrings)
+   suppressMessages(suppressWarnings(require(rcdk)))
+   suppressMessages(suppressWarnings(require(OrgMassSpecR)))
+   suppressMessages(suppressWarnings(require(stringr)))
+   suppressMessages(suppressWarnings(require(Biostrings)))
   
   
   
@@ -912,8 +912,8 @@ convert_peptide_fixmod<-function(mod.df,peptide_symbol,pep_sequence){
 }
 
 convert_peptide_adduct_list<-function(adductsname,peptide_symbol,multiplier=c(1,1),adductslist=Build_adduct_list()){
-  library(rcdk)
-  library(OrgMassSpecR)
+   suppressMessages(suppressWarnings(require(rcdk)))
+   suppressMessages(suppressWarnings(require(OrgMassSpecR)))
   ConvertPeptide<-function (sequence, output = "elements") {
     peptideVector <- strsplit(sequence, split = "")[[1]]
     if (output == "elements") {
@@ -1257,8 +1257,8 @@ Peptide_Summary_para<- function(Proteins,peplist){
 }
 
 Peptide_modification<-function(retrive_ID=NULL,update_unimod=F){
-  library(protViz)
-  library(XML)
+   suppressMessages(suppressWarnings(require(protViz)))
+   suppressMessages(suppressWarnings(require(XML)))
   if(!exists("unimod.df",envir = globalenv())){
       #try(data("unimod.list",package = "HiTMaP"))
   
