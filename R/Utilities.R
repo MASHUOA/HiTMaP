@@ -678,7 +678,7 @@ cluster_image_grid<-function(clusterID,
       cluster_desc<-unique(candidate$desc)[1]
     }
     
-    require(reshape2)
+     suppressMessages(suppressWarnings(require(reshape2)))
     
     Header_table<-NULL
     Header_table$mz=candidateunique

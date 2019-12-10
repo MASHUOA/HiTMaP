@@ -10,6 +10,7 @@ output:
     highlight: zenburn
   pdf_document: default
   word_document: default
+bibliography: references.bib
 ---
 -- An R package of High-resolution Informatics Toolbox for Maldi-imaging Proteomics
 
@@ -176,7 +177,7 @@ print(p_pmf)
 ## # A tibble: 1 x 7
 ##   format width height colorspace matte filesize density
 ##   <chr>  <int>  <int> <chr>      <lgl>    <int> <chr>  
-## 1 PNG     1980   1080 sRGB       FALSE    17113 72x72
+## 1 PNG     1980   1080 sRGB       FALSE    17165 72x72
 ```
 
 <img src="README_files/figure-html/unnamed-chunk-1-1.png" width="1980" />
@@ -193,12 +194,12 @@ head(peptide_pmf_result)
 ## # A tibble: 6 x 16
 ##   Protein    mz Peptide adduct formula isdecoy pepmz charge mz_align Score
 ##     <int> <dbl> <fct>   <fct>  <fct>     <int> <dbl>  <int>    <dbl> <dbl>
-## 1       9 1467. GGNELD~ M+H    C60H96~       0 1466.      1    1467. 0.369
-## 2       9 1323. QEDQLQ~ M+H    C55H88~       0 1322.      1    1323. 0.573
+## 1       9 1323. QIDQKE~ M+H    C55H88~       0 1322.      1    1323. 0.573
+## 2       9 1467. GGNELD~ M+H    C60H96~       0 1466.      1    1467. 0.369
 ## 3       9 1469. NEEPSS~ M+H    C62H94~       0 1468.      1    1469. 3.44 
-## 4       9 1323. QIDQKE~ M+H    C55H88~       0 1322.      1    1323. 0.573
-## 5      13 1493. MDPTDA~ M+H    C62H98~       0 1492.      1    1493. 2.43 
-## 6      13 1359. LKELEV~ M+H    C58H10~       0 1358.      1    1359. 0.542
+## 4       9 1323. QEDQLQ~ M+H    C55H88~       0 1322.      1    1323. 0.573
+## 5      13 1359. LKELEV~ M+H    C58H10~       0 1358.      1    1359. 0.542
+## 6      13 1493. MDPTDA~ M+H    C62H98~       0 1492.      1    1493. 2.43 
 ## # ... with 6 more variables: Rank <int>, Intensity <dbl>,
 ## #   moleculeNames <fct>, Region <int>, Delta_ppm <dbl>, desc <fct>
 ```
@@ -213,12 +214,12 @@ head(protein_pmf_result)
 ## # A tibble: 6 x 9
 ##   Protein Proscore isdecoy Intensity Score peptide_count Protein_coverage
 ##     <int>    <dbl>   <int>     <dbl> <dbl>         <int>            <dbl>
-## 1   10134   0.147        0  1189179. 1.30              5           0.0978
-## 2   10204   0.179        0   167823. 0.912             4           0.198 
-## 3   10370   0.169        0   990324. 2.06              3           0.0719
-## 4   10628   0.0617       0   340804. 1.06              2           0.0553
-## 5   10691   0.125        0   442322. 1.36              3           0.0861
-## 6   10754   0.0699       0    93787. 2.31              1           0.0321
+## 1   10003   0.0552       0    88609. 0.855             2           0.0685
+## 2    1002   0.0556       0   580348. 0.843             4           0.0600
+## 3   10112   0.100        0   641587. 0.889             2           0.102 
+## 4   10134   0.0914       0  1455153. 1.05              4           0.0745
+## 5   10204   0.180        0   167823. 0.912             4           0.198 
+## 6   10370   0.170        0   990324. 2.06              3           0.0719
 ## # ... with 2 more variables: Intensity_norm <dbl>, desc <fct>
 ```
 
@@ -244,12 +245,12 @@ head(Identification_summary_table)
 ## # A tibble: 6 x 16
 ##   Protein    mz Peptide adduct formula isdecoy pepmz charge mz_align Score
 ##     <int> <dbl> <fct>   <fct>  <fct>     <int> <dbl>  <int>    <dbl> <dbl>
-## 1     393 1881. GMSIDQ~ M+H    C81H13~       0 1880.      1    1881. 2.56 
-## 2     393 1301. RPAEIY~ M+H    C55H90~       0 1300.      1    1301. 0.765
-## 3     393 1170. LGALWV~ M+H    C54H89~       0 1169.      1    1170. 0.224
-## 4     452 1837. DGQVIN~ M+H    C74H11~       0 1836.      1    1837. 1.72 
-## 5     452  932. LLEGEE~ M+H    C38H66~       0  931.      1     932. 1.78 
-## 6     452 2203. EMEENF~ M+H    C92H14~       0 2202.      1    2203. 0.631
+## 1     148 1138. MVEFAG~ M+H    C50H81~       0 1137.      1    1138. 1.39 
+## 2     148 2594. AFIVWN~ M+H    C121H1~       0 2593.      1    2594. 2.31 
+## 3     216 1881. ITTLQQ~ M+H    C77H13~       0 1880.      1    1881. 1.64 
+## 4     216 1458. ELELGE~ M+H    C61H10~       0 1457.      1    1458. 0.794
+## 5     393 1170. LGALWV~ M+H    C54H89~       0 1169.      1    1170. 0.224
+## 6     393 1301. RPAEIY~ M+H    C55H90~       0 1300.      1    1301. 0.765
 ## # ... with 6 more variables: Rank <int>, Intensity <dbl>,
 ## #   moleculeNames <fct>, Region <int>, Delta_ppm <dbl>, desc <fct>
 ```
@@ -407,6 +408,50 @@ print(p_cluster3)
 
 <img src="README_files/figure-html/CLuster imaging-2.png" width="1980" />
 
+
+## References
+R Packages used in this project:
+
+   + viridisLite[@viridisLite]
+
+   + rcdklibs[@rcdklibs]
+
+   + rJava[@rJava]
+
+   + data.table[@data.table]
+
+   + RColorBrewer[@RColorBrewer]
+
+   + magick[@magick]
+
+   + ggplot2[@ggplot2]
+
+   + dplyr[@dplyr]
+
+   + stringr[@stringr]
+
+   + protViz[@protViz]
+
+   + cleaver[@cleaver]
+
+   + Biostrings[@Biostrings]
+
+   + IRanges[@IRanges]
+
+   + Cardinal[@Cardinal]
+
+   + tcltk[@tcltk]
+
+   + BiocParallel[@BiocParallel]
+
+   + spdep[@spdep1]
+
+   + FTICRMS[@FTICRMS]
+
+   + UniProt.ws[@UniProt.ws]
+
+
+
 ## Session information
 
 
@@ -448,14 +493,12 @@ sessionInfo()
 ## [28] grid_3.6.1          glue_1.3.1          Biobase_2.44.0     
 ## [31] R6_2.4.0            fansi_0.4.0         tcltk_3.6.1        
 ## [34] XML_3.98-1.20       survival_2.44-1.1   BiocParallel_1.18.1
-## [37] pacman_0.5.1        rmarkdown_1.16      purrr_0.3.2        
+## [37] pacman_0.5.1        rmarkdown_1.18      purrr_0.3.2        
 ## [40] magrittr_1.5        backports_1.1.5     MASS_7.3-51.4      
 ## [43] codetools_0.2-16    htmltools_0.4.0     BiocGenerics_0.30.0
 ## [46] splines_3.6.1       assertthat_0.2.1    utf8_1.1.4         
 ## [49] stringi_1.4.3       doParallel_1.0.15   crayon_1.3.4
 ```
-
-
 
 
 

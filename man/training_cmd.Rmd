@@ -36,11 +36,12 @@ imaging_identification(Digestion_site="([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=
 imaging_identification(Digestion_site="([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=P))",Fastadatabase="uniprot-Human.fasta",output_candidatelist=T,spectra_segments_per_file=4,use_previous_candidates=T,ppm=10,FDR_cutoff = 0.1,PMF_analysis=T,plot_cluster_image_grid=T,Protein_desc_of_interest=c("Histone ","GN=MBP","ACTIN"))
 
 ```{r Citations}
-library(gtools)
-dependencies<-gtools::getDependencies("HiTMaP", dependencies = c("Depends", "Imports", "LinkingTo"), installed=TRUE, available=TRUE, base=FALSE, recommended=FALSE)
-citations<-(lapply(dependencies, citation))
-#writeLines(citations,"citations.BIB")
-citations
+library(pacman)
+p_load("gtools")
+dependencies<-gtools::getDependencies("HiTMaP", dependencies = c("Depends", "Imports", "LinkingTo"), installed=TRUE, available=TRUE, 
+                                      base=TRUE, recommended=FALSE)
+p_load("bibtex")
+write.bib(dependencies, file="references")
 ```
 
 #Bovin lens FTICR

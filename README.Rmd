@@ -10,6 +10,7 @@ output:
     highlight: zenburn
   pdf_document: default
   word_document: default
+bibliography: references.bib
 ---
 -- An R package of High-resolution Informatics Toolbox for Maldi-imaging Proteomics
 
@@ -238,13 +239,55 @@ p_cluster3<-image_read(paste0(wd,"/Summary folder/cluster Ion images/5479_cluste
 print(p_cluster3)
 ```
 
+
+## References
+R Packages used in this project:
+
+   + viridisLite[@viridisLite]
+
+   + rcdklibs[@rcdklibs]
+
+   + rJava[@rJava]
+
+   + data.table[@data.table]
+
+   + RColorBrewer[@RColorBrewer]
+
+   + magick[@magick]
+
+   + ggplot2[@ggplot2]
+
+   + dplyr[@dplyr]
+
+   + stringr[@stringr]
+
+   + protViz[@protViz]
+
+   + cleaver[@cleaver]
+
+   + Biostrings[@Biostrings]
+
+   + IRanges[@IRanges]
+
+   + Cardinal[@Cardinal]
+
+   + tcltk[@tcltk]
+
+   + BiocParallel[@BiocParallel]
+
+   + spdep[@spdep1]
+
+   + FTICRMS[@FTICRMS]
+
+   + UniProt.ws[@UniProt.ws]
+
+
+
 ## Session information
 
 ```{r}
 sessionInfo()
 ```
-
-
 
 
 
