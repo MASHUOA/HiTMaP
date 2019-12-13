@@ -35,15 +35,6 @@ imaging_identification(Digestion_site="([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=
 
 imaging_identification(Digestion_site="([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=P))",Fastadatabase="uniprot-Human.fasta",output_candidatelist=T,spectra_segments_per_file=4,use_previous_candidates=T,ppm=10,FDR_cutoff = 0.1,PMF_analysis=T,plot_cluster_image_grid=T,Protein_desc_of_interest=c("Histone ","GN=MBP","ACTIN"))
 
-```{r Citations}
-library(pacman)
-p_load("gtools")
-dependencies<-gtools::getDependencies("HiTMaP", dependencies = c("Depends", "Imports", "LinkingTo"), installed=TRUE, available=TRUE, 
-                                      base=TRUE, recommended=FALSE)
-p_load("bibtex")
-write.bib(dependencies, file="references")
-```
-
 #Bovin lens FTICR
 imaging_identification(Digestion_site="([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=P))",Fastadatabase="uniprot-Bovin.fasta",output_candidatelist=T,spectra_segments_per_file=4,use_previous_candidates=T,threshold=0.005)
 
@@ -64,7 +55,7 @@ imaging_identification(Digestion_site="([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=
 imaging_identification(Digestion_site="([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=P))",Fastadatabase="uniprot_cali.fasta",output_candidatelist=T,spectra_segments_per_file=1,use_previous_candidates=T,ppm=5,Protein_desc_of_interest="Pro_CALI",threshold=0.005,FDR_cutoff=0.05)
 
 #peptide calibrant
-imaging_identification(Digestion_site="([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=P))",Fastadatabase="uniprot_cali.fasta",output_candidatelist=T,spectra_segments_per_file=1,use_previous_candidates=F,peptide_ID_filter=1,ppm=10,missedCleavages=0:5,Protein_desc_of_interest="Pep_CALI")
+imaging_identification(Digestion_site="([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=P))",Fastadatabase="uniprot_cali.fasta",output_candidatelist=T,spectra_segments_per_file=1,use_previous_candidates=F,peptide_ID_filter=1,ppm=5,missedCleavages=0:5,Modifications=list(fixed=NULL,fixmod_position=NULL,variable=c("Amide"),varmod_position=c(6)),FDR_cutoff=0.1)
 
 imaging_identification(Digestion_site="([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=P))",Fastadatabase="uniprot_cali.fasta",output_candidatelist=T,spectra_segments_per_file=1,use_previous_candidates=T,peptide_ID_filter=1,ppm=5,missedCleavages=0:5)
 
@@ -90,6 +81,24 @@ install_github("guoguodigit/HiTMaP",auth_token ="a124a067ed1c84f8fd577c972845573
 #Update all dependencies
 1
 library(HiTMaP)
+```
+
+tar('Data.tar.gz', '.')
+untar('Data.tar.gz',list = T,  tar="tar")
+```{r}
+
+tar('Data.tar.gz', '.')
+untar('Data.tar.gz',list = T,  tar="tar")
+untar('Data.tar.gz',exdir =".",  tar="tar")
+```
+
+```{r Citations}
+library(pacman)
+p_load("gtools")
+dependencies<-gtools::getDependencies("HiTMaP", dependencies = c("Depends", "Imports", "LinkingTo"), installed=TRUE, available=TRUE, 
+                                      base=TRUE, recommended=FALSE)
+p_load("bibtex")
+write.bib(dependencies, file="references")
 ```
 
 
@@ -299,6 +308,10 @@ sessionInfo()
 ```
 
 
+```{r}
+Peptide_modification(retrive_ID=NULL,update_unimod=T)
+unimod.df[["positions"]]
+```
 
 
 

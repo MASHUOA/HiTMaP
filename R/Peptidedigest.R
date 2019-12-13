@@ -53,7 +53,8 @@ imaging_identification<-function(
                missedCleavages=0:1,
                Fastadatabase="murine_matrisome.fasta",
                adducts=c("M+H"),
-               Modifications=list(fixed=NULL,variable=NULL),
+               Modifications=list(fixed=NULL,fixmod_position=NULL,variable=c("Amide"),varmod_position=c(6)),
+               Substitute_AA=list(AA=c("X","U"),AA_new_formula=c("C5H5NO2","C5H5NO2"),Formula_with_water=c(FALSE,FALSE)),
                Decoy_search=TRUE,
                Decoy_adducts=c("M+ACN+H","M+IsoProp+H","M+DMSO+H","M+Co","M+Ag","M+Cu","M+He","M+Ne","M+Ar","M+Kr","M+Xe","M+Rn"),
                Decoy_mode = "isotope",
@@ -121,6 +122,7 @@ imaging_identification<-function(
                                                  Decoy_mode = Decoy_mode,
                                                  output_candidatelist=output_candidatelist,
                                                  use_previous_candidates=use_previous_candidates,
+                                                 Substitute_AA=Substitute_AA,
                                                  Modifications=Modifications,
                                                  mzrange=mzrange
                                                  )
