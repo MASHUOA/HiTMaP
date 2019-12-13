@@ -104,7 +104,7 @@ Protein_feature_list_fun<-function(workdir=getwd(),
                                    Decoy_search=T,
                                    Decoy_mode=c("adducts","elements","isotope","sequence"),
                                    Decoy_adducts=c("M+He","M+Ne","M+Ar","M+Kr","M+Xe","M+Rn"),
-                                   Substitute_AA=list(AA=c("X","U"),AA_new_formula=c("C5H5NO2","C5H5NO2"),Formula_with_water=c(FALSE,FALSE)),
+                                   Substitute_AA=list(AA=c(NULL),AA_new_formula=c(NULL),Formula_with_water=c(NULL)),
                                    mzrange=c(650,4000),
                                    output_candidatelist=T,
                                    Modifications=list(fixed=NULL,fixmod_position=NULL,variable=NULL,varmod_position=NULL),
@@ -243,7 +243,7 @@ Protein_feature_list_fun<-function(workdir=getwd(),
   if (length(grep("U",tempdf$Peptide))!=0 && !("U" %in% Substitute_AA$AA))  tempdf<-tempdf[-grep("U",tempdf$Peptide),]
   
   min_mod_massdiff<-156.1011
-  max_mod_massdiff<-3549.5366
+  max_mod_massdiff<-500.5366
   if (!is.null(Substitute_AA)) {
     Substitute_AA_df<-data.frame(Substitute_AA[c("AA","AA_new_formula","Formula_with_water")],stringsAsFactors = F)
     for (AA_row in 1:nrow(Substitute_AA_df)){
@@ -745,7 +745,7 @@ convert_peptide_fixmod<-function(mod.df,peptide_symbol,pep_sequence,ConvertPepti
       list_of_protein_sequence<-get("list_of_protein_sequence", envir = .GlobalEnv)
       multiplier_pep=rep(0,length(pep_sequence))
       map_res<-sapply(list_of_protein_sequence,str_locate_all,pep_sequence)
-      map_res_found<-bplapply(1:length(pep_sequence),function(x,map_res,BPPARAM){
+      map_res_found<-bplapply(1:length(pep_sequence),function(x,map_res){
         map_resdf<-(do.call(rbind,map_res[x,]))
         if (1 %in% map_resdf[,"start"]){
           if (sum(map_resdf[,"start"]!=1)>0){
@@ -762,7 +762,7 @@ convert_peptide_fixmod<-function(mod.df,peptide_symbol,pep_sequence,ConvertPepti
       multiplier_pep=rep(0,length(pep_sequence))
       map_res<-sapply(list_of_protein_sequence,str_locate_all,pep_sequence)
       pro_end<-sapply(list_of_protein_sequence,length)
-      map_res_found<-bplapply(1:length(pep_sequence),function(x,map_res,pro_end,BPPARAM){
+      map_res_found<-bplapply(1:length(pep_sequence),function(x,map_res,pro_end){
         map_resdf<-do.call(rbind,map_res[x,])
         pro_label<-rep(pro_end,sapply(map_res[x,],nrow))
         map_resdf[,"end"]==pro_label
@@ -788,7 +788,7 @@ convert_peptide_fixmod<-function(mod.df,peptide_symbol,pep_sequence,ConvertPepti
     #for (formula in 1:length(peptide_symbol)){
     #peptide_symbol[[formula]]<-merge_atoms(peptide_symbol[[formula]],formula_mod[[fixmod]],check_merge = F,mode = "add", multiplier = c(1,multiplier[[fixmod]][formula]))
     #}
-    peptide_symbol<-bplapply(peptide_symbol,merge_atoms,formula_mod[[fixmod]],check_merge = F,mode = "add", multiplier = c(1,multiplier[[fixmod]][formula]),BPPARAM = BPPARAM)
+    peptide_symbol<-bplapply(peptide_symbol,merge_atoms,formula_mod[[fixmod]],check_merge = F,mode = "add", multiplier = c(1,multiplier[[as.character(fixmod)]]),BPPARAM = BPPARAM)
   }
   
   return(list(peptide_symbol=peptide_symbol,multiplier=multiplier))
@@ -1085,9 +1085,6 @@ Peptide_Summary_para<- function(Proteins,peplist){
 Peptide_modification<-function(retrive_ID=NULL,mod_position=NULL,update_unimod=F){
    suppressMessages(suppressWarnings(require(protViz)))
    suppressMessages(suppressWarnings(require(XML)))
-  if(!exists("unimod.df",envir = globalenv())){
-      #try(data("unimod.list",package = "HiTMaP"))
-  
   if(update_unimod){
   message("Updating unimod database...")
   unimodurl <- url("http://www.unimod.org/xml/unimod_tables.xml")
@@ -1096,7 +1093,12 @@ Peptide_modification<-function(retrive_ID=NULL,mod_position=NULL,update_unimod=F
       scan(unimodurl, what = character())))
     save(unimod.list,file =paste0(path.package("HiTMaP"), "/data/unimod.list.rda"))
   
-  }
+  } 
+   
+  if(!exists("unimod.df",envir = globalenv())){
+      #try(data("unimod.list",package = "HiTMaP"))
+  
+  
     
   data("unimod.list",package = "HiTMaP")
   
