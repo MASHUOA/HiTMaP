@@ -23,7 +23,7 @@ This is an tutorial for use of HiTMaP (An R package of High-resolution Informati
 install.packages("devtools")
 Sys.setenv(R_REMOTES_NO_ERRORS_FROM_WARNINGS=T)
 library(devtools)
-install_github("guoguodigit/HiTMaP",auth_token ="a124a067ed1c84f8fd577c972845573922f1bb0f",force=T)
+install_github("MASHUOA/HiTMaP",auth_token ="a124a067ed1c84f8fd577c972845573922f1bb0f",force=T)
 #Update all dependencies
 1
 library(HiTMaP)
@@ -258,7 +258,7 @@ unimod.df[["positions"]]
 ### Amino acid substitution
 
 
-### DIgestionn site
+### Digestionn site
 
 ## Example data
 The HitMaP comes with a series of Maildi imaging data set acquired from FT-ICR or TOF. By the following codes, you can download these raw data set from the recent release of HiTMaP.  
@@ -268,7 +268,7 @@ The HitMaP comes with a series of Maildi imaging data set acquired from FT-ICR o
 library(piggyback)
 library(HiTMaP)
 Sys.setenv(GITHUB_TOKEN="a124a067ed1c84f8fd577c972845573922f1bb0f")
-#made sure that this 
+#made sure that this foler has enough space
 wd=paste0(file.path(path.package(package="HiTMaP")),"/data/")
 setwd(wd)
 pb_download("Data.tar.gz", repo = "MASHUOA/HiTMaP", dest = ".")

@@ -3661,7 +3661,8 @@ protein_scoring<-function(Protein_feature_list,Peptide_plot_list_rank,scoretype=
    suppressMessages(suppressWarnings(require(data.table)))
   Protein_feature_list<-as.data.table(Protein_feature_list)
   
-  
+  Peptide_plot_list_rank$mz<-round(Peptide_plot_list_rank$mz,digits = 4)
+  Protein_feature_list$mz<-round(Protein_feature_list$mz,digits = 4)
   Peptide_plot_list_rank_unique<-duplicated(Peptide_plot_list_rank[,c("mz","Peptide","adduct","formula","isdecoy")])
   Protein_feature_list_rank=merge(Protein_feature_list,Peptide_plot_list_rank,by=c("mz","Peptide","adduct","formula","isdecoy"))
   Protein_feature_list_rank$Score=round(Protein_feature_list_rank$Score,digits = 7)
