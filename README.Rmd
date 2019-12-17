@@ -241,6 +241,7 @@ print(p_cluster3)
 
 ## Details of parameter setting
 
+
 ### Modification
 you can choose one or a list of modifications from the unimod modification list. *Peptide_modification* function is used to load/rebuild the modification database into the global enviornment of R. It will be called automatically in the identification work flow. you can use the *code_name* or *record_id* to refer the modification (see example data "peptide calibrants" to find more details).
 
@@ -250,7 +251,7 @@ modification_list<-unimod.df[["modifications"]]
 head(modification_list[,c("code_name","record_id","full_name","composition","mono_mass")])
 ```
 
-
+You will also need to specify the position of a modifications
 
 ```{r}
 unimod.df[["positions"]]
@@ -259,6 +260,8 @@ unimod.df[["positions"]]
 
 
 ### Digestionn site
+
+
 
 ## Example data
 The HitMaP comes with a series of Maildi imaging data set acquired from FT-ICR or TOF. By the following codes, you can download these raw data set from the recent release of HiTMaP.  

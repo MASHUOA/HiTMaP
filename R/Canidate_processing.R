@@ -122,7 +122,7 @@ Protein_feature_list_fun<-function(workdir=getwd(),
    suppressMessages(suppressWarnings(require(stringr)))
    setwd(workdir)
   
-  
+   missedCleavages<<-missedCleavages
   Decoy_adducts=Decoy_adducts[!(Decoy_adducts %in% adducts)]
   Decoy_adducts=Decoy_adducts[1:length(adducts)]
   list_of_protein_sequence <- readAAStringSet(database,
@@ -167,7 +167,7 @@ Protein_feature_list_fun<-function(workdir=getwd(),
   Index_of_protein_sequence$Degestion=""
   
   peplist<-list()
-  
+  peplist_range<-list()
   Index_of_protein_sequence_list<-data.frame() 
   
   parentIonMasslist<-function(peplist,Index_of_protein_sequence){
@@ -181,21 +181,23 @@ Protein_feature_list_fun<-function(workdir=getwd(),
   for (i in 1:length(Digestion_site)){
     message(paste("Testing fasta sequances for degestion site:",Digestion_site[i]))
     if (Digestion_site[i]==""){Digestion_site[i]="J"}
-    peplist_option<-cleave(as.character(list_of_protein_sequence),custom=Digestion_site[i], missedCleavages=missedCleavages)
+    peplist_range_option<-cleavageRanges(as.character(list_of_protein_sequence),custom=Digestion_site[i], missedCleavages=missedCleavages)
+    peplist_option<-cleave(as.character(list_of_protein_sequence),custom=Digestion_site[i], missedCleavages=missedCleavages,unique =FALSE)
     Index_of_protein_sequence_option<-Index_of_protein_sequence
     pimlist<-lapply(peplist_option,function(x){
     AA<-rep(0,26)
     protViz::parentIonMass(x,fixmod=AA)})
-    
     peplist_option<-peplist_option[duplicated(names(peplist_option))==FALSE]
-    
     peplist_option<-peplist_option[names(peplist_option) %in% names(pimlist) ==TRUE]
+    
+    peplist_range_option<-peplist_range_option[duplicated(names(peplist_range_option))==FALSE]
+    peplist_range_option<-peplist_range_option[names(peplist_range_option) %in% names(pimlist) ==TRUE]
     
     Index_of_protein_sequence_option<-Index_of_protein_sequence_option[Index_of_protein_sequence_option$recno %in% names(pimlist),]
     
     Index_of_protein_sequence_option$Degestion=Digestion_site[i]
     
-    Index_of_protein_sequence_option
+    peplist_range<-c(peplist_range,peplist_range_option)
     
     peplist<-c(peplist,peplist_option)
     
@@ -228,17 +230,27 @@ Protein_feature_list_fun<-function(workdir=getwd(),
   #tempdf<-lapply( 1: length((peplist)), Peptide_Summary_para,peplist)
   #tempdf <- do.call("rbind", tempdf)
   #colnames(tempdf)<-c("Protein","Peptide")
+  #do.call(rbind,peplist_range)
+  start_end<-do.call(rbind,peplist_range)
   
-  tempdf<-data.frame(Protein=rep(names(peplist),unname(unlist(lapply(peplist,length)))),Peptide=unname(unlist(peplist)))
+  
+  Protein.df=rep(names(peplist),unname(unlist(lapply(peplist,length))))
+  Peptide.df=unname(unlist(peplist))
+  tempdf<-data.frame(Protein=Protein.df,Peptide=Peptide.df,start=start_end[,1],end=start_end[,2],stringsAsFactors = FALSE)
   
   #do.call()
   
   #
+  #list_of_protein_sequence<-get("list_of_protein_sequence", envir = .GlobalEnv)
+  
   
   tempdf$Protein<-as.character(tempdf$Protein)
   tempdf$Peptide<-as.character(tempdf$Peptide)
   tempdf<-as.data.frame(tempdf)
-  
+  tempdf$Modification=""
+  pro_end<-sapply(list_of_protein_sequence,length)
+  pro_end<-data.frame(Protein=names(pro_end),pro_end=pro_end)
+  tempdf<-merge(tempdf,pro_end,by="Protein")
   if (length(grep("X",tempdf$Peptide))!=0 && !("X" %in% Substitute_AA$AA))  tempdf<-tempdf[-grep("X",tempdf$Peptide),]
   if (length(grep("U",tempdf$Peptide))!=0 && !("U" %in% Substitute_AA$AA))  tempdf<-tempdf[-grep("U",tempdf$Peptide),]
   
@@ -276,12 +288,21 @@ Protein_feature_list_fun<-function(workdir=getwd(),
     if(length(unique(mod.df$full_name))==length(Modifications$fixed)){
     message(paste("Fixed modifications:",unique(mod.df$full_name),"found in unimod DB",sep=" ",collapse = ", "))
     #peptide_symbol=bplapply(mod.df,convert_peptide_fixmod,peptide_symbol,BPPARAM = BPPARAM,pep_sequence=tempdf$Peptide,ConvertPeptide=ConvertPeptide)
-    peptide_symbol=convert_peptide_fixmod(mod.df,peptide_symbol,pep_sequence=tempdf$Peptide,ConvertPeptide=ConvertPeptide,BPPARAM = BPPARAM)
+
+    
+    peptide_symbol_var=convert_peptide_fixmod(mod.df,peptide_symbol,ConvertPeptide=ConvertPeptide,peptide_info=tempdf,BPPARAM = BPPARAM)
+    message(paste("Merge modification formula done."))
+    tempdf_var<-tempdf
+    reserve_entry<-rep(FALSE,nrow(tempdf_var))
     for (fixmod in mod.df$record_id){
-      tempdf$pepmz <-tempdf$pepmz + peptide_symbol$multiplier[[mod.df$record_id==fixmod]]*as.numeric(mod.df$mono_mass[mod.df$record_id==fixmod])
+      mods<-ifelse(peptide_symbol_var$multiplier[[fixmod]]>=1,mod.df$code_name[mod.df$record_id==fixmod],"")
+      tempdf_var$Modification<-paste(tempdf_var$Modification,mods)
+      tempdf_var$pepmz <-tempdf_var$pepmz + peptide_symbol_var$multiplier[[fixmod]]*as.numeric(mod.df$mono_mass[mod.df$record_id==fixmod])
+      reserve_entry<-ifelse('&'(peptide_symbol_var$multiplier[[fixmod]]>=1,reserve_entry==FALSE),TRUE,reserve_entry)
     }
     
-    peptide_symbol<-peptide_symbol$peptide_symbol
+    tempdf<-tempdf_var
+    peptide_symbol<-peptide_symbol_var$peptide_symbol
     }else{
     message(paste("warning:",
                   Modifications$fixed['&'((Modifications$fixed %in% unique(mod.df$code_name))==F , (Modifications$fixed %in% unique(mod.df$record_id) )==F)],
@@ -295,15 +316,20 @@ Protein_feature_list_fun<-function(workdir=getwd(),
     if(length(unique(mod.df$full_name))==length(Modifications$variable)){
       message(paste("variable modifications:",unique(mod.df$full_name),"found in unimod DB",sep=" ",collapse = ", "))
       #peptide_symbol=bplapply(mod.df,convert_peptide_fixmod,peptide_symbol,BPPARAM = BPPARAM,pep_sequence=tempdf$Peptide,ConvertPeptide=ConvertPeptide)
-      peptide_symbol_var=convert_peptide_fixmod(mod.df,peptide_symbol,pep_sequence=tempdf$Peptide,ConvertPeptide=ConvertPeptide,BPPARAM = BPPARAM)
+      peptide_symbol_var=convert_peptide_fixmod(mod.df,peptide_symbol,ConvertPeptide=ConvertPeptide,peptide_info=tempdf,BPPARAM = BPPARAM)
       message(paste("Merge modification formula done."))
       tempdf_var<-tempdf
+      reserve_entry<-rep(FALSE,nrow(tempdf_var))
       for (fixmod in mod.df$record_id){
-        tempdf_var$pepmz <-tempdf_var$pepmz + peptide_symbol_var$multiplier[[mod.df$record_id==fixmod]]*as.numeric(mod.df$mono_mass[mod.df$record_id==fixmod])
-      }
-      tempdf<-rbind(tempdf,tempdf_var)
+        mods<-ifelse(peptide_symbol_var$multiplier[[fixmod]]>=1,mod.df$code_name[mod.df$record_id==fixmod],"")
+        tempdf_var$Modification<-paste(tempdf_var$Modification,mods)
+        tempdf_var$pepmz <-tempdf_var$pepmz + peptide_symbol_var$multiplier[[fixmod]]*as.numeric(mod.df$mono_mass[mod.df$record_id==fixmod])
+        reserve_entry<-ifelse('&'(peptide_symbol_var$multiplier[[fixmod]]>=1,reserve_entry==FALSE),TRUE,reserve_entry)
+        }
+      
       peptide_symbol_var<-peptide_symbol_var$peptide_symbol
-      peptide_symbol<-c(peptide_symbol,peptide_symbol_var)
+      peptide_symbol<-c(peptide_symbol,peptide_symbol_var[reserve_entry])
+      tempdf<-rbind(tempdf,tempdf_var[reserve_entry,])
     }else{
       message(paste("warning:",
                     Modifications$variable['&'((Modifications$variable %in% unique(mod.df$code_name))==F , (Modifications$variable %in% unique(mod.df$record_id) )==F)],
@@ -662,15 +688,17 @@ convert_peptide_adduct<-function(peptide,adductsname,multiplier=c(1,1),adductsli
 }
 
 
-convert_peptide_fixmod<-function(mod.df,peptide_symbol,pep_sequence,ConvertPeptide,BPPARAM=BPPARAM){
+convert_peptide_fixmod<-function(mod.df,peptide_symbol,ConvertPeptide,peptide_info,BPPARAM=BPPARAM){
+  
+  
    suppressMessages(suppressWarnings(require(rcdk)))
    suppressMessages(suppressWarnings(require(OrgMassSpecR)))
    suppressMessages(suppressWarnings(require(stringr)))
    suppressMessages(suppressWarnings(require(Biostrings)))
    suppressMessages(suppressWarnings(require(stats)))
   
-  
-  
+   pep_sequence=peptide_info$Peptide
+   peptide_seqinfo=peptide_info[,c("start","end")]
 
   merge_atoms<-function(atoms,addelements,check_merge=T,mode=c("add","ded"),multiplier=c(1,1)){
     
@@ -731,7 +759,7 @@ convert_peptide_fixmod<-function(mod.df,peptide_symbol,pep_sequence,ConvertPepti
   #}
   
   mod.df.list <- split(mod.df, seq(nrow(mod.df)))
-  multiplier_for_mod<-function(x,pep_sequence,BPPARAM=bpparam()){
+  multiplier_for_mod<-function(x,pep_sequence,peptide_info,BPPARAM=bpparam()){
     if(x$position_key==2){
       #multiplier_pep<-lapply(pep_sequence,grepl,x$one_letter)
       multiplier_pep<-str_locate_all(pep_sequence,x$one_letter)
@@ -742,38 +770,41 @@ convert_peptide_fixmod<-function(mod.df,peptide_symbol,pep_sequence,ConvertPepti
       return(multiplier_pep)
     } else if(x$position_key %in% c(5)){
       message("Protein N-term modification selected")
-      list_of_protein_sequence<-get("list_of_protein_sequence", envir = .GlobalEnv)
-      multiplier_pep=rep(0,length(pep_sequence))
-      map_res<-sapply(list_of_protein_sequence,str_locate_all,pep_sequence)
-      map_res_found<-bplapply(1:length(pep_sequence),function(x,map_res){
-        map_resdf<-(do.call(rbind,map_res[x,]))
-        if (1 %in% map_resdf[,"start"]){
-          if (sum(map_resdf[,"start"]!=1)>0){
-            return(c(1,1))
-          }else{return(c(1,0))}
-        }else{return(c(0,0))}
-      },map_res,BPPARAM=BPPARAM)
-      map_res_found<-do.call(rbind,map_res_found)
-      multiplier_pep<-map_res_found[,1]
+      #list_of_protein_sequence<-get("list_of_protein_sequence", envir = .GlobalEnv)
+      
+      #multiplier_pep=rep(0,length(pep_sequence))
+      #map_res<-sapply(list_of_protein_sequence,str_locate_all,pep_sequence)
+      #map_res_found<-bplapply(1:length(pep_sequence),function(x,map_res){
+      #  map_resdf<-(do.call(rbind,map_res[x,]))
+      #  if (1 %in% map_resdf[,"start"]){
+      #    if (sum(map_resdf[,"start"]!=1)>0){
+      #      return(c(1,1))
+      #    }else{return(c(1,0))}
+      #  }else{return(c(0,0))}
+      #},map_res,BPPARAM=BPPARAM)
+      #map_res_found<-do.call(rbind,map_res_found)
+      #multiplier_pep<-map_res_found[,1]
+      multiplier_pep<-ifelse(peptide_info[,"start"]==1,1,0)
       return(multiplier_pep)
     } else if(x$position_key %in% c(6)){
       message("Protein C-term modification selected")
-      list_of_protein_sequence<-get("list_of_protein_sequence", envir = .GlobalEnv)
       multiplier_pep=rep(0,length(pep_sequence))
-      map_res<-sapply(list_of_protein_sequence,str_locate_all,pep_sequence)
-      pro_end<-sapply(list_of_protein_sequence,length)
-      map_res_found<-bplapply(1:length(pep_sequence),function(x,map_res,pro_end){
-        map_resdf<-do.call(rbind,map_res[x,])
-        pro_label<-rep(pro_end,sapply(map_res[x,],nrow))
-        map_resdf[,"end"]==pro_label
-        if (sum(map_resdf[,"end"]==pro_label)>=1){
-          if (sum(map_resdf[,"end"]!=pro_label)>0){
-            return(c(1,1))
-          }else{return(c(1,0))}
-        }else{return(c(0,0))}
-      },map_res,pro_end,BPPARAM = BPPARAM)
-      map_res_found<-do.call(rbind,map_res_found)
-      multiplier_pep<-map_res_found[,1]
+      #map_res<-sapply(list_of_protein_sequence,str_locate_all,pep_sequence)
+      #map_res<-bplapply(list_of_protein_sequence,str_locate_all,pep_sequence)
+      
+      multiplier_pep<-ifelse(peptide_info$end==peptide_info$pro_end,1,0)
+      #map_res_found<-bplapply(1:length(pep_sequence),function(x,map_res,pro_end){
+      #  map_resdf<-do.call(rbind,map_res[x,])
+      #  pro_label<-rep(pro_end,sapply(map_res[x,],nrow))
+      #  map_resdf[,"end"]==pro_label
+      #  if (sum(map_resdf[,"end"]==pro_label)>=1){
+      #    if (sum(map_resdf[,"end"]!=pro_label)>0){
+      #      return(c(1,1))
+      #    }else{return(c(1,0))}
+      #  }else{return(c(0,0))}
+      #},map_res,pro_end,BPPARAM = BPPARAM)
+      #map_res_found<-do.call(rbind,map_res_found)
+      #multiplier_pep<-map_res_found[,1]
       return(multiplier_pep)
     }
     
@@ -781,10 +812,13 @@ convert_peptide_fixmod<-function(mod.df,peptide_symbol,pep_sequence,ConvertPepti
   
   formula_mod<-lapply(mod.df$composition,get_atoms)
   
-  multiplier<-lapply(mod.df.list,multiplier_for_mod,pep_sequence=pep_sequence,BPPARAM=BPPARAM)
+  names(formula_mod)<-mod.df$record_id
   
+  multiplier<-lapply(mod.df.list,multiplier_for_mod,pep_sequence=pep_sequence,peptide_info=peptide_info,BPPARAM=BPPARAM)
+  
+  names(multiplier)<-mod.df$record_id
   #formula<-ConvertPeptide(peptide)
-  for (fixmod in 1:nrow(mod.df)){
+  for (fixmod in mod.df$record_id){
     #for (formula in 1:length(peptide_symbol)){
     #peptide_symbol[[formula]]<-merge_atoms(peptide_symbol[[formula]],formula_mod[[fixmod]],check_merge = F,mode = "add", multiplier = c(1,multiplier[[fixmod]][formula]))
     #}
