@@ -3686,6 +3686,7 @@ protein_scoring<-function(Protein_feature_list,Peptide_plot_list_rank,scoretype=
   Protein_feature_list_rank$Protein<-as.factor(Protein_feature_list_rank$Protein)
   
   #message("sum_pro_pep_count")
+
   sum_pro_pep_count<-Protein_feature_list_rank[,length((Peptide)),by=list(Protein,isdecoy)]
   colnames(sum_pro_pep_count)<-c("Protein","isdecoy","peptide_count")
   #sum_pro_pep_count<-Protein_feature_list_rank[,c("isdecoy","Protein","Peptide")] %>% dplyr::group_by(.dots=c("Protein","isdecoy")) %>% summarize(peptide_count=length((Peptide))) 
