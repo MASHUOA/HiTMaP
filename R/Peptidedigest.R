@@ -3681,11 +3681,16 @@ protein_scoring<-function(Protein_feature_list,Peptide_plot_list_rank,scoretype=
   Protein_feature_list_rank=merge(Protein_feature_list,Peptide_plot_list_rank,by=intersect(colnames(Protein_feature_list),colnames(Peptide_plot_list_rank)))
   Protein_feature_list_rank$Score=round(Protein_feature_list_rank$Score,digits = 4)
   Protein_feature_list_rank$mz=round(Protein_feature_list_rank$mz,digits = 4)
-  Protein_feature_list_rank<-as.data.frame(Protein_feature_list_rank)
-
-  message("sum_pro_pep_count")
-  sum_pro_pep_count<-Protein_feature_list_rank %>% group_by(.dots=c("Protein","isdecoy")) %>% summarize(peptide_count=length(unique(Peptide))) 
-  message("sum_pro_pep_count.done")
+  Protein_feature_list_rank<-as.data.table(Protein_feature_list_rank)
+  Protein_feature_list_rank$isdecoy<-as.factor(Protein_feature_list_rank$isdecoy)
+  Protein_feature_list_rank$Protein<-as.factor(Protein_feature_list_rank$Protein)
+  
+  #message("sum_pro_pep_count")
+  sum_pro_pep_count<-Protein_feature_list_rank[,length((Peptide)),by=list(Protein,isdecoy)]
+  colnames(sum_pro_pep_count)<-c("Protein","isdecoy","peptide_count")
+  #sum_pro_pep_count<-Protein_feature_list_rank[,c("isdecoy","Protein","Peptide")] %>% dplyr::group_by(.dots=c("Protein","isdecoy")) %>% summarize(peptide_count=length((Peptide))) 
+  
+  #message("sum_pro_pep_count.done")
   Protein_feature_list_rank<-Protein_feature_list_rank[Protein_feature_list_rank$Protein %in% sum_pro_pep_count$Protein[sum_pro_pep_count$peptide_count>=peptide_ID_filter],]
   if(nrow(Protein_feature_list_rank)==0){
   
@@ -3697,11 +3702,11 @@ protein_scoring<-function(Protein_feature_list,Peptide_plot_list_rank,scoretype=
     return(list(df,Protein_feature_list_rank))
     }
   #sum_pro_score<-Protein_feature_list_rank %>% group_by(.dots=c("Protein","isdecoy")) %>% summarize(Score=sum(Score))
-  
+  #message(nrow(Protein_feature_list_rank))
   list_of_protein_sequence<-get("list_of_protein_sequence", envir = .GlobalEnv)
   Index_of_protein_sequence<-get("Index_of_protein_sequence", envir = .GlobalEnv)
   #Proteinlist=sum_pro_int$Protein
-  message("sum_pro_pep_count.done done") 
+  #message("sum_pro_pep_count.done done") 
     #Protein_feature_list_rank$Peptide_align<-Protein_feature_list_rank$Peptide
   message("perform Peptide feature grouping...")
     
@@ -3720,8 +3725,9 @@ protein_scoring<-function(Protein_feature_list,Peptide_plot_list_rank,scoretype=
         sum_pro_score<-Protein_feature_list_rank %>% group_by(.dots=c("Protein","isdecoy")) %>% summarize(Score=mean(Score*log(Intensity))/mean(log(Intensity)))
         
       }
-        sum_pro_pep_count<-Protein_feature_list_rank %>% group_by(.dots=c("Protein","isdecoy")) %>% summarize(peptide_count=length(unique(Peptide))) 
-
+        #sum_pro_pep_count<-Protein_feature_list_rank %>% group_by(.dots=c("Protein","isdecoy")) %>% summarize(peptide_count=length(unique(Peptide))) 
+        sum_pro_pep_count<-Protein_feature_list_rank[,length((Peptide)),by=list(Protein,isdecoy)]
+        colnames(sum_pro_pep_count)<-c("Protein","isdecoy","peptide_count")
   query_protein=sum_pro_int[,c("Protein","isdecoy")]
   query_protein_list=  split(query_protein, seq(nrow(query_protein)))
   sum_pro_coverage <-  suppressMessages(suppressWarnings(unlist(bplapply(query_protein_list, function(x,Protein_feature_list_rank,list_of_protein_sequence,Index_of_protein_sequence,peptide_map_to_protein){
@@ -3779,8 +3785,9 @@ protein_scoring<-function(Protein_feature_list,Peptide_plot_list_rank,scoretype=
     
     Protein_feature_list_rank$peptide_count<-NULL
     
-    sum_pro_pep_count<-Protein_feature_list_rank %>% group_by(.dots=c("Protein","isdecoy")) %>% summarize(peptide_count=length(unique(Peptide))) 
-    
+    #sum_pro_pep_count<-Protein_feature_list_rank %>% group_by(.dots=c("Protein","isdecoy")) %>% summarize(peptide_count=length(unique(Peptide))) 
+    sum_pro_pep_count<-Protein_feature_list_rank[,length((Peptide)),by=list(Protein,isdecoy)]
+    colnames(sum_pro_pep_count)<-c("Protein","isdecoy","peptide_count")
     #Protein_feature_list_rank$Peptide_align1<-Protein_feature_list_rank$Peptide
     
     
