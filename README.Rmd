@@ -243,20 +243,24 @@ print(p_cluster3)
 
 
 ### Modification
-you can choose one or a list of modifications from the unimod modification list. *Peptide_modification* function is used to load/rebuild the modification database into the global enviornment of R. It will be called automatically in the identification work flow. you can use the *code_name* or *record_id* to refer the modification (see example data "peptide calibrants" to find more details).
+you can choose one or a list of modifications from the unimod modification list. *Peptide_modification* function is used to load/rebuild the modification database into the global enviornment of R. It will be called automatically in the identification work flow. you can use the *code_name* or *record_id* to refer the modification (see example data "peptide calibrants" to find more details). The pipeline will select the *non-hidden* modifications.
+
+
 
 ```{r warning=FALSE}
 Peptide_modification(retrive_ID=NULL,update_unimod=F)
-modification_list<-unimod.df[["modifications"]]
-head(modification_list[,c("code_name","record_id","full_name","composition","mono_mass")])
+modification_list<-merge(unimod.df$modifications,unimod.df$specificity,by.x=c("record_id"),by.y=c("mod_key"),all.x=T)
+head(modification_list['&'(modification_list$code_name=="Phospho",modification_list$hidden!=1),c("code_name","record_id","composition","mono_mass","position_key","one_letter")])
 ```
 
-You will also need to specify the position of a modifications
+If a modification contains different types of site, you will also need to specify the position of a modifications. 
 
 ```{r}
 unimod.df[["positions"]]
 ```
 ### Amino acid substitution
+You can set the *Substitute_AA* to make the uncommon amino acid available to the workflow:
+Substitute_AA=list(AA=c("X"),AA_new_formula=c("C5H5NO2"),Formula_with_water=c(FALSE))
 
 
 ### Digestionn site
@@ -264,7 +268,7 @@ unimod.df[["positions"]]
 
 
 ## Example data
-The HitMaP comes with a series of Maildi imaging data set acquired from FT-ICR or TOF. By the following codes, you can download these raw data set from the recent release of HiTMaP.  
+The HitMaP comes with a series of Maildi imaging data sets acquired from either FT-ICR or TOF. By the following codes, you can download these raw data set into a local folder.  
 
 ```{r message=FALSE, warning=FALSE}
 #install.packages("piggyback")
@@ -276,8 +280,12 @@ wd=paste0(file.path(path.package(package="HiTMaP")),"/data/")
 setwd(wd)
 pb_download("Data.tar.gz", repo = "MASHUOA/HiTMaP", dest = ".")
 untar('Data.tar.gz',exdir =".",  tar="tar")
-dir()
+#unlink('Data.tar.gz')
+list.dirs()
 ```
+
+Below is a list of commands including the parameters for the example data sets.
+
 ```{r}
 #matrisome
 imaging_identification(Digestion_site="(?<=[P]\\w)G(?=\\w)|(?<=[P]\\w)\\w(?=L)",Fastadatabase="matrisome.fasta",spectra_segments_per_file=3)

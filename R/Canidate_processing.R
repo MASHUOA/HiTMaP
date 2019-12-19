@@ -155,13 +155,13 @@ Protein_feature_list_fun<-function(workdir=getwd(),
     }
   
   #assign("list_of_protein_sequence", list_of_protein_sequence, envir=.GlobalEnv) 
-  Index_of_protein_sequence<<-Index_of_protein_sequence
-  list_of_protein_sequence<<-list_of_protein_sequence
+  
   
   names_pro<-merge(data.frame(desc=names(list_of_protein_sequence),stringsAsFactors = F),Index_of_protein_sequence,by="desc",sort=F)
   
   names(list_of_protein_sequence) <- names_pro$recno
-  
+  Index_of_protein_sequence<<-Index_of_protein_sequence
+  list_of_protein_sequence<<-list_of_protein_sequence
   if(use_previous_candidates!=T){
   
   Index_of_protein_sequence$Degestion=""
@@ -214,10 +214,10 @@ Protein_feature_list_fun<-function(workdir=getwd(),
   #pimlist<-parentIonMasslist(peplist,Index_of_protein_sequence_list)
   
   
-  AA<-c(71.037114, 114.534940, 103.009185, 115.026943, 129.042593, 147.068414, 
+  AA<-c(71.037114, 0.000000, 103.009185, 115.026943, 129.042593, 147.068414, 
         57.021464, 137.058912, 113.084064, 0.000000, 128.094963, 113.084064, 
         131.040485, 114.042927, 0.000000, 97.052764, 128.058578, 156.101111, 
-        87.032028, 101.047679, 150.953630, 99.068414, 186.079313, 111.000000, 
+        87.032028, 101.047679, 0.000000, 99.068414, 186.079313, 0.000000, 
         163.063329, 100.994269)
   
   names(AA)<-LETTERS
@@ -254,8 +254,20 @@ Protein_feature_list_fun<-function(workdir=getwd(),
   if (length(grep("X",tempdf$Peptide))!=0 && !("X" %in% Substitute_AA$AA))  tempdf<-tempdf[-grep("X",tempdf$Peptide),]
   if (length(grep("U",tempdf$Peptide))!=0 && !("U" %in% Substitute_AA$AA))  tempdf<-tempdf[-grep("U",tempdf$Peptide),]
   
-  min_mod_massdiff<-156.1011
-  max_mod_massdiff<-500.5366
+  mod.df_fix<-Peptide_modification(retrive_ID = Modifications$fixed,mod_position=Modifications$fixmod_position)
+  mod.df_var<-Peptide_modification(retrive_ID = Modifications$variable,mod_position=Modifications$varmod_position)
+  mod.df<-rbind(mod.df_fix,mod.df_var)
+  if (is.null(mod.df)){
+    min_mod_massdiff<-100
+    max_mod_massdiff<-500
+  }else{
+  min_mod_massdiff<-min(as.numeric(mod.df$mono_mass))
+  max_mod_massdiff<-max(as.numeric(mod.df$mono_mass))
+  
+  if(min_mod_massdiff>0){min_mod_massdiff=0}
+  if(max_mod_massdiff<0){max_mod_massdiff=0}
+  }
+  
   if (!is.null(Substitute_AA)) {
     Substitute_AA_df<-data.frame(Substitute_AA[c("AA","AA_new_formula","Formula_with_water")],stringsAsFactors = F)
     for (AA_row in 1:nrow(Substitute_AA_df)){
@@ -277,7 +289,7 @@ Protein_feature_list_fun<-function(workdir=getwd(),
   #tempdf1<-tempdf
   Protein_Summary<-NULL
   adductslist<-Build_adduct_list()
-  
+  tempdf$Modification<-""
   
   
   message(paste("Generating peptide formula..."))
@@ -316,7 +328,7 @@ Protein_feature_list_fun<-function(workdir=getwd(),
     if(length(unique(mod.df$full_name))==length(Modifications$variable)){
       message(paste("variable modifications:",unique(mod.df$full_name),"found in unimod DB",sep=" ",collapse = ", "))
       #peptide_symbol=bplapply(mod.df,convert_peptide_fixmod,peptide_symbol,BPPARAM = BPPARAM,pep_sequence=tempdf$Peptide,ConvertPeptide=ConvertPeptide)
-      peptide_symbol_var=convert_peptide_fixmod(mod.df,peptide_symbol,ConvertPeptide=ConvertPeptide,peptide_info=tempdf,BPPARAM = BPPARAM)
+      peptide_symbol_var<-convert_peptide_fixmod(mod.df,peptide_symbol,ConvertPeptide=ConvertPeptide,peptide_info=tempdf,BPPARAM = BPPARAM)
       message(paste("Merge modification formula done."))
       tempdf_var<-tempdf
       reserve_entry<-rep(FALSE,nrow(tempdf_var))
@@ -328,6 +340,9 @@ Protein_feature_list_fun<-function(workdir=getwd(),
         }
       
       peptide_symbol_var<-peptide_symbol_var$peptide_symbol
+      s1<-peptide_symbol[reserve_entry]
+      s2<-peptide_symbol_var[reserve_entry]
+      identical(peptide_symbol_var,peptide_symbol)
       peptide_symbol<-c(peptide_symbol,peptide_symbol_var[reserve_entry])
       tempdf<-rbind(tempdf,tempdf_var[reserve_entry,])
     }else{
@@ -732,7 +747,7 @@ convert_peptide_fixmod<-function(mod.df,peptide_symbol,ConvertPeptide,peptide_in
     
   }
   
-  get_atoms<-function(Symbol){
+  get_atoms_mod<-function(Symbol){
     #form = "C5H11BrO" 
     if (Symbol!=""){
       ups = c(gregexpr("[[:upper:]]", Symbol)[[1]], nchar(Symbol) + 1) 
@@ -810,19 +825,28 @@ convert_peptide_fixmod<-function(mod.df,peptide_symbol,ConvertPeptide,peptide_in
     
   }
   
-  formula_mod<-lapply(mod.df$composition,get_atoms)
+  formula_mod<-lapply(mod.df$composition,get_atoms_mod)
   
   names(formula_mod)<-mod.df$record_id
   
   multiplier<-lapply(mod.df.list,multiplier_for_mod,pep_sequence=pep_sequence,peptide_info=peptide_info,BPPARAM=BPPARAM)
   
-  names(multiplier)<-mod.df$record_id
+  names(multiplier)<-as.character(mod.df$record_id)
   #formula<-ConvertPeptide(peptide)
   for (fixmod in mod.df$record_id){
     #for (formula in 1:length(peptide_symbol)){
     #peptide_symbol[[formula]]<-merge_atoms(peptide_symbol[[formula]],formula_mod[[fixmod]],check_merge = F,mode = "add", multiplier = c(1,multiplier[[fixmod]][formula]))
     #}
-    peptide_symbol<-bplapply(peptide_symbol,merge_atoms,formula_mod[[fixmod]],check_merge = F,mode = "add", multiplier = c(1,multiplier[[as.character(fixmod)]]),BPPARAM = BPPARAM)
+    #message(formula_mod[[as.character(fixmod)]])
+    #message(multiplier[[as.character(fixmod)]])
+    peptide_symbol[which(multiplier[[as.character(fixmod)]]>=1)]
+    peptide_symbol[which(multiplier[[as.character(fixmod)]]>=1)]<-bplapply(1:length(peptide_symbol[which(multiplier[[as.character(fixmod)]]>=1)]),function(x,symbol,addelements,merge_atoms,multiplier_list){
+      if (multiplier_list[x]!=0){
+        return(merge_atoms(atoms = symbol[[x]],addelements = addelements,check_merge=F,mode="add",multiplier=c(1,multiplier_list[x])))
+      }else{
+        return(symbol[[x]])
+        }
+      },symbol=peptide_symbol[which(multiplier[[as.character(fixmod)]]>=1)],merge_atoms=merge_atoms,addelements=formula_mod[[as.character(fixmod)]], multiplier_list = multiplier[[as.character(fixmod)]][which(multiplier[[as.character(fixmod)]]>=1)],BPPARAM = BPPARAM)
   }
   
   return(list(peptide_symbol=peptide_symbol,multiplier=multiplier))
