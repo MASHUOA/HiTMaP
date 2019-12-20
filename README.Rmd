@@ -18,7 +18,7 @@ bibliography: references.bib
 ## Package installation
 This is an tutorial for use of HiTMaP (An R package of High-resolution Informatics Toolbox for Maldi-imaging Proteomics). To access the software use the installation codes as below: 
 
-```{r Install the package, eval=FALSE, message=TRUE, warning=TRUE, include=TRUE}
+```{r Install the package, eval=FALSE, message=FALSE, warning=FALSE, include=TRUE}
 #install the git package
 install.packages("devtools")
 Sys.setenv(R_REMOTES_NO_ERRORS_FROM_WARNINGS=T)
@@ -93,7 +93,7 @@ In this example, the project folder will be:
 
 ```{r locate the project folder, message=FALSE, warning=FALSE}
 library(HiTMaP)
-wd=paste0(file.path(path.package(package="HiTMaP")),"/data/Bovinlens_Trypsin_FT/")
+wd=paste0("D:\\GITHUB LFS\\HiTMaP-Data\\inst","/data/Bovinlens_Trypsin_FT/")
 #set a series of imzML files to be processed
 datafile=c("Bovin_lens")
 wd
@@ -271,23 +271,62 @@ Formula_with_water: Set *TRUE* to indicate the formula represents the intact ami
 ### Digestionn site
 
 The *Digestion_site* allows you to specify a list of pre-defined enzyme and customized digestion rules in regular expression format.
+```{r message=FALSE, warning=FALSE, include=FALSE}
+grid.ftable <- function(d, padding = unit(4, "mm"), ...) {
+  library(gridExtra)
+  library(grid)
+  nc <- ncol(d)
+  nr <- nrow(d)
+  
+  ## character table with added row and column names
+  extended_matrix <- cbind(c("", rownames(d)),
+                           rbind(colnames(d),
+                                 as.matrix(d)))
+  
+  ## string width and height
+  w <- apply(extended_matrix, 2, strwidth, "inch")
+  h <- apply(extended_matrix, 2, strheight, "inch")
+  
+  widths <- apply(w, 2, max)
+  heights <- apply(h, 1, max)
+  
+  padding <- convertUnit(padding, unitTo = "in", valueOnly = TRUE)
+  
+  x <- cumsum(widths + padding) - 0.5 * padding
+  y <- cumsum(heights + padding) - padding
+  
+  rg <- rectGrob(x = unit(x - widths/2, "in"),
+                 y = unit(1, "npc") - unit(rep(y, each = nc + 1), "in"),
+                 width = unit(widths + padding, "in"),
+                 height = unit(heights + padding, "in"))
+  
+  tg <- textGrob(c(t(extended_matrix)), x = unit(x - widths/2, "in"),
+                 y = unit(1, "npc") - unit(rep(y, each = nc + 1), "in"),
+                 just = "center")
+  
+  g <- gTree(children = gList(rg, tg), ...,
+             x = x, y = y, widths = widths, heights = heights)
+  
+  grid.draw(g)
+  invisible(g)
+}
+```
 
 
 ```{r echo=TRUE, message=TRUE, warning=FALSE, paged.print=F}
 Cleavage_rules<-Cleavage_rules_fun()
 Cleavage_df<-data.frame(Enzyme=names(Cleavage_rules),Cleavage_rules=unname(Cleavage_rules),stringsAsFactors = F)
 library(gridExtra)
-print(grid.table(Cleavage_df))
-print(Cleavage_df)
+grid.ftable(Cleavage_df, gp = gpar(fontsize=8,fill = rep(c("grey90", "grey95"))))
+#print(Cleavage_df)
 
-Digestion_site
 ```
 
 
 ## Example data
 The HitMaP comes with a series of Maildi imaging data sets acquired from either FT-ICR or TOF. By the following codes, you can download these raw data set into a local folder.  
 
-```{r message=FALSE, warning=FALSE}
+```{r eval=FALSE, message=FALSE, warning=FALSE, include=FALSE}
 #install.packages("piggyback")
 library(piggyback)
 library(HiTMaP)
@@ -303,7 +342,7 @@ list.dirs()
 
 Below is a list of commands including the parameters for the example data sets.
 
-```{r}
+```{r eval=FALSE, include=FALSE}
 #matrisome
 imaging_identification(Digestion_site="(?<=[P]\\w)G(?=\\w)|(?<=[P]\\w)\\w(?=L)",Fastadatabase="matrisome.fasta",spectra_segments_per_file=3)
 
