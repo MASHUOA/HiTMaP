@@ -43,6 +43,7 @@ wd=paste0(file.path(path.package(package="HiTMaP")),"/data/")
 datafile=c("Bovin_lens")
 
 
+
 imaging_identification(
 #==============Choose the imzml raw data file(s) to process  make sure the fasta file in the same folder
                datafile=paste0(wd,datafile),
@@ -92,7 +93,7 @@ In this example, the project folder will be:
 
 ```{r locate the project folder, message=FALSE, warning=FALSE}
 library(HiTMaP)
-wd=paste0(file.path(path.package(package="HiTMaP")),"/data/")
+wd=paste0(file.path(path.package(package="HiTMaP")),"/data/Bovinlens_Trypsin_FT/")
 #set a series of imzML files to be processed
 datafile=c("Bovin_lens")
 wd
@@ -210,7 +211,7 @@ print(p_Matching_Score_vs_mz)
 
 In the project summary folder, you will find four files and a sub-folder:
 ```{r dir summary folder}
-wd_sum=paste(file.path(path.package(package="HiTMaP")),"/data/Summary folder", sep="")
+wd_sum=paste(wd,"/Summary folder", sep="")
 dir(wd_sum)
 ```
 
@@ -223,7 +224,7 @@ dir(wd_sum)
 ```{r summary table, message=FALSE, warning=FALSE}
 library(dplyr)
 Protein_desc_of_interest<-c("Crystallin","Actin")
-Protein_Summary_tb<-read.csv(paste(file.path(path.package(package="HiTMaP")),"/data/Summary folder","/Protein_Summary.csv", sep=""),stringsAsFactors = F)
+Protein_Summary_tb<-read.csv(paste(wd,"/Summary folder","/Protein_Summary.csv", sep=""),stringsAsFactors = F)
 
 ```
 
@@ -231,8 +232,8 @@ Protein_Summary_tb<-read.csv(paste(file.path(path.package(package="HiTMaP")),"/d
 Now you could visualized the interest proteins and their associated peptides' distribution via cluster imaging function.
 
 ```{r CLuster imaging}
-#p_cluster1<-image_read(paste0(wd,"/Summary folder/cluster Ion images/705_cluster_imaging.png"))
-#print(p_cluster1)
+p_cluster1<-image_read(paste0(wd,"/Summary folder/cluster Ion images/791_cluster_imaging.png"))
+print(p_cluster1)
 p_cluster2<-image_read(paste0(wd,"/Summary folder/cluster Ion images/5027_cluster_imaging.png"))
 print(p_cluster2)
 p_cluster3<-image_read(paste0(wd,"/Summary folder/cluster Ion images/5479_cluster_imaging.png"))
@@ -248,7 +249,8 @@ you can choose one or a list of modifications from the unimod modification list.
 
 
 ```{r warning=FALSE}
-Peptide_modification(retrive_ID=NULL,update_unimod=F)
+
+HiTMaP:::Peptide_modification(retrive_ID=NULL,update_unimod=F)
 modification_list<-merge(unimod.df$modifications,unimod.df$specificity,by.x=c("record_id"),by.y=c("mod_key"),all.x=T)
 head(modification_list['&'(modification_list$code_name=="Phospho",modification_list$hidden!=1),c("code_name","record_id","composition","mono_mass","position_key","one_letter")])
 ```
@@ -260,11 +262,26 @@ unimod.df[["positions"]]
 ```
 ### Amino acid substitution
 You can set the *Substitute_AA* to make the uncommon amino acid available to the workflow:
-Substitute_AA=list(AA=c("X"),AA_new_formula=c("C5H5NO2"),Formula_with_water=c(FALSE))
+*Substitute_AA=list(AA=c("X"),AA_new_formula=c("C5H5NO2"),Formula_with_water=c(FALSE))*
+AA: the single letter amino acid to be replaced
+AA_new_formula: the new formula for the amino acid
+Formula_with_water: Set *TRUE* to indicate the formula represents the intact amino acid, *FALSE* to indicate that the formula already lost one H2O molecule and can be considered as AA backbone.
 
 
 ### Digestionn site
 
+The *Digestion_site* allows you to specify a list of pre-defined enzyme and customized digestion rules in regular expression format.
+
+
+```{r echo=TRUE, message=TRUE, warning=FALSE, paged.print=F}
+Cleavage_rules<-Cleavage_rules_fun()
+Cleavage_df<-data.frame(Enzyme=names(Cleavage_rules),Cleavage_rules=unname(Cleavage_rules),stringsAsFactors = F)
+library(gridExtra)
+print(grid.table(Cleavage_df))
+print(Cleavage_df)
+
+Digestion_site
+```
 
 
 ## Example data

@@ -2514,7 +2514,7 @@ if(PMFsearch){
           }else{Score_cutoff_protein=0}
       Protein_feature_result_cutoff=Protein_feature_result[((Protein_feature_result$Proscore>=Score_cutoff_protein)&(!is.na(Protein_feature_result$Intensity))&(Protein_feature_result$isdecoy==0)),]
       
-      Protein_feature_list_rank=merge(Protein_feature_list[Protein_feature_list$Protein %in% Protein_feature_result_cutoff$Protein,],Peptide_plot_list_rank,by=intersect(colnames(Protein_feature_list),colnames(Peptide_plot_list_rank)))
+      #Protein_feature_list_rank=merge(Protein_feature_list[Protein_feature_list$Protein %in% Protein_feature_result_cutoff$Protein,],Peptide_plot_list_rank,by=intersect(colnames(Protein_feature_list),colnames(Peptide_plot_list_rank)))
       Protein_feature_list_rank$Score=round(Protein_feature_list_rank$Score,digits = 7)
       Protein_feature_list_rank$mz=round(Protein_feature_list_rank$mz,digits = 4)
       Protein_feature_list_rank<-as.data.frame(Protein_feature_list_rank)
