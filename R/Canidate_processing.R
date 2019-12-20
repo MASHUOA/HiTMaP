@@ -352,6 +352,7 @@ Protein_feature_list_fun<-function(workdir=getwd(),
     }
     
   }
+  
   message(paste("Generating peptide formula with adducts:",paste(adducts,collapse = " ")))
   peptides_symbol_adducts=bplapply(adducts,convert_peptide_adduct_list,peptide_symbol,BPPARAM = BPPARAM,adductslist=adductslist,ConvertPeptide=ConvertPeptide)
   
@@ -463,7 +464,9 @@ Protein_feature_list_fun<-function(workdir=getwd(),
     
   }
   
-  
+  Protein_Summary$Modification[is.na(Protein_Summary$Modification)]<-""
+  Protein_Summary$mz<-round(Protein_Summary$mz,digits = 4)
+  Protein_Summary<-Protein_Summary[`&`(Protein_Summary$mz>=mzrange[1],Protein_Summary$mz<=mzrange[2]),]
   #Protein_Summary$Protein=Index_of_protein_sequence[Index_of_protein_sequence$desc==Protein_Summary$Protein]
   #temp_index=Index_of_protein_sequence
   #temp_index$Protein=temp_index$desc
@@ -502,7 +505,8 @@ Protein_feature_list_fun<-function(workdir=getwd(),
     Protein_feature_list<<-Protein_Summary
     message("attaching decoy IDs in isotope mode...Done")
   }}
-  Protein_Summary<-Protein_Summary[`&`(Protein_Summary$mz>=mzrange[1],Protein_Summary$mz<=mzrange[2]),]
+  
+
   Protein_feature_list<<-Protein_Summary
   return(Protein_Summary)
 }
