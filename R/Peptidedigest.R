@@ -84,6 +84,7 @@ imaging_identification<-function(
                Protein_desc_of_interest=".",
                plot_unique_component=FALSE,
                FDR_cutoff=0.05,
+               use_top_rank=NULL,
                ...
                ){
   library("pacman")
@@ -2042,6 +2043,7 @@ PMF_Cardinal_Datafilelist<-function(datafile,Peptide_Summary_searchlist,
                                     peptide_ID_filter=2,
                                     Protein_desc_of_interest=".",
                                     FDR_cutoff=0.1,
+                                    use_top_rank=NULL,
                                     ...){
    suppressMessages(suppressWarnings(require(data.table)))
    suppressMessages(suppressWarnings(require(Cardinal)))
@@ -2500,7 +2502,7 @@ if(PMFsearch){
       Index_of_protein_sequence<-get("Index_of_protein_sequence", envir = .GlobalEnv)
       #Protein_feature_result<-merge(Protein_feature_result,Index_of_protein_sequence[,c("recno","desc")],by.x="Protein",by.y = "recno",sort = F)
       
-      Protein_feature_result<-protein_scoring(Protein_feature_list,Peptide_plot_list_rank,BPPARAM = BPPARAM,scoretype="mean",peptide_ID_filter=peptide_ID_filter)
+      Protein_feature_result<-protein_scoring(Protein_feature_list,Peptide_plot_list_rank,BPPARAM = BPPARAM,scoretype="mean",peptide_ID_filter=peptide_ID_filter,use_top_rank=use_top_rank)
       Protein_feature_list_rank<-Protein_feature_result[[2]]
       Protein_feature_result<-Protein_feature_result[[1]]
       
@@ -3669,20 +3671,24 @@ spec_peakdetect<-function(x){
   summarySpectra(spectra[10:20])
 }
 
-protein_scoring<-function(Protein_feature_list,Peptide_plot_list_rank,scoretype=c("sum","mean"),BPPARAM = bpparam(),protein_nr_grouping=T,prioritize_protein=T,compete_decoy=T,peptide_ID_filter=2){
+protein_scoring<-function(Protein_feature_list,Peptide_plot_list_rank,scoretype=c("sum","mean"),BPPARAM = bpparam(),protein_nr_grouping=T,prioritize_protein=T,compete_decoy=T,peptide_ID_filter=2,use_top_rank=NULL){
   
   message("Start protein scoring...")
    suppressMessages(suppressWarnings(require(dplyr)))
    suppressMessages(suppressWarnings(require(data.table)))
   Protein_feature_list<-as.data.frame(Protein_feature_list)
   Peptide_plot_list_rank<-as.data.frame(Peptide_plot_list_rank)
+  if (!is.null(use_top_rank)){
+   Peptide_plot_list_rank<-Peptide_plot_list_rank[,Peptide_plot_list_rank$Rank<=use_top_rank] 
+  }
+  
   #Peptide_plot_list_rank$mz<-round(Peptide_plot_list_rank$mz,digits = 4)
   #Protein_feature_list$mz<-round(Protein_feature_list$mz,digits = 4)
   #Peptide_plot_list_rank_unique<-duplicated(Peptide_plot_list_rank[,c("mz","Peptide","adduct","formula","isdecoy")])
   Protein_feature_list_rank=merge(Protein_feature_list,Peptide_plot_list_rank,by=intersect(colnames(Protein_feature_list),colnames(Peptide_plot_list_rank)))
   #Protein_feature_list_rank$Score=round(Protein_feature_list_rank$Score,digits = 7)
   #Protein_feature_list_rank$mz=round(Protein_feature_list_rank$mz,digits = 4)
-  message(colnames(Protein_feature_list_rank))
+  #message(colnames(Protein_feature_list_rank))
   #message(search())
   #message("sum_pro_pep_count")
   sum_pro_pep_count_fun<-function(Protein_feature_list_rank){
@@ -3692,6 +3698,10 @@ protein_scoring<-function(Protein_feature_list,Peptide_plot_list_rank,scoretype=
   sum_pro_pep_count<-Protein_feature_list_rank[,length((Peptide)),by=list(Protein,isdecoy)]
   colnames(sum_pro_pep_count)<-c("Protein","isdecoy","peptide_count")
   return(sum_pro_pep_count)
+  }
+  
+  protein_scoring_fun<-function(Protein_feature_list_rank){
+    
   }
   
   sum_pro_pep_count<-sum_pro_pep_count_fun(Protein_feature_list_rank)
@@ -3710,7 +3720,7 @@ protein_scoring<-function(Protein_feature_list,Peptide_plot_list_rank,scoretype=
     }
   #sum_pro_score<-Protein_feature_list_rank %>% group_by(.dots=c("Protein","isdecoy")) %>% summarize(Score=sum(Score))
   #message(nrow(Protein_feature_list_rank))
-  list_of_protein_sequence<-get("list_of_protein_sequence", envir = .GlobalEnv)
+  #list_of_protein_sequence<-get("list_of_protein_sequence", envir = .GlobalEnv)
   Index_of_protein_sequence<-get("Index_of_protein_sequence", envir = .GlobalEnv)
   #Proteinlist=sum_pro_int$Protein
   #message("sum_pro_pep_count.done done") 
@@ -3849,7 +3859,7 @@ protein_scoring<-function(Protein_feature_list,Peptide_plot_list_rank,scoretype=
       
       message("Iterating Protein information...")
       
-      matched_proteins_final_hP<-BiocParallel::bplapply(names(matched_proteins_final),function(x,protein_links){
+      matched_proteins_final_hP<-lapply(names(matched_proteins_final),function(x,protein_links){
 
         test_length<- protein_links$test_list_length[protein_links$Protein==as.numeric(x)]+1
         
@@ -3874,7 +3884,7 @@ protein_scoring<-function(Protein_feature_list,Peptide_plot_list_rank,scoretype=
         
        return(findhigher)
        
-      },protein_links,BPPARAM = BPPARAM)
+      },protein_links)
 
       matched_proteins_final_hP<-unlist(matched_proteins_final_hP)
       

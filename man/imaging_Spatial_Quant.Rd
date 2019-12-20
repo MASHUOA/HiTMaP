@@ -4,26 +4,44 @@
 \alias{imaging_Spatial_Quant}
 \title{imaging_Spatial_Quant}
 \usage{
-imaging_Spatial_Quant(datafile = tk_choose.files(filter =
-  matrix(c("imzml file", ".imzML", "Text", ".txt", "All files", "*"), 3, 2,
-  byrow = TRUE), caption =
-  "Choose single or multiple file(s) for analysis"), threshold = 0,
-  ppm = 2.5, Quant_list = "Metabolites of Interest.csv",
-  adducts = c("M-H", "M+Cl"), cal.mz = F, mzlist_bypass = T,
-  PMF_analysis = TRUE, Protein_feature_summary = T,
-  plot_cluster_image = T, plot_style = "fleximaging",
-  Peptide_feature_summary = T, plot_ion_image = FALSE,
-  parallel = detectCores()/2, spectra_segments_per_file = 5,
-  spatialKMeans = F, Smooth_range = 1, Virtual_segmentation = T,
+imaging_Spatial_Quant(
+  datafile = tk_choose.files(filter = matrix(c("imzml file", ".imzML", "Text", ".txt",
+    "All files", "*"), 3, 2, byrow = TRUE), caption =
+    "Choose single or multiple file(s) for analysis"),
+  threshold = 0,
+  ppm = 2.5,
+  Quant_list = "Metabolites of Interest.csv",
+  adducts = c("M-H", "M+Cl"),
+  cal.mz = F,
+  mzlist_bypass = T,
+  PMF_analysis = TRUE,
+  Protein_feature_summary = T,
+  plot_cluster_image = T,
+  plot_style = "fleximaging",
+  Peptide_feature_summary = T,
+  plot_ion_image = FALSE,
+  parallel = detectCores()/2,
+  spectra_segments_per_file = 5,
+  spatialKMeans = F,
+  Smooth_range = 1,
+  Virtual_segmentation = T,
   Virtual_segmentation_rankfile = tk_choose.files(default =
-  "Z:/George skyline results/maldiimaging/Maldi_imaging - Copy/radius_rank.csv",
-  caption = "Choose Virtual segmentation rank info file"),
-  Spectrum_feature_summary = T, Region_feature_summary = T,
-  Region_feature_analysis = T, plot_each_metabolites = T,
-  Cluster_level = "High", ClusterID_colname = "Name",
-  Region_feature_analysis_bar_plot = T, norm_datafiles = T,
-  norm_Type = "Median", mzrange = NULL, BPPARAM = bpparam(),
-  Rotate_IMG = NULL, ...)
+    "Z:/George skyline results/maldiimaging/Maldi_imaging - Copy/radius_rank.csv", caption
+    = "Choose Virtual segmentation rank info file"),
+  Spectrum_feature_summary = T,
+  Region_feature_summary = T,
+  Region_feature_analysis = T,
+  plot_each_metabolites = T,
+  Cluster_level = "High",
+  ClusterID_colname = "Name",
+  Region_feature_analysis_bar_plot = T,
+  norm_datafiles = T,
+  norm_Type = "Median",
+  mzrange = NULL,
+  BPPARAM = bpparam(),
+  Rotate_IMG = NULL,
+  ...
+)
 }
 \arguments{
 \item{datafile}{specify the imzML data files}

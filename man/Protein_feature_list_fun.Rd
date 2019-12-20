@@ -4,13 +4,24 @@
 \alias{Protein_feature_list_fun}
 \title{Protein_feature_list_fun}
 \usage{
-Protein_feature_list_fun(workdir = getwd(), database,
-  Digestion_site = "[G]", missedCleavages = 0:1, adducts = c("M+H",
-  "M+NH4", "M+Na"), BPPARAM = bpparam(), Decoy_adducts = c("M+He",
-  "M+Ne", "M+Ar", "M+Kr", "M+Xe", "M+Rn"), Decoy_mode = c("adducts",
-  "elements", "isotope"), Decoy_search = T, mzrange = c(700, 4000),
-  output_candidatelist = T, Modifications = list(fixed = NULL, variable
-  = NULL), use_previous_candidates = F)
+Protein_feature_list_fun(
+  workdir = getwd(),
+  database,
+  Digestion_site = "[G]",
+  missedCleavages = 0:1,
+  adducts = c("M+H", "M+NH4", "M+Na"),
+  BPPARAM = bpparam(),
+  Decoy_search = T,
+  Decoy_mode = c("adducts", "elements", "isotope", "sequence"),
+  Decoy_adducts = c("M+He", "M+Ne", "M+Ar", "M+Kr", "M+Xe", "M+Rn"),
+  Substitute_AA = list(AA = c(NULL), AA_new_formula = c(NULL), Formula_with_water =
+    c(NULL)),
+  mzrange = c(650, 4000),
+  output_candidatelist = T,
+  Modifications = list(fixed = NULL, fixmod_position = NULL, variable = NULL,
+    varmod_position = NULL),
+  use_previous_candidates = F
+)
 }
 \arguments{
 \item{workdir}{the folder that contains fasta file}

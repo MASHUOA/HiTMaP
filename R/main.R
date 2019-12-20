@@ -1,12 +1,12 @@
 
 #' \tabular{ll}{
-#' Package: \tab Metwork \cr
+#' Package: \tab HiTMaP \cr
 #' License: \tab GPL (>= 2)\cr
 #' URL: \tab 
 #' }
 #'
 #' @docType package
-#' @name Metwork
+#' @name HiTMaP
 #' @author George GUO \email{George.GUO@@auckland.ac.nz}
 #' @references TBD
 #' @keywords package

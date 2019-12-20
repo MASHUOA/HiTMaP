@@ -4,8 +4,14 @@
 \alias{Meta_feature_list_fun}
 \title{Meta_feature_list_fun}
 \usage{
-Meta_feature_list_fun(database, workdir = getwd(), adducts = adducts,
-  cal.mz = TRUE, bypass = FALSE, BPPARAM = bpparam())
+Meta_feature_list_fun(
+  database,
+  workdir = getwd(),
+  adducts = adducts,
+  cal.mz = TRUE,
+  bypass = FALSE,
+  BPPARAM = bpparam()
+)
 }
 \arguments{
 \item{database}{the file name of candidate list}

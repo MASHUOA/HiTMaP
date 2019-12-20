@@ -4,8 +4,13 @@
 \alias{merge_atoms}
 \title{merge_atoms}
 \usage{
-merge_atoms(atoms, addelements, check_merge = T, mode = c("add",
-  "ded"), multiplier = c(1, 1))
+merge_atoms(
+  atoms,
+  addelements,
+  check_merge = T,
+  mode = c("add", "ded"),
+  multiplier = c(1, 1)
+)
 }
 \arguments{
 \item{database}{the file name of candidate list}

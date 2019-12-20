@@ -121,6 +121,21 @@ Protein_feature_list_fun<-function(workdir=getwd(),
    suppressMessages(suppressWarnings(require(grid)))
    suppressMessages(suppressWarnings(require(stringr)))
    setwd(workdir)
+   
+   parse_cleavage_rule<-function(Digestion_site){
+     
+    Cleavage_rules<-Cleavage_rules_fun()
+   
+    found_enzyme<-Digestion_site[Digestion_site %in% names(Cleavage_rules)]
+    
+   Digestion_site_cleave<-Cleavage_rules[found_enzyme] 
+     
+    Digestion_site[Digestion_site %in% (Cleavage_rules)] 
+     
+   }
+   
+   
+   
   
    missedCleavages<<-missedCleavages
   Decoy_adducts=Decoy_adducts[!(Decoy_adducts %in% adducts)]

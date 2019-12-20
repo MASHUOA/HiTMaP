@@ -1,4 +1,3 @@
-
 Package: HiTMaP
 Type: Package
 Title: A collection of tools for imaging MS data processing
@@ -86,7 +85,7 @@ Suggests:
     devtools,
     plotly,
     bitops
-RoxygenNote: 6.1.1
+RoxygenNote: 7.0.2
 biocViews: Software, Infrastructure, Proteomics, Lipidomics,
         MassSpectrometry, ImagingMassSpectrometry, ImmunoOncology,
         Normalization, Clustering, Classification, Regression
