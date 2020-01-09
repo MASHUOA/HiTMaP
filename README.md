@@ -8,6 +8,8 @@ output:
     number_sections: yes
     df_print: tibble
     highlight: zenburn
+    fig_width: 10
+    fig_height: 10
   pdf_document: default
   word_document: default
 bibliography: references.bib
@@ -447,8 +449,24 @@ head(modification_list['&'(modification_list$code_name=="Phospho",modification_l
 ## 3 Phospho   21        H O(3) P    79.966331 2            S
 ```
 
-If a modification contains different types of site, you will also need to specify the position of a modifications. 
+```r
+head(modification_list['&'(modification_list$code_name=="Amide",modification_list$hidden!=1),c("code_name","record_id","composition","mono_mass","position_key","one_letter")])
+```
 
+```
+## # A tibble: 2 x 6
+##   code_name record_id composition mono_mass position_key one_letter
+##   <chr>     <chr>     <chr>       <chr>     <chr>        <chr>     
+## 1 Amide     2         H N O(-1)   -0.984016 4            C-term    
+## 2 Amide     2         H N O(-1)   -0.984016 6            C-term
+```
+
+If a modification occurs on different types of site , you will also need to specify the position of a modifications.
+
+* *Anywhere*, side chain of possible amino acids
+* *Any N-term*, any N-term of enzymatic peptide 
+* *Protein N-term*, any N-term of protein 
+ 
 
 ```r
 unimod.df[["positions"]]
@@ -468,14 +486,16 @@ unimod.df[["positions"]]
 ### Amino acid substitution
 You can set the *Substitute_AA* to make the uncommon amino acid available to the workflow:
 *Substitute_AA=list(AA=c("X"),AA_new_formula=c("C5H5NO2"),Formula_with_water=c(FALSE))*
-AA: the single letter amino acid to be replaced
-AA_new_formula: the new formula for the amino acid
-Formula_with_water: Set *TRUE* to indicate the formula represents the intact amino acid, *FALSE* to indicate that the formula already lost one H2O molecule and can be considered as AA backbone.
+
+* AA: the single letter amino acid to be replaced
+* AA_new_formula: the new formula for the amino acid
+* Formula_with_water: Set *TRUE* to indicate the formula represents the intact amino acid, *FALSE* to indicate that the formula already lost one H2O molecule and can be considered as AA backbone.
 
 
 ### Digestionn site
 
-The *Digestion_site* allows you to specify a list of pre-defined enzyme and customized digestion rules in regular expression format.
+The *Digestion_site* allows you to specify a list of pre-defined enzyme and customized digestion rules in regular expression format. You can either use the enzyme name, customized cleavage rule or combination of them to get the enzymatics peptides list. 
+
 
 
 
@@ -484,79 +504,82 @@ The *Digestion_site* allows you to specify a list of pre-defined enzyme and cust
 Cleavage_rules<-Cleavage_rules_fun()
 Cleavage_df<-data.frame(Enzyme=names(Cleavage_rules),Cleavage_rules=unname(Cleavage_rules),stringsAsFactors = F)
 library(gridExtra)
-```
-
-```
-## 
-## Attaching package: 'gridExtra'
-```
-
-```
-## The following object is masked from 'package:dplyr':
-## 
-##     combine
-```
-
-```r
-grid.ftable(Cleavage_df, gp = gpar(fontsize=8,fill = rep(c("grey90", "grey95"))))
+grid.ftable(Cleavage_df, gp = gpar(fontsize=9,fill = rep(c("grey90", "grey95"))))
 ```
 
 ![](README_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
-
-```r
-#print(Cleavage_df)
-```
 
 
 ## Example data
 The HitMaP comes with a series of Maildi imaging data sets acquired from either FT-ICR or TOF. By the following codes, you can download these raw data set into a local folder.  
 
 
+```r
+#install.packages("piggyback")
+library(piggyback)
+library(HiTMaP)
+Sys.setenv(GITHUB_TOKEN="a124a067ed1c84f8fd577c972845573922f1bb0f")
+#made sure that this foler has enough space
+wd=paste0(file.path(path.package(package="HiTMaP")),"/data/")
+setwd(wd)
+pb_download("Data.tar.gz", repo = "MASHUOA/HiTMaP", dest = ".")
+untar('Data.tar.gz',exdir =".",  tar="tar")
+#unlink('Data.tar.gz')
+list.dirs()
+```
 
 Below is a list of commands including the parameters for the example data sets.
 
 
+```r
+#matrisome
+imaging_identification(Digestion_site="(?<=[P]\\w)G(?=\\w)|(?<=[P]\\w)\\w(?=L)",Fastadatabase="matrisome.fasta",spectra_segments_per_file=3)
 
-## References
-R Packages used in this project:
+#Human brain FTICR
+imaging_identification(Digestion_site="([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=P))",Fastadatabase="uniprot-Human_w_cali.fasta",output_candidatelist=T,spectra_segments_per_file=4,use_previous_candidates=F,ppm=5)
 
-   + viridisLite[@viridisLite]
+imaging_identification(Digestion_site="([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=P))",Fastadatabase="uniprot-Human_w_cali.fasta",output_candidatelist=T,spectra_segments_per_file=4,use_previous_candidates=T,ppm=10,missedCleavages=0:5,Protein_desc_of_interest=c("Histone ","GN=MBP","ACTIN"))
 
-   + rcdklibs[@rcdklibs]
+imaging_identification(Digestion_site="([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=P))",Fastadatabase="uniprot-Human.fasta",output_candidatelist=T,spectra_segments_per_file=4,use_previous_candidates=T,ppm=12.5,PMF_analysis=T,plot_cluster_image_grid=T,Protein_desc_of_interest=c("Histone ","GN=MBP","ACTIN"))
 
-   + rJava[@rJava]
+imaging_identification(Digestion_site="([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=P))",Fastadatabase="uniprot-Human.fasta",output_candidatelist=T,spectra_segments_per_file=4,use_previous_candidates=T,ppm=12.5,PMF_analysis=F,plot_cluster_image_grid=T,Protein_desc_of_interest=c("Histone ","GN=MBP","ACTIN"))
 
-   + data.table[@data.table]
+imaging_identification(Digestion_site="([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=P))",Fastadatabase="uniprot-Human.fasta",output_candidatelist=T,spectra_segments_per_file=4,use_previous_candidates=T,ppm=10,FDR_cutoff = 0.1,PMF_analysis=T,plot_cluster_image_grid=T,Protein_desc_of_interest=c("Histone ","GN=MBP","ACTIN"))
 
-   + RColorBrewer[@RColorBrewer]
+#Bovin lens FTICR
+imaging_identification(Digestion_site="([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=P))",Fastadatabase="uniprot-Bovin.fasta",output_candidatelist=T,spectra_segments_per_file=4,use_previous_candidates=T,threshold=0.005)
 
-   + magick[@magick]
+imaging_identification(Digestion_site="([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=P))",Fastadatabase="uniprot-Bovin.fasta",output_candidatelist=T,spectra_segments_per_file=4,use_previous_candidates=T,peptide_ID_filter=3,threshold = 0.005)
 
-   + ggplot2[@ggplot2]
+imaging_identification(Digestion_site="([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=P))",Fastadatabase="uniprot-Bovin.fasta",output_candidatelist=T,spectra_segments_per_file=4,use_previous_candidates=T,peptide_ID_filter=3,threshold = 0.005,FDR_cutoff=0.05)
 
-   + dplyr[@dplyr]
+imaging_identification(Digestion_site="([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=P))",Fastadatabase="uniprot-Bovin.fasta",output_candidatelist=T,spectra_segments_per_file=4,use_previous_candidates=T,peptide_ID_filter=3,threshold = 0.005,FDR_cutoff=0.05,PMF_analysis=F,plot_cluster_image_grid=T,Protein_desc_of_interest=c("crystallin","ACTIN"))
 
-   + stringr[@stringr]
 
-   + protViz[@protViz]
+#protein calibrant
+imaging_identification(Digestion_site="([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=P))",Fastadatabase="uniprot_cali.fasta",output_candidatelist=T,spectra_segments_per_file=1,use_previous_candidates=F,ppm=10,Protein_desc_of_interest="Pro_CALI",peptide_ID_filter=3,threshold=0.005)
 
-   + cleaver[@cleaver]
+imaging_identification(Digestion_site="([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=P))",Fastadatabase="3protein_cali.fasta",output_candidatelist=T,spectra_segments_per_file=1,use_previous_candidates=F,ppm=10,Protein_desc_of_interest="Pro_CALI",peptide_ID_filter=3,threshold=0.005)
 
-   + Biostrings[@Biostrings]
+imaging_identification(Digestion_site="([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=P))",Fastadatabase="uniprot_cali.fasta",output_candidatelist=T,spectra_segments_per_file=1,use_previous_candidates=T,ppm=5,Protein_desc_of_interest="Pro_CALI",threshold=0.005,FDR_cutoff=0.1)
 
-   + IRanges[@IRanges]
+imaging_identification(Digestion_site="([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=P))",Fastadatabase="uniprot_cali.fasta",output_candidatelist=T,spectra_segments_per_file=1,use_previous_candidates=T,ppm=5,Protein_desc_of_interest="Pro_CALI",threshold=0.005,FDR_cutoff=0.05)
 
-   + Cardinal[@Cardinal]
+#peptide calibrant
+imaging_identification(Digestion_site="([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=P))",Fastadatabase="uniprot_cali.fasta",output_candidatelist=T,spectra_segments_per_file=1,use_previous_candidates=F,peptide_ID_filter=1,ppm=5,missedCleavages=0:5,Modifications=list(fixed=NULL,fixmod_position=NULL,variable=c("Amide"),varmod_position=c(6)),FDR_cutoff=0.1)
 
-   + tcltk[@tcltk]
+imaging_identification(Digestion_site="([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=P))",Fastadatabase="uniprot_cali.fasta",output_candidatelist=T,spectra_segments_per_file=1,use_previous_candidates=T,peptide_ID_filter=1,ppm=5,missedCleavages=0:5)
 
-   + BiocParallel[@BiocParallel]
+#Ultraflex data
+imaging_identification(Digestion_site="([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=P))",Fastadatabase="uniprot-bovin.fasta",output_candidatelist=T,spectra_segments_per_file=4,use_previous_candidates=T,ppm=25,peptide_ID_filter=3,Protein_desc_of_interest<-c("Crystallin","Actin"))
 
-   + spdep[@spdep1]
+imaging_identification(Digestion_site="([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=P))",Fastadatabase="uniprot-Human.fasta",output_candidatelist=T,spectra_segments_per_file=4,use_previous_candidates=F,ppm=25,peptide_ID_filter=3,Protein_desc_of_interest<-c("Crystallin","Actin"))
 
-   + FTICRMS[@FTICRMS]
+imaging_identification(Digestion_site="([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=P))",Fastadatabase="uniprot-bovin.fasta",output_candidatelist=T,spectra_segments_per_file=4,use_previous_candidates=F,ppm=25)
 
-   + UniProt.ws[@UniProt.ws]
+imaging_identification(Digestion_site="([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=P))",Fastadatabase="uniprot-mus.fasta",output_candidatelist=T,spectra_segments_per_file=4,use_previous_candidates=F,ppm=25)
+```
+
 
 
 
@@ -613,3 +636,45 @@ sessionInfo()
 
 
 End of the tutorial, Enjoy~
+
+
+## References
+R Packages used in this project:
+
+   + viridisLite[@viridisLite]
+
+   + rcdklibs[@rcdklibs]
+
+   + rJava[@rJava]
+
+   + data.table[@data.table]
+
+   + RColorBrewer[@RColorBrewer]
+
+   + magick[@magick]
+
+   + ggplot2[@ggplot2]
+
+   + dplyr[@dplyr]
+
+   + stringr[@stringr]
+
+   + protViz[@protViz]
+
+   + cleaver[@cleaver]
+
+   + Biostrings[@Biostrings]
+
+   + IRanges[@IRanges]
+
+   + Cardinal[@Cardinal]
+
+   + tcltk[@tcltk]
+
+   + BiocParallel[@BiocParallel]
+
+   + spdep[@spdep1]
+
+   + FTICRMS[@FTICRMS]
+
+   + UniProt.ws[@UniProt.ws]

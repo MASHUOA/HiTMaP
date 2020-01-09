@@ -85,6 +85,7 @@ imaging_identification<-function(
                plot_unique_component=FALSE,
                FDR_cutoff=0.05,
                use_top_rank=NULL,
+               plot_matching_score=F,
                ...
                ){
   library("pacman")
@@ -155,6 +156,7 @@ imaging_identification<-function(
                                                   adjust_score=adjust_score,
                                                   peptide_ID_filter=peptide_ID_filter,
                                                   Protein_desc_of_interest=Protein_desc_of_interest,
+                                                  plot_matching_score_t=plot_matching_score,
                                                   FDR_cutoff= FDR_cutoff)
   
   }
@@ -2038,7 +2040,7 @@ PMF_Cardinal_Datafilelist<-function(datafile,Peptide_Summary_searchlist,
                                     Decoy_mode="",
                                     Decoy_search=T,
                                     adjust_score=T,
-                                    plot_matching_score_t=T,
+                                    plot_matching_score_t=F,
                                     Protein_feature_list,
                                     peptide_ID_filter=2,
                                     Protein_desc_of_interest=".",
@@ -3166,7 +3168,7 @@ FDR_cutoff_plot_protein<-function(Protein_feature_result,FDR_cutoff=0.1,plot_fdr
   target_Proscore[target_Proscore==Inf]<-0
   decoy_Proscore[decoy_Proscore==Inf]<-0
   
-  breaks = seq(min(Protein_feature_result$Proscore), max(Protein_feature_result$Proscore), by=max(Protein_feature_result$Proscore)/FDR_strip)
+  breaks = seq(min(Protein_feature_result$Proscore,na.rm = T), max(Protein_feature_result$Proscore,na.rm = T), by=max(Protein_feature_result$Proscore,na.rm = T)/FDR_strip)
   target_Proscore.cut = cut(target_Proscore, breaks, right=T) 
   decoy_Proscore.cut = cut(decoy_Proscore, breaks,right=T) 
   target_Proscore.freq = table(target_Proscore.cut)
@@ -3186,7 +3188,7 @@ FDR_cutoff_plot_protein<-function(Protein_feature_result,FDR_cutoff=0.1,plot_fdr
   #df$logProscore=log(df$breaks)
   
   Proscore_cutoff<-min(c(df$breaks[(df$FDR_m.av<=FDR_cutoff)==T],df$breaks[(df$FDR<=FDR_cutoff)==T]),na.rm = T)
-  
+  message(paste("Protein score cutoff:",Proscore_cutoff))
   if (!is.null(outputdir) && plot_fdr){
     
     png(paste0(outputdir,"/Protein_FDR.png"))
@@ -3678,6 +3680,8 @@ protein_scoring<-function(Protein_feature_list,Peptide_plot_list_rank,scoretype=
    suppressMessages(suppressWarnings(require(data.table)))
   Protein_feature_list<-as.data.frame(Protein_feature_list)
   Peptide_plot_list_rank<-as.data.frame(Peptide_plot_list_rank)
+  Peptide_plot_list_rank$Modification[is.na(Peptide_plot_list_rank$Modification)]<-""
+  Peptide_plot_list_rank<-Peptide_plot_list_rank[Peptide_plot_list_rank$Intensity>0,]
   if (!is.null(use_top_rank)){
    Peptide_plot_list_rank<-Peptide_plot_list_rank[,Peptide_plot_list_rank$Rank<=use_top_rank] 
   }
@@ -3691,6 +3695,7 @@ protein_scoring<-function(Protein_feature_list,Peptide_plot_list_rank,scoretype=
   #message(colnames(Protein_feature_list_rank))
   #message(search())
   #message("sum_pro_pep_count")
+  Protein_feature_list_rank$Peptide<-as.character(Protein_feature_list_rank$Peptide)
   sum_pro_pep_count_fun<-function(Protein_feature_list_rank){
   Protein_feature_list_rank<-as.data.table(Protein_feature_list_rank)
   #Protein_feature_list_rank$isdecoy<-as.factor(Protein_feature_list_rank$isdecoy)
@@ -3829,7 +3834,7 @@ protein_scoring<-function(Protein_feature_list,Peptide_plot_list_rank,scoretype=
       
       #protein_links<-lapply(protein_ids,function(x,nr_pro_pep){nr_pro_pep$Peptide[nr_pro_pep$Protein==x]},nr_pro_pep)
       
-      protein_links<-nr_pro_pep  %>% group_by(.dots=c("Protein")) %>% summarize(Peptide=list(Peptide))
+      protein_links<-nr_pro_pep %>% group_by(.dots=c("Protein")) %>% summarize(Peptide=list(Peptide))
       
       matched_proteins<-lapply(protein_ids,function(x,Protein_feature_list_rank,peptide_links){
         
@@ -3859,19 +3864,21 @@ protein_scoring<-function(Protein_feature_list,Peptide_plot_list_rank,scoretype=
       
       message("Iterating Protein information...")
       
-      matched_proteins_final_hP<-lapply(names(matched_proteins_final),function(x,protein_links){
+      matched_proteins_final_hP<-bplapply(names(matched_proteins_final),function(x,protein_links){
 
         test_length<- protein_links$test_list_length[protein_links$Protein==as.numeric(x)]+1
         
         test_peptides<-protein_links$Peptide[protein_links$Protein==as.numeric(x)][[1]]
         
         protein_t_within<-protein_links[protein_links$test_list_length>=test_length,]
+        length_test_peptides=length(test_peptides)
+        #protein_t_within<-lapply(protein_links[protein_links$test_list_length>=test_length,],paste,sep=",")
         findhigher=NA
          
         if (nrow(protein_t_within)>0){
           for (test_peptide_list in 1:length(protein_t_within$Peptide)){
           
-          if (length(intersect(test_peptides,protein_t_within$Peptide[test_peptide_list][[1]]))==length(test_peptides)){
+          if (length(intersect(test_peptides,protein_t_within$Peptide[test_peptide_list][[1]]))==length_test_peptides){
             findhigher=protein_t_within$Protein[test_peptide_list]
             break
           }
@@ -3884,7 +3891,7 @@ protein_scoring<-function(Protein_feature_list,Peptide_plot_list_rank,scoretype=
         
        return(findhigher)
        
-      },protein_links)
+      },protein_links,BPPARAM = BPPARAM)
 
       matched_proteins_final_hP<-unlist(matched_proteins_final_hP)
       
@@ -4023,7 +4030,7 @@ protein_scoring<-function(Protein_feature_list,Peptide_plot_list_rank,scoretype=
       
       sum_pro_int<-Protein_feature_list_rank %>% group_by(.dots=c("Protein","isdecoy")) %>% summarize(Intensity=mean(Intensity)) 
       
-      sum_pro_score<-Protein_feature_list_rank %>% group_by(.dots=c("Protein","isdecoy")) %>% summarize(Score=mean(Score*log(Intensity))/mean(log(Intensity)))
+      sum_pro_score<-Protein_feature_list_rank %>% group_by(.dots=c("Protein","isdecoy")) %>% summarize(Score=mean(Score*log(Intensity),na.rm=T)/mean(log(Intensity),na.rm=T))
       
     }
     

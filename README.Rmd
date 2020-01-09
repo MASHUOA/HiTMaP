@@ -8,6 +8,8 @@ output:
     number_sections: yes
     df_print: tibble
     highlight: zenburn
+    fig_width: 10
+    fig_height: 10
   pdf_document: default
   word_document: default
 bibliography: references.bib
@@ -253,26 +255,33 @@ you can choose one or a list of modifications from the unimod modification list.
 HiTMaP:::Peptide_modification(retrive_ID=NULL,update_unimod=F)
 modification_list<-merge(unimod.df$modifications,unimod.df$specificity,by.x=c("record_id"),by.y=c("mod_key"),all.x=T)
 head(modification_list['&'(modification_list$code_name=="Phospho",modification_list$hidden!=1),c("code_name","record_id","composition","mono_mass","position_key","one_letter")])
+head(modification_list['&'(modification_list$code_name=="Amide",modification_list$hidden!=1),c("code_name","record_id","composition","mono_mass","position_key","one_letter")])
 ```
 
-If a modification contains different types of site, you will also need to specify the position of a modifications. 
+If a modification occurs on different types of site , you will also need to specify the position of a modifications.
 
+* *Anywhere*, side chain of possible amino acids
+* *Any N-term*, any N-term of enzymatic peptide 
+* *Protein N-term*, any N-term of protein 
+ 
 ```{r}
 unimod.df[["positions"]]
 ```
 ### Amino acid substitution
 You can set the *Substitute_AA* to make the uncommon amino acid available to the workflow:
 *Substitute_AA=list(AA=c("X"),AA_new_formula=c("C5H5NO2"),Formula_with_water=c(FALSE))*
-AA: the single letter amino acid to be replaced
-AA_new_formula: the new formula for the amino acid
-Formula_with_water: Set *TRUE* to indicate the formula represents the intact amino acid, *FALSE* to indicate that the formula already lost one H2O molecule and can be considered as AA backbone.
+
+* AA: the single letter amino acid to be replaced
+* AA_new_formula: the new formula for the amino acid
+* Formula_with_water: Set *TRUE* to indicate the formula represents the intact amino acid, *FALSE* to indicate that the formula already lost one H2O molecule and can be considered as AA backbone.
 
 
 ### Digestionn site
 
-The *Digestion_site* allows you to specify a list of pre-defined enzyme and customized digestion rules in regular expression format.
+The *Digestion_site* allows you to specify a list of pre-defined enzyme and customized digestion rules in regular expression format. You can either use the enzyme name, customized cleavage rule or combination of them to get the enzymatics peptides list. 
+
 ```{r message=FALSE, warning=FALSE, include=FALSE}
-grid.ftable <- function(d, padding = unit(4, "mm"), ...) {
+  grid.ftable <- function(d, padding = unit(3, "mm"), ...) {
   library(gridExtra)
   library(grid)
   nc <- ncol(d)
@@ -313,12 +322,11 @@ grid.ftable <- function(d, padding = unit(4, "mm"), ...) {
 ```
 
 
-```{r echo=TRUE, message=TRUE, warning=FALSE, paged.print=F}
+```{r echo=TRUE, message=F, warning=FALSE, paged.print=T}
 Cleavage_rules<-Cleavage_rules_fun()
 Cleavage_df<-data.frame(Enzyme=names(Cleavage_rules),Cleavage_rules=unname(Cleavage_rules),stringsAsFactors = F)
 library(gridExtra)
-grid.ftable(Cleavage_df, gp = gpar(fontsize=8,fill = rep(c("grey90", "grey95"))))
-#print(Cleavage_df)
+grid.ftable(Cleavage_df, gp = gpar(fontsize=9,fill = rep(c("grey90", "grey95"))))
 
 ```
 
@@ -326,7 +334,7 @@ grid.ftable(Cleavage_df, gp = gpar(fontsize=8,fill = rep(c("grey90", "grey95")))
 ## Example data
 The HitMaP comes with a series of Maildi imaging data sets acquired from either FT-ICR or TOF. By the following codes, you can download these raw data set into a local folder.  
 
-```{r eval=FALSE, message=FALSE, warning=FALSE, include=FALSE}
+```{r eval=FALSE, message=FALSE, warning=FALSE, include=TRUE}
 #install.packages("piggyback")
 library(piggyback)
 library(HiTMaP)
@@ -342,7 +350,7 @@ list.dirs()
 
 Below is a list of commands including the parameters for the example data sets.
 
-```{r eval=FALSE, include=FALSE}
+```{r eval=FALSE, include=TRUE}
 #matrisome
 imaging_identification(Digestion_site="(?<=[P]\\w)G(?=\\w)|(?<=[P]\\w)\\w(?=L)",Fastadatabase="matrisome.fasta",spectra_segments_per_file=3)
 
@@ -391,6 +399,20 @@ imaging_identification(Digestion_site="([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=
 imaging_identification(Digestion_site="([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=P))",Fastadatabase="uniprot-mus.fasta",output_candidatelist=T,spectra_segments_per_file=4,use_previous_candidates=F,ppm=25)
 ```
 
+
+
+
+## Session information
+
+```{r}
+sessionInfo()
+```
+
+
+
+End of the tutorial, Enjoy~
+
+
 ## References
 R Packages used in this project:
 
@@ -431,15 +453,3 @@ R Packages used in this project:
    + FTICRMS[@FTICRMS]
 
    + UniProt.ws[@UniProt.ws]
-
-
-
-## Session information
-
-```{r}
-sessionInfo()
-```
-
-
-
-End of the tutorial, Enjoy~
