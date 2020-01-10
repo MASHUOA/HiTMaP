@@ -108,7 +108,8 @@ Protein_feature_list_fun<-function(workdir=getwd(),
                                    mzrange=c(650,4000),
                                    output_candidatelist=T,
                                    Modifications=list(fixed=NULL,fixmod_position=NULL,variable=NULL,varmod_position=NULL),
-                                   use_previous_candidates=F){
+                                   use_previous_candidates=F,
+                                   Protein_desc_of_exclusion=NULL){
   
    suppressMessages(suppressWarnings(require(Biostrings)))
    suppressMessages(suppressWarnings(require(cleaver)))
@@ -145,28 +146,30 @@ Protein_feature_list_fun<-function(workdir=getwd(),
    Digestion_site<-parse_cleavage_rule(Digestion_site)
    
   
-   missedCleavages<<-missedCleavages
+  missedCleavages<<-missedCleavages
   Decoy_adducts=Decoy_adducts[!(Decoy_adducts %in% adducts)]
   Decoy_adducts=Decoy_adducts[1:length(adducts)]
+     
+ 
+  #if (length(list_of_protein_sequence)<2000){bpworkers(BPPARAM)=3}
+  
+  #if (length(list_of_protein_sequence)<500){bpworkers(BPPARAM)=1}
+
+
+  
+  Index_of_protein_sequence <<- fasta.index(database,
+                                         nrec=-1L, 
+                                         skip=0L)  
+  
+  
   list_of_protein_sequence <- readAAStringSet(database,
                                             format="fasta",
                                             nrec=-1L, 
                                             skip=0L, 
                                             seek.first.rec=FALSE,
                                             use.names=TRUE, 
-                                            with.qualities=FALSE)    
- 
-  #if (length(list_of_protein_sequence)<2000){bpworkers(BPPARAM)=3}
-  
-  #if (length(list_of_protein_sequence)<500){bpworkers(BPPARAM)=1}
-
-  
-  
-  
-  Index_of_protein_sequence<<-fasta.index(database,
-                                         nrec=-1L, 
-                                         skip=0L)   
-
+                                            with.qualities=FALSE,
+                                            ) 
     if (Decoy_search && ("sequence" %in% Decoy_mode)){
     list_of_protein_sequence_rev<-Biostrings::reverse(list_of_protein_sequence)
     names(list_of_protein_sequence_rev)<-paste0("Decoy_",names(list_of_protein_sequence_rev))
@@ -530,8 +533,29 @@ Protein_feature_list_fun<-function(workdir=getwd(),
     message("attaching decoy IDs in isotope mode...Done")
   }}
   
+  if (!is.null(Protein_desc_of_exclusion)){
+    Protein_Summary<-merge(Protein_Summary,Index_of_protein_sequence[,c("recno","desc")],by.x="Protein",by.y="recno",all.x=T)
+    Protein_Summary_exclusion<-NULL
+    num_of_interest<-numeric(0)
+    for (interest_desc in Protein_desc_of_exclusion){
+      num_before=nrow(Protein_Summary_exclusion)
+      if(is.null(num_before)) num_before=0
+      Protein_Summary_exclusion<-rbind(Protein_Summary_exclusion,Protein_Summary[grepl(paste0(" ",interest_desc),Protein_Summary$desc,ignore.case = T),])
+      Protein_Summary_exclusion<-rbind(Protein_Summary_exclusion,Protein_Summary[grepl(paste0("-",interest_desc),Protein_Summary$desc,ignore.case = T),])
+      num_after=nrow(Protein_Summary_exclusion)
+      if(is.null(num_after)) num_after=0
+      num_of_interest[interest_desc]<-nrow(unique(Protein_Summary[grepl(paste0(" ",interest_desc),Protein_Summary$desc,ignore.case = T),]))+nrow(unique(Protein_Summary[grepl(paste0("-",interest_desc),Protein_Summary$desc,ignore.case = T),]))
+    }
+    #Protein_feature_list_crystallin$Protein=as.character(Protein_feature_list_crystallin$desc)
+    Protein_Summary=Protein_Summary[!(Protein_Summary$Protein %in% unique(Protein_Summary_exclusion$Protein)),]
+    Protein_Summary$desc<-NULL
+    message(paste(num_of_interest,"Protein(s) found with annotations of exclusion:",Protein_desc_of_exclusion,collapse = "\n"))     
+  }
+  
+  Protein_feature_list<<-Protein_Summary 
+  
 
-  Protein_feature_list<<-Protein_Summary
+  
   return(Protein_Summary)
 }
 

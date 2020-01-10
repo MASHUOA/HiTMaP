@@ -82,6 +82,7 @@ imaging_identification<-function(
                componentID_colname="Peptide",
                ClusterID_colname="Protein",
                Protein_desc_of_interest=".",
+               Protein_desc_of_exclusion=NULL,
                plot_unique_component=FALSE,
                FDR_cutoff=0.05,
                use_top_rank=NULL,
@@ -126,7 +127,8 @@ imaging_identification<-function(
                                                  use_previous_candidates=use_previous_candidates,
                                                  Substitute_AA=Substitute_AA,
                                                  Modifications=Modifications,
-                                                 mzrange=mzrange
+                                                 mzrange=mzrange,
+                                                 Protein_desc_of_exclusion=Protein_desc_of_exclusion
                                                  )
   
   #list_of_protein_sequence<-get("list_of_protein_sequence", envir = .GlobalEnv)
@@ -2516,7 +2518,8 @@ if(PMFsearch){
           }else{Score_cutoff_protein=0}
       Protein_feature_result_cutoff=Protein_feature_result[((Protein_feature_result$Proscore>=Score_cutoff_protein)&(!is.na(Protein_feature_result$Intensity))&(Protein_feature_result$isdecoy==0)),]
       
-      Protein_feature_list_rank=merge(Protein_feature_list[Protein_feature_list$Protein %in% Protein_feature_result_cutoff$Protein,],Peptide_plot_list_rank,by=intersect(colnames(Protein_feature_list),colnames(Peptide_plot_list_rank)))
+      #Protein_feature_list_rank=merge(Protein_feature_list[Protein_feature_list$Protein %in% Protein_feature_result_cutoff$Protein,],Peptide_plot_list_rank,by=intersect(colnames(Protein_feature_list),colnames(Peptide_plot_list_rank)))
+      Protein_feature_list_rank=Protein_feature_list_rank[Protein_feature_list_rank$Protein %in% Protein_feature_result_cutoff$Protein,]
       Protein_feature_list_rank$Score=round(Protein_feature_list_rank$Score,digits = 7)
       Protein_feature_list_rank$mz=round(Protein_feature_list_rank$mz,digits = 4)
       Protein_feature_list_rank<-as.data.frame(Protein_feature_list_rank)
