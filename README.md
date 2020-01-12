@@ -27,8 +27,11 @@ install.packages("devtools")
 Sys.setenv(R_REMOTES_NO_ERRORS_FROM_WARNINGS=T)
 library(devtools)
 install_github("MASHUOA/HiTMaP",auth_token ="a124a067ed1c84f8fd577c972845573922f1bb0f",force=T)
+3
+no
 #Update all dependencies
-1
+BiocManager::install(ask = F)
+yes
 library(HiTMaP)
 ```
 
@@ -180,7 +183,7 @@ print(p_pmf)
 ## # A tibble: 1 x 7
 ##   format width height colorspace matte filesize density
 ##   <chr>  <int>  <int> <chr>      <lgl>    <int> <chr>  
-## 1 PNG     1980   1080 sRGB       FALSE    16659 72x72
+## 1 PNG     1980   1080 sRGB       FALSE    17664 72x72
 ```
 
 <img src="README_files/figure-html/unnamed-chunk-1-1.png" width="1980" />
@@ -194,18 +197,19 @@ head(peptide_pmf_result)
 ```
 
 ```
-## # A tibble: 6 x 20
-##   Protein Peptide Modification pepmz formula    mz adduct isdecoy charge start
-##     <int> <fct>   <lgl>        <dbl> <fct>   <dbl> <fct>    <int>  <int> <int>
-## 1      53 FKNINP… NA           1328. C64H98… 1329. M+H          0      1   207
-## 2      53 AVQNFT… NA           1449. C65H97… 1450. M+H          0      1    92
-## 3      53 AVQNFT… NA           1605. C71H10… 1606. M+H          0      1    92
-## 4      75 GLASRK… NA           2617. C113H1… 2618. M+H          0      1   198
-## 5      75 ALGSDH… NA           1586. C72H11… 1587. M+H          0      1   304
-## 6      75 GLDWVK  NA            716. C34H53…  717. M+H          0      1    80
-## # … with 10 more variables: end <int>, pro_end <int>, mz_align <dbl>,
-## #   Score <dbl>, Rank <int>, moleculeNames <fct>, Region <int>,
-## #   Delta_ppm <dbl>, Intensity <dbl>, desc <fct>
+## # A tibble: 6 x 23
+##   Protein    mz Protein_coverage isdecoy Peptide Modification pepmz formula
+##     <int> <dbl>            <dbl>   <int> <fct>   <lgl>        <dbl> <fct>  
+## 1      48 1301.           0.0688       0 HLEQFA~ NA           1300. C57H90~
+## 2      48 1301.           0.0688       0 QYFLDL~ NA           1300. C60H94~
+## 3      48 1325.           0.0688       0 GSKCIL~ NA           1324. C62H94~
+## 4      53 1329.           0.0554       0 FKNINP~ NA           1328. C64H98~
+## 5      53 1450.           0.0554       0 AVQNFT~ NA           1449. C65H97~
+## 6      53 1606.           0.0554       0 AVQNFT~ NA           1605. C71H10~
+## # ... with 15 more variables: adduct <fct>, charge <int>, start <int>,
+## #   end <int>, pro_end <int>, mz_align <dbl>, Score <dbl>, Rank <int>,
+## #   moleculeNames <fct>, Region <int>, Delta_ppm <dbl>, Intensity <dbl>,
+## #   peptide_count <int>, desc.x <fct>, desc.y <fct>
 ```
 
 
@@ -224,7 +228,7 @@ head(protein_pmf_result)
 ## 4   10659   0.112        0   327352. 0.745             3           0.164 
 ## 5   10888   0.0798       0   532832. 1.24              3           0.0672
 ## 6   11270   0.107        0  2944154. 1.33              3           0.0745
-## # … with 2 more variables: Intensity_norm <dbl>, desc <fct>
+## # ... with 2 more variables: Intensity_norm <dbl>, desc <fct>
 ```
 
 ## Scoring system for protein and peptide
@@ -246,18 +250,19 @@ head(Identification_summary_table)
 ```
 
 ```
-## # A tibble: 6 x 20
-##   Protein Peptide Modification pepmz formula    mz adduct isdecoy charge start
-##     <int> <fct>   <lgl>        <dbl> <fct>   <dbl> <fct>    <int>  <int> <int>
-## 1      24 GFPGQD… NA           1143. C51H79… 1144. M+H          0      1   516
-## 2      24 GLTGPI… NA           1589. C69H11… 1590. M+H          0      1   786
-## 3      24 DGANGI… NA           1684. C72H11… 1685. M+H          0      1  1175
-## 4      24 LLSTEG… NA           1693. C72H11… 1694. M+H          0      1  1380
-## 5      24 GQPGVM… NA           1881. C82H12… 1882. M+H          0      1   597
-## 6      24 GDSGPP… NA            741. C29H48…  742. M+H          0      1   933
-## # … with 10 more variables: end <int>, pro_end <int>, mz_align <dbl>,
-## #   Score <dbl>, Rank <int>, moleculeNames <fct>, Region <int>,
-## #   Delta_ppm <dbl>, Intensity <dbl>, desc <fct>
+## # A tibble: 6 x 23
+##   Protein    mz Protein_coverage isdecoy Peptide Modification pepmz formula
+##     <int> <dbl>            <dbl>   <int> <fct>   <lgl>        <dbl> <fct>  
+## 1      24 1144.           0.0612       0 GFPGQD~ NA           1143. C51H79~
+## 2      24 1685.           0.0612       0 DGANGI~ NA           1684. C72H11~
+## 3      24  742.           0.0612       0 GDSGPP~ NA            741. C29H48~
+## 4      24 1694.           0.0612       0 LLSTEG~ NA           1693. C72H11~
+## 5      24 1882.           0.0612       0 GQPGVM~ NA           1881. C82H12~
+## 6      48 1217.           0.0348       0 ASTSVQ~ NA           1216. C51H94~
+## # ... with 15 more variables: adduct <fct>, charge <int>, start <int>,
+## #   end <int>, pro_end <int>, mz_align <dbl>, Score <dbl>, Rank <int>,
+## #   moleculeNames <fct>, Region <int>, Delta_ppm <dbl>, Intensity <dbl>,
+## #   peptide_count <int>, desc.x <fct>, desc.y <fct>
 ```
 
 The details of protein/peptide identification process has been save to the folder named by the segmentation:
@@ -581,6 +586,26 @@ imaging_identification(Digestion_site="([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=
 ```
 
 
+## For Mac OS users
+
+You may need to update the Xcode. Go to your Mac OS terminal and input:
+
+
+```bash
+xcode-select --install
+```
+
+You'll then receive:
+*xcode-select: note: install requested for command line developer tools*
+You will be prompted at this point in a window to update Xcode Command Line tools. 
+
+You may also need to install the tcl/tk support and X11.app for Mac system:
+
++ X11.app:
+https://www.xquartz.org/
+
++ Use the following link to download and install the correct tcltk package for your OS version.
+https://cran.r-project.org/bin/macosx/tools/
 
 
 ## Session information
@@ -618,14 +643,14 @@ sessionInfo()
 ##  [4] splines_3.6.1       tcltk_3.6.1         vctrs_0.2.1        
 ##  [7] htmltools_0.4.0     stats4_3.6.1        yaml_2.2.0         
 ## [10] utf8_1.1.4          survival_3.1-8      rlang_0.4.2        
-## [13] pillar_1.4.2        glue_1.3.1          BiocParallel_1.18.1
+## [13] pillar_1.4.3        glue_1.3.1          BiocParallel_1.18.1
 ## [16] BiocGenerics_0.30.0 foreach_1.4.7       stringr_1.4.0      
 ## [19] gtable_0.3.0        codetools_0.2-16    evaluate_0.14      
 ## [22] Biobase_2.44.0      knitr_1.26          doParallel_1.0.15  
 ## [25] parallel_3.6.1      fansi_0.4.0         Rcpp_1.0.3         
 ## [28] backports_1.1.5     BiocManager_1.30.10 S4Vectors_0.22.1   
 ## [31] png_0.1-7           digest_0.6.23       stringi_1.4.3      
-## [34] cli_2.0.0           tools_3.6.1         magrittr_1.5       
+## [34] cli_2.0.1           tools_3.6.1         magrittr_1.5       
 ## [37] tibble_2.1.3        pacman_0.5.1        crayon_1.3.4       
 ## [40] pkgconfig_2.0.3     zeallot_0.1.0       MASS_7.3-51.4      
 ## [43] Matrix_1.2-18       assertthat_0.2.1    rmarkdown_2.0      

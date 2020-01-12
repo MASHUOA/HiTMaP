@@ -26,8 +26,11 @@ install.packages("devtools")
 Sys.setenv(R_REMOTES_NO_ERRORS_FROM_WARNINGS=T)
 library(devtools)
 install_github("MASHUOA/HiTMaP",auth_token ="a124a067ed1c84f8fd577c972845573922f1bb0f",force=T)
+3
+no
 #Update all dependencies
-1
+BiocManager::install(ask = F)
+yes
 library(HiTMaP)
 ```
 
@@ -400,6 +403,25 @@ imaging_identification(Digestion_site="([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=
 ```
 
 
+## For Mac OS users
+
+You may need to update the Xcode. Go to your Mac OS terminal and input:
+
+```{bash eval=FALSE, include=T}
+xcode-select --install
+```
+
+You'll then receive:
+*xcode-select: note: install requested for command line developer tools*
+You will be prompted at this point in a window to update Xcode Command Line tools. 
+
+You may also need to install the X11.app and tcl/tk support for Mac system:
+
++ X11.app:
+https://www.xquartz.org/
+
++ Use the following link to download and install the correct tcltk package for your OS version.
+https://cran.r-project.org/bin/macosx/tools/
 
 
 ## Session information
