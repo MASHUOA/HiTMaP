@@ -4,6 +4,8 @@ output:
   html_document: 
     keep_md: yes
     toc: yes
+    toc_float: true
+    collapsed: false
     theme: spacelab
     number_sections: yes
     df_print: tibble
@@ -12,6 +14,8 @@ output:
     fig_height: 10
   pdf_document: default
   word_document: default
+  md_document:
+    variant: markdown_github
 bibliography: references.bib
 ---
 -- An R package of High-resolution Informatics Toolbox for Maldi-imaging Proteomics
@@ -497,7 +501,7 @@ You can set the *Substitute_AA* to make the uncommon amino acid available to the
 * Formula_with_water: Set *TRUE* to indicate the formula represents the intact amino acid, *FALSE* to indicate that the formula already lost one H2O molecule and can be considered as AA backbone.
 
 
-### Digestionn site
+### Digestion site
 
 The *Digestion_site* allows you to specify a list of pre-defined enzyme and customized digestion rules in regular expression format. You can either use the enzyme name, customized cleavage rule or combination of them to get the enzymatics peptides list. 
 
@@ -562,6 +566,8 @@ imaging_identification(Digestion_site="([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=
 
 
 #protein calibrant
+imaging_identification(Digestion_site="([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=P))",Fastadatabase="cali.fasta",output_candidatelist=T,spectra_segments_per_file=4,use_previous_candidates=F,ppm=5,peptide_ID_filter=1,missedCleavages=0:5)
+
 imaging_identification(Digestion_site="([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=P))",Fastadatabase="uniprot_cali.fasta",output_candidatelist=T,spectra_segments_per_file=1,use_previous_candidates=F,ppm=10,Protein_desc_of_interest="Pro_CALI",peptide_ID_filter=3,threshold=0.005)
 
 imaging_identification(Digestion_site="([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=P))",Fastadatabase="3protein_cali.fasta",output_candidatelist=T,spectra_segments_per_file=1,use_previous_candidates=F,ppm=10,Protein_desc_of_interest="Pro_CALI",peptide_ID_filter=3,threshold=0.005)
@@ -599,7 +605,7 @@ You'll then receive:
 *xcode-select: note: install requested for command line developer tools*
 You will be prompted at this point in a window to update Xcode Command Line tools. 
 
-You may also need to install the tcl/tk support and X11.app for Mac system:
+You may also need to install the X11.app and tcl/tk support for Mac system:
 
 + X11.app:
 https://www.xquartz.org/

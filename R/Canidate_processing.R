@@ -167,8 +167,6 @@ Protein_feature_list_fun<-function(workdir=getwd(),
                                             nrec=-1L, 
                                             skip=0L, 
                                             seek.first.rec=FALSE,
-                                            use.names=TRUE, 
-                                            with.qualities=FALSE,
                                             ) 
     if (Decoy_search && ("sequence" %in% Decoy_mode)){
     list_of_protein_sequence_rev<-Biostrings::reverse(list_of_protein_sequence)

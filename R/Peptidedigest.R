@@ -2523,6 +2523,7 @@ if(PMFsearch){
       Protein_feature_list_rank$Score=round(Protein_feature_list_rank$Score,digits = 7)
       Protein_feature_list_rank$mz=round(Protein_feature_list_rank$mz,digits = 4)
       Protein_feature_list_rank<-as.data.frame(Protein_feature_list_rank)
+      Protein_feature_list_rank$desc<-NULL
       Protein_feature_list_rank=merge(Protein_feature_list_rank,Index_of_protein_sequence[,c("recno","desc")],by.x="Protein",by.y="recno",all.x=T)
       
       Protein_feature_list_rank_cutoff<-Protein_feature_list_rank
