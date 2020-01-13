@@ -149,7 +149,7 @@ print(p)
     ##   format width height colorspace matte filesize density
     ## 1    PNG  1024   2640       sRGB FALSE    30726   72x72
 
-<img src="READMEgit_files/figure-markdown_github/VisulazeKmean-1.png" width="1024" />
+<img src="README_files/figure-markdown_github/VisulazeKmean-1.png" width="1024" />
 
 The pixels in image data now has been categorized into five regions
 according to the initial setting of segmentation
@@ -172,7 +172,7 @@ print(p_pmf)
     ##   format width height colorspace matte filesize density
     ## 1    PNG  1980   1080       sRGB FALSE    17664   72x72
 
-<img src="READMEgit_files/figure-markdown_github/unnamed-chunk-1-1.png" width="1980" />
+<img src="README_files/figure-markdown_github/unnamed-chunk-1-1.png" width="1980" />
 
 list of Peptides and proteins of each region has also been created so
 that you may check each individual region’s result.
@@ -354,7 +354,7 @@ print(p_peptide_vs_mz_feature)
     ##   format width height colorspace matte filesize density
     ## 1    PNG   960    480       sRGB FALSE    11196   72x72
 
-<img src="READMEgit_files/figure-markdown_github/FDR plot-1.png" width="960" />
+<img src="README_files/figure-markdown_github/FDR plot-1.png" width="960" />
 
 ``` r
 p_FDR_peptide<-image_read(paste0(wd,datafile," ID/3/FDR.png"))
@@ -368,7 +368,7 @@ print(p_combined)
     ##   format width height colorspace matte filesize density
     ## 1    PNG  1920    480       sRGB FALSE        0   72x72
 
-<img src="READMEgit_files/figure-markdown_github/FDR plot-2.png" width="1920" />
+<img src="README_files/figure-markdown_github/FDR plot-2.png" width="1920" />
 
 you will also find a *Matching\_Score\_vs\_mz* plots for further
 investigation on peptide matching quality.
@@ -383,7 +383,7 @@ print(p_Matching_Score_vs_mz)
     ##   format width height colorspace matte filesize density
     ## 1    PNG   480    480       sRGB FALSE    47438   72x72
 
-<img src="READMEgit_files/figure-markdown_github/p_Matching_Score_vs_mz plot-1.png" width="480" />
+<img src="README_files/figure-markdown_github/p_Matching_Score_vs_mz plot-1.png" width="480" />
 
 Identification summary and cluster imaging
 ------------------------------------------
@@ -433,7 +433,7 @@ print(p_cluster1)
     ##   <chr>  <int>  <int> <chr>      <lgl>    <int> <chr>  
     ## 1 PNG     1980    849 sRGB       TRUE    661169 118x118
 
-<img src="READMEgit_files/figure-markdown_github/CLuster imaging-1.png" width="1980" />
+<img src="README_files/figure-markdown_github/CLuster imaging-1.png" width="1980" />
 
 ``` r
 p_cluster2<-image_read(paste0(wd,"/Summary folder/cluster Ion images/5027_cluster_imaging.png"))
@@ -445,7 +445,7 @@ print(p_cluster2)
     ##   <chr>  <int>  <int> <chr>      <lgl>    <int> <chr>  
     ## 1 PNG     1980    649 sRGB       TRUE    503884 118x118
 
-<img src="READMEgit_files/figure-markdown_github/CLuster imaging-2.png" width="1980" />
+<img src="README_files/figure-markdown_github/CLuster imaging-2.png" width="1980" />
 
 ``` r
 p_cluster3<-image_read(paste0(wd,"/Summary folder/cluster Ion images/5479_cluster_imaging.png"))
@@ -457,7 +457,7 @@ print(p_cluster3)
     ##   <chr>  <int>  <int> <chr>      <lgl>    <int> <chr>  
     ## 1 PNG     1980    359 sRGB       TRUE    362007 118x118
 
-<img src="READMEgit_files/figure-markdown_github/CLuster imaging-3.png" width="1980" />
+<img src="README_files/figure-markdown_github/CLuster imaging-3.png" width="1980" />
 
 Details of parameter setting
 ----------------------------
@@ -536,7 +536,7 @@ library(gridExtra)
 grid.ftable(Cleavage_df, gp = gpar(fontsize=9,fill = rep(c("grey90", "grey95"))))
 ```
 
-![](READMEgit_files/figure-markdown_github/unnamed-chunk-8-1.png)
+![](README_files/figure-markdown_github/unnamed-chunk-8-1.png)
 
 Example data
 ------------
