@@ -2415,8 +2415,12 @@ if(PMFsearch){
     Peptide_plot_list$Region=SPECTRUM_batch
     Peptide_plot_list=Peptide_plot_list[(!is.na(Peptide_plot_list$Intensity)),]
     message(paste("1st run returns",nrow(Peptide_plot_list)))
-    write.csv(Peptide_plot_list,paste0(datafile[z] ," ID/",SPECTRUM_batch,"/Peptide_1st_ID.csv"),row.names = F)
     
+    
+    write.csv(Peptide_plot_list,paste0(datafile[z] ," ID/",SPECTRUM_batch,"/Peptide_1st_ID.csv"),row.names = F)
+    if (nrow(Peptide_plot_list)==0){
+      next
+    }
     #peptide_mz_plot<-Peptide_plot_list %>% group_by(mz) %>% summarize(length(unique(Peptide)))
     #colnames(peptide_mz_plot)<-c("mz","peptide_count")
     
@@ -2513,9 +2517,11 @@ if(PMFsearch){
       #Protein_feature_result=Protein_feature_result[!grepl("Uncharacterized",Protein_feature_result$desc,ignore.case = T),]
       #message(unique(Protein_feature_result$isdecoy))
       #message(unique(Peptide_plot_list_rank$isdecoy))
-      if (nrow(Protein_feature_result)>2){
+      if (nrow(Protein_feature_result)>=2){
       Score_cutoff_protein= FDR_cutoff_plot_protein(Protein_feature_result,FDR_cutoff=FDR_cutoff,plot_fdr=T,outputdir=paste0(datafile[z] ," ID/",SPECTRUM_batch),adjust_score = F)
-          }else{Score_cutoff_protein=0}
+      }else{
+            Score_cutoff_protein=Protein_feature_result$Proscore
+            if (length(Score_cutoff_protein)==0) Score_cutoff_protein=0}
       Protein_feature_result_cutoff=Protein_feature_result[((Protein_feature_result$Proscore>=Score_cutoff_protein)&(!is.na(Protein_feature_result$Intensity))&(Protein_feature_result$isdecoy==0)),]
       
       #Protein_feature_list_rank=merge(Protein_feature_list[Protein_feature_list$Protein %in% Protein_feature_result_cutoff$Protein,],Peptide_plot_list_rank,by=intersect(colnames(Protein_feature_list),colnames(Peptide_plot_list_rank)))
@@ -3172,7 +3178,7 @@ FDR_cutoff_plot_protein<-function(Protein_feature_result,FDR_cutoff=0.1,plot_fdr
   target_Proscore[target_Proscore==Inf]<-0
   decoy_Proscore[decoy_Proscore==Inf]<-0
   
-  breaks = seq(min(Protein_feature_result$Proscore,na.rm = T), max(Protein_feature_result$Proscore,na.rm = T), by=max(Protein_feature_result$Proscore,na.rm = T)/FDR_strip)
+  breaks = seq(min(Protein_feature_result$Proscore,na.rm = T), max(Protein_feature_result$Proscore,na.rm = T), by=abs(max(Protein_feature_result$Proscore,na.rm = T)/FDR_strip))
   target_Proscore.cut = cut(target_Proscore, breaks, right=T) 
   decoy_Proscore.cut = cut(decoy_Proscore, breaks,right=T) 
   target_Proscore.freq = table(target_Proscore.cut)
@@ -3441,7 +3447,8 @@ FDR_cutoff_plot<-function(Peptide_plot_list,FDR_cutoff=0.1,FDR_strip=500,plot_fd
   target_score[target_score==Inf]<-0
   decoy_score[decoy_score==Inf]<-0
   
-  breaks = seq( min(Peptide_plot_list$Score), max(Peptide_plot_list$Score) + (max(Peptide_plot_list$Score)-min(Peptide_plot_list$Score))/FDR_strip , by=(max(Peptide_plot_list$Score)-min(Peptide_plot_list$Score))/FDR_strip)
+  if (length(unique(Peptide_plot_list$Score))==1) return(unique(Peptide_plot_list$Score))
+  breaks = seq( min(Peptide_plot_list$Score), max(Peptide_plot_list$Score) + (max(Peptide_plot_list$Score)-min(Peptide_plot_list$Score))/FDR_strip , by=abs(max(Peptide_plot_list$Score)-min(Peptide_plot_list$Score))/FDR_strip)
   target_score.cut = cut(target_score, breaks, right=T) 
   decoy_score.cut = cut(decoy_score, breaks,right=T) 
   target_score.freq = table(target_score.cut)
@@ -3463,7 +3470,7 @@ FDR_cutoff_plot<-function(Peptide_plot_list,FDR_cutoff=0.1,FDR_strip=500,plot_fd
   Score_cutoff<-min(c(df$breaks[(df$FDR_m.av<=FDR_cutoff)==T],df$breaks[(df$FDR<=FDR_cutoff)==T]),na.rm = T)
   
   if (!is.null(outputdir) && plot_fdr){
-  
+  if ((sum(is.na(df$FDR)) + sum(is.infinite(df$FDR)))<length(df$FDR)){
   png(paste0(outputdir,"/FDR.png"))
   plot.new()
   plot(df$breaks, df$FDR,            # plot the data 
@@ -3472,10 +3479,14 @@ FDR_cutoff_plot<-function(Peptide_plot_list,FDR_cutoff=0.1,FDR_strip=500,plot_fd
        ylab="FDR")   # y−axis label 
   lines(df$breaks, df$FDR_m.av)
   dev.off()  
+    
+  }
+
   
   write.csv(df,paste0(outputdir,"/FDR.CSV"),row.names = F)  
     
-  }}
+  }
+  }
 
   if (adjust_score){
     return(list(Score_cutoff,Peptide_plot_list))
