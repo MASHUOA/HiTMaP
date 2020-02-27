@@ -1,3 +1,142 @@
+virtual_segmentation<-function(imdata,Virtual_segmentation_rankfile="~/GitHub/HiTMaP/inst/data/radius_rank_bovin.csv"){
+  library(reshape2)
+  library(BiocParallel)
+  coordatadf=imdata@elementMetadata@coord
+  coordatadf$run<-imdata@elementMetadata@run
+  coordatadf$indx<-as.numeric(rownames(coordatadf))
+  coordatadf<-as.data.frame(coordatadf)
+  coordatalist=list()
+  for (i in unique(coordatadf$run)){
+    
+    coordatalist[[i]]<-coordatadf[coordatadf$run==i,]
+    
+  }
+  
+  
+  radius_rank=read.csv(file = Virtual_segmentation_rankfile)
+  radius_rank=radius_rank[order(radius_rank$Rank),]
+  
+  
+  coordata_rank_list<- function(coordata,radius_rank,BPPARAM=bpparam()){
+      coordist_para=function(i,coordata){
+    
+    coordist_para=NULL
+    for( j in 1  :  nrow(coordata)){
+      coordist_para[j]=sqrt((coordata$x[i]-coordata$x[j])^2+(coordata$y[i]-coordata$y[j])^2)
+    }
+    coordist_para
+  }
+  
+  
+  #coordistmatrix<-matrix(nrow=nrow(coordata),ncol=nrow(coordata))
+  #coordistmatrix<-NULL
+  #cl=autoStopCluster(cl)
+  #coordistmatrix=parLapply(cl=cl,1:  nrow(coordata),coordist_para,coordata)
+  coordistmatrix=bplapply(1:  nrow(coordata),coordist_para,coordata,BPPARAM = BPPARAM)
+  coordistmatrix=matrix(unlist(coordistmatrix),nrow = nrow(coordata),ncol = nrow(coordata))
+  coordistmatrix=as.data.table(coordistmatrix)
+  coordistmatrix$sum=0
+  #coordistmatrix$sum=base::unlist(parLapply(cl=cl,1:nrow(coordata),function(j,coordistmatrix,coordata){coordistmatrix$sum[j]=sum(coordistmatrix[j,1:nrow(coordata)])},coordistmatrix,coordata))
+  coordistmatrix$sum=base::unlist(bplapply(1:nrow(coordata),function(j,coordistmatrix,coordata){coordistmatrix$sum[j]=sum(coordistmatrix[j,1:nrow(coordata)])},coordistmatrix,coordata,BPPARAM = BPPARAM))
+  
+  coorrange=max(coordistmatrix$sum)-min(coordistmatrix$sum)
+  
+  
+  
+  findedge<-function(coordata){
+    #for (i in 1: nrow(coordata)){
+    uniquex=unique(coordata$x)
+    uniquey=unique(coordata$y)
+    coordata$edge=FALSE
+    for (x in uniquex){
+      
+      min=min(coordata[coordata$x==x,"y"])
+      max=max(coordata[coordata$x==x,"y"])
+      coordata['&'(coordata$y==max,coordata$x==x),"edge"]=TRUE
+      coordata['&'(coordata$y==min,coordata$x==x),"edge"]=TRUE
+    }
+    
+    for (y in uniquey){
+      min=min(coordata[coordata$y==y,"x"])
+      max=max(coordata[coordata$y==y,"x"])
+      coordata['&'(coordata$x==max,coordata$y==y),"edge"]=TRUE
+      coordata['&'(coordata$x==min,coordata$y==y),"edge"]=TRUE
+    }
+    coordata
+  }
+  
+  coordata=findedge(coordata)
+  
+  
+  
+  #paste0("v",colnames(coordistmatrix[coordistmatrix$sum==min(coordistmatrix$sum),]))
+  
+  #center_dist=t(coordistmatrix[which.min(coordistmatrix$sum),])
+  
+  
+  #plot(rownames(coordistmatrix),coordistmatrix$sum)
+  
+  #write.csv(radius_rank,file = "radius_rank.csv", row.names = F)
+  
+  
+  
+  rank_pixel<-function(coordata,coordistmatrix){
+    #coordata[coordata$edge==TRUE,]=coordata[coordata$edge==TRUE,]
+    shape_center=coordata[coordistmatrix$sum==min(coordistmatrix$sum),]
+    center_dist=t(coordistmatrix[which.min(coordistmatrix$sum),1:nrow(coordata)])
+    library(useful)
+    From <- shape_center[rep(seq_len(nrow(shape_center)), each=nrow(coordata)),1:2]
+    To <- coordata[,1:2]
+    df=To-From
+    center_edge_angle=cbind(coordata[,1:2],cart2pol(df$x, df$y, degrees = F),edge=coordata[,"edge"])
+    center_edge_angle_sdge=center_edge_angle[center_edge_angle$edge==TRUE,]
+    coordata$rank=0 
+    coordata$pattern=""       
+    
+    for (i in 1: (nrow(coordata))){
+      
+      
+      #From <- coordata[i,][rep(seq_len(nrow(coordata[i,])), each=nrow(coordata[coordata$edge==TRUE,])),1:2]
+      #To <- coordata[coordata$edge==TRUE,][,1:2]
+      
+      if (coordata$edge[i]!=TRUE){      
+        df=coordata[i,1:2]-shape_center[,1:2]
+        point_center_angle=cbind(coordata[i,1:2],cart2pol(df$x, df$y, degrees = F))
+        pointedge=center_edge_angle_sdge[which(abs(center_edge_angle_sdge$theta-point_center_angle$theta)==min(abs(center_edge_angle_sdge$theta-point_center_angle$theta))),]
+        #message(pointedge)
+        
+        pointedge=pointedge[which.min(pointedge$r),]
+        to_edge=coordistmatrix[[i]]['&'(coordata$x==pointedge$x,coordata$y==pointedge$y)]
+      }else{to_edge=0}
+      
+      
+      to_center=center_dist[i]
+      total=to_edge+to_center
+      max(radius_rank$Radius_U)
+      norm_center_dist=to_center/total*max(radius_rank$Radius_U)
+      coordata$rank[i]=as.character(radius_rank$Rank['&'(radius_rank$Radius_L<=norm_center_dist,radius_rank$Radius_U>=norm_center_dist)])
+      coordata$pattern[i]=as.character(radius_rank$Name['&'(radius_rank$Radius_L<=norm_center_dist,radius_rank$Radius_U>=norm_center_dist)])
+    }
+    coordata
+  }
+  
+  coordata=rank_pixel(coordata,coordistmatrix)
+  
+  coordata
+  
+  }
+  
+  
+  coordatalist_result<-lapply(coordatalist,coordata_rank_list,radius_rank)
+  
+  coordatalist_result_merge<-do.call(rbind,coordatalist_result)
+  coordatadf_merge<-merge(coordatadf,coordatalist_result_merge[,c("x","y","run","rank","pattern")],by=c("x","y","run"))
+  rownames(coordatadf_merge)<-coordatadf_merge$indx
+  return(coordatadf_merge)
+  
+  }
+
+
 
 Load_Cardinal_imaging<-function(datafile=tk_choose.files(filter = Filters,
                                                          caption  = "Choose single or multiple file(s) for analysis",
@@ -12,7 +151,7 @@ Load_Cardinal_imaging<-function(datafile=tk_choose.files(filter = Filters,
   
   datafiles<-gsub(".imzML", "", datafile)
   workdir<-base::dirname(datafiles) 
-  name <-gsub(base::dirname(datafiles),"",datafiles)
+  name <-gsub(paste0(base::dirname(datafiles),"/"),"",datafiles)
   folder<-base::dirname(datafiles)
   if (rotate==0){
     imdata <-  suppressMessages(suppressWarnings(Cardinal::readImzML(name, folder, attach.only=attach.only,as=as,resolution=resolution, units="ppm",BPPARAM=BPPARAM,mass.range=mzrange)))
@@ -421,6 +560,7 @@ cluster_image_grid<-function(clusterID,
                              combine_header_footer=F,
                              plot_style=c("fleximaging","ClusterOnly","rainbow"),
                              protein_coverage=F,
+                             footer_style="Length",
                              output_png_width_limit=1980){
   #complementary(color="red", plot = TRUE, bg = "white", labcol = NULL, cex = 0.8, title = TRUE)
   windows_filename<- function(stringX){
@@ -433,10 +573,11 @@ cluster_image_grid<-function(clusterID,
    suppressMessages(suppressWarnings(require(magick)))
    suppressMessages(suppressWarnings(require(stringr)))
    suppressMessages(suppressWarnings(require(data.table)))
-  Sys.setenv("PATH" = paste(paste(unique(str_split(Sys.getenv("PATH"),.Platform$path.sep)[[1]]), sep = .Platform$path.sep,collapse = .Platform$path.sep), "C:/ProgramData/Anaconda3/orca_app", sep = .Platform$path.sep))
+   Sys.setenv("PATH" = paste(paste(unique(str_split(Sys.getenv("PATH"),.Platform$path.sep)[[1]]), sep = .Platform$path.sep,collapse = .Platform$path.sep), "C:/ProgramData/Anaconda3/orca_app", sep = .Platform$path.sep))
    suppressMessages(suppressWarnings(require(grid)))
    suppressMessages(suppressWarnings(require(plotly)))
    suppressMessages(suppressWarnings(require(dplyr)))
+   suppressMessages(suppressWarnings(require(colortools)))
   #rotate the image
   #imdata@pixelData@data<-rotatetmp
   outputpngsum=paste(getwd(),"\\",windows_filename(substr(clusterID, 1, 15)),"_cluster_imaging",'.png',sep="")
@@ -447,24 +588,31 @@ cluster_image_grid<-function(clusterID,
   #message(outputpng)
   candidate=SMPLIST[SMPLIST[[ClusterID_colname]]==clusterID,]
   #candidate=candidate[order(as.character())]
-  candidate_u<- candidate %>% group_by(mz) %>% summarise(Peptide=Peptide[1])
+  candidate_u<- candidate %>% group_by(mz) %>% dplyr::summarise(Peptide=Peptide[1])
   candidateunique=as.numeric(as.character(unique(candidate[,"mz"])))
   candidateunique=candidateunique[order(as.character(candidateunique))]
   candidate<-merge(data.frame(candidate_u),candidate,by=c("mz","Peptide"),sort=F)
-   suppressMessages(suppressWarnings(require(colortools)))
+   
   if (length(candidateunique)>4){
     
-    mycol=wheel("steelblue", num = length(candidateunique),bg = "white")
+    mycol=wheel("red", num = length(candidateunique),bg = "white")
   } else if (length(candidateunique)==4){
-    mycol=tetradic("steelblue")
+    mycol=tetradic("red")
+    #mycol=c("#FF0000", "#00FF00", "#0000FF")
   } else if (length(candidateunique)==3){
-    mycol=splitComp("steelblue")
+    #mycol=splitComp("red")
+    mycol=c("#FF0000", "#00FF00", "#0000FF")
   } else if (length(candidateunique)<=2){
-    mycol=complementary("steelblue")
+    #mycol=complementary("red")
+    mycol=c("#FF0000", "#00FFFF")
   }
     
   mycol <- as.factor(as.character(mycol))  
   mycol=mycol[order(mycol)]
+  #mycolrgb<-hex2RGB(mycol)
+  #meancoldf<-colSums(mycolrgb@coords)/max(colSums(mycolrgb@coords))
+  #meancol<-RGB(R=meancoldf[1],G=meancoldf[2],B=meancoldf[3])
+  #colorspace::hex(meancol)
   
   if (length(candidateunique)>=Component_plot_threshold){
     
@@ -473,9 +621,6 @@ cluster_image_grid<-function(clusterID,
       
     }else
       {
-      
-      
-      
        suppressMessages(suppressWarnings(require(RColorBrewer)))
        suppressMessages(suppressWarnings(require(Cardinal)))
        suppressMessages(suppressWarnings(require(EBImage)))
@@ -535,7 +680,7 @@ cluster_image_grid<-function(clusterID,
               contrast.enhance = contrast.enhance,
               smooth.image = smooth.image ,
               superpose=TRUE,normalize.image="linear",
-              plusminus=round(median(ppm*candidateunique/1000000),digits = 4))
+              plusminus=round(median(ppm*candidateunique/1000000),digits = 4),key=F)
         
         for (i in 1:length(candidateunique)){
           #image(imdata, mz=candidateunique[i], col=mycol[i], superpose=F,normalize.image="linear")
@@ -585,16 +730,20 @@ cluster_image_grid<-function(clusterID,
         }
         
         
+        col.regions <- gradient.colors(100, start="black", end=levels(mycol)[1])
         
-        
-        clusterimg=image(imdata, mz=candidateunique, 
-              col=levels(mycol),
-              contrast.enhance = contrast.enhance,
+       if (F){clusterimg=image(imdata, mz=candidateunique, 
+ #            col=levels(mycol),
+              colorscale =col.regions,
+              #contrast.enhance = contrast.enhance,
+              contrast.enhance = "none",
               smooth.image = smooth.image ,
-              superpose=TRUE,normalize.image="linear",
+              superpose=F,normalize.image="linear",
               plusminus=round(mean(ppm*candidateunique/1000000),digits = 4),
-              layout=c(length(levels(Cardinal::run(imdata))),1))
-        print(clusterimg)
+              layout=c(length(levels(Cardinal::run(imdata))),1),key=F
+              )
+
+        print(clusterimg)}
         
         dev.off()
         
@@ -611,11 +760,12 @@ cluster_image_grid<-function(clusterID,
             col=levels(mycol)[i]
           }
           componentimg[[i]]=image(imdata, mz=candidateunique[i], 
-                                      contrast.enhance=contrast.enhance,
+                                      #contrast.enhance=contrast.enhance,
+                                      contrast.enhance = "none",
                                       smooth.image = smooth.image,
-                                      #col.regions=col.regions,
+                                      colorscale=col.regions,
                                       col=col,
-                                      normalize.image="none",
+                                      normalize.image="linear",
                                       plusminus=round(ppm*candidateunique[i]/1000000,digits = 4),
                                       key=F,
                                       xlab=NULL,
@@ -643,15 +793,29 @@ cluster_image_grid<-function(clusterID,
         pngfile<-image_border(pngfile, "black", "30x30")
         pngfile<-image_annotate(pngfile,paste(clusterID),gravity = "north",size = 50,color = "white")
         
-        
+        pngcompfile_org=list()
         pngcompfile=list()
         for (i in 1:length(candidateunique)){
-          pngcompfile[[i]]<-image_read(temp_component_png[[i]])
+          pngcompfile_org[[i]]<-(image_read(temp_component_png[[i]]))
+          pngcompfile[[i]]<-pngcompfile_org[[i]]
           #pngcompfile[[i]]<-image(temp_component_png[[i]])
           pngcompfile[[i]]<-image_border(pngcompfile[[i]], "black", "30x30")
           pngcompfile[[i]]<-image_annotate(pngcompfile[[i]],paste(unique(candidate[candidate$mz==candidateunique[i],"moleculeNames"]),candidateunique[i]),gravity = "north",size = 50,color = "white")
          
-          }
+        }
+        
+
+        
+        
+        img_com<-image_read(temp_component_png[[1]])
+        pngcompfile_org[[1]]<-NULL
+        for (imgs in pngcompfile_org){
+          img_com<-c(img_com,unlist(imgs))
+        }
+        pngfile<-image_modulate(image_average(img_com), brightness = 100 + 25 * length(candidateunique), saturation = 100)
+        pngfile<-image_border(pngfile, "black", "30x30")
+        pngfile<-image_annotate(pngfile,paste(clusterID),gravity = "north",size = 50,color = "white")
+        
          pngfile=image_append(c(pngfile,unlist(pngcompfile)))
         image_write(pngfile,outputpngsum)
         
@@ -799,7 +963,7 @@ cluster_image_grid<-function(clusterID,
     
       prosequence<-list_of_protein_sequence[clusterID]
       candidate_unique_table=unique(candidate[,c(ClusterID_colname,componentID_colname,"Intensity","mz")])
-      component_int<-candidate_unique_table %>% group_by_at((componentID_colname)) %>% summarise(int=sum(Intensity))
+      component_int<-candidate_unique_table %>% group_by_at((componentID_colname)) %>% dplyr::summarise(int=sum(Intensity))
       component_int$int<-component_int$int/max(component_int$int)
       
       s1=as.character(component_int$Peptide)
@@ -820,6 +984,7 @@ cluster_image_grid<-function(clusterID,
       pro_length<-unname(width(s2))
       pro_int<-rep(0,pro_length)
       pro_col<-rep(transcolor,pro_length)
+      pro_col<-rep("grey93",pro_length)
       for(y in 1:nrow(component_int)){
         for( t in component_int$start[y]:component_int$end[y]){
           #pro_col[t]<-mixcolor(component_int$int[y]/(pro_int[t]+component_int$int[y]), col2RGB(pro_col[t]), col2RGB(component_int$mycol[y]))
@@ -846,6 +1011,8 @@ cluster_image_grid<-function(clusterID,
         )}
       
       footerpng<-paste(getwd(),"\\",windows_filename(substr(clusterID, 1, 10)),"_footer.png",sep="")
+      
+      if (footer_style=="Protein"){
       png(footerpng,width = 5*length(candidateunique+1),height = 5*ceiling(ncharrow/10),units = "in",res = 300)
       par(oma=c(0, 0, 0, 0),mar=c(1, 0, 0, 0))
       p <- ggplot(component_int_plot, aes(x, y, label = char)) + 
@@ -859,6 +1026,26 @@ cluster_image_grid<-function(clusterID,
       
       print(p)
       dev.off()
+      } else if (footer_style=="Length"){
+              
+      png(footerpng,width = 5*length(candidateunique+1),height = 1,units = "in",res = 300)
+      par(oma=c(0, 0, 0, 0),mar=c(1, 0, 0, 0))
+      component_int_plot$x=as.factor(1)
+      component_int_plot$y=1
+      p<- ggplot(data=component_int_plot, aes(x=x, y=site,group=x, label=x,fill=col)) +
+        geom_bar(stat="identity",fill=component_int_plot$col)+ 
+        theme(axis.line=element_blank(),axis.text.x=element_blank(),
+              axis.text.y=element_blank(),axis.ticks=element_blank(),
+              axis.title.y=element_blank(),legend.position="none",
+              panel.background=element_blank(),panel.border=element_blank(),panel.grid.major=element_blank(),
+              panel.grid.minor=element_blank(),plot.background=element_blank()) + coord_flip()+
+        ylab(cluster_desc)
+      print(p)
+      dev.off()
+      
+      }
+
+
       
       if(file.exists(outputpngsum)){
         

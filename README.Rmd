@@ -17,7 +17,17 @@ output:
     fig_width: 10
     fig_height: 10
 bibliography: references.bib
+vignette: >
+  %\VignetteIndexEntry{1. HiTMaP}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
 ---
+
+
+```{r setup, echo=FALSE, message=FALSE}
+knitr::opts_chunk$set(cache = T)
+```
+
 -- An R package of High-resolution Informatics Toolbox for Maldi-imaging Proteomics
 
 
@@ -28,7 +38,8 @@ This is an tutorial for use of HiTMaP (An R package of High-resolution Informati
 #install the git package
 install.packages("devtools")
 Sys.setenv(R_REMOTES_NO_ERRORS_FROM_WARNINGS=T)
-library(devtools)
+#library(devtools)
+library(remotes)
 install_github("MASHUOA/HiTMaP",auth_token ="a124a067ed1c84f8fd577c972845573922f1bb0f",force=T)
 3
 no
@@ -38,6 +49,37 @@ yes
 library(HiTMaP)
 ```
 
+### For Linux OS users
+Run the codes as below to enable the required components in Linux console.
+
+```{bash eval=FALSE, include=T}
+sudo apt-get install tcl-dev tk-dev
+sudo apt-get install r-cran-ncdf4
+sudo apt install libxml2-dev
+sudo apt install libssl-dev
+sudo apt install libcurl4-openssl-dev
+sudo apt-get install libnss-winbind winbind
+```
+
+### For Mac OS users
+
+You may need to update the Xcode. Go to your Mac OS terminal and input:
+
+```{bash eval=FALSE, include=T}
+xcode-select --install
+```
+
+You'll then receive:
+*xcode-select: note: install requested for command line developer tools*
+You will be prompted at this point in a window to update Xcode Command Line tools. 
+
+You may also need to install the X11.app and tcl/tk support for Mac system:
+
++ X11.app:
+https://www.xquartz.org/
+
++ Use the following link to download and install the correct tcltk package for your OS version.
+https://cran.r-project.org/bin/macosx/tools/
 
 ## Proteomics identification on Maldi imaging data file 
 
@@ -59,7 +101,7 @@ imaging_identification(
                threshold=0.005, 
                ppm=5,
 #==============specify the digestion enzyme specificity
-               Digestion_site="([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=P))",
+               Digestion_site="trypsin",
 #==============specify the range of missed Cleavages
                missedCleavages=0:1,
 #==============Set the target fasta file
@@ -263,6 +305,7 @@ HiTMaP:::Peptide_modification(retrive_ID=NULL,update_unimod=F)
 modification_list<-merge(unimod.df$modifications,unimod.df$specificity,by.x=c("record_id"),by.y=c("mod_key"),all.x=T)
 head(modification_list['&'(modification_list$code_name=="Phospho",modification_list$hidden!=1),c("code_name","record_id","composition","mono_mass","position_key","one_letter")])
 head(modification_list['&'(modification_list$code_name=="Amide",modification_list$hidden!=1),c("code_name","record_id","composition","mono_mass","position_key","one_letter")])
+head(modification_list['&'(stringr::str_detect(modification_list$code_name,"Ca"),modification_list$hidden!=1),c("code_name","record_id","composition","mono_mass","position_key","one_letter")])
 ```
 
 If a modification occurs on different types of site , you will also need to specify the position of a modifications.
@@ -283,7 +326,7 @@ You can set the *Substitute_AA* to make the uncommon amino acid available to the
 * Formula_with_water: Set *TRUE* to indicate the formula represents the intact amino acid, *FALSE* to indicate that the formula already lost one H2O molecule and can be considered as AA backbone.
 
 
-### Digestion site
+### Digestion site and enzyme
 
 The *Digestion_site* allows you to specify a list of pre-defined enzyme and customized digestion rules in regular expression format. You can either use the enzyme name, customized cleavage rule or combination of them to get the enzymatics peptides list. 
 
@@ -338,6 +381,7 @@ grid.ftable(Cleavage_df, gp = gpar(fontsize=9,fill = rep(c("grey90", "grey95")))
 ```
 
 
+
 ## Example data
 The HitMaP comes with a series of Maildi imaging data sets acquired from either FT-ICR or TOF. By the following codes, you can download these raw data set into a local folder.  
 
@@ -362,78 +406,57 @@ Below is a list of commands including the parameters for the example data sets.
 imaging_identification(Digestion_site="(?<=[P]\\w)G(?=\\w)|(?<=[P]\\w)\\w(?=L)",Fastadatabase="matrisome.fasta",spectra_segments_per_file=3)
 
 #Human brain FTICR
-imaging_identification(Digestion_site="([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=P))",Fastadatabase="uniprot-Human_w_cali.fasta",output_candidatelist=T,spectra_segments_per_file=4,use_previous_candidates=F,ppm=5)
+imaging_identification(Digestion_site="trypsin",Fastadatabase="uniprot-Human_w_cali.fasta",output_candidatelist=T,spectra_segments_per_file=4,use_previous_candidates=F,ppm=5)
 
-imaging_identification(Digestion_site="([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=P))",Fastadatabase="uniprot-Human_w_cali.fasta",output_candidatelist=T,spectra_segments_per_file=4,use_previous_candidates=T,ppm=10,missedCleavages=0:5,Protein_desc_of_interest=c("Histone ","GN=MBP","ACTIN"))
+imaging_identification(Digestion_site="trypsin",Fastadatabase="uniprot-Human_w_cali.fasta",output_candidatelist=T,spectra_segments_per_file=4,use_previous_candidates=T,ppm=10,missedCleavages=0:5,Protein_desc_of_interest=c("Histone ","GN=MBP","ACTIN"))
 
-imaging_identification(Digestion_site="([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=P))",Fastadatabase="uniprot-Human.fasta",output_candidatelist=T,spectra_segments_per_file=4,use_previous_candidates=T,ppm=12.5,PMF_analysis=T,plot_cluster_image_grid=T,Protein_desc_of_interest=c("Histone ","GN=MBP","ACTIN"))
+imaging_identification(Digestion_site="trypsin",Fastadatabase="uniprot-Human.fasta",output_candidatelist=T,spectra_segments_per_file=4,use_previous_candidates=T,ppm=12.5,PMF_analysis=T,plot_cluster_image_grid=T,Protein_desc_of_interest=c("Histone ","GN=MBP","ACTIN"))
 
-imaging_identification(Digestion_site="([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=P))",Fastadatabase="uniprot-Human.fasta",output_candidatelist=T,spectra_segments_per_file=4,use_previous_candidates=T,ppm=12.5,PMF_analysis=F,plot_cluster_image_grid=T,Protein_desc_of_interest=c("Histone ","GN=MBP","ACTIN"))
+imaging_identification(Digestion_site="trypsin",Fastadatabase="uniprot-Human.fasta",output_candidatelist=T,spectra_segments_per_file=4,use_previous_candidates=T,ppm=12.5,PMF_analysis=F,plot_cluster_image_grid=T,Protein_desc_of_interest=c("Histone ","GN=MBP","ACTIN"))
 
-imaging_identification(Digestion_site="([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=P))",Fastadatabase="uniprot-Human.fasta",output_candidatelist=T,spectra_segments_per_file=4,use_previous_candidates=T,ppm=10,FDR_cutoff = 0.1,PMF_analysis=T,plot_cluster_image_grid=T,Protein_desc_of_interest=c("Histone ","GN=MBP","ACTIN"))
+imaging_identification(Digestion_site="trypsin",Fastadatabase="uniprot-Human.fasta",output_candidatelist=T,spectra_segments_per_file=4,use_previous_candidates=T,ppm=10,FDR_cutoff = 0.1,PMF_analysis=T,plot_cluster_image_grid=T,Protein_desc_of_interest=c("Histone ","GN=MBP","ACTIN"))
 
 #Bovin lens FTICR
-imaging_identification(Digestion_site="([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=P))",Fastadatabase="uniprot-Bovin.fasta",output_candidatelist=T,spectra_segments_per_file=4,use_previous_candidates=T,threshold=0.005)
+imaging_identification(Digestion_site="trypsin",Fastadatabase="uniprot-Bovin.fasta",output_candidatelist=T,spectra_segments_per_file=4,use_previous_candidates=T,threshold=0.005)
 
-imaging_identification(Digestion_site="([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=P))",Fastadatabase="uniprot-Bovin.fasta",output_candidatelist=T,spectra_segments_per_file=4,use_previous_candidates=T,peptide_ID_filter=3,threshold = 0.005)
+imaging_identification(Digestion_site="trypsin",Fastadatabase="uniprot-Bovin.fasta",output_candidatelist=T,spectra_segments_per_file=4,use_previous_candidates=T,peptide_ID_filter=3,threshold = 0.005)
 
-imaging_identification(Digestion_site="([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=P))",Fastadatabase="uniprot-Bovin.fasta",output_candidatelist=T,spectra_segments_per_file=4,use_previous_candidates=T,peptide_ID_filter=3,threshold = 0.005,FDR_cutoff=0.05)
+imaging_identification(Digestion_site="trypsin",Fastadatabase="uniprot-Bovin.fasta",output_candidatelist=F,spectra_segments_per_file=4,use_previous_candidates=T,peptide_ID_filter=3,threshold = 0.005,FDR_cutoff=0.05)
 
-imaging_identification(Digestion_site="([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=P))",Fastadatabase="uniprot-Bovin.fasta",output_candidatelist=T,spectra_segments_per_file=4,use_previous_candidates=T,peptide_ID_filter=3,threshold = 0.005,FDR_cutoff=0.05,PMF_analysis=F,plot_cluster_image_grid=T,Protein_desc_of_interest=c("crystallin","ACTIN"))
+imaging_identification(Digestion_site="trypsin",Fastadatabase="uniprot-Bovin.fasta",output_candidatelist=T,spectra_segments_per_file=4,use_previous_candidates=T,peptide_ID_filter=3,threshold = 0.005,FDR_cutoff=0.05,PMF_analysis=F,plot_cluster_image_grid=T,Protein_desc_of_interest=c("crystallin","ACTIN","Vimentin","Filensin","Phakinin"))
 
 
 #protein calibrant
-imaging_identification(Digestion_site="([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=P))",Fastadatabase="cali.fasta",output_candidatelist=T,spectra_segments_per_file=4,use_previous_candidates=F,ppm=5,peptide_ID_filter=1,missedCleavages=0:5)
+imaging_identification(Digestion_site="trypsin",Fastadatabase="cali.fasta",output_candidatelist=T,spectra_segments_per_file=4,use_previous_candidates=F,ppm=5,peptide_ID_filter=1,missedCleavages=0:5)
 
-imaging_identification(Digestion_site="([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=P))",Fastadatabase="uniprot_cali.fasta",output_candidatelist=T,spectra_segments_per_file=1,use_previous_candidates=F,ppm=10,Protein_desc_of_interest="Pro_CALI",peptide_ID_filter=3,threshold=0.005)
+imaging_identification(Digestion_site="trypsin",Fastadatabase="uniprot_cali.fasta",output_candidatelist=T,spectra_segments_per_file=1,use_previous_candidates=F,ppm=10,Protein_desc_of_interest="Pro_CALI",peptide_ID_filter=3,threshold=0.005)
 
-imaging_identification(Digestion_site="([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=P))",Fastadatabase="3protein_cali.fasta",output_candidatelist=T,spectra_segments_per_file=1,use_previous_candidates=F,ppm=10,Protein_desc_of_interest="Pro_CALI",peptide_ID_filter=3,threshold=0.005)
+imaging_identification(Digestion_site="trypsin",Fastadatabase="3protein_cali.fasta",output_candidatelist=T,spectra_segments_per_file=1,use_previous_candidates=F,ppm=10,Protein_desc_of_interest="Pro_CALI",peptide_ID_filter=3,threshold=0.005)
 
-imaging_identification(Digestion_site="([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=P))",Fastadatabase="uniprot_cali.fasta",output_candidatelist=T,spectra_segments_per_file=1,use_previous_candidates=T,ppm=5,Protein_desc_of_interest="Pro_CALI",threshold=0.005,FDR_cutoff=0.1)
+imaging_identification(Digestion_site="trypsin",Fastadatabase="uniprot_cali.fasta",output_candidatelist=T,spectra_segments_per_file=1,use_previous_candidates=T,ppm=5,Protein_desc_of_interest="Pro_CALI",threshold=0.005,FDR_cutoff=0.1)
 
-imaging_identification(Digestion_site="([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=P))",Fastadatabase="uniprot_cali.fasta",output_candidatelist=T,spectra_segments_per_file=1,use_previous_candidates=T,ppm=5,Protein_desc_of_interest="Pro_CALI",threshold=0.005,FDR_cutoff=0.05)
+imaging_identification(Digestion_site="trypsin",Fastadatabase="uniprot_cali.fasta",output_candidatelist=T,spectra_segments_per_file=1,use_previous_candidates=T,ppm=5,Protein_desc_of_interest="Pro_CALI",threshold=0.005,FDR_cutoff=0.05)
 
 #peptide calibrant
-imaging_identification(Digestion_site="([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=P))",Fastadatabase="uniprot_cali.fasta",output_candidatelist=T,spectra_segments_per_file=1,use_previous_candidates=F,peptide_ID_filter=1,ppm=5,missedCleavages=0:5,Modifications=list(fixed=NULL,fixmod_position=NULL,variable=c("Amide"),varmod_position=c(6)),FDR_cutoff=0.1)
+imaging_identification(Digestion_site="trypsin",Fastadatabase="uniprot_cali.fasta",output_candidatelist=T,spectra_segments_per_file=1,use_previous_candidates=F,peptide_ID_filter=1,ppm=5,missedCleavages=0:5,Modifications=list(fixed=NULL,fixmod_position=NULL,variable=c("Amide"),varmod_position=c(6)),FDR_cutoff=0.1)
 
-imaging_identification(Digestion_site="([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=P))",Fastadatabase="uniprot_cali.fasta",output_candidatelist=T,spectra_segments_per_file=1,use_previous_candidates=T,peptide_ID_filter=1,ppm=5,missedCleavages=0:5)
+imaging_identification(Digestion_site="trypsin",Fastadatabase="uniprot_cali.fasta",output_candidatelist=T,spectra_segments_per_file=1,use_previous_candidates=T,peptide_ID_filter=1,ppm=5,missedCleavages=0:5)
 
 #Ultraflex data
-imaging_identification(Digestion_site="([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=P))",Fastadatabase="uniprot-bovin.fasta",output_candidatelist=T,spectra_segments_per_file=4,use_previous_candidates=T,ppm=25,peptide_ID_filter=3,Protein_desc_of_interest<-c("Crystallin","Actin"))
+imaging_identification(Digestion_site="trypsin",Fastadatabase="uniprot-bovin.fasta",output_candidatelist=T,spectra_segments_per_file=4,use_previous_candidates=T,ppm=25,peptide_ID_filter=3,Protein_desc_of_interest<-c("Crystallin","Actin"))
 
-imaging_identification(Digestion_site="([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=P))",Fastadatabase="uniprot-Human.fasta",output_candidatelist=T,spectra_segments_per_file=4,use_previous_candidates=F,ppm=25,peptide_ID_filter=3,Protein_desc_of_interest<-c("Crystallin","Actin"))
+imaging_identification(Digestion_site="trypsin",Fastadatabase="uniprot-Human.fasta",output_candidatelist=T,spectra_segments_per_file=4,use_previous_candidates=F,ppm=25,peptide_ID_filter=3,Protein_desc_of_interest<-c("Crystallin","Actin"))
 
-imaging_identification(Digestion_site="([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=P))",Fastadatabase="uniprot-bovin.fasta",output_candidatelist=T,spectra_segments_per_file=4,use_previous_candidates=F,ppm=25)
+imaging_identification(Digestion_site="trypsin",Fastadatabase="uniprot-bovin.fasta",output_candidatelist=T,spectra_segments_per_file=4,use_previous_candidates=F,ppm=25)
 
-imaging_identification(Digestion_site="([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=P))",Fastadatabase="uniprot-mus.fasta",output_candidatelist=T,spectra_segments_per_file=4,use_previous_candidates=F,ppm=25)
+imaging_identification(Digestion_site="trypsin",Fastadatabase="uniprot-mus.fasta",output_candidatelist=T,spectra_segments_per_file=4,use_previous_candidates=F,ppm=25)
 ```
-
-
-## For Mac OS users
-
-You may need to update the Xcode. Go to your Mac OS terminal and input:
-
-```{bash eval=FALSE, include=T}
-xcode-select --install
-```
-
-You'll then receive:
-*xcode-select: note: install requested for command line developer tools*
-You will be prompted at this point in a window to update Xcode Command Line tools. 
-
-You may also need to install the X11.app and tcl/tk support for Mac system:
-
-+ X11.app:
-https://www.xquartz.org/
-
-+ Use the following link to download and install the correct tcltk package for your OS version.
-https://cran.r-project.org/bin/macosx/tools/
 
 
 ## Session information
 
 ```{r}
-sessionInfo()
+toLatex(sessionInfo())
 ```
 
 

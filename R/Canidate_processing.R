@@ -166,7 +166,7 @@ Protein_feature_list_fun<-function(workdir=getwd(),
                                             format="fasta",
                                             nrec=-1L, 
                                             skip=0L, 
-                                            seek.first.rec=FALSE,
+                                            seek.first.rec=FALSE
                                             ) 
     if (Decoy_search && ("sequence" %in% Decoy_mode)){
     list_of_protein_sequence_rev<-Biostrings::reverse(list_of_protein_sequence)
@@ -292,7 +292,7 @@ Protein_feature_list_fun<-function(workdir=getwd(),
   if(max_mod_massdiff<0){max_mod_massdiff=0}
   }
   
-  if (!is.null(Substitute_AA)) {
+  if (!is.null(Substitute_AA$AA)) {
     Substitute_AA_df<-data.frame(Substitute_AA[c("AA","AA_new_formula","Formula_with_water")],stringsAsFactors = F)
     for (AA_row in 1:nrow(Substitute_AA_df)){
       if(is.null(Substitute_AA_df$Formula_with_water[AA_row])){
