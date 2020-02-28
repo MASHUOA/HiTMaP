@@ -7,12 +7,12 @@ output:
 
 
 ```{r setup, echo=FALSE, message=FALSE}
-knitr::opts_chunk$set(cache = T)
+knitr::opts_chunk$set(cache = T, message=FALSE, warning=FALSE)
 ```
 
 ##Segementation test
 The identification summary.
-```{r eval=F}
+```{r eval=FALSE, include=FALSE}
 library(HiTMaP)
 imaging_identification(datafile="D:/GITHUB LFS/HiTMaP-Data/inst/segmentation test/Bovinlens_Trypsin_FT_1seg/Bovin_lens.imzML",Digestion_site="trypsin",Fastadatabase="uniprot-Bovin.fasta",output_candidatelist=F,spectra_segments_per_file=1,use_previous_candidates=T,threshold=0.005,FDR_cutoff=0.01)
 imaging_identification(datafile="D:/GITHUB LFS/HiTMaP-Data/inst/segmentation test/Bovinlens_Trypsin_FT_2seg/Bovin_lens.imzML",Digestion_site="trypsin",Fastadatabase="uniprot-Bovin.fasta",output_candidatelist=F,spectra_segments_per_file=2,use_previous_candidates=T,threshold=0.005,FDR_cutoff=0.01)
@@ -31,6 +31,23 @@ imaging_identification(datafile="D:/GITHUB LFS/HiTMaP-Data/inst/segmentation tes
 imaging_identification(datafile="D:/GITHUB LFS/HiTMaP-Data/inst/segmentation test/Bovinlens_Trypsin_FT_15seg/Bovin_lens.imzML",Digestion_site="trypsin",Fastadatabase="uniprot-Bovin.fasta",output_candidatelist=F,spectra_segments_per_file=15,use_previous_candidates=T,threshold=0.005,FDR_cutoff=0.01)
 imaging_identification(datafile="D:/GITHUB LFS/HiTMaP-Data/inst/segmentation test/Bovinlens_Trypsin_FT_16seg/Bovin_lens.imzML",Digestion_site="trypsin",Fastadatabase="uniprot-Bovin.fasta",output_candidatelist=F,spectra_segments_per_file=16,use_previous_candidates=T,threshold=0.005,FDR_cutoff=0.01)
 
+imaging_identification(datafile="D:/GITHUB LFS/HiTMaP-Data/inst/segmentation test/Bovinlens_Trypsin_FT_1seg/Bovin_lens.imzML",Digestion_site="trypsin",Fastadatabase="uniprot-Bovin.fasta",output_candidatelist=F,spectra_segments_per_file=1,use_previous_candidates=T,threshold=0.005,FDR_cutoff=0.01,peptide_ID_filter=3)
+imaging_identification(datafile="D:/GITHUB LFS/HiTMaP-Data/inst/segmentation test/Bovinlens_Trypsin_FT_2seg/Bovin_lens.imzML",Digestion_site="trypsin",Fastadatabase="uniprot-Bovin.fasta",output_candidatelist=F,spectra_segments_per_file=2,use_previous_candidates=T,threshold=0.005,FDR_cutoff=0.01,peptide_ID_filter=3)
+imaging_identification(datafile="D:/GITHUB LFS/HiTMaP-Data/inst/segmentation test/Bovinlens_Trypsin_FT_3seg/Bovin_lens.imzML",Digestion_site="trypsin",Fastadatabase="uniprot-Bovin.fasta",output_candidatelist=F,spectra_segments_per_file=3,use_previous_candidates=T,threshold=0.005,FDR_cutoff=0.01,peptide_ID_filter=3)
+imaging_identification(datafile="D:/GITHUB LFS/HiTMaP-Data/inst/segmentation test/Bovinlens_Trypsin_FT_4seg/Bovin_lens.imzML",Digestion_site="trypsin",Fastadatabase="uniprot-Bovin.fasta",output_candidatelist=F,spectra_segments_per_file=4,use_previous_candidates=T,threshold=0.005,FDR_cutoff=0.01,peptide_ID_filter=3)
+imaging_identification(datafile="D:/GITHUB LFS/HiTMaP-Data/inst/segmentation test/Bovinlens_Trypsin_FT_5seg/Bovin_lens.imzML",Digestion_site="trypsin",Fastadatabase="uniprot-Bovin.fasta",output_candidatelist=F,spectra_segments_per_file=5,use_previous_candidates=T,threshold=0.005,FDR_cutoff=0.01,peptide_ID_filter=3)
+imaging_identification(datafile="D:/GITHUB LFS/HiTMaP-Data/inst/segmentation test/Bovinlens_Trypsin_FT_6seg/Bovin_lens.imzML",Digestion_site="trypsin",Fastadatabase="uniprot-Bovin.fasta",output_candidatelist=F,spectra_segments_per_file=6,use_previous_candidates=T,threshold=0.005,FDR_cutoff=0.01,peptide_ID_filter=3)
+imaging_identification(datafile="D:/GITHUB LFS/HiTMaP-Data/inst/segmentation test/Bovinlens_Trypsin_FT_7seg/Bovin_lens.imzML",Digestion_site="trypsin",Fastadatabase="uniprot-Bovin.fasta",output_candidatelist=F,spectra_segments_per_file=7,use_previous_candidates=T,threshold=0.005,FDR_cutoff=0.01,peptide_ID_filter=3)
+imaging_identification(datafile="D:/GITHUB LFS/HiTMaP-Data/inst/segmentation test/Bovinlens_Trypsin_FT_8seg/Bovin_lens.imzML",Digestion_site="trypsin",Fastadatabase="uniprot-Bovin.fasta",output_candidatelist=F,spectra_segments_per_file=8,use_previous_candidates=T,threshold=0.005,FDR_cutoff=0.01,peptide_ID_filter=3)
+imaging_identification(datafile="D:/GITHUB LFS/HiTMaP-Data/inst/segmentation test/Bovinlens_Trypsin_FT_9seg/Bovin_lens.imzML",Digestion_site="trypsin",Fastadatabase="uniprot-Bovin.fasta",output_candidatelist=F,spectra_segments_per_file=9,use_previous_candidates=T,threshold=0.005,FDR_cutoff=0.01,peptide_ID_filter=3)
+imaging_identification(datafile="D:/GITHUB LFS/HiTMaP-Data/inst/segmentation test/Bovinlens_Trypsin_FT_10seg/Bovin_lens.imzML",Digestion_site="trypsin",Fastadatabase="uniprot-Bovin.fasta",output_candidatelist=F,spectra_segments_per_file=10,use_previous_candidates=T,threshold=0.005,FDR_cutoff=0.01,peptide_ID_filter=3)
+imaging_identification(datafile="D:/GITHUB LFS/HiTMaP-Data/inst/segmentation test/Bovinlens_Trypsin_FT_11seg/Bovin_lens.imzML",Digestion_site="trypsin",Fastadatabase="uniprot-Bovin.fasta",output_candidatelist=F,spectra_segments_per_file=11,use_previous_candidates=T,threshold=0.005,FDR_cutoff=0.01,peptide_ID_filter=3)
+imaging_identification(datafile="D:/GITHUB LFS/HiTMaP-Data/inst/segmentation test/Bovinlens_Trypsin_FT_12seg/Bovin_lens.imzML",Digestion_site="trypsin",Fastadatabase="uniprot-Bovin.fasta",output_candidatelist=F,spectra_segments_per_file=12,use_previous_candidates=T,threshold=0.005,FDR_cutoff=0.01,peptide_ID_filter=3)
+imaging_identification(datafile="D:/GITHUB LFS/HiTMaP-Data/inst/segmentation test/Bovinlens_Trypsin_FT_13seg/Bovin_lens.imzML",Digestion_site="trypsin",Fastadatabase="uniprot-Bovin.fasta",output_candidatelist=F,spectra_segments_per_file=13,use_previous_candidates=T,threshold=0.005,FDR_cutoff=0.01,peptide_ID_filter=3)
+imaging_identification(datafile="D:/GITHUB LFS/HiTMaP-Data/inst/segmentation test/Bovinlens_Trypsin_FT_14seg/Bovin_lens.imzML",Digestion_site="trypsin",Fastadatabase="uniprot-Bovin.fasta",output_candidatelist=F,spectra_segments_per_file=14,use_previous_candidates=T,threshold=0.005,FDR_cutoff=0.01,peptide_ID_filter=3)
+imaging_identification(datafile="D:/GITHUB LFS/HiTMaP-Data/inst/segmentation test/Bovinlens_Trypsin_FT_15seg/Bovin_lens.imzML",Digestion_site="trypsin",Fastadatabase="uniprot-Bovin.fasta",output_candidatelist=F,spectra_segments_per_file=15,use_previous_candidates=T,threshold=0.005,FDR_cutoff=0.01,peptide_ID_filter=3)
+imaging_identification(datafile="D:/GITHUB LFS/HiTMaP-Data/inst/segmentation test/Bovinlens_Trypsin_FT_16seg/Bovin_lens.imzML",Digestion_site="trypsin",Fastadatabase="uniprot-Bovin.fasta",output_candidatelist=F,spectra_segments_per_file=16,use_previous_candidates=T,threshold=0.005,FDR_cutoff=0.01,peptide_ID_filter=3)
+
 
 ```
 
@@ -48,14 +65,27 @@ for (Segmentation_number in 1:totalseg){
   Protein_Summary_bind_protein<-Protein_Summary_bind %>% group_by(Segmentation_number) %>% summarise(Protein_num=length(unique(Protein)))
   Protein_Summary_bind_peptide<-Protein_Summary_bind %>% group_by(Segmentation_number) %>% summarise(Peptide_num=length(unique(Peptide)))
   Protein_Summary_bind_Score<-Protein_Summary_bind %>% group_by(.dots=c("Segmentation_number","Peptide")) %>% summarise(Peptide_Score=(max(Score)))
-  Protein_Summary_bind_Score_max<-Protein_Summary_bind_Score %>% group_by(.dots=c("Segmentation_number")) %>% summarise(Peptide_Score=(mean(Peptide_Score)))
-  plot(Protein_Summary_bind_protein)
-  plot(Protein_Summary_bind_peptide)
-  plot(Protein_Summary_bind_Score_max)
-  Protein_Summary_bind_peptide_id_quality<-data.frame(Segmentation_number=Protein_Summary_bind_peptide$Segmentation_number,ID_score_count=Protein_Summary_bind_peptide$Peptide_num*Protein_Summary_bind_Score_max$Peptide_Score)
-  plot(Protein_Summary_bind_peptide_id_quality)
-  
+  Protein_Summary_bind_Score_max<-Protein_Summary_bind_Score %>% group_by(.dots=c("Segmentation_number")) %>% summarise(Peptide_Score=(median(Peptide_Score)))
 ```
+
+Protein NR count vs. sementation number
+```{r eval=T, message=FALSE, warning=FALSE, include=T}
+  plot(Protein_Summary_bind_protein)
+
+```
+
+Peptide NR count vs. sementation number
+```{r eval=T, message=FALSE, warning=FALSE, include=T}
+  plot(Protein_Summary_bind_peptide)
+```
+
+Peptide score(regions' median) vs. sementation number
+```{r eval=T, message=FALSE, warning=FALSE, include=T}
+plot(Protein_Summary_bind_Score_max)
+  Protein_Summary_bind_peptide_id_quality<-data.frame(Segmentation_number=Protein_Summary_bind_peptide$Segmentation_number,ID_score_count=Protein_Summary_bind_peptide$Peptide_num*Protein_Summary_bind_Score_max$Peptide_Score)
+  #plot(Protein_Summary_bind_peptide_id_quality)
+```
+
 
 
 The spectrum quality summary:
@@ -80,6 +110,9 @@ library(FTICRMS)
     }
 
   }
+  
+  
+  
   spectrum_bind<-do.call(rbind,spectrum)
   spectrum_bind_bind<-do.call(rbind,spectrum_bind)
   spectrum_bind_bind<-unique(spectrum_bind_bind)
@@ -117,7 +150,10 @@ library(FTICRMS)
   locate.peaks_spec_bindlist[[Segmentation_number]]$Segmentation_number<-Segmentation_number
   #locate.peaks_spec_bindlist[[Segmentation_number]]$Center_hat<-round(locate.peaks_spec_bindlist[[Segmentation_number]]$Center_hat,digits = 3)
   }
-  
+```
+
+
+```{r eval=T, message=FALSE, warning=FALSE, include=T}
   locate.peaks_spec_bindlist_bind <- do.call(rbind,locate.peaks_spec_bindlist,quote = F)
   locate.peaks_spec_bindlist_bind$Segmentation_number<-as.factor(locate.peaks_spec_bindlist_bind$Segmentation_number)
   locate.peaks_spec_bindlist_bind$Width_hat_log<-log(locate.peaks_spec_bindlist_bind$Width_hat)
@@ -129,24 +165,20 @@ library(FTICRMS)
   
   
   common_feature<-locate.peaks_spec_bindlist_bind %>% group_by(round(Center_hat,digits = 3)) %>% summarise(count=length(Width_hat))
-  common_feature<-common_feature[common_feature$count>=0.2*totalseg,]
+  common_feature<-common_feature[common_feature$count>=0.3*totalseg,]
   locate.peaks_spec_bindlist_bind_filtered<-locate.peaks_spec_bindlist_bind[round(locate.peaks_spec_bindlist_bind$Center_hat,digits = 3) %in% common_feature$`round(Center_hat, digits = 3)`,]
   
   unfiltered_width<-locate.peaks_spec_bindlist_bind %>% group_by(Segmentation_number) %>% summarise(width=median(Width_hat))
   filtered_width<-locate.peaks_spec_bindlist_bind_filtered %>% group_by(Segmentation_number) %>% summarise(width=median(Width_hat))
   plot(unfiltered_width)
   plot(filtered_width)
-  
-  
-  g<-ggplot(locate.peaks_spec_bindlist_bind_filtered)+geom_bar(aes(x=Segmentation_number, y=Width_hat, position = "dodge", , fun.y = "median"))
-  g
-  
-  
-  
-  peak_num<-unlist(lapply(locate.peaks_spec_bindlist,nrow))
+```
+
+
+```{r eval=T, message=FALSE, warning=FALSE, include=T}
+peak_num<-unlist(lapply(locate.peaks_spec_bindlist,nrow))
   peak_width<-unlist(lapply(locate.peaks_spec_bindlist,function(x){max(x$Width_hat)}))
-  ggplot(NULL,aes(x=peak_num,y=peak_width)) +
-  geom_bar(stat="identity")
+  #ggplot(NULL,aes(x=peak_num,y=peak_width)) +  geom_bar(stat="identity")
 
 
 ```
@@ -166,9 +198,15 @@ imaging_identification(datafile=paste0("D:/GITHUB LFS/HiTMaP-Data/inst/Enzyme te
 library(dplyr)
 library(ggplot2)
 enzyme<-c("trypsin","lysn","lysc","caspase1","asp-n endopeptidase","pepsin","proteinase k")
+enzyme<-c("trypsin","lysn","lysc","caspase1","asp-n endopeptidase")
 Protein_Summary<-list()
 for (indx in 1:length(enzyme)){
   Protein_Summary[[enzyme[indx]]] <- readr::read_csv(paste0("D:/GITHUB LFS/HiTMaP-Data/inst/Enzyme test/Bovinlens_Trypsin_FT ",enzyme[indx],"/Summary folder/Protein_peptide_Summary.csv"))
+  #Protein_Summary[[enzyme[indx]]]$indx=enzyme[indx]
+}
+candidatelist<-NULL
+for (indx in 1:length(enzyme)){
+  candidatelist[[enzyme[indx]]] <- readr::read_csv(paste0("D:/GITHUB LFS/HiTMaP-Data/inst/Enzyme test/Bovinlens_Trypsin_FT ",enzyme[indx],"/Summary folder/candidatelist.csv"))
   #Protein_Summary[[enzyme[indx]]]$indx=enzyme[indx]
 }
   #Protein_Summary <-tidyr::hoist(Protein_Summary)
@@ -176,20 +214,16 @@ for (indx in 1:length(enzyme)){
   Protein_Summary_bind<-do.call(rbind,Protein_Summary)
   Protein_Summary_bind$indx<-rep(enzyme,lapply(Protein_Summary,nrow))
   Protein_Summary_bind_proteinnr<-unique(Protein_Summary_bind[,c("Protein","indx")])
-  #Protein_Summary_bind_protein<-Protein_Summary_bind %>% group_by(indx) %>% summarise(Protein=(unique(Protein)))
+  Protein_Summary_bind_peptidenr<-unique(Protein_Summary_bind[,c("Peptide","indx")])
+  Protein_Summary_bind_protein<-Protein_Summary_bind %>% group_by(indx) %>% summarise(Protein=length(unique(Protein)))
   #Protein_Summary_bind_peptide<-Protein_Summary_bind %>% group_by(indx) %>% summarise(Peptide=(unique(Peptide)))
   #Protein_Summary_bind_Score<-Protein_Summary_bind %>% group_by(.dots=c("indx","Peptide")) %>% summarise(Peptide_Score=(max(Score)))
   #Protein_Summary_bind_Score_max<-Protein_Summary_bind_Score %>% group_by(.dots=c("indx")) %>% summarise(Peptide_Score=(mean(Peptide_Score)))
-  ggplot2::ggplot(Protein_Summary_bind_proteinnr, aes(x=indx,group=indx)) + geom_bar()
-  
-  
+  #ggplot(Protein_Summary_bind_protein, aes(x=indx,y=Protein,group=indx)) + geom_bar(position="dodge", stat="identity")
+  ggplot(Protein_Summary_bind_proteinnr, aes(x=indx,group=indx)) + geom_bar(position="dodge", stat="Count")
+  ggplot(Protein_Summary_bind_peptidenr, aes(x=indx,group=indx)) + geom_bar(position="dodge", stat="Count")
+  candidate_number<-lapply(candidatelist,nrow)
  
-  plot(Protein_Summary_bind_peptide)
-  plot(Protein_Summary_bind_Score_max)
-  Protein_Summary_bind_peptide_id_quality<-data.frame(indx=Protein_Summary_bind_peptide$indx,ID_score_count=Protein_Summary_bind_peptide$Peptide_num*Protein_Summary_bind_Score_max$Peptide_Score)
-  plot(Protein_Summary_bind_peptide_id_quality)
-  
-  
 ```
 
 
@@ -204,6 +238,31 @@ imaging_identification(datafile="D:/GITHUB LFS/HiTMaP-Data/inst/FDR test/Bovinle
 ```
 
 
+```{r}
+library(dplyr)
+library(ggplot2)
+fdr<-c("01","05","10")
+Protein_Summary<-list()
+for (indx in 1:length(fdr)){
+  Protein_Summary[[fdr[indx]]] <- readr::read_csv(paste0("D:/GITHUB LFS/HiTMaP-Data/inst/FDR test/Bovinlens_Trypsin_FT fdr",fdr[indx],"/Summary folder/Protein_peptide_Summary.csv"))
+  #Protein_Summary[[fdr[indx]]]$indx=fdr[indx]
+}
 
+  #Protein_Summary <-tidyr::hoist(Protein_Summary)
+  #Protein_Summary <-  mapply(`[<-`, Protein_Summary, 'Species', value = names(Protein_Summary), SIMPLIFY = FALSE)
+  Protein_Summary_bind<-do.call(rbind,Protein_Summary)
+  Protein_Summary_bind$indx<-rep(fdr,lapply(Protein_Summary,nrow))
+  Protein_Summary_bind_proteinnr<-unique(Protein_Summary_bind[,c("Protein","indx")])
+  Protein_Summary_bind_peptidenr<-unique(Protein_Summary_bind[,c("Peptide","indx")])
+  Protein_Summary_bind_protein<-Protein_Summary_bind %>% group_by(indx) %>% summarise(Protein=length(unique(Protein)))
+  #Protein_Summary_bind_peptide<-Protein_Summary_bind %>% group_by(indx) %>% summarise(Peptide=(unique(Peptide)))
+  #Protein_Summary_bind_Score<-Protein_Summary_bind %>% group_by(.dots=c("indx","Peptide")) %>% summarise(Peptide_Score=(max(Score)))
+  #Protein_Summary_bind_Score_max<-Protein_Summary_bind_Score %>% group_by(.dots=c("indx")) %>% summarise(Peptide_Score=(mean(Peptide_Score)))
+  #ggplot(Protein_Summary_bind_protein, aes(x=indx,y=Protein,group=indx)) + geom_bar(position="dodge", stat="identity")
+  ggplot(Protein_Summary_bind_proteinnr, aes(x=indx,group=indx)) + geom_bar(position="dodge", stat="Count")
+  ggplot(Protein_Summary_bind_peptidenr, aes(x=indx,group=indx)) + geom_bar(position="dodge", stat="Count")
+  candidate_number<-lapply(candidatelist,nrow)
+ 
+```
 
 

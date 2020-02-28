@@ -2392,7 +2392,7 @@ if(PMFsearch){
     message(paste("PMF_analysis",name,"region",SPECTRUM_batch))
     peaklist<-imdata_ed@featureData@data
     #peaklist<-peaklist[peaklist$mean>0,]
-    
+    write.csv(peaklist,paste0(datafile[z] ," ID/",SPECTRUM_batch,"/Spectrum.csv"),row.names = F)
     colnames(peaklist)<-c("m.z","intensities")
     peaklist<-peaklist[peaklist$intensities>0,]
     peaklist_pmf<-peaklist[peaklist$intensities>(max(peaklist$intensities)*threshold),]
