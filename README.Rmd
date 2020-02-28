@@ -1,10 +1,6 @@
 ---
 title: "HiTMaP"
 output:
-  md_document:
-    variant: markdown_github
-  pdf_document: default
-  word_document: default
   html_document: 
     keep_md: yes
     toc: yes
@@ -16,11 +12,15 @@ output:
     highlight: zenburn
     fig_width: 10
     fig_height: 10
+  pdf_document: default
+  word_document: default
+  md_document:
+    variant: markdown_github
 bibliography: references.bib
 vignette: >
   %\VignetteIndexEntry{1. HiTMaP}
-  %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
 ---
 
 
@@ -40,7 +40,7 @@ install.packages("devtools")
 Sys.setenv(R_REMOTES_NO_ERRORS_FROM_WARNINGS=T)
 #library(devtools)
 library(remotes)
-install_github("MASHUOA/HiTMaP",auth_token ="a124a067ed1c84f8fd577c972845573922f1bb0f",force=T)
+install_github("MASHUOA/HiTMaP",auth_token ="6b325a9ea13b64d40cbdf5d73e7495e8ecc574c3",force=T)
 3
 no
 #Update all dependencies
