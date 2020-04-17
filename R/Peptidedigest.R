@@ -51,7 +51,7 @@ imaging_identification<-function(
                mode=c("Proteomics","Metabolomics"),
                Digestion_site="trypsin",
                missedCleavages=0:1,
-               Fastadatabase="murine_matrisome.fasta",
+               Fastadatabase="uniprot-bovin.fasta",
                adducts=c("M+H"),
                Modifications=list(fixed=NULL,fixmod_position=NULL,variable=NULL,varmod_position=NULL),
                Substitute_AA=NULL,
@@ -61,6 +61,8 @@ imaging_identification<-function(
                mzrange=c(700,4000),
                adjust_score = FALSE,
                PMF_analysis=TRUE,
+               PMFsearch=PMF_analysis,
+               Load_candidatelist=PMF_analysis || plot_cluster_image_grid,
                Bypass_generate_spectrum=FALSE,
                peptide_ID_filter=2,
                Protein_feature_summary=TRUE,
@@ -70,7 +72,7 @@ imaging_identification<-function(
                spectra_segments_per_file=5,
                spatialKMeans=TRUE,
                Smooth_range=1,
-               Virtual_segmentation=FALSE,
+               Virtual_segmentation=!spatialKMeans,
                Virtual_segmentation_rankfile=NULL,
                Rotate_IMG=NULL,
                Region_feature_summary=FALSE,
@@ -79,6 +81,7 @@ imaging_identification<-function(
                use_previous_candidates=FALSE,
                score_method="SQRTP",
                plot_cluster_image_grid=FALSE,
+               smooth.image="gaussian",
                componentID_colname="Peptide",
                ClusterID_colname="Protein",
                Protein_desc_of_interest=".",
@@ -87,16 +90,18 @@ imaging_identification<-function(
                FDR_cutoff=0.05,
                use_top_rank=NULL,
                plot_matching_score=F,
+               cluster_color_scale=c("blackwhite","fleximaging"),
                ...
                ){
   library("pacman")
   suppressMessages(suppressWarnings(p_load(RColorBrewer,RCurl,bitops,magick,ggplot2,reticulate,dplyr,stringr,tcltk,
-         data.table,doParallel,iterators,foreach,protViz,cleaver,MALDIquant,Biostrings,
-         XVector,IRanges,Cardinal,ProtGenerics,S4Vectors,stats4,EBImage,BiocParallel,
+         data.table,iterators,foreach,protViz,MALDIquant,
+         XVector,IRanges,S4Vectors,stats4,EBImage,BiocParallel,
          BiocGenerics,parallel,stats,graphics,grDevices,datasets,methods)))
   if (missing(datafile)) {datafile=tk_choose.files(filter = matrix(c( "imzml file", ".imzML","Text", ".txt", "All files", "*"),3, 2, byrow = TRUE),
                                         caption  = "Choose single or multiple file(s) for analysis")}
-  datafile<-gsub(".imzML", "", datafile)
+  datafile_imzML<-datafile
+  datafile<-gsub(".imzML$", "", datafile)
   workdir<-base::dirname(datafile[1])
   #setwd(workdir)
   #cl <- autoStopCluster(makeCluster(parallel))
@@ -114,8 +119,8 @@ imaging_identification<-function(
   message(paste(Fastadatabase, "was selected as database.", "Candidates will be generated through",mode[1] ,"mode" ))
   
   
-  
-  Protein_feature_list<-Protein_feature_list_fun(workdir=workdir,
+  if(Load_candidatelist){
+    Protein_feature_list<-Protein_feature_list_fun(workdir=workdir,
                                                  database=Fastadatabase,
                                                  Digestion_site=Digestion_site,
                                                  missedCleavages=missedCleavages,
@@ -131,6 +136,8 @@ imaging_identification<-function(
                                                  mzrange=mzrange,
                                                  Protein_desc_of_exclusion=Protein_desc_of_exclusion
                                                  )
+  
+  }
   
   #list_of_protein_sequence<-get("list_of_protein_sequence", envir = .GlobalEnv)
   #Index_of_protein_sequence<-get("Index_of_protein_sequence", envir = .GlobalEnv)
@@ -148,7 +155,7 @@ imaging_identification<-function(
                                                   threshold=threshold,rotate = Rotate_IMG,
                                                   ppm=ppm,
                                                   spatialKMeans=spatialKMeans,
-                                                  PMFsearch = PMF_analysis,
+                                                  PMFsearch = PMFsearch,
                                                   Virtual_segmentation=Virtual_segmentation,
                                                   Virtual_segmentation_rankfile = Virtual_segmentation_rankfile,
                                                   BPPARAM = BPPARAM,
@@ -171,7 +178,7 @@ imaging_identification<-function(
     protein_feature_all<-NULL
   for (i in 1:length(datafile)){
   datafilename<-gsub(paste(workdir,"/",sep=""),"",gsub(".imzML", "", datafile[i]))
-  currentdir<-paste0(datafile[i] ," ID")
+  currentdir<-paste0(gsub(".imzML", "", datafile[i]) ," ID")
   setwd(paste(currentdir,sep=""))
   
   for (protein_feature_file in dir()[stringr::str_detect(dir(),"Protein_segment_PMF_RESULT_")]){
@@ -214,12 +221,12 @@ imaging_identification<-function(
     Peptide_Summary_file_a<-NULL
     for (i in 1:length(datafile)){
       datafilename<-gsub(paste(workdir,"/",sep=""),"",gsub(".imzML", "", datafile[i]))
-      currentdir<-paste0(datafile[i] ," ID")
+      currentdir<-paste0(gsub(".imzML", "", datafile[i])," ID")
       
       setwd(paste(currentdir,sep=""))
       
       Peptide_Summary_file<-fread("Peptide_region_file.csv")
-      Peptide_Summary_file$Source<-datafile[i]
+      Peptide_Summary_file$Source<-gsub(".imzML", "", datafile[i])
       Peptide_Summary_file_a<-rbind(Peptide_Summary_file_a,Peptide_Summary_file)
       #Peptide_feature_list<-Peptide_Summary_file[Peptide_Summary_file$Intensity>=max(Peptide_Summary_file$Intensity)*threshold,]
       #write.csv(Peptide_feature_list,"Peptide_feature_list.csv")
@@ -263,10 +270,10 @@ imaging_identification<-function(
     Spectrum_summary<-NULL
     for (i in 1:length(datafile)){
       datafilename<-gsub(paste(workdir,"/",sep=""),"",gsub(".imzML", "", datafile[i]))
-      currentdir<-paste0(datafile[i] ," ID")
+      currentdir<-paste0(gsub(".imzML", "", datafile[i]) ," ID")
       setwd(currentdir)
-      name <-gsub(base::dirname(datafile[i]),"",datafile[i])
-      message(paste("Region_feature_summary",datafile[i]))
+      name <-gsub(base::dirname(datafile[i]),"",gsub(".imzML", "", datafile[i]))
+      message(paste("Region_feature_summary",gsub(".imzML", "", datafile[i])))
       
       if (dir.exists(paste(workdir,"/Summary folder",sep=""))==FALSE){dir.create(paste(workdir,"/Summary folder",sep=""))}
       #Feature_summary_all_files(datafile,workdir,threshold = threshold)
@@ -286,7 +293,7 @@ imaging_identification<-function(
       }
     }
     
-    name <-gsub(base::dirname(datafile[1]),"",datafile)
+    name <-gsub(base::dirname(datafile[1]),"",gsub(".imzML", "", datafile[i]))
     Spectrum_summary[is.na(Spectrum_summary)] <- 0
     colnames(Spectrum_summary)=c("ID",name)
     colnames(Spectrum_summary)=gsub("/","",colnames(Spectrum_summary))
@@ -300,7 +307,7 @@ imaging_identification<-function(
     Protein_feature_list=fread(file=paste(workdir,"/Summary folder/Protein_peptide_Summary.csv",sep=""),stringsAsFactors = F)
     #Protein_feature_list=merge(Protein_feature_list,Index_of_protein_sequence[,c("recno","desc")],by.x="Protein",by.y="recno",sort=F)
     #Protein_feature_list_crystallin<-Protein_feature_list[grepl("crystallin",Protein_feature_list$desc,ignore.case = T),]
-    if (sum(Protein_desc_of_interest!=".")>1){
+    if (sum(Protein_desc_of_interest!=".")>=1){
     Protein_feature_list_interest<-NULL
     num_of_interest<-numeric(0)
     for (interest_desc in Protein_desc_of_interest){
@@ -324,7 +331,7 @@ imaging_identification<-function(
         mzrange=NULL
         testrange=c(0,0)
         for (i in 1:length(datafile)){
-          rotate=Rotate_IMG[Rotate_IMG$filenames==datafile[i],"rotation"]
+          rotate=Rotate_IMG[Rotate_IMG$filenames==datafile_imzML,"rotation"]
           rotate=as.numeric(rotate)
           if (length(rotate)==0){rotate=0}
           imdata[[i]]=Load_Cardinal_imaging(datafile[i],preprocessing = F,resolution = ppm*2,rotate = rotate,attach.only=F,as="MSImagingExperiment",mzrange=mzrange)
@@ -362,22 +369,13 @@ imaging_identification<-function(
     combinedimdata@elementMetadata@coord@listData[["z"]]=NULL
     
     imdata=combinedimdata
-    
+    message("imdata loaded.")
     outputfolder=paste(workdir,"/Summary folder/cluster Ion images/",sep="")
     if (dir.exists(outputfolder)==FALSE){dir.create(outputfolder)}
-    setwd(outputfolder)
+
     if (!(plot_unique_component)){
-          lapply(unique(Protein_feature_list[,ClusterID_colname]),
-           cluster_image_grid,
-           imdata=imdata,
-           SMPLIST=Protein_feature_list,
-           ppm=ppm,ClusterID_colname=ClusterID_colname,
-           componentID_colname=componentID_colname,
-           plot_layout="line",
-           export_Header_table=T,
-           export_footer_table=T,
-           plot_style="fleximaging",
-           Component_plot_coloure="as.cluster")
+    setwd(outputfolder)
+    Protein_feature_list_trimmed<-Protein_feature_list
     }
 
     
@@ -385,11 +383,12 @@ imaging_identification<-function(
     outputfolder=paste(workdir,"/Summary folder/cluster Ion images/unique/",sep="")
     if (dir.exists(outputfolder)==FALSE){dir.create(outputfolder)}
     setwd(outputfolder)
-    
     Protein_feature_list_unique=Protein_feature_list %>% group_by(mz) %>% dplyr::summarise(num=length(unique(Protein)))
     Protein_feature_list_unique_mz<-Protein_feature_list_unique$mz[Protein_feature_list_unique$num==1]
     Protein_feature_list_trimmed<-Protein_feature_list[Protein_feature_list$mz %in% Protein_feature_list_unique_mz, ]
     write.csv(Protein_feature_list_trimmed,paste(workdir,"/Summary folder/Protein_feature_list_trimmed.csv",sep=""),row.names = F)
+    }
+    
     lapply(unique(Protein_feature_list_trimmed$Protein),
            cluster_image_grid,
            imdata=imdata,
@@ -400,9 +399,8 @@ imaging_identification<-function(
            export_Header_table=T,
            export_footer_table=T,
            plot_style="fleximaging",
-           Component_plot_coloure="as.cluster")
-    }
-    
+           smooth.image=smooth.image,
+           Component_plot_coloure="mono",cluster_color_scale=cluster_color_scale)
 
     if(F){
     Pngclusterkmean=NULL
@@ -2069,11 +2067,17 @@ PMF_Cardinal_Datafilelist<-function(datafile,Peptide_Summary_searchlist,
    suppressMessages(suppressWarnings(require(Cardinal)))
    suppressMessages(suppressWarnings(require(RColorBrewer)))
    suppressMessages(suppressWarnings(require(stringr)))
+   getPalette = colorRampPalette(brewer.pal_n(9, colorstyle))
+   
   if (!is.null(rotate)){
     message("Found rotation info")
     #rotatedegrees=rotate[rotate$filenames==datafile,"rotation"]
     rotatedegrees=sapply(datafile,function(x,df){
-      degree=df[df$filenames==x,"rotation"]
+      library(stringr)
+      if (!str_detect(x,".imzML$")){
+        x<-paste0(x,".imzML")
+      }
+      degree=df[df$filenames==(x),"rotation"]
       if (length(degree)==0) {
         message("Missing rotation data please check the rotation configuration file: ",x)
         degree=0
@@ -2102,19 +2106,25 @@ PMF_Cardinal_Datafilelist<-function(datafile,Peptide_Summary_searchlist,
   Peptide_Summary_searchlist$start<-NULL
   Peptide_Summary_searchlist$end<-NULL
   Peptide_Summary_searchlist<-unique(Peptide_Summary_searchlist)
-  Peptide_Summary_file<-Peptide_Summary_searchlist  
+  Peptide_Summary_file<-Peptide_Summary_searchlist 
+  datafile_imzML<-datafile
   for (z in 1:length(datafile)){
 
   Peptide_Summary_file$Intensity<-rep(0,nrow(Peptide_Summary_file))
   name <-gsub(base::dirname(datafile[z]),"",datafile[z])
+  name <-gsub(".imzML$","",name)
+  name <-gsub("/$","",name)
   folder<-base::dirname(datafile[z])
-  imdata <- Load_Cardinal_imaging(datafile[z],preprocessing = F,attach.only = T,resolution = 200,rotate = rotate[z],as="MSImageSet",BPPARAM = BPPARAM)
-  ##imdata <- Cardinal::readMSIData(datafile[z],  attach.only=T,as="MSImageSet",resolution=200, units="ppm",BPPARAM=BPPARAM,mass.range=mzrange)
+  #imdata <- Cardinal::readImzML(datafile[z],preprocessing = F,attach.only = T,resolution = 200,rotate = rotate[z],as="MSImageSet",BPPARAM = BPPARAM)
+  if (!str_detect(datafile[z],".imzML$")){
+        datafile_imzML[z]<-paste0(datafile[z],".imzML")
+      }
+  imdata <- Cardinal::readMSIData(datafile_imzML[z],  attach.only=T,as="MSImageSet",resolution=200, units="ppm",BPPARAM=BPPARAM)
   
   
   coordata=imdata@pixelData@data
-  if (dir.exists(paste0(datafile[z] ," ID"))==FALSE){dir.create(paste0(datafile[z] ," ID"))}
-  setwd(paste0(datafile[z] ," ID")) 
+  if (dir.exists(paste0(gsub(".imzML$","",datafile[z]) ," ID"))==FALSE){dir.create(paste0(gsub(".imzML$","",datafile[z])  ," ID"))}
+  setwd(paste0(gsub(".imzML$","",datafile[z])  ," ID")) 
     
     
   if (Bypass_generate_spectrum==F){
@@ -2122,7 +2132,7 @@ PMF_Cardinal_Datafilelist<-function(datafile,Peptide_Summary_searchlist,
      #cl=autoStopCluster(makeCluster(6))
 
   
-  if (spatialKMeans && SPECTRUM_for_average!=1){
+  if (spatialKMeans ){
     set.seed(1)
   #message(paste0("spatialKMeans computing for ",name))
   skm <-  suppressMessages(suppressWarnings(spatialKMeans(imdata, r=Smooth_range, k=SPECTRUM_for_average, method="adaptive")))
@@ -2135,15 +2145,29 @@ PMF_Cardinal_Datafilelist<-function(datafile,Peptide_Summary_searchlist,
       bty="n",pty="s",xaxt="n",
       yaxt="n",
       no.readonly = TRUE,ann=FALSE)
-  Cardinal::image(skm, col=brewer.pal(SPECTRUM_for_average,colorstyle), key=FALSE, ann=FALSE,axes=FALSE)
-  legend("topright", legend=1:SPECTRUM_for_average, fill=brewer.pal(SPECTRUM_for_average,colorstyle), col=brewer.pal(SPECTRUM_for_average,"Paired"), bg="transparent",xpd=TRUE,cex = 1)
+  Cardinal::image(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], key=FALSE, ann=FALSE,axes=FALSE)
+  legend("topright", legend=1:SPECTRUM_for_average, fill=brewer.pal_n(SPECTRUM_for_average,colorstyle), col=brewer.pal_n(SPECTRUM_for_average,"Paired"), bg="transparent",xpd=TRUE,cex = 1)
   
-  #Cardinal::plot(skm, col=brewer.pal(SPECTRUM_for_average,colorstyle), type=c('p','h'), key=T)
-  #Cardinal::plot(skm, col=brewer.pal(SPECTRUM_for_average,colorstyle), type=c('p','h'), key=FALSE,mode="centers")
-  #Cardinal::plot(skm, col=brewer.pal(SPECTRUM_for_average,colorstyle), type=c('p','h'), key=FALSE,mode="betweenss")
-  Cardinal::plot(skm, col=brewer.pal(SPECTRUM_for_average,colorstyle), type=c('p','h'), key=T)
+  #Cardinal::plot(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], type=c('p','h'), key=T)
+  #Cardinal::plot(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], type=c('p','h'), key=FALSE,mode="centers")
+  #Cardinal::plot(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], type=c('p','h'), key=FALSE,mode="betweenss")
+  Cardinal::plot(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], type=c('p','h'), key=T)
   
-  legend("topright", legend=1:SPECTRUM_for_average, fill=brewer.pal(SPECTRUM_for_average,colorstyle), col=brewer.pal(SPECTRUM_for_average,"Paired"), bg="transparent",xpd=TRUE,cex = 1)
+  legend("topright", legend=1:SPECTRUM_for_average, fill=brewer.pal_n(SPECTRUM_for_average,colorstyle), col=brewer.pal_n(SPECTRUM_for_average,"Paired"), bg="transparent",xpd=TRUE,cex = 1)
+  dev.off()
+  png(paste(getwd(),"\\","spatialKMeans_image.png",sep=""),width = 720,height = 720)
+  #plot(skm, col=c("pink", "blue", "red","orange","navyblue"), type=c('p','h'), key=FALSE)
+  #par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(1+ceiling(SPECTRUM_for_average/2), 2),
+  par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(1, 1),
+      bty="n",pty="s",xaxt="n",
+      yaxt="n",
+      no.readonly = TRUE,ann=FALSE)
+  Cardinal::image(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], key=FALSE, ann=FALSE,axes=FALSE)
+  legend("topright", legend=1:SPECTRUM_for_average, fill=brewer.pal_n(SPECTRUM_for_average,colorstyle), col=brewer.pal_n(SPECTRUM_for_average,"Paired"), bg="transparent",xpd=TRUE,cex = 1)
+  
+  #Cardinal::plot(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], type=c('p','h'), key=T)
+  #Cardinal::plot(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], type=c('p','h'), key=FALSE,mode="centers")
+  #Cardinal::plot(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], type=c('p','h'), key=FALSE,mode="betweenss")
   dev.off()
   suppressMessages(suppressWarnings(require(magick)))
   skmimg<-image_read(paste(getwd(),"\\","spatialKMeans_image_plot_",SPECTRUM_for_average,"_segs.png",sep=""))
@@ -2153,13 +2177,14 @@ PMF_Cardinal_Datafilelist<-function(datafile,Peptide_Summary_searchlist,
   centers=skm@resultData[[1]][["centers"]]
   
   centers_mz<-skm@featureData@data[["mz"]]
+  #centers_mz<-mz(imdata)
   suppressMessages(suppressWarnings(require(ggplot2)))
   sp<-NULL
   sp_plot<-NULL
   for (region in colnames(centers)){
     sp_plot[[region]]<-data.frame(mz=centers_mz,intensity=centers[,region])
-    sp[[region]]<-ggplot2::ggplot(data=sp_plot[[region]], size=1 ,aes(x=mz, y=intensity,xend=mz,yend=rep(0,length( sp_plot[[region]]$intensity)),colour =brewer.pal(SPECTRUM_for_average,colorstyle)[as.numeric(region)])) +
-      geom_segment(show.legend=F,colour =brewer.pal(SPECTRUM_for_average,colorstyle)[as.numeric(region)]) +
+    sp[[region]]<-ggplot2::ggplot(data=sp_plot[[region]], size=1 ,aes(x=mz, y=intensity,xend=mz,yend=rep(0,length( sp_plot[[region]]$intensity)),colour =brewer.pal_n(SPECTRUM_for_average,colorstyle)[as.numeric(region)])) +
+      geom_segment(show.legend=F,colour =brewer.pal_n(SPECTRUM_for_average,colorstyle)[as.numeric(region)]) +
       theme_classic() +
       ggtitle(paste("Mean spectrum"," Segmentation:",region),)
   }
@@ -2201,6 +2226,8 @@ PMF_Cardinal_Datafilelist<-function(datafile,Peptide_Summary_searchlist,
   }else if(Virtual_segmentation){
   radius_rank=read.csv(file = Virtual_segmentation_rankfile)
   radius_rank=radius_rank[order(radius_rank$Rank),]
+  
+  
   coordist_para=function(i,coordata){
     
   coordist_para=NULL
@@ -2219,36 +2246,113 @@ PMF_Cardinal_Datafilelist<-function(datafile,Peptide_Summary_searchlist,
   coordistmatrix=matrix(unlist(coordistmatrix),nrow = nrow(coordata),ncol = nrow(coordata))
   coordistmatrix=as.data.table(coordistmatrix)
   coordistmatrix$sum=0
-  #coordistmatrix$sum=base::unlist(parLapply(cl=cl,1:nrow(coordata),function(j,coordistmatrix,coordata){coordistmatrix$sum[j]=sum(coordistmatrix[j,1:nrow(coordata)])},coordistmatrix,coordata))
   coordistmatrix$sum=base::unlist(bplapply(1:nrow(coordata),function(j,coordistmatrix,coordata){coordistmatrix$sum[j]=sum(coordistmatrix[j,1:nrow(coordata)])},coordistmatrix,coordata,BPPARAM = BPPARAM))
-  
   coorrange=max(coordistmatrix$sum)-min(coordistmatrix$sum)
   
 
   
-  findedge<-function(coordata){
-    #for (i in 1: nrow(coordata)){
+  findedge<-function(coordata,center_type){
+    if (missing(center_type)) center_type="central"
+    
+    if (center_type=="central"){
       uniquex=unique(coordata$x)
       uniquey=unique(coordata$y)
       coordata$edge=FALSE
-    for (x in uniquex){
+      for (x in uniquex){
+        
+        min=min(coordata[coordata$x==x,"y"])
+        max=max(coordata[coordata$x==x,"y"])
+        coordata['&'(coordata$y==max,coordata$x==x),"edge"]=TRUE
+        coordata['&'(coordata$y==min,coordata$x==x),"edge"]=TRUE
+      }
       
-      min=min(coordata[coordata$x==x,"y"])
-      max=max(coordata[coordata$x==x,"y"])
-      coordata['&'(coordata$y==max,coordata$x==x),"edge"]=TRUE
-      coordata['&'(coordata$y==min,coordata$x==x),"edge"]=TRUE
-    }
+      for (y in uniquey){
+        min=min(coordata[coordata$y==y,"x"])
+        max=max(coordata[coordata$y==y,"x"])
+        coordata['&'(coordata$x==max,coordata$y==y),"edge"]=TRUE
+        coordata['&'(coordata$x==min,coordata$y==y),"edge"]=TRUE
+      }
       
-    for (y in uniquey){
-      min=min(coordata[coordata$y==y,"x"])
-      max=max(coordata[coordata$y==y,"x"])
-      coordata['&'(coordata$x==max,coordata$y==y),"edge"]=TRUE
-      coordata['&'(coordata$x==min,coordata$y==y),"edge"]=TRUE
-    }
-      coordata
+    }else { 
+      if(center_type=="southeast"){
+        uniquex=unique(coordata$x)
+        uniquey=unique(coordata$y)
+        coordata$edge=FALSE
+        for (x in uniquex){
+          
+          min=min(coordata[coordata$x==x,"y"])
+          max=max(coordata[coordata$x==x,"y"])
+          #coordata['&'(coordata$y==max,coordata$x==x),"edge"]=TRUE
+          coordata['&'(coordata$y==min,coordata$x==x),"edge"]=TRUE
+        }
+        
+        for (y in uniquey){
+          min=min(coordata[coordata$y==y,"x"])
+          max=max(coordata[coordata$y==y,"x"])
+          #coordata['&'(coordata$x==max,coordata$y==y),"edge"]=TRUE
+          coordata['&'(coordata$x==min,coordata$y==y),"edge"]=TRUE
+        }
+      } else if(center_type=="northeast"){
+        uniquex=unique(coordata$x)
+        uniquey=unique(coordata$y)
+        coordata$edge=FALSE
+        for (x in uniquex){
+          
+          min=min(coordata[coordata$x==x,"y"])
+          max=max(coordata[coordata$x==x,"y"])
+          coordata['&'(coordata$y==max,coordata$x==x),"edge"]=TRUE
+          #coordata['&'(coordata$y==min,coordata$x==x),"edge"]=TRUE
+        }
+        
+        for (y in uniquey){
+          min=min(coordata[coordata$y==y,"x"])
+          max=max(coordata[coordata$y==y,"x"])
+          #coordata['&'(coordata$x==max,coordata$y==y),"edge"]=TRUE
+          coordata['&'(coordata$x==min,coordata$y==y),"edge"]=TRUE
+        }
+      }else if(center_type=="northwest"){
+        uniquex=unique(coordata$x)
+        uniquey=unique(coordata$y)
+        coordata$edge=FALSE
+        for (x in uniquex){
+          
+          min=min(coordata[coordata$x==x,"y"])
+          max=max(coordata[coordata$x==x,"y"])
+          coordata['&'(coordata$y==max,coordata$x==x),"edge"]=TRUE
+          #coordata['&'(coordata$y==min,coordata$x==x),"edge"]=TRUE
+        }
+        
+        for (y in uniquey){
+          min=min(coordata[coordata$y==y,"x"])
+          max=max(coordata[coordata$y==y,"x"])
+          coordata['&'(coordata$x==max,coordata$y==y),"edge"]=TRUE
+          #coordata['&'(coordata$x==min,coordata$y==y),"edge"]=TRUE
+        }
+      }else if(center_type=="southwest"){
+        uniquex=unique(coordata$x)
+        uniquey=unique(coordata$y)
+        coordata$edge=FALSE
+        for (x in uniquex){
+          
+          min=min(coordata[coordata$x==x,"y"])
+          max=max(coordata[coordata$x==x,"y"])
+          #coordata['&'(coordata$y==max,coordata$x==x),"edge"]=TRUE
+          coordata['&'(coordata$y==min,coordata$x==x),"edge"]=TRUE
+        }
+        
+        for (y in uniquey){
+          min=min(coordata[coordata$y==y,"x"])
+          max=max(coordata[coordata$y==y,"x"])
+          coordata['&'(coordata$x==max,coordata$y==y),"edge"]=TRUE
+          #coordata['&'(coordata$x==min,coordata$y==y),"edge"]=TRUE
+        }
+      }}
+    
+    return(coordata)
+
   }
   
-  coordata=findedge(coordata)
+  coordata=findedge(coordata,center_type=unique(radius_rank$Core))
   
   
   
@@ -2263,47 +2367,128 @@ PMF_Cardinal_Datafilelist<-function(datafile,Peptide_Summary_searchlist,
   
 
   
-  rank_pixel<-function(coordata,coordistmatrix){
+  rank_pixel<-function(coordata,coordistmatrix,radius_rank){
     #coordata[coordata$edge==TRUE,]=coordata[coordata$edge==TRUE,]
-    shape_center=coordata[coordistmatrix$sum==min(coordistmatrix$sum),]
-    center_dist=t(coordistmatrix[which.min(coordistmatrix$sum),1:nrow(coordata)])
-    p_load(useful)
-    From <- shape_center[rep(seq_len(nrow(shape_center)), each=nrow(coordata)),1:2]
-    To <- coordata[,1:2]
-    df=To-From
-    center_edge_angle=cbind(coordata[,1:2],cart2pol(df$x, df$y, degrees = F),edge=coordata[,"edge"])
-    center_edge_angle_sdge=center_edge_angle[center_edge_angle$edge==TRUE,]
-     coordata$rank=0 
-     coordata$pattern=""       
-
-     for (i in 1: (nrow(coordata))){
-       
-
-       #From <- coordata[i,][rep(seq_len(nrow(coordata[i,])), each=nrow(coordata[coordata$edge==TRUE,])),1:2]
-       #To <- coordata[coordata$edge==TRUE,][,1:2]
-
-       if (coordata$edge[i]!=TRUE){      
-         df=coordata[i,1:2]-shape_center[,1:2]
-       point_center_angle=cbind(coordata[i,1:2],cart2pol(df$x, df$y, degrees = F))
-       pointedge=center_edge_angle_sdge[which(abs(center_edge_angle_sdge$theta-point_center_angle$theta)==min(abs(center_edge_angle_sdge$theta-point_center_angle$theta))),]
-       #message(pointedge)
-
-         pointedge=pointedge[which.min(pointedge$r),]
-         to_edge=coordistmatrix[[i]]['&'(coordata$x==pointedge$x,coordata$y==pointedge$y)]
-      }else{to_edge=0}
-       
-       
-       to_center=center_dist[i]
-       total=to_edge+to_center
-       max(radius_rank$Radius_U)
-       norm_center_dist=to_center/total*max(radius_rank$Radius_U)
-       coordata$rank[i]=as.character(radius_rank$Rank['&'(radius_rank$Radius_L<=norm_center_dist,radius_rank$Radius_U>=norm_center_dist)])
-       coordata$pattern[i]=as.character(radius_rank$Name['&'(radius_rank$Radius_L<=norm_center_dist,radius_rank$Radius_U>=norm_center_dist)])
-     }
-     coordata
+    
+    if (unique(radius_rank$Core)=="central"){
+      shape_center=coordata[coordistmatrix$sum==min(coordistmatrix$sum),]
+      center_dist=t(coordistmatrix[which.min(coordistmatrix$sum),1:nrow(coordata)])
+      library(useful)
+      From <- shape_center[rep(seq_len(nrow(shape_center)), each=nrow(coordata)),1:2]
+      To <- coordata[,1:2]
+      df=To-From
+      center_edge_angle=cbind(coordata[,1:2],cart2pol(df$x, df$y, degrees = F),edge=coordata[,"edge"])
+      center_edge_angle_sdge=center_edge_angle[center_edge_angle$edge==TRUE,]
+      coordata$rank=0 
+      coordata$pattern=""       
+      
+      for (i in 1: (nrow(coordata))){
+        
+        
+        #From <- coordata[i,][rep(seq_len(nrow(coordata[i,])), each=nrow(coordata[coordata$edge==TRUE,])),1:2]
+        #To <- coordata[coordata$edge==TRUE,][,1:2]
+        
+        if (coordata$edge[i]!=TRUE){      
+          df=coordata[i,1:2]-shape_center[,1:2]
+          point_center_angle=cbind(coordata[i,1:2],cart2pol(df$x, df$y, degrees = F))
+          pointedge=center_edge_angle_sdge[which(abs(center_edge_angle_sdge$theta-point_center_angle$theta)==min(abs(center_edge_angle_sdge$theta-point_center_angle$theta))),]
+          #message(pointedge)
+          
+          pointedge=pointedge[which.min(pointedge$r),]
+          to_edge=coordistmatrix[[i]]['&'(coordata$x==pointedge$x,coordata$y==pointedge$y)]
+        }else{to_edge=0}
+        
+        
+        to_center=center_dist[i]
+        total=to_edge+to_center
+        
+        norm_center_dist=to_center/total*max(radius_rank$Radius_U)
+        if(length(radius_rank$Rank['&'(radius_rank$Radius_L<=norm_center_dist,radius_rank$Radius_U>=norm_center_dist)])==1){
+          coordata$rank[i]=as.character(radius_rank$Rank['&'(radius_rank$Radius_L<=norm_center_dist,radius_rank$Radius_U>=norm_center_dist)])
+          coordata$pattern[i]=as.character(radius_rank$Name['&'(radius_rank$Radius_L<=norm_center_dist,radius_rank$Radius_U>=norm_center_dist)])
+        }else{
+          coordata$rank[i]="Undefined"
+          coordata$pattern[i]="Undefined"
+        }
+      }
+      coordata$rank<-factor(coordata$rank)
+      coordata
+    }else { 
+      if(unique(radius_rank$Core)=="southeast"){
+      #shape_center=coordata['&'(coordata$x>=max(coordata$x)-1,coordata$y>=max(coordata$y)-1),]
+      shape_center=coordata[1,]
+      shape_center$x=max(coordata$x)
+      shape_center$y=max(coordata$y)
+      coordata_new<-rbind(coordata,shape_center)
+      center_dist=bplapply(nrow(coordata_new),coordist_para,coordata_new,BPPARAM = BPPARAM)[[1]]
+      #center_dist=t(coordistmatrix[which.min(coordistmatrix$sum),1:nrow(coordata)])
+    } else if(unique(radius_rank$Core)=="northeast"){
+      #shape_center=coordata['&'(coordata$x>=max(coordata$x)-1,coordata$y>=max(coordata$y)-1),]
+      shape_center=coordata[1,]
+      shape_center$x=max(coordata$x)
+      shape_center$y=min(coordata$y)
+      
+    }else if(unique(radius_rank$Core)=="northwest"){
+      #shape_center=coordata['&'(coordata$x>=max(coordata$x)-1,coordata$y>=max(coordata$y)-1),]
+      shape_center=coordata[1,]
+      shape_center$x=min(coordata$x)
+      shape_center$y=min(coordata$y)
+      
+    }else if(unique(radius_rank$Core)=="southwest"){
+      #shape_center=coordata['&'(coordata$x>=max(coordata$x)-1,coordata$y>=max(coordata$y)-1),]
+      shape_center=coordata[1,]
+      shape_center$x=min(coordata$x)
+      shape_center$y=max(coordata$y)
+      
+    }
+      
+      library(useful)
+      coordata$rank=0 
+      coordata$pattern=""       
+      From <- shape_center[rep(seq_len(nrow(shape_center)), each=nrow(coordata)),1:2]
+      To <- coordata[,1:2]
+      df=To-From
+      center_edge_angle=cbind(coordata[,1:2],cart2pol(df$x, df$y, degrees = F),edge=coordata[,"edge"])
+      center_edge_angle_sdge=center_edge_angle[center_edge_angle$edge==TRUE,]
+      coordata$rank=0 
+      coordata$pattern=""      
+      for (i in 1: (nrow(coordata))){
+        
+        
+        #From <- coordata[i,][rep(seq_len(nrow(coordata[i,])), each=nrow(coordata[coordata$edge==TRUE,])),1:2]
+        #To <- coordata[coordata$edge==TRUE,][,1:2]
+          
+          df=coordata[i,1:2]-shape_center[,1:2]
+          point_center_angle=cbind(coordata[i,1:2],cart2pol(df$x, df$y, degrees = F))
+          pointedge=center_edge_angle_sdge[which(abs(center_edge_angle_sdge$theta-point_center_angle$theta)==min(abs(center_edge_angle_sdge$theta-point_center_angle$theta))),]
+          #message(pointedge)
+          
+          pointedge=pointedge[which.min(pointedge$r),]
+          to_edge=coordistmatrix[[i]]['&'(coordata$x==pointedge$x,coordata$y==pointedge$y)]
+        
+        
+        to_center=center_dist[i]
+        total=to_edge+to_center
+        
+        norm_center_dist=to_center/total*max(radius_rank$Radius_U)
+        if(length(radius_rank$Rank['&'(radius_rank$Radius_L<=norm_center_dist,radius_rank$Radius_U>=norm_center_dist)])==1){
+          coordata$rank[i]=as.character(radius_rank$Rank['&'(radius_rank$Radius_L<=norm_center_dist,radius_rank$Radius_U>=norm_center_dist)])
+          coordata$pattern[i]=as.character(radius_rank$Name['&'(radius_rank$Radius_L<=norm_center_dist,radius_rank$Radius_U>=norm_center_dist)])
+        }else{
+          coordata$rank[i]="Undefined"
+          coordata$pattern[i]="Undefined"
+        }
+      }
+      coordata$rank<-factor(coordata$rank)
+      coordata
+      
+  }
+    
+    
+   
   }
   
-  coordata=rank_pixel(coordata,coordistmatrix)
+  coordata=rank_pixel(coordata,coordistmatrix,radius_rank)
  
   
   x=NULL
@@ -2314,7 +2499,10 @@ PMF_Cardinal_Datafilelist<-function(datafile,Peptide_Summary_searchlist,
     
   }
   write.csv(coordata,"coordata.csv",row.names = F)
-  region_pattern <- factor(coordata$rank,levels=unique(coordata$rank), labels=unique(coordata$pattern))
+  
+  region_pattern <- factor(coordata$pattern,levels=unique(coordata$pattern), labels=unique(coordata$pattern))
+  #image(imdata, region_pattern ~ x * y, key=T)
+  
   set.seed(1)
   skm <- spatialKMeans(imdata, r=Smooth_range, k=length(unique(coordata$rank)), method="adaptive")
   png(paste(getwd(),"\\","spatialKMeans_image",'.png',sep=""),width = 1024,height = 1024)
@@ -2324,13 +2512,13 @@ PMF_Cardinal_Datafilelist<-function(datafile,Peptide_Summary_searchlist,
       bty="n",pty="s",xaxt="n",
       yaxt="n",
       no.readonly = TRUE,ann=FALSE)
-  Cardinal::image(skm, col=brewer.pal(SPECTRUM_for_average,colorstyle), key=FALSE, ann=FALSE,axes=FALSE)
+  Cardinal::image(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], key=FALSE, ann=FALSE,axes=FALSE)
   
-  legend("topright", legend=1:SPECTRUM_for_average, fill=brewer.pal(SPECTRUM_for_average,colorstyle), col=brewer.pal(SPECTRUM_for_average,"Paired"), bg="transparent",xpd=TRUE,cex = 1)
+  legend("topright", legend=1:SPECTRUM_for_average, fill=brewer.pal_n(SPECTRUM_for_average,colorstyle), col=brewer.pal_n(SPECTRUM_for_average,"Paired"), bg="transparent",xpd=TRUE,cex = 1)
   
-  #Cardinal::plot(skm, col=brewer.pal(SPECTRUM_for_average,colorstyle), type=c('p','h'), key=FALSE)
-  #Cardinal::plot(skm, col=brewer.pal(SPECTRUM_for_average,colorstyle), type=c('p','h'), key=FALSE,mode="centers")
-  #Cardinal::plot(skm, col=brewer.pal(SPECTRUM_for_average,colorstyle), type=c('p','h'), key=FALSE,mode="betweenss")
+  #Cardinal::plot(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], type=c('p','h'), key=FALSE)
+  #Cardinal::plot(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], type=c('p','h'), key=FALSE,mode="centers")
+  #Cardinal::plot(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], type=c('p','h'), key=FALSE,mode="betweenss")
   dev.off()
   
   for (i in 1:nrow(coordata)){
@@ -2338,7 +2526,7 @@ PMF_Cardinal_Datafilelist<-function(datafile,Peptide_Summary_searchlist,
     
   }
   
-  #Cardinal::image(imdata, col=brewer.pal(SPECTRUM_for_average,colorstyle), key=FALSE, ann=FALSE,axes=FALSE,groups =pattern)
+  #Cardinal::image(imdata, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], key=FALSE, ann=FALSE,axes=FALSE,groups =pattern)
   
   #msset <- generateImage(region_pattern, coord=coordata[,1:2],
   #                        range=c(1000, 5000), centers=c(2000, 3000, 4000),
@@ -2352,10 +2540,10 @@ PMF_Cardinal_Datafilelist<-function(datafile,Peptide_Summary_searchlist,
       yaxt="n",
       no.readonly = TRUE,ann=FALSE)
   
-  Cardinal::image(skm, col=brewer.pal(length(unique(coordata$rank)),colorstyle), key=FALSE, ann=FALSE,axes=FALSE)
+  Cardinal::image(skm, col=brewer.pal_n(length(unique(coordata$rank)),colorstyle), key=FALSE, ann=FALSE,axes=FALSE)
   
-  #Cardinal::image(msset,feature=1:3, col=brewer.pal(length(unique(coordata$pattern)),colorstyle),strip=T,superpose=T, key=FALSE, ann=FALSE,axes=FALSE,groups =region_pattern)
-  legend("topright", legend=paste(radius_rank$Rank,radius_rank$Name), fill=brewer.pal(length(unique(coordata$pattern)),colorstyle), col=brewer.pal(length(unique(coordata$pattern)),"Paired"), bg="transparent",xpd=TRUE,cex = 1)
+  #Cardinal::image(msset,feature=1:3, col=brewer.pal_n(length(unique(coordata$pattern)),colorstyle),strip=T,superpose=T, key=FALSE, ann=FALSE,axes=FALSE,groups =region_pattern)
+  legend("topright", legend=paste(radius_rank$Rank,radius_rank$Name), fill=brewer.pal_n(length(unique(coordata$pattern)),colorstyle), col=brewer.pal_n(length(unique(coordata$pattern)),"Paired"), bg="transparent",xpd=TRUE,cex = 1)
 
   dev.off()
   
@@ -2371,8 +2559,8 @@ PMF_Cardinal_Datafilelist<-function(datafile,Peptide_Summary_searchlist,
   
 if(PMFsearch){   
     imdata <- Load_Cardinal_imaging(datafile[z],preprocessing = F,resolution = ppm,rotate = rotate[z],as="MSImageSet")
-    if (dir.exists(paste0(datafile[z] ," ID"))==FALSE){dir.create(paste0(datafile[z] ," ID"))}
-    setwd(paste0(datafile[z] ," ID"))
+    if (dir.exists(paste0(gsub(".imzML$","",datafile[z])  ," ID"))==FALSE){dir.create(paste0(gsub(".imzML$","",datafile[z])  ," ID"))}
+    setwd(paste0(gsub(".imzML$","",datafile[z])  ," ID"))
     #cl=makeCluster(8)SPECTRUM_for_average
     Peptide_Summary_file_regions<-data.frame()
     message(paste("PMFsearch",name))
@@ -2391,8 +2579,9 @@ if(PMFsearch){
     savename=paste(name,SPECTRUM_batch)
     message(paste("PMF_analysis",name,"region",SPECTRUM_batch))
     peaklist<-imdata_ed@featureData@data
-    #peaklist<-peaklist[peaklist$mean>0,]
+    #
     write.csv(peaklist,paste0(datafile[z] ," ID/",SPECTRUM_batch,"/Spectrum.csv"),row.names = F)
+    peaklist<-peaklist[peaklist$mean>0,]
     colnames(peaklist)<-c("m.z","intensities")
     peaklist<-peaklist[peaklist$intensities>0,]
     peaklist_pmf<-peaklist[peaklist$intensities>(max(peaklist$intensities)*threshold),]
@@ -2559,13 +2748,19 @@ if(PMFsearch){
         try(plot_matching_score(Protein_feature_list_rank_cutoff,peaklist,charge=1,ppm,outputdir=paste0(datafile[z] ," ID/",SPECTRUM_batch,"/ppm")))
       }
       png(paste0(datafile[z] ," ID/",SPECTRUM_batch,"/unique_peptide_ranking_vs_mz_feature",".png"),width = 960,height = 480)
-      sp<-ggplot2::ggplot(Peptide_plot_list_rank, aes(x=mz,fill=as.factor(Peptide_plot_list_rank$Rank))) +  geom_bar(stat = "bin",bins = 100) +
+      sp<-ggplot2::ggplot(Peptide_plot_list_rank, aes(x=mz,fill=as.factor(Rank))) +  geom_bar(stat = "bin",bins = 100) +
         labs(title="Matched peptide ranking vs. mz feature",x="mz", y = "Matched peptide ranking")+
-        theme_classic() + theme(legend.title  = element_blank())
+        theme_classic() + theme(legend.title  = element_blank()) + scale_fill_brewer()
       try(print(sp))
       dev.off()
       message(paste("Plotting peptide matching number vs mz feature"))
       Peptide_plot_list_2nd=Protein_feature_list_rank_cutoff
+      png(paste0(datafile[z] ," ID/",SPECTRUM_batch,"/unique_peptide_ranking_vs_mz_feature_2nd",".png"),width = 960,height = 480)
+      sp<-ggplot2::ggplot(Peptide_plot_list_2nd, aes(x=mz,fill=as.factor(floor(Rank/max(Rank)*8)))) +  geom_bar(stat = "bin",bins = 100) +
+        labs(title="Matched peptide ranking 2nd vs. mz feature",x="mz", y = "Matched peptide ranking")+
+        theme_classic() + theme(legend.title  = element_blank()) + scale_fill_brewer()
+      try(print(sp))
+      dev.off()
       write.csv(Protein_feature_result_cutoff,paste0(datafile[z] ," ID/","Protein_segment_PMF_RESULT_",SPECTRUM_batch,".csv"),row.names = F)
     } 
     
@@ -3241,7 +3436,7 @@ FDR_cutoff_plot_protein<-function(Protein_feature_result,FDR_cutoff=0.1,plot_fdr
     Protein_feature_result_plot<-Protein_feature_result[,c("isdecoy","Proscore","Score")]
     target_decoy<-factor(ifelse(Protein_feature_result$isdecoy==0,"Target","Decoy"),levels = c("Target","Decoy"))
     Protein_feature_result_plot$target_decoy=target_decoy
-    
+    Protein_feature_result_plot$color=ifelse(Protein_feature_result$isdecoy==0,"red","blue")
     if(F){x <- Protein_feature_result_plot$Proscore
     h<-hist(x, breaks=10, col="red", xlab="Miles Per Gallon",
             main="Histogram with Normal Curve")
@@ -3257,6 +3452,24 @@ FDR_cutoff_plot_protein<-function(Protein_feature_result,FDR_cutoff=0.1,plot_fdr
       xlab("Protein score") + ylab("Counts") + labs(fill = "Is_Decoy") + theme_classic()+ geom_vline(xintercept = Proscore_cutoff)  #+ facet_grid(target_decoy ~ .)
     print(p)
     dev.off() 
+    if(F){
+    pep_cali<-Protein_feature_result_plot$Proscore[grep("Pep_cali",Protein_feature_result_plot$desc,ignore.case = Proscore_cutoff)]
+    png(paste0("PROTEIN_Score_histogram_full_scale.png"))
+    gg_color_hue <- function(n) {
+      hues = seq(15, 375, length = n + 1)
+      hcl(h = hues, l = 65, c = 100)[1:n]
+    }
+    p<-ggplot(data=Protein_feature_result_plot,aes(x=Proscore,color=target_decoy, fill=target_decoy)) + geom_histogram( fill="white",alpha=0.5, bins = 200)  +
+      ggtitle("Protein score vs Counts")  +
+      xlab("Protein score") + ylab("Counts") + labs(fill = "Is_Decoy") + theme_classic()+ 
+      scale_color_manual(values=c("grey50",gg_color_hue(2)[2:1])) +
+      geom_vline(xintercept = Proscore_cutoff,linetype="dashed") + #geom_segment(aes(x=Proscore,xend = Proscore,y=rep(0.3,length(Proscore)),yend=rep(0.1,length(Proscore))))
+      geom_segment(data=data.frame(pep_cali=pep_cali),aes(x=pep_cali,color=" Peptide calibrant",fill="black",xend = pep_cali,y=rep(300,length(pep_cali)),yend=rep(0.1,length(pep_cali))),arrow = arrow(angle = 15, ends = "last", type = "closed",length = unit(0.15, "inches")))
+      #geom_vline(,xend = ,show.legend = T)# Protein_feature_result_plot$desc[grep("Pep_cali",Protein_feature_result_plot$desc,ignore.case = T)]) #+ facet_grid(target_decoy ~ .)
+    print(p)
+    dev.off()
+    }
+ 
   }
   
   return(Proscore_cutoff)
@@ -4285,18 +4498,18 @@ PMF_Cardinal_Datafilelist_quant<-function (datafile, Peptide_Summary_searchlist,
                                                  1, 1), mfrow = c(1, 2), bty = "n", pty = "s", 
           xaxt = "n", yaxt = "n", no.readonly = TRUE, 
           ann = FALSE)
-      Cardinal::image(skm, col = brewer.pal(SPECTRUM_for_average, 
+      Cardinal::image(skm, col = brewer.pal_n(SPECTRUM_for_average, 
                                             colorstyle), key = FALSE, ann = FALSE, axes = FALSE)
       legend("topright", legend = 1:SPECTRUM_for_average, 
-             fill = brewer.pal(SPECTRUM_for_average, colorstyle), 
-             col = brewer.pal(SPECTRUM_for_average, "Paired"), 
+             fill = brewer.pal_n(SPECTRUM_for_average, colorstyle), 
+             col = brewer.pal_n(SPECTRUM_for_average, "Paired"), 
              bg = "transparent", xpd = TRUE, cex = 1)
-      Cardinal::plot(skm, col = brewer.pal(SPECTRUM_for_average, 
+      Cardinal::plot(skm, col = brewer.pal_n(SPECTRUM_for_average, 
                                            colorstyle), type = c("p", "h"), 
                      key = FALSE, mode = "withinss")
       legend("topright", legend = 1:SPECTRUM_for_average, 
-             fill = brewer.pal(SPECTRUM_for_average, colorstyle), 
-             col = brewer.pal(SPECTRUM_for_average, "Paired"), 
+             fill = brewer.pal_n(SPECTRUM_for_average, colorstyle), 
+             col = brewer.pal_n(SPECTRUM_for_average, "Paired"), 
              bg = "transparent", xpd = TRUE, cex = 1)
       dev.off()
       withinss = skm@resultData[[1]][["withinss"]]
@@ -4431,11 +4644,11 @@ PMF_Cardinal_Datafilelist_quant<-function (datafile, Peptide_Summary_searchlist,
                                                  1, 1), mfrow = c(1, 1), bty = "n", pty = "s", 
           xaxt = "n", yaxt = "n", no.readonly = TRUE, 
           ann = FALSE)
-      Cardinal::image(skm, col = brewer.pal(SPECTRUM_for_average, 
+      Cardinal::image(skm, col = brewer.pal_n(SPECTRUM_for_average, 
                                             colorstyle), key = FALSE, ann = FALSE, axes = FALSE)
       legend("topright", legend = 1:SPECTRUM_for_average, 
-             fill = brewer.pal(SPECTRUM_for_average, colorstyle), 
-             col = brewer.pal(SPECTRUM_for_average, "Paired"), 
+             fill = brewer.pal_n(SPECTRUM_for_average, colorstyle), 
+             col = brewer.pal_n(SPECTRUM_for_average, "Paired"), 
              bg = "transparent", xpd = TRUE, cex = 1)
       dev.off()
       for (i in 1:nrow(coordata)) {
@@ -4450,11 +4663,11 @@ PMF_Cardinal_Datafilelist_quant<-function (datafile, Peptide_Summary_searchlist,
                                                  1, 1), mfrow = c(1, 1), bty = "n", pty = "s", 
           xaxt = "n", yaxt = "n", no.readonly = TRUE, 
           ann = FALSE)
-      Cardinal::image(skm, col = brewer.pal(length(unique(coordata$rank)), 
+      Cardinal::image(skm, col = brewer.pal_n(length(unique(coordata$rank)), 
                                             colorstyle), key = FALSE, ann = FALSE, axes = FALSE)
       legend("topright", legend = paste(radius_rank$Rank, 
-                                        radius_rank$Name), fill = brewer.pal(length(unique(coordata$pattern)), 
-                                                                             colorstyle), col = brewer.pal(length(unique(coordata$pattern)), 
+                                        radius_rank$Name), fill = brewer.pal_n(length(unique(coordata$pattern)), 
+                                                                             colorstyle), col = brewer.pal_n(length(unique(coordata$pattern)), 
                                                                                                            "Paired"), bg = "transparent", xpd = TRUE, 
              cex = 1)
       dev.off()
@@ -4569,7 +4782,7 @@ resolve_multi_modes<-function(mm,adjust=0.25){
 }
 
 
-Load_Cardinal_imaging_combine<-function(datafile,Rotate_IMG=NULL,as="MSImagingExperiment",...){
+Load_Cardinal_imaging_combine<-function(datafile,Rotate_IMG=NULL,ppm=10,as="MSImagingExperiment",...){
   if (!is.null(Rotate_IMG)){
     Rotate_IMG=read.csv(Rotate_IMG,stringsAsFactors = F)
   }
@@ -4583,7 +4796,7 @@ Load_Cardinal_imaging_combine<-function(datafile,Rotate_IMG=NULL,as="MSImagingEx
       rotate=Rotate_IMG[Rotate_IMG$filenames==datafile[i],"rotation"]
       rotate=as.numeric(rotate)
       if (length(rotate)==0){rotate=0}
-      imdata[[i]]=Load_Cardinal_imaging(datafile[i],preprocessing = F,resolution = ppm*2,rotate = rotate,attach.only=F,as=as,mzrange=mzrange)
+      imdata[[i]]=Load_Cardinal_imaging(datafile[i],preprocessing = F,resolution = ppm,rotate = rotate,attach.only=F,as=as,mzrange=mzrange)
       if (i==1) {
         testrange=c(min(imdata[[i]]@featureData@mz),max(imdata[[i]]@featureData@mz))
       }else{

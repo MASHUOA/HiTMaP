@@ -546,7 +546,7 @@ cluster_image_cardinal_allinone<-function(clusterID,
 cluster_image_grid<-function(clusterID,
                              SMPLIST,
                              ppm=20,
-                             imdata=Load_Cardinal_imaging(datafile[i],preprocessing = F,resolution = ppm),
+                             imdata,
                              ClusterID_colname="Protein",
                              componentID_colname="Peptide",
                              Component_plot_threshold=2,
@@ -557,11 +557,14 @@ cluster_image_grid<-function(clusterID,
                              plot_layout="grid",
                              export_Header_table=F,
                              export_footer_table=F,
-                             combine_header_footer=F,
+                             
                              plot_style=c("fleximaging","ClusterOnly","rainbow"),
                              protein_coverage=F,
                              footer_style="Length",
-                             output_png_width_limit=1980){
+                             output_png_width_limit=1980,
+                             attach_summary_cluster=T,
+                             cluster_color_scale=c("blackwhite","fleximaging"),
+                             remove_cluster_from_grid=T){
   #complementary(color="red", plot = TRUE, bg = "white", labcol = NULL, cex = 0.8, title = TRUE)
   windows_filename<- function(stringX){
     stringX<-stringr::str_remove_all(stringX,"[><*?:\\/\\\\]")
@@ -582,7 +585,7 @@ cluster_image_grid<-function(clusterID,
   #imdata@pixelData@data<-rotatetmp
   outputpngsum=paste(getwd(),"\\",windows_filename(substr(clusterID, 1, 15)),"_cluster_imaging",'.png',sep="")
   
-  
+  message(outputpngsum)
   SMPLIST=as.data.frame(SMPLIST)
   outputpng=paste(getwd(),"\\",windows_filename(substr(clusterID, 1, 10)),"_cluster_plot",'.png',sep="")  
   #message(outputpng)
@@ -592,12 +595,19 @@ cluster_image_grid<-function(clusterID,
   candidateunique=as.numeric(as.character(unique(candidate[,"mz"])))
   candidateunique=candidateunique[order(as.character(candidateunique))]
   candidate<-merge(data.frame(candidate_u),candidate,by=c("mz","Peptide"),sort=F)
-   
+  if(is.null(candidate$desc)){
+    candidate_unique_table=unique(candidate[,c("mz",componentID_colname,"formula","adduct")])
+  }else{
+    candidate_unique_table=unique(candidate[,c(componentID_colname,"mz","formula","adduct")])
+    cluster_desc<-unique(candidate$desc)[1]
+  } 
   if (length(candidateunique)>4){
     
-    mycol=wheel("red", num = length(candidateunique),bg = "white")
+    mycol=setColors("red", length(candidateunique))#wheel("red", num = length(candidateunique),bg = "white")
   } else if (length(candidateunique)==4){
-    mycol=tetradic("red")
+    tmp_cols = setColors("red", 12)
+    tetrad_colors <- tmp_cols[c(1, 3, 7, 9)]
+    mycol=tetrad_colors
     #mycol=c("#FF0000", "#00FF00", "#0000FF")
   } else if (length(candidateunique)==3){
     #mycol=splitComp("red")
@@ -713,8 +723,10 @@ cluster_image_grid<-function(clusterID,
         tmp_dir <- tempdir()
         temp_cluster_png=tempfile(pattern = "file", tmpdir = tempdir(), fileext = ".png")
         temp_component_png=list()
+        temp_component_png.mono=list()
         if (plot_layout=="line"){
-          png(temp_cluster_png,width = 5,height = 5 * length( levels(Cardinal::run(imdata))), bg = "black",units = "in",res = 300)
+          #png(temp_cluster_png,width = 5,height = 5 * length( levels(Cardinal::run(imdata))), bg = "black",units = "in",res = 300)
+          temp_cluster_png<-image_graph(width = 750,height = 750 * length( levels(Cardinal::run(imdata))), bg = "black",res = 150)
           par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(length( levels(Cardinal::run(imdata))),1),
               bty="n",pty="s",xaxt="n",
               yaxt="n",
@@ -722,7 +734,9 @@ cluster_image_grid<-function(clusterID,
           
           
         }else{
-          png(temp_cluster_png,width = 5*2,height = 5*(ceiling((length(candidateunique)+1)/2)), bg = "black",units = "in",res = 300)
+          #png(temp_cluster_png,width = 5*2,height = 5*(ceiling((length(candidateunique)+1)/2)), bg = "black",units = "in",res = 300)
+          temp_cluster_png<-image_graph(width = 750*2,height = 750 * (ceiling((length(candidateunique)+1)/2)), bg = "black",res = 150)
+          
           par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(ceiling((length(candidateunique)+1)/2), 2),
               bty="n",pty="s",xaxt="n",
               yaxt="n",
@@ -746,20 +760,60 @@ cluster_image_grid<-function(clusterID,
         print(clusterimg)}
         
         dev.off()
-        
-        
-        
+        #if (length(candidateunique)==2){
+        #  bg = "grey9"
+        #}else if (length(candidateunique)==3){
+        #  bg = "grey8"
+        #}else if (length(candidateunique)==3){
+        #  
+        #}
+        bg = paste0("grey",ifelse((15-length(candidateunique))>1,(15-length(candidateunique)),2))
+        #bg = "transparent"
         componentimg=list()
+        componentimg.mono=list()
         for (i in 1:length(candidateunique)){
           #image(imdata, mz=candidateunique[i], col=mycol[i], superpose=F,normalize.image="linear")
           col.regions <- gradient.colors(100, start="black", end=levels(mycol)[i])
           if  (Component_plot_coloure=="mono"){
-            col.regions=intensity.colors_customize1()
+            bg = paste0("grey",14)
+            col.regions.mono=intensity.colors_customize1(colset = 2)
+            col.regions=gradient.colors(100, start="black", end=levels(mycol)[i])
           }else if(Component_plot_coloure=="as.cluster"){
             col.regions=gradient.colors(100, start="black", end=levels(mycol)[i])
+            #col.regions=gradient.colors(100, start="#030303", end=levels(mycol)[i])
             col=levels(mycol)[i]
           }
-          componentimg[[i]]=image(imdata, mz=candidateunique[i], 
+          if(cluster_color_scale=="blackwhite"){
+            col.regions.mono=gradient.colors(100, start="black", end="white")
+            col.regions=gradient.colors(100, start="black", end="white")
+          }
+          if (Component_plot_coloure=="mono"){
+            componentimg.mono[[i]]=image(imdata, mz=candidateunique[i], 
+                                    #contrast.enhance=contrast.enhance,
+                                    contrast.enhance = "none",
+                                    smooth.image = smooth.image,
+                                    colorscale=col.regions.mono,
+                                    col=col,
+                                    normalize.image="linear",
+                                    plusminus=round(ppm*candidateunique[i]/1000000,digits = 4),
+                                    key=F,
+                                    xlab=NULL,
+                                    layout=c( length(levels(Cardinal::run(imdata))),1)
+            )
+            temp_component_png[[i]]=tempfile(pattern = "file", tmpdir = tempdir(), fileext = ".png")
+            
+            #png(temp_component_png.mono[[i]],width = 5,height = 5 * length( levels(Cardinal::run(imdata))), bg = bg,units = "in",res = 300)
+            temp_component_png[[i]]<-image_graph(width = 750,height = 750 * length( levels(Cardinal::run(imdata))), bg = bg,res = 150)
+            par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(length( levels(Cardinal::run(imdata))),1),
+                #par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(1,(length(candidateunique)+1)),
+                bty="n",pty="s",xaxt="n",
+                yaxt="n",
+                no.readonly = TRUE,ann=FALSE)  
+            
+            try(tryCatch(print(componentimg.mono[[i]])),silent = T)
+            dev.off()
+          }else{
+        componentimg[[i]]=image(imdata, mz=candidateunique[i], 
                                       #contrast.enhance=contrast.enhance,
                                       contrast.enhance = "none",
                                       smooth.image = smooth.image,
@@ -774,54 +828,133 @@ cluster_image_grid<-function(clusterID,
         
         temp_component_png[[i]]=tempfile(pattern = "file", tmpdir = tempdir(), fileext = ".png")
 
-        png(temp_component_png[[i]],width = 5,height = 5 * length( levels(Cardinal::run(imdata))), bg = "black",units = "in",res = 300)
+        #png(temp_component_png[[i]],width = 5,height = 5 * length( levels(Cardinal::run(imdata))), bg = bg,units = "in",res = 300)
+        temp_component_png[[i]]<-image_graph(width = 750,height = 750 * length( levels(Cardinal::run(imdata))), bg = bg,res = 150)
         par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(length( levels(Cardinal::run(imdata))),1),
             #par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(1,(length(candidateunique)+1)),
             bty="n",pty="s",xaxt="n",
             yaxt="n",
             no.readonly = TRUE,ann=FALSE)  
 
-       try(tryCatch(print(componentimg[[i]])),silent = T)
+        try(tryCatch(print(componentimg[[i]])),silent = T)
+        
         dev.off()
+          }
+          
+
+        
+
           #componentname=unique(candidate[[componentID_colname]][candidate$mz==as.numeric(candidateunique[i])])
           #for (component in componentname){
           #  text(cex=30/ifelse(nchar(component)>30,nchar(component),30),labels=paste0(component),x=1,y=1+(which(componentname==component)-1)*3,adj=0,pos=4,offset=1,col = "white")
           #}
         }
-
-        pngfile<-image_read(temp_cluster_png)
-        pngfile<-image_border(pngfile, "black", "30x30")
-        pngfile<-image_annotate(pngfile,paste(clusterID),gravity = "north",size = 50,color = "white")
+        
+        temp_component_cover=tempfile(pattern = "file", tmpdir = tempdir(), fileext = ".png")
+        
+        #png(temp_component_cover,width = 5,height = 0.5, bg = bg,units = "in",res = 300)
+        temp_component_cover<-image_graph(width = 750,height = 750, bg = bg,res = 150)
+        plot.new()
+        text("")
+        #temp_component_cover<-image_draw(temp_component_cover)
+        dev.off()
+        temp_component_cover<-image_crop(temp_component_cover, "750x80+0")
+        #temp_component_cover<-image_background(temp_component_cover, "hotpink")
+        makeacover<-(temp_component_cover)
+        #print(makeacover)
+        #pngfile<-(temp_cluster_png)
+        #pngfile<-image_border(pngfile, bg, "30x30")
+        #pngfile<-image_annotate(pngfile,paste(clusterID),gravity = "north",size = 50,color = "white")
         
         pngcompfile_org=list()
         pngcompfile=list()
         for (i in 1:length(candidateunique)){
-          pngcompfile_org[[i]]<-(image_read(temp_component_png[[i]]))
-          pngcompfile[[i]]<-pngcompfile_org[[i]]
-          #pngcompfile[[i]]<-image(temp_component_png[[i]])
-          pngcompfile[[i]]<-image_border(pngcompfile[[i]], "black", "30x30")
-          pngcompfile[[i]]<-image_annotate(pngcompfile[[i]],paste(unique(candidate[candidate$mz==candidateunique[i],"moleculeNames"]),candidateunique[i]),gravity = "north",size = 50,color = "white")
-         
+          pngcompfile_org[[i]]<-((temp_component_png[[i]]))
+          pngcompfile_org[[i]]<-image_flatten(c(pngcompfile_org[[i]],makeacover))
+          #if (Component_plot_coloure=="mono"){
+          #pngcompfile[[i]]<-(temp_component_png.mono[[i]] ) 
+          #pngcompfile[[i]]<-image_flatten(c(pngcompfile[[i]],makeacover))
+          #}else{
+          pngcompfile[[i]]<-pngcompfile_org[[i]] 
+          #}
+          
+          pngcompfile[[i]]<-image_border(pngcompfile[[i]], bg, "30x30")
+          pngcompfile[[i]]<-image_annotate(pngcompfile[[i]],paste(unique(candidate[candidate$mz==candidateunique[i],"moleculeNames"]),candidateunique[i]),gravity = "north",size = 30,color = "white")
+          
         }
         
 
         
+        pngcompfile_output<-pngcompfile[[1]]
+        for (i in 2: length(pngcompfile)){
+          pngcompfile_output<-c(pngcompfile_output,unlist(pngcompfile[[i]]))
+        } 
         
-        img_com<-image_read(temp_component_png[[1]])
-        pngcompfile_org[[1]]<-NULL
-        for (imgs in pngcompfile_org){
-          img_com<-c(img_com,unlist(imgs))
+        #img_com<-(temp_component_png[[1]])
+        #img_com<-image_flatten(c(img_com,makeacover))
+        #pngcompfile_org[[1]]<-NULL
+        img_com<-pngcompfile_org[[1]]
+        for (i in 2: length(pngcompfile_org)){
+          img_com<-c(img_com,unlist(pngcompfile_org[[i]]))
         }
-        pngfile<-image_modulate(image_average(img_com), brightness = 100 + 25 * length(candidateunique), saturation = 100)
-        pngfile<-image_border(pngfile, "black", "30x30")
-        pngfile<-image_annotate(pngfile,paste(clusterID),gravity = "north",size = 50,color = "white")
+        #img_com<-rbind(unlist(pngcompfile_org))
         
-         pngfile=image_append(c(pngfile,unlist(pngcompfile)))
-        image_write(pngfile,outputpngsum)
         
-        removetempfile(tmp_dir,matchword=c(".png$","^magick-"))
+        #lapply(channel_types(),function(x,pngfile){
+        #  pngfile %>% image_threshold(type = "white", threshold = "50%",channel = x) %>% image_scale( "x600") %>% image_write(path = paste0(x,".png"))
+        #},pngfile)
+        cluster_desc<-gsub(stringr::str_extract(cluster_desc,"OS=.{1,}"),"",cluster_desc)
         
-        rm(pngcompfile)
+       if ((Component_plot_coloure=="mono")) {
+         
+         pngfile_big<-image_average(img_com)
+         pngfile<-pngfile_big
+         pngfile_big<-image_border(pngfile_big, bg, "30x30")
+         #pngfile_big<-image_modulate(pngfile_big, brightness = 100 + 25 * length(candidateunique), saturation = 100)
+         #pngfile_big<-image_threshold(pngfile_big,type = "white", threshold = "50%",channel = "All")
+         #pngfile_big<-image_annotate(pngfile_big,paste(cluster_desc),gravity = "north",size = 50,color = "white")
+         pngfile_big<-image_annotate(pngfile_big,cluster_desc,gravity = "north",size = 30*40/width(cluster_desc),color = "white")
+         
+         pngfile_big<-image_annotate(pngfile_big,"0%                                               100%",location = "+55+160",gravity = "northeast",size = 30,color = "white",degree=270)
+         
+         #pngfile<-image_average(img_com)
+         #pngfile<-image_threshold(pngfile, type = "black",  threshold = "50%")
+         pngfile<-image_border(pngfile, bg, "30x30")
+         #pngfile<-image_modulate(pngfile, brightness = 150)
+         
+         
+         }
+        else if ((Component_plot_coloure=="as.cluster")){
+        pngfile_big<-image_average(img_com)
+        pngfile<-pngfile_big
+        pngfile_big<-image_border(pngfile_big, bg, "30x30")
+        pngfile_big<-image_modulate(pngfile_big, brightness = 100 + 25 * length(candidateunique), saturation = 100)
+        pngfile_big<-image_threshold(pngfile_big,type = "white", threshold = "50%",channel = "All")
+        #pngfile_big<-image_annotate(pngfile_big,paste(cluster_desc),gravity = "north",size = 50,color = "white")
+        pngfile_big<-image_annotate(pngfile_big,cluster_desc,gravity = "north",size = 30*40/width(cluster_desc),color = "white")
+        
+        pngfile_big<-image_annotate(pngfile_big,"0                                               100",location = "+52+165",gravity = "northeast",size = 30,color = "white",degree=270)
+        
+        #pngfile<-image_average(img_com)
+        #pngfile<-image_threshold(pngfile, type = "black",  threshold = "50%")
+        pngfile<-image_border(pngfile, bg, "30x30")
+        pngfile<-image_modulate(pngfile, brightness = 150)
+      }
+        
+        pngfile<-image_annotate(pngfile,paste(clusterID),gravity = "north",size = 30,color = "white")
+        if (remove_cluster_from_grid){
+          pngfile=image_append(c((pngcompfile_output)))
+        }else{
+          pngfile=image_append(c(pngfile,(pngcompfile_output)))
+        }
+        
+        bg = paste0("grey15")
+        #property_png<-image_attributes(pngfile)
+        #width_height<-as.numeric(unlist(stringr::str_split(property_png[property_png$property=="png:IHDR.width,height",2],", ")))
+        #pngfile<-c(image_blank(width_height[1], width_height[2], color = bg, pseudo_image = ""),pngfile)
+        image_write(pngfile,outputpngsum,flatten =T)
+        
+        
       
     }
     
@@ -863,17 +996,42 @@ cluster_image_grid<-function(clusterID,
       l <- table$layout
       which(l$t==(row) & l$l==(col) & l$name==name)
     }
-    
-    t_Header_table<-cbind(c("ClusterID",clusterID,str_sub(cluster_desc,end = regexpr(" ",cluster_desc)),rep("",nrow(t_Header_table)-3)),t_Header_table)
+    if (remove_cluster_from_grid){
+      t_Header_table<-cbind(t_Header_table)
+      
+    }else{ 
+      t_Header_table<-cbind(c("ClusterID",clusterID,str_sub(cluster_desc,end = regexpr(" ",cluster_desc)),rep("",nrow(t_Header_table)-3)),t_Header_table)
+    }    
     header_table_op<-tableGrob(t_Header_table,cols = NULL,rows=NULL)
+    
+
+    if (remove_cluster_from_grid){
+    for (mzfeatures in 1:(length(candidateunique))){
+      for (rows in 3:3){
+        ind <- find_cell(header_table_op, rows, mzfeatures, "core-fg")
+        #ind2 <- find_cell(header_table_op, rows, mzfeatures, "core-fg")
+        header_table_op$grobs[ind][[1]][["gp"]] <- gpar(fill=levels(mycol)[mzfeatures], col = levels(mycol)[mzfeatures], lwd=5)
+        #header_table_op$grobs[ind][[1]][["gp"]] <- gpar(fill=levels(mycol)[mzfeatures-1], col = "black", lwd=5)
+        #header_table_op$grobs[ind2][[1]][["gp"]] <- gpar(fill=levels(mycol)[mzfeatures-1], col = "black", lwd=5)
+        
+        #header_table_op$grobs[ind][[1]][["gp"]] <- gpar(fill="darkolivegreen1", col = "darkolivegreen4", lwd=5)
+      }}
+    }else{
     for (mzfeatures in 2:(length(candidateunique)+1)){
-    for (rows in 1:nrow(t_Header_table)){
+    for (rows in 3:3){
     ind <- find_cell(header_table_op, rows, mzfeatures, "core-fg")
+    #ind2 <- find_cell(header_table_op, rows, mzfeatures, "core-fg")
     header_table_op$grobs[ind][[1]][["gp"]] <- gpar(fill=levels(mycol)[mzfeatures-1], col = levels(mycol)[mzfeatures-1], lwd=5)
+    #header_table_op$grobs[ind][[1]][["gp"]] <- gpar(fill=levels(mycol)[mzfeatures-1], col = "black", lwd=5)
+    #header_table_op$grobs[ind2][[1]][["gp"]] <- gpar(fill=levels(mycol)[mzfeatures-1], col = "black", lwd=5)
+    
     #header_table_op$grobs[ind][[1]][["gp"]] <- gpar(fill="darkolivegreen1", col = "darkolivegreen4", lwd=5)
     }
     }
-     suppressMessages(suppressWarnings(require(gtable)))
+    }
+    
+    suppressMessages(suppressWarnings(require(gtable)))
+    
     header_table_op <- gtable_add_grob(header_table_op,
                          grobs = rectGrob(gp = gpar(fill = NA, lwd = 2)),
                          t = 2, b = nrow(header_table_op), l = 1, r = ncol(header_table_op))
@@ -883,8 +1041,13 @@ cluster_image_grid<-function(clusterID,
     header_table_op$widths <- rep(max(header_table_op$widths), length(header_table_op$widths))
     
     header_file_png = windows_filename(paste0(clusterID,"_header.png"))
-    
-    png(header_file_png,width = 5*length(candidateunique+1),height = 5,units = "in",res = 300)
+    if (remove_cluster_from_grid){
+      png(header_file_png,width = 5*length(candidateunique),height = 5,units = "in",res = 300)
+      
+    }else{
+      png(header_file_png,width = 5*length(candidateunique+1),height = 5,units = "in",res = 300)
+      
+    }
     
     grid.arrange(header_table_op,nrow=1)
     
@@ -989,7 +1152,7 @@ cluster_image_grid<-function(clusterID,
         for( t in component_int$start[y]:component_int$end[y]){
           #pro_col[t]<-mixcolor(component_int$int[y]/(pro_int[t]+component_int$int[y]), col2RGB(pro_col[t]), col2RGB(component_int$mycol[y]))
           mixedcolor<-colorRamp(colors=c(pro_col[t],component_int$mycol[y]),  space ="rgb",
-                    interpolate = "linear")(component_int$int[y]/(pro_int[t]+component_int$int[y]))
+                    interpolate = "linear")((pro_int[t]+component_int$int[y])/(pro_int[t]+component_int$int[y]))
           pro_col[t]<-rgb(mixedcolor[,1],mixedcolor[,2],mixedcolor[,3], maxColorValue = 255)
           pro_int[t]<-pro_int[t]+component_int$int[y]
         }
@@ -1032,13 +1195,14 @@ cluster_image_grid<-function(clusterID,
       par(oma=c(0, 0, 0, 0),mar=c(1, 0, 0, 0))
       component_int_plot$x=as.factor(1)
       component_int_plot$y=1
-      p<- ggplot(data=component_int_plot, aes(x=x, y=site,group=x, label=x,fill=col)) +
+      p<- ggplot(data=component_int_plot, aes(x=site, y=1,group=site,fill=col)) +
         geom_bar(stat="identity",fill=component_int_plot$col)+ 
-        theme(axis.line=element_blank(),axis.text.x=element_blank(),
+        theme(axis.line=element_blank(),
               axis.text.y=element_blank(),axis.ticks=element_blank(),
               axis.title.y=element_blank(),legend.position="none",
               panel.background=element_blank(),panel.border=element_blank(),panel.grid.major=element_blank(),
-              panel.grid.minor=element_blank(),plot.background=element_blank()) + coord_flip()+
+              panel.grid.minor=element_blank(),plot.background=element_blank()) +
+         
         ylab(cluster_desc)
       print(p)
       dev.off()
@@ -1085,7 +1249,31 @@ cluster_image_grid<-function(clusterID,
 
     }
   
-  
+  if(attach_summary_cluster){
+    pngfile<-image_read(outputpngsum)
+    #temp_component_png=tempfile(pattern = "file", tmpdir = tempdir(), fileext = ".png")
+    
+    #png(temp_component_png,width = 5,height = 5 , bg = bg,units = "in",res = 300)
+    #print(pngfile_big)
+    #dev.off()
+    #pngfile_foot<-image_read(temp_component_png)image_scale(img, "100")
+    
+    #bg = paste0("grey15")
+    #property_png<-image_attributes(pngfile_big)
+    #width_height<-as.numeric(unlist(stringr::str_split(property_png[property_png$property=="png:IHDR.width,height",2],", ")))
+    #pngfile_big<-image_flatten(c(image_blank(width_height[1], width_height[2], color = bg, pseudo_image = ""),pngfile_big))
+    
+    #image_write(pngfile,outputpngsum,flatten =T)
+    
+    pngfiletry=tryCatch(image_append(c(pngfile,pngfile_big),stack = T))
+   # 
+    if (class(pngfiletry)=="magick-image") image_write(pngfiletry,outputpngsum)
+    #///rm(temp_component_png)
+    
+  }
+    removetempfile(tmp_dir,matchword=c(".png$","^magick-"))
+    
+    rm(pngcompfile)
   }
   }
 
@@ -1430,7 +1618,10 @@ intensity.colors_customize1 <- function(n = 100, alpha = 1,colset=1) {
   col2 <- rainbow(3*n, alpha=alpha)[(2*n):1]
   if (colset==1){
   f <- colorRamp(colors=c("darkorchid4", "dodgerblue","green", "greenyellow","yellow"))  
-  } else {
+  } else if(colset==2){
+  f <- colorRamp(colors=c("black", "dodgerblue","green", "greenyellow","yellow"))
+  }
+  else {
   f <- colorRamp(colors=c("darkorchid4", "blue", "darkseagreen1", "yellow"))  
   }
   
@@ -2005,3 +2196,18 @@ grid.ftable <- function(d, padding = unit(4, "mm"), ...) {
   grid.draw(g)
   invisible(g)
 }
+
+brewer.pal_n<-function(n,colorstyle){
+  library(RColorBrewer)
+  if (n>9){
+    getPalette = colorRampPalette(brewer.pal(8, colorstyle))
+    return(getPalette(n))
+  }else{
+    getPalette = brewer.pal(n, colorstyle)
+    return(getPalette)
+    
+  }
+  
+  
+}
+

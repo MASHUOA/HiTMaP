@@ -1,14 +1,28 @@
 ---
 title: "R Notebook"
 output:
-  html_document:
-    df_print: paged
+  html_document: 
+    keep_md: yes
+    toc: yes
+    toc_float: true
+    collapsed: false
+    theme: spacelab
+    number_sections: yes
+    df_print: tibble
+    highlight: zenburn
+    fig_width: 10
+    fig_height: 10
+  word_document: default
+  md_document:
+    variant: markdown_github
+  pdf_document: default
 ---
 
 
 ```{r setup, echo=FALSE, message=FALSE}
-knitr::opts_chunk$set(cache = T, message=FALSE, warning=FALSE)
+knitr::opts_chunk$set(cache = F, message=FALSE, warning=FALSE)
 ```
+
 
 ##Segementation test
 The identification summary.
@@ -65,7 +79,15 @@ for (Segmentation_number in 1:totalseg){
   Protein_Summary_bind_protein<-Protein_Summary_bind %>% group_by(Segmentation_number) %>% summarise(Protein_num=length(unique(Protein)))
   Protein_Summary_bind_peptide<-Protein_Summary_bind %>% group_by(Segmentation_number) %>% summarise(Peptide_num=length(unique(Peptide)))
   Protein_Summary_bind_Score<-Protein_Summary_bind %>% group_by(.dots=c("Segmentation_number","Peptide")) %>% summarise(Peptide_Score=(max(Score)))
-  Protein_Summary_bind_Score_max<-Protein_Summary_bind_Score %>% group_by(.dots=c("Segmentation_number")) %>% summarise(Peptide_Score=(median(Peptide_Score)))
+  
+  
+  common_pep<-Protein_Summary_bind_Score[,c("Segmentation_number","Peptide")] %>% 
+  group_by(Peptide) %>% mutate(In_groups = length(unique(Segmentation_number))) %>% 
+  ungroup() %>% filter(In_groups == length(unique(Segmentation_number))) %>%  .$Peptide %>% 
+  unique()
+  
+  Protein_Summary_bind_Score_common_mean<-Protein_Summary_bind_Score[Protein_Summary_bind_Score$Peptide %in% common_pep,]  %>% group_by(.dots=c("Segmentation_number")) %>% summarise(Peptide_Score=(mean(Peptide_Score)))
+  
 ```
 
 Protein NR count vs. sementation number
@@ -81,9 +103,8 @@ Peptide NR count vs. sementation number
 
 Peptide score(regions' median) vs. sementation number
 ```{r eval=T, message=FALSE, warning=FALSE, include=T}
-plot(Protein_Summary_bind_Score_max)
-  Protein_Summary_bind_peptide_id_quality<-data.frame(Segmentation_number=Protein_Summary_bind_peptide$Segmentation_number,ID_score_count=Protein_Summary_bind_peptide$Peptide_num*Protein_Summary_bind_Score_max$Peptide_Score)
-  #plot(Protein_Summary_bind_peptide_id_quality)
+plot(Protein_Summary_bind_Score_common_mean)
+
 ```
 
 
@@ -95,7 +116,8 @@ library(dplyr)
 library(readr)
 library(ggplot2)
 library(FTICRMS)
-  Protein_Summary_bind_Delta_ppm<-Protein_Summary_bind %>% group_by(.dots=c("Segmentation_number","Peptide")) %>% summarise(Delta_ppm=(min(Delta_ppm)))
+library(Cardinal)
+  Protein_Summary_bind_Delta_ppm<-Protein_Summary_bind[Protein_Summary_bind$Peptide %in% common_pep,] %>% group_by(.dots=c("Segmentation_number","Peptide")) %>% summarise(Delta_ppm=(min(Delta_ppm)))
   Protein_Summary_bind_Delta_ppm_min<-Protein_Summary_bind_Delta_ppm %>% group_by(.dots=c("Segmentation_number")) %>% summarise(Delta_ppm=(mean(Delta_ppm)))
  
   plot(Protein_Summary_bind_Delta_ppm_min)
@@ -116,7 +138,22 @@ library(FTICRMS)
   spectrum_bind<-do.call(rbind,spectrum)
   spectrum_bind_bind<-do.call(rbind,spectrum_bind)
   spectrum_bind_bind<-unique(spectrum_bind_bind)
+  imdata<-Cardinal::readMSIData("D:/GITHUB LFS/HiTMaP-Data/inst/segmentation test/Bovinlens_Trypsin_FT_1seg/Bovin_lens.imzML",resolution=5)
+  mz.all.df<-data.frame(m.z=imdata@featureData@mz)
+  mz.all.df$mz_start<-mz.all.df$m.z
+  mz.all.df$mz_end<-c(mz.all.df$m.z[2:length(mz.all.df$m.z)],mz.all.df$m.z[length(mz.all.df$m.z)]*2-mz.all.df$m.z[length(mz.all.df$m.z)-1])
+  mz.all.df$m.z<-NULL
+  #abs(diff(mz.all.df$m.z))
+  
+  #mz.all.df<-summarize(imdata, .stat="mean", .by="feature", .as="DataFrame")
+  
+  #sum((spectrum[[2]][[1]]$m.z %in% mz.all.df$m.z))
+  #which.min(abs(diff(spectrum[[2]][[1]]$m.z)))
   spectrum_bind_bind<-spectrum_bind_bind[order(spectrum_bind_bind$Segmentation_number,spectrum_bind_bind$seg,spectrum_bind_bind$m.z),]
+  
+  
+  
+  
   spectrum_bind_bind_rank<-spectrum_bind_bind %>% group_by(.dots=c("Segmentation_number","seg"))  %>% summarise(min=min(intensities),median=median(intensities))
   spectrum_bind_bind_rank
   ggplot(spectrum_bind_bind_rank,aes(x=interaction(seg,Segmentation_number),y=min)) +
@@ -125,6 +162,41 @@ library(FTICRMS)
   geom_bar(stat="identity")
   min(spectrum_bind_bind$intensities)
   max(spectrum_bind_bind$intensities)
+  
+  impute_bin_spec_fun<-function(spectrum_bind_bind,Segmentation_number,mz.all.df){
+    
+    library(tidyverse)
+    library(fuzzyjoin)
+    library(data.table)
+    library(lubridate )
+    library(sqldf)
+    mz.all.df<-as.data.table(mz.all.df)
+    
+    locate.peaks_spec<-NULL
+    for (seg in 1:Segmentation_number){    spectrum_bind_bind_log<-spectrum_bind_bind['&'(spectrum_bind_bind$Segmentation_number==Segmentation_number,spectrum_bind_bind$seg==seg),1:2]
+    spectrum_bind_bind_log<-as.data.table(spectrum_bind_bind_log)
+    mzdf<-mz.all.df
+    spectrum_bind_bind_log$mz<-spectrum_bind_bind_log$m.z
+    output <- sqldf('SELECT spectrum_bind_bind_log.mz, spectrum_bind_bind_log.intensities , mzdf.mz_start 
+      FROM spectrum_bind_bind_log 
+      LEFT JOIN mzdf ON mz BETWEEN mz_start and mz_end')
+    output_merge<-merge(mzdf,output,by="mz_start",all.x = T)
+    sum(output_merge$mz_start %in% mzdf$mz_start)
+    output_merge$mz<-output_merge$mz_start
+    output_merge[is.na(output_merge)]<-0
+    output_merge$Segmentation_number=Segmentation_number
+    output_merge$seg=seg
+    locate.peaks_spec<-rbind(locate.peaks_spec,output_merge[,c("mz","intensities","Segmentation_number","seg")])
+  }
+
+  return(locate.peaks_spec)
+  }
+  spectrum_bind_bind_impute<-spectrum_bind_bind
+  #spectrum_bind_bind_impute<-NULL
+  #for  (Segmentation_number in 1:totalseg){
+  #spectrum_bind_bind_impute<-rbind(spectrum_bind_bind_impute,impute_bin_spec_fun(spectrum_bind_bind,Segmentation_number,mz.all.df))
+  #}
+  
   locate.peaks_spec_fun<-function(spectrum_bind_bind,Segmentation_number){
     locate.peaks_spec<-list()
     for (seg in 1:Segmentation_number){    spectrum_bind_bind_log<-spectrum_bind_bind['&'(spectrum_bind_bind$Segmentation_number==Segmentation_number,spectrum_bind_bind$seg==seg),1:2]
@@ -137,7 +209,7 @@ library(FTICRMS)
   }
   locate.peaks_spec_bindlist<-list()
   for  (Segmentation_number in 1:totalseg){
-  locate.peaks_spec<-locate.peaks_spec_fun(spectrum_bind_bind,Segmentation_number)
+  locate.peaks_spec<-locate.peaks_spec_fun(spectrum_bind_bind_impute,Segmentation_number)
   locate.peaks_spec_bind<-do.call(rbind,locate.peaks_spec)
   locate.peaks_spec_bind<-locate.peaks_spec_bind[!duplicated(locate.peaks_spec_bind$Center_hat),]
   locate.peaks_spec_bindlist[[Segmentation_number]]<-locate.peaks_spec_bind
@@ -165,13 +237,22 @@ library(FTICRMS)
   
   
   common_feature<-locate.peaks_spec_bindlist_bind %>% group_by(round(Center_hat,digits = 3)) %>% summarise(count=length(Width_hat))
-  common_feature<-common_feature[common_feature$count>=0.3*totalseg,]
-  locate.peaks_spec_bindlist_bind_filtered<-locate.peaks_spec_bindlist_bind[round(locate.peaks_spec_bindlist_bind$Center_hat,digits = 3) %in% common_feature$`round(Center_hat, digits = 3)`,]
+  common_feature<-common_feature[common_feature$count>=0.15*totalseg,]
+  
+  locate.peaks_spec_bindlist_bind$Center_hat<-round(locate.peaks_spec_bindlist_bind$Center_hat,digits = 2)
+  common_feature<-locate.peaks_spec_bindlist_bind %>% 
+  group_by(Center_hat) %>% mutate(In_groups = length(unique(Segmentation_number))) %>% 
+  ungroup() %>% filter(In_groups >= 5) %>%  .$Center_hat %>% 
+  unique()
+  
+  
+  locate.peaks_spec_bindlist_bind_filtered<-locate.peaks_spec_bindlist_bind[locate.peaks_spec_bindlist_bind$Center_hat %in% common_feature,]
   
   unfiltered_width<-locate.peaks_spec_bindlist_bind %>% group_by(Segmentation_number) %>% summarise(width=median(Width_hat))
   filtered_width<-locate.peaks_spec_bindlist_bind_filtered %>% group_by(Segmentation_number) %>% summarise(width=median(Width_hat))
-  plot(unfiltered_width)
-  plot(filtered_width)
+  plot(unfiltered_width, type="l")
+  plot(filtered_width,type="l")
+  lines(filtered_width,type = "l", lty = 1)
 ```
 
 
@@ -261,7 +342,7 @@ for (indx in 1:length(fdr)){
   #ggplot(Protein_Summary_bind_protein, aes(x=indx,y=Protein,group=indx)) + geom_bar(position="dodge", stat="identity")
   ggplot(Protein_Summary_bind_proteinnr, aes(x=indx,group=indx)) + geom_bar(position="dodge", stat="Count")
   ggplot(Protein_Summary_bind_peptidenr, aes(x=indx,group=indx)) + geom_bar(position="dodge", stat="Count")
-  candidate_number<-lapply(candidatelist,nrow)
+
  
 ```
 
