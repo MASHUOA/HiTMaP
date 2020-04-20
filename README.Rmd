@@ -37,9 +37,10 @@ This is an tutorial for use of HiTMaP (An R package of High-resolution Informati
 ```{r Install the package, eval=FALSE, message=FALSE, warning=FALSE, include=TRUE}
 #install the git package
 install.packages("remotes")
-Sys.setenv(R_REMOTES_NO_ERRORS_FROM_WARNINGS=T)
+
 #library(devtools)
 library(remotes)
+Sys.setenv(R_REMOTES_NO_ERRORS_FROM_WARNINGS=T)
 install_github("MASHUOA/HiTMaP",auth_token ="6b325a9ea13b64d40cbdf5d73e7495e8ecc574c3",force=T)
 3
 no
