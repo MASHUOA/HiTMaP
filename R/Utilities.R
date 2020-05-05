@@ -775,7 +775,7 @@ cluster_image_grid<-function(clusterID,
           #image(imdata, mz=candidateunique[i], col=mycol[i], superpose=F,normalize.image="linear")
           col.regions <- gradient.colors(100, start="black", end=levels(mycol)[i])
           if  (Component_plot_coloure=="mono"){
-            bg = paste0("grey",14)
+            bg = paste0("grey",29)
             col.regions.mono=intensity.colors_customize1(colset = 2)
             col.regions=gradient.colors(100, start="black", end=levels(mycol)[i])
           }else if(Component_plot_coloure=="as.cluster"){
@@ -915,7 +915,9 @@ cluster_image_grid<-function(clusterID,
          #pngfile_big<-image_annotate(pngfile_big,paste(cluster_desc),gravity = "north",size = 50,color = "white")
          pngfile_big<-image_annotate(pngfile_big,cluster_desc,gravity = "north",size = 30*40/width(cluster_desc),color = "white")
          
-         pngfile_big<-image_annotate(pngfile_big,"0%                                               100%",location = "+55+160",gravity = "northeast",size = 30,color = "white",degree=270)
+         pngfile_big<-image_annotate(pngfile_big,"0%        Relative intensity        100%",location = "+55+160",gravity = "northeast",size = 30,color = "white",degree=270)
+         #pngfile_big<-image_annotate(pngfile_big,"0                                               100",location = "+52+165",gravity = "northeast",size = 30,color = "white",degree=270)
+         #pngfile_big<-image_annotate(pngfile_big,"                 Relative intensity                  ",location = "+55+160",gravity = "northeast",size = 30,color = "white",degree=270)
          
          #pngfile<-image_average(img_com)
          #pngfile<-image_threshold(pngfile, type = "black",  threshold = "50%")
@@ -932,8 +934,10 @@ cluster_image_grid<-function(clusterID,
         pngfile_big<-image_threshold(pngfile_big,type = "white", threshold = "50%",channel = "All")
         #pngfile_big<-image_annotate(pngfile_big,paste(cluster_desc),gravity = "north",size = 50,color = "white")
         pngfile_big<-image_annotate(pngfile_big,cluster_desc,gravity = "north",size = 30*40/width(cluster_desc),color = "white")
+        pngfile_big<-image_annotate(pngfile_big,"0%         Relative intensity        100%",location = "+55+160",gravity = "northeast",size = 30,color = "white",degree=270)
         
-        pngfile_big<-image_annotate(pngfile_big,"0                                               100",location = "+52+165",gravity = "northeast",size = 30,color = "white",degree=270)
+        #pngfile_big<-image_annotate(pngfile_big,"0%                                               100%",location = "+55+160",gravity = "northeast",size = 30,color = "white",degree=270)
+        #pngfile_big<-image_annotate(pngfile_big,"                Relative intensity                 ",location = "+52+160",gravity = "northeast",size = 30,color = "white",degree=270)
         
         #pngfile<-image_average(img_com)
         #pngfile<-image_threshold(pngfile, type = "black",  threshold = "50%")
@@ -948,7 +952,7 @@ cluster_image_grid<-function(clusterID,
           pngfile=image_append(c(pngfile,(pngcompfile_output)))
         }
         
-        bg = paste0("grey15")
+        bg = paste0("grey29")
         #property_png<-image_attributes(pngfile)
         #width_height<-as.numeric(unlist(stringr::str_split(property_png[property_png$property=="png:IHDR.width,height",2],", ")))
         #pngfile<-c(image_blank(width_height[1], width_height[2], color = bg, pseudo_image = ""),pngfile)
@@ -1093,7 +1097,7 @@ cluster_image_grid<-function(clusterID,
     
     orca(p, file = windows_filename(paste0(clusterID,"_header.png")),width=120*(nrow(Header_table))+200,height=540) }
     
-    if(file.exists(outputpngsum)){
+  if(file.exists(outputpngsum)){
       
       clusterpng<-image_read(outputpngsum)
       if (image_info(clusterpng)[2]>output_png_width_limit){
