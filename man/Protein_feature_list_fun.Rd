@@ -20,7 +20,8 @@ Protein_feature_list_fun(
   output_candidatelist = T,
   Modifications = list(fixed = NULL, fixmod_position = NULL, variable = NULL,
     varmod_position = NULL),
-  use_previous_candidates = F
+  use_previous_candidates = F,
+  Protein_desc_of_exclusion = NULL
 )
 }
 \arguments{
