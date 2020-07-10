@@ -52,7 +52,14 @@ imaging_identification(
   FDR_cutoff = 0.05,
   use_top_rank = NULL,
   plot_matching_score = F,
-  cluster_color_scale = c("blackwhite", "fleximaging"),
+  Component_plot_coloure = c("mono", "as.cluster"),
+  cluster_color_scale = c("blackwhite", NULL),
+  plot_layout = "line",
+  export_Header_table = T,
+  export_footer_table = T,
+  attach_summary_cluster = T,
+  remove_cluster_from_grid = attach_summary_cluster,
+  Thread = NULL,
   ...
 )
 }
@@ -61,7 +68,9 @@ imaging_identification(
 
 \item{ppm}{the mz tolerance (in ppm) for peak integration}
 
-\item{Digestion_site}{the enzyme digestion site specificity}
+\item{mode}{the way of generating candidate list and run  the workflow. "Proteomics" requires a proteome fasta file and the parameter list for proteomics annotation.}
+
+\item{Digestion_site}{Set the enzyme digestion specificity by one or more regex expressions or the name of a enzyme}
 
 \item{missedCleavages}{miss cleavage number allowed in this PMF search}
 
@@ -69,9 +78,25 @@ imaging_identification(
 
 \item{adducts}{the adducts list to be used for generating the PMF search candidates}
 
+\item{Modifications}{set the modifications}
+
+\item{Substitute_AA}{set the amino acid Substitutions}
+
+\item{Decoy_search}{enable (default) or disable the decoy search}
+
+\item{Decoy_adducts}{define the adduct list for decoy search. the decoy adducts could be "M+ACN+H","M+IsoProp+H","M+DMSO+H","M+Co","M+Ag","M+Cu","M+He","M+Ne","M+Ar","M+Kr","M+Xe" or"M+Rn".}
+
+\item{Decoy_mode}{select the decoy search mode between "isotope" (default), "element" and "adduct"}
+
+\item{mzrange}{define the mz range for the experiment, default is 700 to 4000 m/z.}
+
 \item{PMF_analysis}{Set \code{"true"} if you want to have a PMF search, set \code{"false"} if you want to bypass it}
 
+\item{peptide_ID_filter}{set the minimal count of peptides needed to identify a protein}
+
 \item{Protein_feature_summary}{\code{"PMF_analysis"} follow-up process that will collect all the identified peptide information and associate them with possible proteins}
+
+\item{Peptide_feature_summary}{\code{"PMF_analysis"} follow-up process that will summarize all datafiles identified peptides and generats a \code{"peptide shortlist"} in the result summary folder}
 
 \item{plot_ion_image}{\code{"Peptide_feature_summarya"} follow-up process that will plot every connponents in the \code{"peptide shortlist"}}
 
@@ -87,9 +112,41 @@ imaging_identification(
 
 \item{Virtual_segmentation_rankfile}{specify a region rank file contains region information for manualy region segmentation}
 
-\item{plot_cluster_image}{\code{"Protein_feature_summary"} follow-up process that will plot the protein cluster image}
+\item{Rotate_IMG}{specify a configuration file to further change the rotation of the images}
 
-\item{Peptide_feature_summarya}{\code{"PMF_analysis"} follow-up process that will summarize all datafiles identified peptides and generats a \code{"peptide shortlist"} in the result summary folder}
+\item{Region_feature_summary}{\code{"PMF_analysis"} follow-up process that will summarize mz feature of all regions of all data files into the summary folder}
+
+\item{use_previous_candidates}{set as TRUE to reload the previously generated candidate list.}
+
+\item{score_method}{specify the peptide spectrum scoring method, "SQRTP" is recommended.}
+
+\item{plot_cluster_image_grid}{set as \code{"TRUE"} to enable the protein cluster image function.}
+
+\item{componentID_colname}{Specify the component ID column in the result spreadsheet.}
+
+\item{ClusterID_colname}{Specify the cluster ID column in the result spreadsheet.}
+
+\item{Protein_desc_of_interest}{Specify a list of protein descriptions for cluster image plotting. Default setting will plot all reported proteins.}
+
+\item{Protein_desc_of_exclusion}{Specify a list of protein descriptions to be excluded from cluster image plotting.}
+
+\item{plot_unique_component}{Set as \code{"TRUE"} to plot only the unique components in the cluster image plotting.}
+
+\item{FDR_cutoff}{set the protein FDR cutoff threshold, default is 5 percent}
+
+\item{plot_matching_score}{enable the spectrum matching overlay plot}
+
+\item{Component_plot_coloure}{set as "mono" to use a pre-defined color scale to plot component images. Set as "as.cluster" to use the previously assigned mono color in the additive cluster binning process.}
+
+\item{cluster_color_scale}{Set as "blackwhite" to use only black and white color in the cluster image plotting. using "blackwhite" in cluster_color_scale will overwrite the components' color setting.}
+
+\item{export_Header_table}{Set as \code{"TRUE"} to plot the header in the cluster image plotting. Header table includes the basic information of cluster and components.}
+
+\item{export_footer_table}{Set as \code{"TRUE"} to plot the footer in the cluster image plotting. Footer shows the protein coverage in the Proteomics mode.}
+
+\item{attach_summary_cluster}{Set as \code{"TRUE"} to attach an enlarged cluster image to the bottom of the cluster image.}
+
+\item{remove_cluster_from_grid}{Set as \code{"TRUE"} to remove the cluster image from the cluster image grid. it is recommended to set this same as the attach_summary_cluster.}
 }
 \value{
 None

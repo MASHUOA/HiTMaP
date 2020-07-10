@@ -27,7 +27,7 @@ Meta_feature_list_fun<-function(database,
    suppressMessages(suppressWarnings(require(dplyr)))
    suppressMessages(suppressWarnings(require(Rdisop)))
    suppressMessages(suppressWarnings(require(Biostrings)))
-  
+   suppressMessages(suppressWarnings(require(OrgMassSpecR)))
   adductslist<-Build_adduct_list()
   candidates<-read.csv(paste0(workdir,"/",database),as.is = TRUE)
   
@@ -41,7 +41,7 @@ Meta_feature_list_fun<-function(database,
     required_col=c("moleculeNames")
     candidates=data_test_rename(required_col,candidates)
     
-       candidates$mass=0
+       candidates$mass<-NULL
     if (cal.mz==F){
     required_col=c("mz")
     candidates=data_test_rename(required_col,candidates)
@@ -55,12 +55,19 @@ Meta_feature_list_fun<-function(database,
         candidates$mass<-candidates$mz
         }
       }else{
-        
+
         required_col=c("formula")
         candidates=data_test_rename(required_col,candidates)
+        unique_formula<-unique(candidates$formula)
+        unique_formula_list<-lapply(unique_formula,get_atoms)
+        masslist<-lapply(unique_formula_list,MonoisotopicMass)
+        uniquemass<-unlist(masslist)
+        mass_DF<-data.frame(formula=unique_formula,mass=uniquemass,stringsAsFactors = F)
+        candidates<-base::merge(candidates,mass_DF)
         
-      candidates_mass<-candidates$formula %>% lapply(getMonomass) 
-      candidates$mass<-as.numeric(unlist(candidates_mass))
+        
+      #candidates_mass<-candidates$formula %>% lapply(getMonomass) 
+      #candidates$mass<-as.numeric(unlist(candidates_mass))
     }
     candidates<-candidates[duplicated(names(candidates))==FALSE]
     
@@ -124,18 +131,12 @@ Protein_feature_list_fun<-function(workdir=getwd(),
    setwd(workdir)
    
    parse_cleavage_rule<-function(Digestion_site){
-     
     Cleavage_rules<-Cleavage_rules_fun()
-   
-    #lapply((Digestion_site),grepl,names(Cleavage_rules),ignore.case	=T)
-    
     found_enzyme<-Digestion_site[Digestion_site %in% names(Cleavage_rules)]
     not_found_enzyme<-Digestion_site[!(Digestion_site %in% names(Cleavage_rules))]
     found_rule<-not_found_enzyme[not_found_enzyme %in% (Cleavage_rules)]
     not_found_rule<-not_found_enzyme[!(not_found_enzyme %in% (Cleavage_rules))]
-    
     Digestion_site_rule<-Cleavage_rules[found_enzyme] 
-     
     Digestion_site_final<- unique(c(Digestion_site_rule,found_rule,not_found_rule))
      message("Found enzyme: ",found_enzyme)
      message("Found rule: \"",found_rule,"\"")

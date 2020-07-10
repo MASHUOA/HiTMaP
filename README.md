@@ -35,7 +35,7 @@ This is an tutorial for use of HiTMaP (An R package of High-resolution Informati
 
 ```r
 #install the git package
-install.packages("devtools")
+install.packages("remotes")
 Sys.setenv(R_REMOTES_NO_ERRORS_FROM_WARNINGS=T)
 #library(devtools)
 library(remotes)
@@ -102,6 +102,7 @@ imaging_identification(
                datafile=paste0(wd,datafile),
                threshold=0.005, 
                ppm=5,
+               FDR_cutoff = 0.05,
 #==============specify the digestion enzyme specificity
                Digestion_site="trypsin",
 #==============specify the range of missed Cleavages
@@ -278,14 +279,21 @@ head(protein_pmf_result)
 ```
 
 ## Scoring system for protein and peptide
-**Score** in peptide result table shows the isotopic pattern matching score of the peptide. In Protein result table, it shows the intensity weighted peptide spectrum matching score.
+**Score** in peptide result table shows the isotopic pattern matching score of the peptide (Pepscore). In Protein result table, it shows the protein score (Proscore). The Pepscore consist of two parts: Intensity_Score and Mass_error_Score:
 
-$Score=\log(Observed\_Peak/Theoritical\_peak)-\log(\sqrt{\frac{\sum_{x = 1}^{n} (Theoritical\_intensity_x-Observed\_intensity_x)^2}{\sum_{x = 1}^{n} (Theoritical\_intensity_x)^2(Observed\_intensity_x)^2}}$
+   + Intensity_Score indicates how well a putative isotopic pattern can be matched to the observed spectrum.The default scoring method is SQRTP. It combines the Square root mean differences between observed and theoretical peaks and observed proportion of the isotopic peaks above a certain relative intensity threshold.
+   
+   + Mass_error_Score indicates the summary of mass error (in *ppm*) for every detected isotopic peak. in order to integrate the Mass_error_Score in to scoring system. the mean ppm error has been normalized by ppm tolerance, and supplied to the probability normal distributions (*pnorm* function for R). The resulting value (Quantiles of the given Probability Density) is deducted by 0.5 and converted into absolute value.
 
+$Intensity\_Score=\log(PeakCount_{Observed}/PeakCount_{Theoritical})-\log(\sqrt{\frac{\sum_{x = 1}^{n} (Theoritical\_intensity_x-Observed\_intensity_x)^2}{\sum_{x = 1}^{n} (Theoritical\_intensity_x)^2(Observed\_intensity_x)^2}}$
+
+$Mass\_error\_Score=|(p\_norm\_dist(\frac{mean\_ppm\_error}{ppm\_tolerance})-0.5)|$
+
+$Pepscore=Intensity\_Score-Mass\_error\_Score$
 
 **Proscore** in the protein result table shows the overall estimation of the protein identification Accuracy
 
-$Proscore=\frac{\sum_{x = 1}^{n}(Score_x*log(Intensity_x))}{mean(log(Intensity))}*Protein\_coverage*Normalized\_intensity$
+$Proscore=\frac{\sum_{x = 1}^{n}(Pepscore_x*log(Intensity_x))}{mean(log(Intensity))}*Protein\_coverage*Normalized\_intensity$
 
 A *Peptide_region_file.csv* has also been created to summarise all the IDs in this data file:
 
@@ -436,6 +444,16 @@ Now you could visualized the interest proteins and their associated peptides' di
 
 
 ```r
+library(magick)
+```
+
+```
+## Linking to ImageMagick 6.9.9.14
+## Enabled features: cairo, freetype, fftw, ghostscript, lcms, pango, rsvg, webp
+## Disabled features: fontconfig, x11
+```
+
+```r
 p_cluster1<-image_read(paste0(wd,"/Summary folder/cluster Ion images/791_cluster_imaging.png"))
 print(p_cluster1)
 ```
@@ -444,7 +462,7 @@ print(p_cluster1)
 ## # A tibble: 1 x 7
 ##   format width height colorspace matte filesize density
 ##   <chr>  <int>  <int> <chr>      <lgl>    <int> <chr>  
-## 1 PNG     1980    849 sRGB       TRUE    656132 118x118
+## 1 PNG     1980   1308 sRGB       TRUE    302087 118x118
 ```
 
 <img src="README_files/figure-html/CLuster imaging-1.png" width="1980" />
@@ -458,7 +476,7 @@ print(p_cluster2)
 ## # A tibble: 1 x 7
 ##   format width height colorspace matte filesize density
 ##   <chr>  <int>  <int> <chr>      <lgl>    <int> <chr>  
-## 1 PNG     1980    649 sRGB       TRUE    500794 118x118
+## 1 PNG     1980   1309 sRGB       TRUE    348111 118x118
 ```
 
 <img src="README_files/figure-html/CLuster imaging-2.png" width="1980" />
@@ -472,7 +490,7 @@ print(p_cluster3)
 ## # A tibble: 1 x 7
 ##   format width height colorspace matte filesize density
 ##   <chr>  <int>  <int> <chr>      <lgl>    <int> <chr>  
-## 1 PNG     1980    359 sRGB       TRUE    359818 118x118
+## 1 PNG     1980   1069 sRGB       TRUE    237191 118x118
 ```
 
 <img src="README_files/figure-html/CLuster imaging-3.png" width="1980" />
@@ -636,7 +654,39 @@ imaging_identification(Digestion_site="trypsin",Fastadatabase="uniprot_cali.fast
 imaging_identification(Digestion_site="trypsin",Fastadatabase="uniprot_cali.fasta",output_candidatelist=T,spectra_segments_per_file=1,use_previous_candidates=T,ppm=5,Protein_desc_of_interest="Pro_CALI",threshold=0.005,FDR_cutoff=0.05)
 
 #peptide calibrant
-imaging_identification(Digestion_site="trypsin",Fastadatabase="uniprot_cali.fasta",output_candidatelist=T,spectra_segments_per_file=1,use_previous_candidates=F,peptide_ID_filter=1,ppm=5,missedCleavages=0:5,Modifications=list(fixed=NULL,fixmod_position=NULL,variable=c("Amide"),varmod_position=c(6)),FDR_cutoff=0.1)
+imaging_identification(
+  Digestion_site="trypsin",
+  Fastadatabase="uniprot_cali.fasta",
+  output_candidatelist=T,
+  plot_matching_score=T,
+  spectra_segments_per_file=1,
+  use_previous_candidates=F,
+  peptide_ID_filter=1,ppm=5,missedCleavages=0:5,
+  Modifications=list(fixed=NULL,fixmod_position=NULL,variable=c("Amide"),varmod_position=c(6)),
+  FDR_cutoff=0.1,
+  Substitute_AA=list(AA=c("X"),AA_new_formula=c("C5H5NO2"),Formula_with_water=c(FALSE)))
+
+imaging_identification(
+  Digestion_site="trypsin",
+  Fastadatabase="uniprot_cali.fasta",
+  output_candidatelist=T,
+  plot_matching_score=T,
+  spectra_segments_per_file=1,
+  use_previous_candidates=T,
+  peptide_ID_filter=1,ppm=5,missedCleavages=0:5,
+  FDR_cutoff=0.1)
+
+imaging_identification(
+  Digestion_site="trypsin",
+  Fastadatabase="calibrants.fasta",
+  output_candidatelist=T,
+  plot_matching_score=T,
+  spectra_segments_per_file=1,
+  use_previous_candidates=T,
+  peptide_ID_filter=1,ppm=5,missedCleavages=0:5,
+  Modifications=list(fixed=NULL,fixmod_position=NULL,variable=c("Amide"),varmod_position=c(6)),
+  FDR_cutoff=100,
+  Substitute_AA=list(AA=c("X"),AA_new_formula=c("C5H5NO2"),Formula_with_water=c(FALSE)),Thread = 1)
 
 imaging_identification(Digestion_site="trypsin",Fastadatabase="uniprot_cali.fasta",output_candidatelist=T,spectra_segments_per_file=1,use_previous_candidates=T,peptide_ID_filter=1,ppm=5,missedCleavages=0:5)
 

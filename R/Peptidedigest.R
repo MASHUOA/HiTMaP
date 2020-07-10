@@ -12,24 +12,50 @@ Filters <- matrix(c( "imzml file", ".imzML",
 #' imaging_identification
 #'
 #' This is a peptide mass fingerprint search function for maldi imaging data analysis
-#'
+#' @param datafile the data files' path for the analysis, leave it as blank to enable a graphical user interface to select the data
 #' @param threshold specify the intensities threshold (0 to 1 in percentage)to report a identified molecule 
 #' @param ppm the mz tolerance (in ppm) for peak integration
-#' @param Digestion_site the enzyme digestion site specificity
+#' @param mode the way of generating candidate list and run  the workflow. "Proteomics" requires a proteome fasta file and the parameter list for proteomics annotation. 
+#' @param Digestion_site Set the enzyme digestion specificity by one or more regex expressions or the name of a enzyme 
 #' @param missedCleavages miss cleavage number allowed in this PMF search
 #' @param Fastadatabase the fasta database used in this pmf search, the file should be placed in the same folder with data files
-#' @param adducts  the adducts list to be used for generating the PMF search candidates
+#' @param adducts the adducts list to be used for generating the PMF search candidates
+#' @param Modifications set the modifications
+#' @param Substitute_AA set the amino acid Substitutions
+#' @param Decoy_search enable (default) or disable the decoy search
+#' @param Decoy_mode select the decoy search mode between "isotope" (default), "element" and "adduct"
+#' @param Decoy_adducts define the adduct list for decoy search. the decoy adducts could be "M+ACN+H","M+IsoProp+H","M+DMSO+H","M+Co","M+Ag","M+Cu","M+He","M+Ne","M+Ar","M+Kr","M+Xe" or"M+Rn".
+#' @param mzrange define the mz range for the experiment, default is 700 to 4000 m/z.
+#' @param use_previous_candidates set as TRUE to reload the previously generated candidate list.
 #' @param PMF_analysis Set \code{"true"} if you want to have a PMF search, set \code{"false"} if you want to bypass it
-#' @param Protein_feature_summary  \code{"PMF_analysis"} follow-up process that will collect all the identified peptide information and associate them with possible proteins 
-#' @param plot_cluster_image  \code{"Protein_feature_summary"} follow-up process that will plot the protein cluster image 
-#' @param Peptide_feature_summarya \code{"PMF_analysis"} follow-up process that will summarize all datafiles identified peptides and generats a \code{"peptide shortlist"} in the result summary folder
-#' @param plot_ion_image  \code{"Peptide_feature_summarya"} follow-up process that will plot every connponents in the \code{"peptide shortlist"}
+#' @param FDR_cutoff set the protein FDR cutoff threshold, default is 5 percent
+#' @param score_method specify the peptide spectrum scoring method, "SQRTP" is recommended.
+#' @param peptide_ID_filter set the minimal count of peptides needed to identify a protein
+#' @param plot_matching_score enable the spectrum matching overlay plot 
+#' @param Protein_feature_summary \code{"PMF_analysis"} follow-up process that will collect all the identified peptide information and associate them with possible proteins 
+#' @param Peptide_feature_summary \code{"PMF_analysis"} follow-up process that will summarize all datafiles identified peptides and generats a \code{"peptide shortlist"} in the result summary folder
+#' @param Region_feature_summary \code{"PMF_analysis"} follow-up process that will summarize mz feature of all regions of all data files into the summary folder
+#' @param plot_ion_image \code{"Peptide_feature_summarya"} follow-up process that will plot every connponents in the \code{"peptide shortlist"}
 #' @param parallel the number of threads will be used in the PMF search, this option now only works for windows OS
 #' @param spectra_segments_per_file optimal number of distinctive regions in the imaging, a virtual segmentation will be applied to the image files with this value. To have a better PMF result you may set a value that in the sweet point of sensitivety and false discovery rate (FDR).
 #' @param spatialKMeans set true to enable a \code{"spatialKMeans"}  method for the automatic virtual segmentation. If a region rank file was supplied, you can disable this to perform a mannual segmentation.
 #' @param Smooth_range \code{"spatialKMeans"} pixel smooth range 
 #' @param Virtual_segmentation set \code{"TRUE"} if you want to overide the automaitic segmentation
 #' @param Virtual_segmentation_rankfile specify a region rank file contains region information for manualy region segmentation
+#' @param Rotate_IMG specify a configuration file to further change the rotation of the images
+#' @param plot_cluster_image_grid set as \code{"TRUE"} to enable the protein cluster image function.
+#' @param plot_layout Set as \code{"line"} to plot cluster and component images for multiple data file or as \code{"grid"} to plot cluster images for single data file. In "grid" mode, Image's will be rendered into a grid with 5 columns. 
+#' @param ClusterID_colname Specify the cluster ID column in the result spreadsheet.
+#' @param componentID_colname Specify the component ID column in the result spreadsheet.
+#' @param Protein_desc_of_interest Specify a list of protein descriptions for cluster image plotting. Default setting will plot all reported proteins.
+#' @param Protein_desc_of_exclusion Specify a list of protein descriptions to be excluded from cluster image plotting.
+#' @param plot_unique_component Set as \code{"TRUE"} to plot only the unique components in the cluster image plotting.
+#' @param Component_plot_coloure set as "mono" to use a pre-defined color scale to plot component images. Set as "as.cluster" to use the previously assigned mono color in the additive cluster binning process.
+#' @param cluster_color_scale Set as "blackwhite" to use only black and white color in the cluster image plotting. using "blackwhite" in cluster_color_scale will overwrite the components' color setting.
+#' @param export_Header_table Set as \code{"TRUE"} to plot the header in the cluster image plotting. Header table includes the basic information of cluster and components.
+#' @param export_footer_table Set as \code{"TRUE"} to plot the footer in the cluster image plotting. Footer shows the protein coverage in the Proteomics mode.
+#' @param attach_summary_cluster Set as \code{"TRUE"} to attach an enlarged cluster image to the bottom of the cluster image. 
+#' @param remove_cluster_from_grid Set as \code{"TRUE"} to remove the cluster image from the cluster image grid. it is recommended to set this same as the attach_summary_cluster.
 #' @return None
 #'
 #' @examples
@@ -90,7 +116,14 @@ imaging_identification<-function(
                FDR_cutoff=0.05,
                use_top_rank=NULL,
                plot_matching_score=F,
-               cluster_color_scale=c("blackwhite","fleximaging"),
+               Component_plot_coloure=c("mono", "as.cluster"),
+               cluster_color_scale=c("blackwhite",NULL),
+               plot_layout="line",
+               export_Header_table=T,
+               export_footer_table=T,
+               attach_summary_cluster=T,
+               remove_cluster_from_grid=attach_summary_cluster,
+               Thread=NULL,
                ...
                ){
   library("pacman")
@@ -105,12 +138,17 @@ imaging_identification<-function(
   workdir<-base::dirname(datafile[1])
   #setwd(workdir)
   #cl <- autoStopCluster(makeCluster(parallel))
-  parallel=try(detectCores()/2)
+  if (is.null(Thread)){
+    parallel=try(detectCores()/2)
   if (parallel<1 | is.null(parallel)){parallel=1}
+  BPPARAM=Parallel.OS(parallel) 
+  }else{
+  parallel=Thread
+  BPPARAM=Parallel.OS(parallel) 
+  }
   
-  BPPARAM=bpparam("SnowParam")
-  BiocParallel::bpworkers(BPPARAM)=parallel
-  bpprogressbar(BPPARAM)=TRUE
+  
+  
   setwd(workdir)
   message(paste(try(detectCores()), "Cores detected,",parallel, "threads will be used for computing"))
 
@@ -395,12 +433,15 @@ imaging_identification<-function(
            SMPLIST=Protein_feature_list,
            ppm=ppm,ClusterID_colname=ClusterID_colname,
            componentID_colname=componentID_colname,
-           plot_layout="line",
-           export_Header_table=T,
-           export_footer_table=T,
+           plot_layout=plot_layout,
+           export_Header_table=export_Header_table,
+           export_footer_table=export_footer_table,
+           attach_summary_cluster=attach_summary_cluster,
+           remove_cluster_from_grid=remove_cluster_from_grid,
            plot_style="fleximaging",
            smooth.image=smooth.image,
-           Component_plot_coloure="mono",cluster_color_scale=cluster_color_scale)
+           Component_plot_coloure=Component_plot_coloure,
+           cluster_color_scale=cluster_color_scale)
 
     if(F){
     Pngclusterkmean=NULL
@@ -1646,6 +1687,7 @@ searchPMF_para<-function(pimlist,spectrumlist,ppm,BPPARAM=bpparam()){
   pimresultlist<-pimlist
   message("Start PMF search")
     #pimresultlist<-parLapply(cl=cl,pimlist,PMFsum,spectrumlist,ppm)
+  #pimresultlist<-bplapply(pimlist$mz,PMFsum,spectrumlist,ppm,BPPARAM = SerialParam())
     pimresultlist<-bplapply(pimlist,PMFsum,spectrumlist,ppm,BPPARAM = BPPARAM)
   
   return(pimresultlist)
@@ -2558,6 +2600,11 @@ PMF_Cardinal_Datafilelist<-function(datafile,Peptide_Summary_searchlist,
   } 
   
 if(PMFsearch){   
+   if (ppm>=25) {
+    instrument_ppm=50
+   }else{
+    instrument_ppm=10
+   }
     imdata <- Load_Cardinal_imaging(datafile[z],preprocessing = F,resolution = ppm,rotate = rotate[z],as="MSImageSet")
     if (dir.exists(paste0(gsub(".imzML$","",datafile[z])  ," ID"))==FALSE){dir.create(paste0(gsub(".imzML$","",datafile[z])  ," ID"))}
     setwd(paste0(gsub(".imzML$","",datafile[z])  ," ID"))
@@ -2590,7 +2637,7 @@ if(PMFsearch){
     message(paste(nrow(deconv_peaklist),"mz features found in the spectrum") )
     #MassSpecWavelet_fun(peaklist = peaklist)
     #mz_feature_list<-Do_PMF_search(deconv_peaklist,Peptide_Summary_searchlist,BPPARAM=BPPARAM,ppm = ppm)
-    mz_feature_list<-Do_PMF_search(peaklist_pmf,Peptide_Summary_searchlist,BPPARAM=BPPARAM,ppm = ppm)
+    mz_feature_list<-Do_PMF_search(peaklist_pmf,Peptide_Summary_searchlist,BPPARAM=BPPARAM,ppm = instrument_ppm)
     mz_feature_list<-unique(mz_feature_list)
     
     message("Iterating peptide information...")
@@ -2709,7 +2756,9 @@ if(PMFsearch){
         Peptide_plot_list_2nd=Peptide_plot_list_2nd[((Peptide_plot_list_2nd$Score>=Score_cutoff)&(!is.na(Peptide_plot_list_2nd$Intensity))),]
         }
       write.csv(Peptide_plot_list_2nd,paste0(datafile[z] ," ID/",SPECTRUM_batch,"/Peptide_2nd_ID_score_rank",score_method,"_Rank_above_",Rank,".csv"),row.names = F)
-      
+      if (plot_matching_score_t && nrow(Peptide_plot_list_2nd)!=0){
+        try(plot_matching_score(Peptide_plot_list_2nd,peaklist,charge=1,ppm,outputdir=paste0(datafile[z] ," ID/",SPECTRUM_batch,"/ppm")))
+      }
       Peptide_plot_list_rank$mz=as.numeric(as.character(Peptide_plot_list_rank$mz))
       Peptide_plot_list_2nd$mz=as.numeric(as.character(Peptide_plot_list_2nd$mz))
       
@@ -2744,9 +2793,7 @@ if(PMFsearch){
       write.csv(Protein_feature_result,paste0(datafile[z] ," ID/",SPECTRUM_batch,"/Protein_ID_score_rank_",score_method,".csv"),row.names = F)
       write.csv(Protein_feature_list_rank_cutoff,paste0(datafile[z] ," ID/","Peptide_segment_PMF_RESULT_",SPECTRUM_batch,".csv"),row.names = F)
       
-      if (plot_matching_score_t && nrow(Protein_feature_list_rank_cutoff)!=0){
-        try(plot_matching_score(Protein_feature_list_rank_cutoff,peaklist,charge=1,ppm,outputdir=paste0(datafile[z] ," ID/",SPECTRUM_batch,"/ppm")))
-      }
+
       png(paste0(datafile[z] ," ID/",SPECTRUM_batch,"/unique_peptide_ranking_vs_mz_feature",".png"),width = 960,height = 480)
       sp<-ggplot2::ggplot(Peptide_plot_list_rank, aes(x=mz,fill=as.factor(Rank))) +  geom_bar(stat = "bin",bins = 100) +
         labs(title="Matched peptide ranking vs. mz feature",x="mz", y = "Matched peptide ranking")+
@@ -2975,7 +3022,7 @@ SCORE_PMF<-function(formula,peaklist,isotopes=NULL,threshold=1,charge=1,ppm=5,pr
   formula<-as.character(formula)
   Spectrum_scoring <- function(spec.top, spec.bottom, t = 0.25, b = 0, top.label = NULL, 
                                bottom.label = NULL, xlim = c(50, 1200), x.threshold = 0, print.alignment = FALSE,
-                               print.graphic = F, output.list = F,score_method="SQRT",Peak_intensity=0,outputfile=NULL,formula=NULL,pattern_ppm=NULL) {
+                               print.graphic = F, output.list = F,score_method="SQRT",Peak_intensity=0,outputfile=NULL,formula=NULL,pattern_ppm=NULL,ppm_error=0) {
     
     
     ## format spectra and normalize intensitites
@@ -3072,7 +3119,7 @@ SCORE_PMF<-function(formula,peaklist,isotopes=NULL,threshold=1,charge=1,ppm=5,pr
     }
     
     ## generate plot
-    
+    similarity_score=round((similarity_score-ppm_error),digits = 7)
     if(print.graphic == TRUE) {
        suppressMessages(suppressWarnings(require(ggplot2)))
       #library(magick)
@@ -3283,16 +3330,16 @@ SCORE_PMF<-function(formula,peaklist,isotopes=NULL,threshold=1,charge=1,ppm=5,pr
   
   
   
-  score=Spectrum_scoring(spec.top = pattern,spec.bottom = spectrum,b=0,t=mean(pattern[,1])*ppm/1000000,top.label = "Theoretical",
+  finalscore=Spectrum_scoring(spec.top = pattern,spec.bottom = spectrum,b=0,t=mean(pattern[,1])*ppm/1000000,top.label = "Theoretical",
                          score_method=score_method,bottom.label = "Observed spectrum",
                          xlim = c(min(range(pattern[,1],na.rm = T))-1,max(range(pattern[,1],na.rm = T))+1),
                          output.list=output.list,print.graphic = print.graphic,
                          outputfile = outputfile,
                          Peak_intensity=Peak_intensity,
-                         formula=formula,pattern_ppm=pattern_ppm)
+                         formula=formula,pattern_ppm=pattern_ppm,ppm_error=ppm_error)
   #score
   #message(score)
-  finalscore=round((score-ppm_error),digits = 7)
+  
   Peak_intensity<-sum(spectrum$Intensity)
   return(as.numeric(data.frame(finalscore,meanppm,Peak_intensity)))
 }
@@ -3437,14 +3484,6 @@ FDR_cutoff_plot_protein<-function(Protein_feature_result,FDR_cutoff=0.1,plot_fdr
     target_decoy<-factor(ifelse(Protein_feature_result$isdecoy==0,"Target","Decoy"),levels = c("Target","Decoy"))
     Protein_feature_result_plot$target_decoy=target_decoy
     Protein_feature_result_plot$color=ifelse(Protein_feature_result$isdecoy==0,"red","blue")
-    if(F){x <- Protein_feature_result_plot$Proscore
-    h<-hist(x, breaks=10, col="red", xlab="Miles Per Gallon",
-            main="Histogram with Normal Curve")
-    xfit<-seq(min(x),max(x),length=40)
-    yfit<-dnorm(xfit,mean=mean(x),sd=sd(x))
-    yfit <- yfit*diff(h$mids[1:2])*length(x)
-    lines(xfit, yfit, col="blue", lwd=2)
-    quantile(x, c(0.99))}
              
     png(paste0(outputdir,"/PROTEIN_Score_histogram.png"))
     p<-ggplot(data=Protein_feature_result_plot,aes(x=Proscore,color=target_decoy, fill=target_decoy)) + geom_histogram( fill="white",alpha=0.5, bins = 200)  +
@@ -3739,6 +3778,11 @@ FDR_cutoff_plot<-function(Peptide_plot_list,FDR_cutoff=0.1,FDR_strip=500,plot_fd
 }
 
 plot_matching_score<-function(Peptide_plot_list,peaklist,charge,ppm,outputdir=getwd()){
+  if (ppm>=25) {
+    instrument_ppm=50
+  }else{
+    instrument_ppm=10
+  }
   message("plot matching isotopic pattern")
    suppressMessages(suppressWarnings(require(enviPat)))
    suppressMessages(suppressWarnings(require(dplyr)))
@@ -4469,10 +4513,23 @@ PMF_Cardinal_Datafilelist_quant<-function (datafile, Peptide_Summary_searchlist,
   else {
     rotate = rep(0, length(datafile))
   }
-  for (z in 1:length(datafile)) {
-    imdata <- Load_Cardinal_imaging(datafile[z], preprocessing = F, 
-                                    attach.only = T, resolution = 200, rotate = rotate[z], 
-                                    as = "MSImageSet", BPPARAM = BPPARAM)
+ 
+    datafile_imzML<-datafile
+    for (z in 1:length(datafile)){
+      name <-gsub(base::dirname(datafile[z]),"",datafile[z])
+      name <-gsub(".imzML$","",name)
+      name <-gsub("/$","",name)
+      folder<-base::dirname(datafile[z])
+      #imdata <- Cardinal::readImzML(datafile[z],preprocessing = F,attach.only = T,resolution = 200,rotate = rotate[z],as="MSImageSet",BPPARAM = BPPARAM)
+      if (!str_detect(datafile[z],".imzML$")){
+        datafile_imzML[z]<-paste0(datafile[z],".imzML")
+      }
+      imdata <- Cardinal::readMSIData(datafile_imzML[z],  attach.only=T,as="MSImageSet",resolution=200, units="ppm",BPPARAM=BPPARAM)
+      
+      
+    #imdata <- Load_Cardinal_imaging(datafile[z], preprocessing = F, 
+     #                               attach.only = T, resolution = 200, rotate = rotate[z], 
+    #                                as = "MSImageSet", BPPARAM = BPPARAM)
     name <- gsub(base::dirname(datafile[z]), "", datafile[z])
     folder <- base::dirname(datafile[z])
     coordata = imdata@pixelData@data

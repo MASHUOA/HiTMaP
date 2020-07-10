@@ -146,23 +146,24 @@ Load_Cardinal_imaging<-function(datafile=tk_choose.files(filter = Filters,
                                 attach.only=TRUE,
                                 preprocessing=F,
                                 rotate=0,as="MSImagingExperiment",
-                                mzrange=NULL){
+                                mzrange=NULL,is_centroided=F){
   #imdata_meta <- importImzMl(datafile, coordinates = matrix(c(2, 4),nrow=1, ncol=2),removeEmptySpectra = F, centroided = T)
-  
+  datafile<-gsub("\\\\", "/", datafile)
   datafiles<-gsub(".imzML", "", datafile)
   workdir<-base::dirname(datafiles) 
   name <-gsub(paste0(base::dirname(datafiles),"/"),"",datafiles)
   folder<-base::dirname(datafiles)
   if (rotate==0){
-    imdata <-  suppressMessages(suppressWarnings(Cardinal::readImzML(name, folder, attach.only=attach.only,as=as,resolution=resolution, units="ppm",BPPARAM=BPPARAM,mass.range=mzrange)))
+    imdata <-  suppressMessages(suppressWarnings(Cardinal::readImzML(name, folder, attach.only=attach.only,as=as,resolution=resolution, units="ppm",BPPARAM=BPPARAM,mass.range=mzrange,is_centroided=is_centroided)))
     
   }else  {
-    imdata <-  suppressMessages(suppressWarnings(readImzML(name, folder, attach.only=attach.only,as=as,resolution=resolution, units="ppm",rotate = rotate,BPPARAM=BPPARAM,mass.range=mzrange)))
+    imdata <-  suppressMessages(suppressWarnings(Cardinal::readImzML(name, folder, attach.only=attach.only,as=as,resolution=resolution, units="ppm",rotate = rotate,BPPARAM=BPPARAM,mass.range=mzrange,is_centroided=is_centroided)))
   }
   if (preprocessing){
     imdata <- try(batchProcess(imdata, normalize=FALSE, smoothSignal=TRUE, reduceBaseline=list(method = "median",blocks=500, fun=min, spar=1),
                                peakPick=list(SNR=12), peakAlign=TRUE,BPPARAM=BPPARAM))
   }
+  imdata@centroided=is_centroided
   imdata
   
 }
@@ -554,7 +555,7 @@ cluster_image_grid<-function(clusterID,
                              smooth.image="gaussian",
                              contrast.enhance = "suppression",
                              colorpallet="Set1",
-                             plot_layout="grid",
+                             plot_layout=c("line","grid"),
                              export_Header_table=F,
                              export_footer_table=F,
                              
@@ -1414,7 +1415,7 @@ readImzML <- function(name, folder = getwd(), attach.only = TRUE,
   }
 }
 
-.readImzML <- function(file) {
+.readImzML_H <- function(file) {
   parse <- .Call("C_readImzML", normalizePath(file), PACKAGE="Cardinal")
   len <- sapply(parse$experimentMetadata, nchar, type="bytes")
   experimentMetadata <- parse$experimentMetadata[len > 0]
@@ -1424,14 +1425,14 @@ readImzML <- function(name, folder = getwd(), attach.only = TRUE,
     intensityArrayList=as(parse$intensityArrayList, "DataFrame"),
     metadata=experimentMetadata)
 }
-intensityData<-function(x){
+intensityData_H<-function(x){
   x@intensityData
 }
 
-metadata<-function(x){
+metadata_H<-function(x){
   x@metadata
 }
-.readIbd <- function(file, info, outclass, attach.only,
+.readIbd_H <- function(file, info, outclass, attach.only,
                      mass.range, resolution, units,...)
 {
    suppressMessages(suppressWarnings(require(matter)))
@@ -1552,7 +1553,7 @@ metadata<-function(x){
   object
 }
 
-.MSImagingInfo <- setClass("MSImagingInfo",
+.MSImagingInfo_H <- setClass("MSImagingInfo",
                            contains = "Vector",
                            slots = c(
                              scanList = "DataTable",
@@ -1562,7 +1563,7 @@ metadata<-function(x){
                              scanList = DataFrame(),
                              mzArrayList = DataFrame(),
                              intensityArrayList = DataFrame()))
-.message <- function(..., progress=c("none", "start", "stop", "increment"), min=0, max=1) {
+.message_H <- function(..., progress=c("none", "start", "stop", "increment"), min=0, max=1) {
   progress <- match.arg(progress)
   if ( progress == "none" ) {
     .log(...)
@@ -1591,7 +1592,7 @@ metadata<-function(x){
     }
   }
 }
-.log <- function(...) {
+.log_H <- function(...) {
   msg <- paste(date(), paste0(..., collapse="\n  "))
   .Cardinal$log <- append(.Cardinal$log, msg)
   elapsed <- proc.time()[3] - .Cardinal$time$flush
@@ -2027,7 +2028,7 @@ recheck_peptide_score<-function(formula="AGLQFPVGR",peaklist=read.csv(paste0(get
  peaklist 
 }
 
-IAnnotatedDataFrame<-function (data, varMetadata, dimLabels = c("pixelNames", 
+IAnnotatedDataFrame_H<-function (data, varMetadata, dimLabels = c("pixelNames", 
                                            "pixelColumns"), ...) 
 {
   reqLabelTypes <- c("dim", "sample", "pheno")
@@ -2215,3 +2216,18 @@ brewer.pal_n<-function(n,colorstyle){
   
 }
 
+Parallel.OS<-function(Thread=1,bpprogressbar_t=TRUE){
+  library(BiocParallel)
+  if(Thread!=1){
+    switch(Sys.info()[['sysname']],
+         Windows= {BPPARAM=BiocParallel::SnowParam()},
+         Linux  = {BPPARAM=BiocParallel::MulticoreParam()},
+         Darwin = {BPPARAM=BiocParallel::MulticoreParam()}) 
+    BiocParallel::bpworkers(BPPARAM)=Thread
+  }else{
+    BPPARAM=BiocParallel::SerialParam() 
+    } 
+  
+  bpprogressbar(BPPARAM)=bpprogressbar_t
+  return(BPPARAM)
+}

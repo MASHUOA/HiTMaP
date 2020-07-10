@@ -1,6 +1,8 @@
 ---
 title: "HiTMaP"
 output:
+  word_document: default
+  pdf_document: default
   html_document: 
     keep_md: yes
     toc: yes
@@ -12,8 +14,6 @@ output:
     highlight: zenburn
     fig_width: 10
     fig_height: 10
-  pdf_document: default
-  word_document: default
   md_document:
     variant: markdown_github
 bibliography: references.bib
@@ -40,7 +40,7 @@ install.packages("remotes")
 Sys.setenv(R_REMOTES_NO_ERRORS_FROM_WARNINGS=T)
 #library(devtools)
 library(remotes)
-install_github("MASHUOA/HiTMaP",auth_token ="6b325a9ea13b64d40cbdf5d73e7495e8ecc574c3",force=T)
+install_github("MASHUOA/HiTMaP",auth_token ="cf6d877f8b6ada1865987b13f9e9996c1883014a",force=T)
 3
 no
 #Update all dependencies
@@ -48,6 +48,7 @@ BiocManager::install(ask = F)
 yes
 library(HiTMaP)
 ```
+
 
 ### For Linux OS users
 Run the codes as below to enable the required components in Linux console.
@@ -100,6 +101,7 @@ imaging_identification(
                datafile=paste0(wd,datafile),
                threshold=0.005, 
                ppm=5,
+               FDR_cutoff = 0.05,
 #==============specify the digestion enzyme specificity
                Digestion_site="trypsin",
 #==============specify the range of missed Cleavages
@@ -206,14 +208,22 @@ head(protein_pmf_result)
 ```
 
 ## Scoring system for protein and peptide
-**Score** in peptide result table shows the isotopic pattern matching score of the peptide. In Protein result table, it shows the intensity weighted peptide spectrum matching score.
+**Score** in peptide result table shows the isotopic pattern matching score of the peptide (Pepscore). In Protein result table, it shows the protein score (Proscore). The Pepscore consist of two parts: Intensity_Score and Mass_error_Score:
 
-$Score=\log(Observed\_Peak/Theoritical\_peak)-\log(\sqrt{\frac{\sum_{x = 1}^{n} (Theoritical\_intensity_x-Observed\_intensity_x)^2}{\sum_{x = 1}^{n} (Theoritical\_intensity_x)^2(Observed\_intensity_x)^2}}$
+   + Intensity_Score indicates how well a putative isotopic pattern can be matched to the observed spectrum.The default scoring method is SQRTP. It combines the Square root mean differences between observed and theoretical peaks and observed proportion of the isotopic peaks above a certain relative intensity threshold.
+   
+   + Mass_error_Score indicates the summary of mass error (in *ppm*) for every detected isotopic peak. in order to integrate the Mass_error_Score in to scoring system. the mean ppm error has been normalized by ppm tolerance, and supplied to the probability normal distributions (*pnorm* function for R). The resulting value (Quantiles of the given Probability Density) is deducted by 0.5 and converted into absolute value.
 
+$Intensity\_Score=\log(PeakCount_{Observed}/PeakCount_{Theoritical})-\log(\sqrt{\frac{\sum_{x = 1}^{n} (Theoritical\_intensity_x-Observed\_intensity_x)^2}{\sum_{x = 1}^{n} (Theoritical\_intensity_x)^2(Observed\_intensity_x)^2}}$
+
+$Mass\_error\_Score=|(p\_norm\_dist(\frac{mean\_ppm\_error}{ppm\_tolerance})-0.5)|$
+
+
+$Pepscore=Intensity\_Score-Mass\_error\_Score$
 
 **Proscore** in the protein result table shows the overall estimation of the protein identification Accuracy
 
-$Proscore=\frac{\sum_{x = 1}^{n}(Score_x*log(Intensity_x))}{mean(log(Intensity))}*Protein\_coverage*Normalized\_intensity$
+$Proscore=\frac{\sum_{x = 1}^{n}(Pepscore_x*log(Intensity_x))}{mean(log(Intensity))}*Protein\_coverage*Normalized\_intensity$
 
 A *Peptide_region_file.csv* has also been created to summarise all the IDs in this data file:
 
@@ -282,7 +292,8 @@ Protein_Summary_tb<-read.csv(paste(wd,"/Summary folder","/Protein_Summary.csv", 
 
 Now you could visualized the interest proteins and their associated peptides' distribution via cluster imaging function.
 
-```{r CLuster imaging}
+```{r CLuster imaging,cache=FALSE}
+library(magick)
 p_cluster1<-image_read(paste0(wd,"/Summary folder/cluster Ion images/791_cluster_imaging.png"))
 print(p_cluster1)
 p_cluster2<-image_read(paste0(wd,"/Summary folder/cluster Ion images/5027_cluster_imaging.png"))
@@ -438,7 +449,39 @@ imaging_identification(Digestion_site="trypsin",Fastadatabase="uniprot_cali.fast
 imaging_identification(Digestion_site="trypsin",Fastadatabase="uniprot_cali.fasta",output_candidatelist=T,spectra_segments_per_file=1,use_previous_candidates=T,ppm=5,Protein_desc_of_interest="Pro_CALI",threshold=0.005,FDR_cutoff=0.05)
 
 #peptide calibrant
-imaging_identification(Digestion_site="trypsin",Fastadatabase="uniprot_cali.fasta",output_candidatelist=T,spectra_segments_per_file=1,use_previous_candidates=F,peptide_ID_filter=1,ppm=5,missedCleavages=0:5,Modifications=list(fixed=NULL,fixmod_position=NULL,variable=c("Amide"),varmod_position=c(6)),FDR_cutoff=0.1,Substitute_AA=list(AA=c("X"),AA_new_formula=c("C5H5NO2"),Formula_with_water=c(FALSE)))
+imaging_identification(
+  Digestion_site="trypsin",
+  Fastadatabase="uniprot_cali.fasta",
+  output_candidatelist=T,
+  plot_matching_score=T,
+  spectra_segments_per_file=1,
+  use_previous_candidates=F,
+  peptide_ID_filter=1,ppm=5,missedCleavages=0:5,
+  Modifications=list(fixed=NULL,fixmod_position=NULL,variable=c("Amide"),varmod_position=c(6)),
+  FDR_cutoff=0.1,
+  Substitute_AA=list(AA=c("X"),AA_new_formula=c("C5H5NO2"),Formula_with_water=c(FALSE)))
+
+imaging_identification(
+  Digestion_site="trypsin",
+  Fastadatabase="uniprot_cali.fasta",
+  output_candidatelist=T,
+  plot_matching_score=T,
+  spectra_segments_per_file=1,
+  use_previous_candidates=T,
+  peptide_ID_filter=1,ppm=5,missedCleavages=0:5,
+  FDR_cutoff=0.1)
+
+imaging_identification(
+  Digestion_site="trypsin",
+  Fastadatabase="calibrants.fasta",
+  output_candidatelist=T,
+  plot_matching_score=T,
+  spectra_segments_per_file=1,
+  use_previous_candidates=T,
+  peptide_ID_filter=1,ppm=5,missedCleavages=0:5,
+  Modifications=list(fixed=NULL,fixmod_position=NULL,variable=c("Amide"),varmod_position=c(6)),
+  FDR_cutoff=100,
+  Substitute_AA=list(AA=c("X"),AA_new_formula=c("C5H5NO2"),Formula_with_water=c(FALSE)),Thread = 1)
 
 imaging_identification(Digestion_site="trypsin",Fastadatabase="uniprot_cali.fasta",output_candidatelist=T,spectra_segments_per_file=1,use_previous_candidates=T,peptide_ID_filter=1,ppm=5,missedCleavages=0:5)
 
