@@ -444,6 +444,19 @@ imaging_identification(
   Substitute_AA=list(AA=c("X"),AA_new_formula=c("C5H5NO2"),Formula_with_water=c(FALSE)))
 
 imaging_identification(
+  adducts = c("M+H","M+Na"),
+  Digestion_site="trypsin",
+  Fastadatabase="uniprot_cali.fasta",
+  output_candidatelist=T,
+  plot_matching_score=T,
+  spectra_segments_per_file=1,
+  use_previous_candidates=F,
+  peptide_ID_filter=1,ppm=5,missedCleavages=0:5,
+  Modifications=list(fixed=NULL,fixmod_position=NULL,variable=c("Amide"),varmod_position=c(6)),
+  FDR_cutoff=0.1,
+  Substitute_AA=list(AA=c("X"),AA_new_formula=c("C5H5NO2"),Formula_with_water=c(FALSE)))
+
+imaging_identification(
   Digestion_site="trypsin",
   Fastadatabase="uniprot_cali.fasta",
   output_candidatelist=T,

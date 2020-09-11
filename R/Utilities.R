@@ -592,12 +592,16 @@ cluster_image_grid<-function(clusterID,
   #message(outputpng)
   candidate=SMPLIST[SMPLIST[[ClusterID_colname]]==clusterID,]
   #candidate=candidate[order(as.character())]
+  if ("Peptide" %in% colnames(candidate)){
   candidate_u<- candidate %>% group_by(mz) %>% dplyr::summarise(Peptide=Peptide[1])
+
+  candidate<-merge(data.frame(candidate_u),candidate,by=c("mz","Peptide"),sort=F)
+  }
   candidateunique=as.numeric(as.character(unique(candidate[,"mz"])))
   candidateunique=candidateunique[order(as.character(candidateunique))]
-  candidate<-merge(data.frame(candidate_u),candidate,by=c("mz","Peptide"),sort=F)
   if(is.null(candidate$desc)){
     candidate_unique_table=unique(candidate[,c("mz",componentID_colname,"formula","adduct")])
+    cluster_desc<-"-"
   }else{
     candidate_unique_table=unique(candidate[,c(componentID_colname,"mz","formula","adduct")])
     cluster_desc<-unique(candidate$desc)[1]
@@ -914,7 +918,7 @@ cluster_image_grid<-function(clusterID,
          #pngfile_big<-image_modulate(pngfile_big, brightness = 100 + 25 * length(candidateunique), saturation = 100)
          #pngfile_big<-image_threshold(pngfile_big,type = "white", threshold = "50%",channel = "All")
          #pngfile_big<-image_annotate(pngfile_big,paste(cluster_desc),gravity = "north",size = 50,color = "white")
-         pngfile_big<-image_annotate(pngfile_big,cluster_desc,gravity = "north",size = 30*40/width(cluster_desc),color = "white")
+         pngfile_big<-image_annotate(pngfile_big,cluster_desc,gravity = "north",size = 30*40/nchar(cluster_desc),color = "white")
          
          pngfile_big<-image_annotate(pngfile_big,"0%        Relative intensity        100%",location = "+55+160",gravity = "northeast",size = 30,color = "white",degree=270)
          #pngfile_big<-image_annotate(pngfile_big,"0                                               100",location = "+52+165",gravity = "northeast",size = 30,color = "white",degree=270)
@@ -934,7 +938,7 @@ cluster_image_grid<-function(clusterID,
         pngfile_big<-image_modulate(pngfile_big, brightness = 100 + 25 * length(candidateunique), saturation = 100)
         pngfile_big<-image_threshold(pngfile_big,type = "white", threshold = "50%",channel = "All")
         #pngfile_big<-image_annotate(pngfile_big,paste(cluster_desc),gravity = "north",size = 50,color = "white")
-        pngfile_big<-image_annotate(pngfile_big,cluster_desc,gravity = "north",size = 30*40/width(cluster_desc),color = "white")
+        pngfile_big<-image_annotate(pngfile_big,cluster_desc,gravity = "north",size = 30*40/nchar(cluster_desc),color = "white")
         pngfile_big<-image_annotate(pngfile_big,"0%         Relative intensity        100%",location = "+55+160",gravity = "northeast",size = 30,color = "white",degree=270)
         
         #pngfile_big<-image_annotate(pngfile_big,"0%                                               100%",location = "+55+160",gravity = "northeast",size = 30,color = "white",degree=270)

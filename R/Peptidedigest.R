@@ -38,9 +38,8 @@ Filters <- matrix(c( "imzml file", ".imzML",
 #' @param plot_ion_image \code{"Peptide_feature_summarya"} follow-up process that will plot every connponents in the \code{"peptide shortlist"}
 #' @param parallel the number of threads will be used in the PMF search, this option now only works for windows OS
 #' @param spectra_segments_per_file optimal number of distinctive regions in the imaging, a virtual segmentation will be applied to the image files with this value. To have a better PMF result you may set a value that in the sweet point of sensitivety and false discovery rate (FDR).
-#' @param spatialKMeans set true to enable a \code{"spatialKMeans"}  method for the automatic virtual segmentation. If a region rank file was supplied, you can disable this to perform a mannual segmentation.
-#' @param Smooth_range \code{"spatialKMeans"} pixel smooth range 
-#' @param Virtual_segmentation set \code{"TRUE"} if you want to overide the automaitic segmentation
+#' @param Segmentation set as "spatialKMeans" to enable a \code{"spatialKMeans"} Segmentation; set as "spatialShrunkenCentroids" to enable a \code{"spatialShrunkenCentroids"} Segmentation; If a region rank file was supplied, you can set this as "Virtual_segmentation" to perform a manual segmentation; Set it as "none" to bypass the segmentation.
+#' @param Smooth_range \code{"Segmentation"} pixel smooth range 
 #' @param Virtual_segmentation_rankfile specify a region rank file contains region information for manualy region segmentation
 #' @param Rotate_IMG specify a configuration file to further change the rotation of the images
 #' @param plot_cluster_image_grid set as \code{"TRUE"} to enable the protein cluster image function.
@@ -64,7 +63,7 @@ Filters <- matrix(c( "imzml file", ".imzML",
 #'                        adducts=c("M+H","M+NH4","M+Na"),PMF_analysis=TRUE,
 #'                        Protein_feature_summary=TRUE,plot_cluster_image=TRUE,
 #'                        Peptide_feature_summary=TRUE,plot_ion_image=FALSE,
-#'                        parallel=3,spectra_segments_per_file=5,spatialKMeans=TRUE
+#'                        parallel=3,spectra_segments_per_file=5,Segmentation="spatialKMeans"
 #'                        )
 #'
 #' @export
@@ -96,9 +95,8 @@ imaging_identification<-function(
                plot_ion_image=FALSE,
                parallel=detectCores(),
                spectra_segments_per_file=5,
-               spatialKMeans=TRUE,
+               Segmentation=c("spatialKMeans","spatialShrunkenCentroids","Virtual_segmentation","none"),
                Smooth_range=1,
-               Virtual_segmentation=!spatialKMeans,
                Virtual_segmentation_rankfile=NULL,
                Rotate_IMG=NULL,
                Region_feature_summary=FALSE,
@@ -183,7 +181,7 @@ imaging_identification<-function(
   if (!is.null(Rotate_IMG)){Rotate_IMG=read.csv(Rotate_IMG,stringsAsFactors = F)}
   
   if(PMF_analysis){
-  message(paste(Fastadatabase,"was selected as database","\nAssume", spectra_segments_per_file,"distinguishable region(s)  to be existed in the image.","\nSpectrum intensity threshold:",percent(threshold),"\nmz tolerance:",ppm,"ppm","\nPerform manual segmentation:",Virtual_segmentation,
+  message(paste(Fastadatabase,"was selected as database","\nSpectrum intensity threshold:",percent(threshold),"\nmz tolerance:",ppm,"ppm","Segmentation method:",Segmentation,
                 "\nManual segmentation def file:",ifelse(is.null(Virtual_segmentation_rankfile),"None",Virtual_segmentation_rankfile),"\nBypass spectrum generation:",Bypass_generate_spectrum))
   Peptide_Summary_searchlist<-unique(Protein_feature_list)
   
@@ -192,9 +190,8 @@ imaging_identification<-function(
                                                   SPECTRUM_for_average=spectra_segments_per_file,
                                                   threshold=threshold,rotate = Rotate_IMG,
                                                   ppm=ppm,
-                                                  spatialKMeans=spatialKMeans,
+                                                  Segmentation=Segmentation,
                                                   PMFsearch = PMFsearch,
-                                                  Virtual_segmentation=Virtual_segmentation,
                                                   Virtual_segmentation_rankfile = Virtual_segmentation_rankfile,
                                                   BPPARAM = BPPARAM,
                                                   Bypass_generate_spectrum=Bypass_generate_spectrum,
@@ -492,9 +489,8 @@ imaging_identification<-function(
 #' @param plot_ion_image  \code{"Peptide_feature_summarya"} follow-up process that will plot every connponents in the \code{"peptide shortlist"}
 #' @param parallel the number of threads will be used in the PMF search, this option now only works for windows OS
 #' @param spectra_segments_per_file optimal number of distinctive regions in the imaging, a virtual segmentation will be applied to the image files with this value. To have a better PMF result you may set a value that in the sweet point of sensitivety and false discovery rate (FDR).
-#' @param spatialKMeans set true to enable a \code{"spatialKMeans"}  method for the automatic virtual segmentation. If a region rank file was supplied, you can disable this to perform a mannual segmentation.
-#' @param Smooth_range \code{"spatialKMeans"} pixel smooth range 
-#' @param Virtual_segmentation set \code{"TRUE"} if you want to overide the automaitic segmentation
+#' @param Segmentation set as "spatialKMeans" to enable a \code{"spatialKMeans"} Segmentation; set as "spatialShrunkenCentroids" to enable a \code{"spatialShrunkenCentroids"} Segmentation; If a region rank file was supplied, you can set this as "Virtual_segmentation" to perform a manual segmentation; Set it as "none" to bypass the segmentation.
+#' @param Smooth_range \code{"Segmentation"} pixel smooth range 
 #' @param Virtual_segmentation_rankfile specify a region rank file contains region information for manualy region segmentation
 #' @return None
 #'
@@ -535,9 +531,8 @@ imaging_Spatial_Quant<-function(
   parallel=detectCores()/2,
   #==============Set a number (1 to maximum pixels in the data file) if you want to dig more peaks in the raw data
   spectra_segments_per_file=5,
-  spatialKMeans=F,
   Smooth_range=1,
-  Virtual_segmentation=T,
+  Segmentation=c("spatialKMeans","spatialShrunkenCentroids","Virtual_segmentation","none"),
   Virtual_segmentation_rankfile=tk_choose.files(default = "Z:/George skyline results/maldiimaging/Maldi_imaging - Copy/radius_rank.csv",caption  = "Choose Virtual segmentation rank info file"),
   Spectrum_feature_summary=T,
   Region_feature_summary=T,
@@ -595,8 +590,7 @@ imaging_Spatial_Quant<-function(
                                                     SPECTRUM_for_average=spectra_segments_per_file,
                                                     threshold=threshold,
                                                     ppm=ppm,
-                                                    spatialKMeans=spatialKMeans,
-                                                    Virtual_segmentation=Virtual_segmentation,
+                                                    Segmentation=Segmentation,
                                                     Virtual_segmentation_rankfile=Virtual_segmentation_rankfile,
                                                     Smooth_range=Smooth_range,BPPARAM = BPPARAM,
                                                     PMFsearch = TRUE)
@@ -1993,6 +1987,8 @@ simple_ion_image_cardinal<-function(datafile=tk_choose.files(filter =  matrix(c(
                                     smooth.image = "gaussian",
                                     contrast.enhance = "none",
                                     ...){
+  library(stringr)
+  library(magick)
   datafile<-gsub(".imzML", "", datafile)
   workdir=base::dirname(datafile[1])
   if (dir.exists(paste0(workdir ,"/Ion images/"))==FALSE){dir.create(paste0(workdir ,"/Ion images/"))}
@@ -2002,7 +1998,7 @@ simple_ion_image_cardinal<-function(datafile=tk_choose.files(filter =  matrix(c(
   for (z in 1:length(datafile)){
     name <-gsub(paste0(base::dirname(datafile[z]),"/"),"",datafile[z])
     folder<-base::dirname(datafile[z])
-    MALDI_IMAGE <- readImzML(name, folder, attach.only=F,as = "MSImageSet")
+    MALDI_IMAGE <- Cardinal::readImzML(name, folder, attach.only=F)
     print(paste("Plot Ion Images from",name))
     if (dir.exists(paste0(workdir ,"/Ion images/",name))==FALSE){dir.create(paste0(workdir ,"/Ion images/",name))}
     
@@ -2082,11 +2078,11 @@ Plot_Ion_image_Png_Cardinal<- function(WKdir, imagefile, png_filename, mz,adduct
 
 PMF_Cardinal_Datafilelist<-function(datafile,Peptide_Summary_searchlist, 
                                     SPECTRUM_for_average=5,threshold=0.1,
-                                    ppm,spatialKMeans=FALSE,
+                                    ppm,
+                                    Segmentation=c("spatialKMeans","spatialShrunkenCentroids","Virtual_segmentation","none"),
                                     Smooth_range=1,
                                     colorstyle="Set1",
-                                    Virtual_segmentation=FALSE,
-                                    Virtual_segmentation_rankfile="Z:\\George skyline results\\maldiimaging\\Maldi_imaging - Copy\\radius_rank.csv",
+                                    Virtual_segmentation_rankfile=NULL,
                                     PMFsearch=TRUE,
                                     rotate=NULL,
                                     matching_validation=T,
@@ -2161,10 +2157,10 @@ PMF_Cardinal_Datafilelist<-function(datafile,Peptide_Summary_searchlist,
   if (!str_detect(datafile[z],".imzML$")){
         datafile_imzML[z]<-paste0(datafile[z],".imzML")
       }
-  imdata <- Cardinal::readMSIData(datafile_imzML[z],  attach.only=T,as="MSImageSet",resolution=200, units="ppm",BPPARAM=BPPARAM)
+  imdata <- Cardinal::readMSIData(datafile_imzML[z],  attach.only=T,as="MSImagingExperiment",resolution=200, units="ppm",BPPARAM=BPPARAM)
   
   
-  coordata=imdata@pixelData@data
+  coordata=as.data.frame(imdata@elementMetadata@coord)
   if (dir.exists(paste0(gsub(".imzML$","",datafile[z]) ," ID"))==FALSE){dir.create(paste0(gsub(".imzML$","",datafile[z])  ," ID"))}
   setwd(paste0(gsub(".imzML$","",datafile[z])  ," ID")) 
     
@@ -2174,7 +2170,7 @@ PMF_Cardinal_Datafilelist<-function(datafile,Peptide_Summary_searchlist,
      #cl=autoStopCluster(makeCluster(6))
 
   
-  if (spatialKMeans ){
+    if (Segmentation=="spatialKMeans") {
     set.seed(1)
   #message(paste0("spatialKMeans computing for ",name))
   skm <-  suppressMessages(suppressWarnings(spatialKMeans(imdata, r=Smooth_range, k=SPECTRUM_for_average, method="adaptive")))
@@ -2265,10 +2261,103 @@ PMF_Cardinal_Datafilelist<-function(datafile,Peptide_Summary_searchlist,
   
   
   
-  }else if(Virtual_segmentation){
+  }
+    else if (Segmentation=="spatialShrunkenCentroids") {
+    set.seed(1)
+    #message(paste0("spatialShrunkenCentroids computing for ",name))
+    skm <-  suppressMessages(suppressWarnings(spatialShrunkenCentroids(imdata, r=Smooth_range, k=SPECTRUM_for_average, method="adaptive")))
+    message(paste0("spatialShrunkenCentroids finished for ",name))
+    #skm@resultData[["new"]]=skm@resultData[["r = 1, k = 5"]]
+    png(paste(getwd(),"\\","spatialShrunkenCentroids_image_plot_",SPECTRUM_for_average,"_segs.png",sep=""),width = 1024,height = 720)
+    #plot(skm, col=c("pink", "blue", "red","orange","navyblue"), type=c('p','h'), key=FALSE)
+    #par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(1+ceiling(SPECTRUM_for_average/2), 2),
+    par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(1, 2),
+        bty="n",pty="s",xaxt="n",
+        yaxt="n",
+        no.readonly = TRUE,ann=FALSE)
+    Cardinal::image(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], key=FALSE, ann=FALSE,axes=FALSE)
+    legend("topright", legend=1:SPECTRUM_for_average, fill=brewer.pal_n(SPECTRUM_for_average,colorstyle), col=brewer.pal_n(SPECTRUM_for_average,"Paired"), bg="transparent",xpd=TRUE,cex = 1)
+    
+    #Cardinal::plot(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], type=c('p','h'), key=T)
+    #Cardinal::plot(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], type=c('p','h'), key=FALSE,mode="centers")
+    #Cardinal::plot(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], type=c('p','h'), key=FALSE,mode="betweenss")
+    Cardinal::plot(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], type=c('p','h'), key=T)
+    
+    legend("topright", legend=1:SPECTRUM_for_average, fill=brewer.pal_n(SPECTRUM_for_average,colorstyle), col=brewer.pal_n(SPECTRUM_for_average,"Paired"), bg="transparent",xpd=TRUE,cex = 1)
+    dev.off()
+    png(paste(getwd(),"\\","spatialShrunkenCentroids_image.png",sep=""),width = 720,height = 720)
+    #plot(skm, col=c("pink", "blue", "red","orange","navyblue"), type=c('p','h'), key=FALSE)
+    #par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(1+ceiling(SPECTRUM_for_average/2), 2),
+    par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(1, 1),
+        bty="n",pty="s",xaxt="n",
+        yaxt="n",
+        no.readonly = TRUE,ann=FALSE)
+    Cardinal::image(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], key=FALSE, ann=FALSE,axes=FALSE)
+    legend("topright", legend=1:SPECTRUM_for_average, fill=brewer.pal_n(SPECTRUM_for_average,colorstyle), col=brewer.pal_n(SPECTRUM_for_average,"Paired"), bg="transparent",xpd=TRUE,cex = 1)
+    
+    #Cardinal::plot(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], type=c('p','h'), key=T)
+    #Cardinal::plot(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], type=c('p','h'), key=FALSE,mode="centers")
+    #Cardinal::plot(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], type=c('p','h'), key=FALSE,mode="betweenss")
+    dev.off()
+    suppressMessages(suppressWarnings(require(magick)))
+    skmimg<-image_read(paste(getwd(),"\\","spatialShrunkenCentroids_image_plot_",SPECTRUM_for_average,"_segs.png",sep=""))
+    
+    
+    png(paste(getwd(),"\\","spatialShrunkenCentroids_image_plot_",SPECTRUM_for_average,"_segs.png",sep=""),width = 1024,height = 480*((SPECTRUM_for_average)))
+    centers=skm@resultData[[1]][["centers"]]
+    
+    centers_mz<-skm@featureData@data[["mz"]]
+    #centers_mz<-mz(imdata)
+    suppressMessages(suppressWarnings(require(ggplot2)))
+    sp<-NULL
+    sp_plot<-NULL
+    for (region in colnames(centers)){
+      sp_plot[[region]]<-data.frame(mz=centers_mz,intensity=centers[,region])
+      sp[[region]]<-ggplot2::ggplot(data=sp_plot[[region]], size=1 ,aes(x=mz, y=intensity,xend=mz,yend=rep(0,length( sp_plot[[region]]$intensity)),colour =brewer.pal_n(SPECTRUM_for_average,colorstyle)[as.numeric(region)])) +
+        geom_segment(show.legend=F,colour =brewer.pal_n(SPECTRUM_for_average,colorstyle)[as.numeric(region)]) +
+        theme_classic() +
+        ggtitle(paste("Mean spectrum"," Segmentation:",region),)
+    }
+    suppressMessages(suppressWarnings(require(gridExtra)))
+    grid.arrange( grobs = sp,ncol=1, nrow = ceiling(SPECTRUM_for_average) )
+    dev.off()
+    
+    skmimg_spec<-image_read(paste(getwd(),"\\","spatialShrunkenCentroids_image_plot_",SPECTRUM_for_average,"_segs.png",sep=""))
+    skmimg<-image_append(c(skmimg,skmimg_spec),stack = T)
+    image_write(skmimg,paste(getwd(),"\\","spatialShrunkenCentroids_image_plot_",SPECTRUM_for_average,"_segs.png",sep=""))
+    withinss=as.data.frame(skm@resultData[[1]][["withinss"]])
+    withinss[,"mz"]<-as.numeric(gsub("m/z = ","",rownames(withinss)))
+    centers=as.data.frame(skm@resultData[[1]][["centers"]])
+    centers[,"mz"]<-as.numeric(gsub("m/z = ","",rownames(centers)))
+    cluster=as.data.frame(skm@resultData[[1]][["cluster"]])
+    cluster$Coor=rownames(cluster)
+    write.csv(withinss,paste("spatialShrunkenCentroids_RESULT","withinss",SPECTRUM_for_average,"segs.csv"),row.names = F)
+    write.csv(centers,paste("spatialShrunkenCentroids_RESULT","centers",SPECTRUM_for_average,"segs.csv"),row.names = F)
+    write.csv(cluster,paste("spatialShrunkenCentroids_RESULT","cluster",SPECTRUM_for_average,"segs.csv"),row.names = F)
+    
+    
+    #cluster=skm@resultData[["r = 1, k = 5"]][["cluster"]]
+    
+    
+    y=skm@resultData[[paste0("r = ",Smooth_range,", k = ", SPECTRUM_for_average)]][["cluster"]]
+    y=as.data.frame(y)
+    rownames(y)=1:nrow(y)
+    y$pixel=1:nrow(y)
+    regions=unique(y[,1])
+    x=NULL
+    for (i in 1:length(regions)){
+      listname=as.character(regions[i])
+      x[[listname]]<-y[y[, 1] == regions[i], "pixel"]
+    }
+    
+    
+    
+    
+  }else if
+    (Segmentation=="Virtual_segmentation"){
   radius_rank=read.csv(file = Virtual_segmentation_rankfile)
   radius_rank=radius_rank[order(radius_rank$Rank),]
-  
+  if (is.null(radius_rank$Core)) radius_rank$Core="central"
   
   coordist_para=function(i,coordata){
     
@@ -2293,8 +2382,8 @@ PMF_Cardinal_Datafilelist<-function(datafile,Peptide_Summary_searchlist,
   
 
   
-  findedge<-function(coordata,center_type){
-    if (missing(center_type)) center_type="central"
+  findedge<-function(coordata,center_type=c("central","southeast","northeast","northwest","southwest")){
+    if (is.null(center_type)) center_type="central"
     
     if (center_type=="central"){
       uniquex=unique(coordata$x)
@@ -2545,28 +2634,28 @@ PMF_Cardinal_Datafilelist<-function(datafile,Peptide_Summary_searchlist,
   region_pattern <- factor(coordata$pattern,levels=unique(coordata$pattern), labels=unique(coordata$pattern))
   #image(imdata, region_pattern ~ x * y, key=T)
   
-  set.seed(1)
-  skm <- spatialKMeans(imdata, r=Smooth_range, k=length(unique(coordata$rank)), method="adaptive")
-  png(paste(getwd(),"\\","spatialKMeans_image",'.png',sep=""),width = 1024,height = 1024)
+  #set.seed(1)
+  #skm <- spatialKMeans(imdata, r=Smooth_range, k=length(unique(coordata$rank)), method="adaptive")
+  #png(paste(getwd(),"\\","spatialKMeans_image",'.png',sep=""),width = 1024,height = 1024)
   #plot(skm, col=c("pink", "blue", "red","orange","navyblue"), type=c('p','h'), key=FALSE)
   #par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(1+ceiling(SPECTRUM_for_average/2), 2),
-  par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(1, 1),
-      bty="n",pty="s",xaxt="n",
-      yaxt="n",
-      no.readonly = TRUE,ann=FALSE)
-  Cardinal::image(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], key=FALSE, ann=FALSE,axes=FALSE)
+  #par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(1, 1),
+  #    bty="n",pty="s",xaxt="n",
+  #    yaxt="n",
+  #    no.readonly = TRUE,ann=FALSE)
+  #print(Cardinal::image(imdata, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], key=FALSE, ann=FALSE,axes=FALSE))
   
-  legend("topright", legend=1:SPECTRUM_for_average, fill=brewer.pal_n(SPECTRUM_for_average,colorstyle), col=brewer.pal_n(SPECTRUM_for_average,"Paired"), bg="transparent",xpd=TRUE,cex = 1)
+  #legend("topright", legend=1:SPECTRUM_for_average, fill=brewer.pal_n(SPECTRUM_for_average,colorstyle), col=brewer.pal_n(SPECTRUM_for_average,"Paired"), bg="transparent",xpd=TRUE,cex = 1)
   
   #Cardinal::plot(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], type=c('p','h'), key=FALSE)
   #Cardinal::plot(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], type=c('p','h'), key=FALSE,mode="centers")
   #Cardinal::plot(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], type=c('p','h'), key=FALSE,mode="betweenss")
-  dev.off()
+  #dev.off()
   
-  for (i in 1:nrow(coordata)){
-  skm@resultData[[paste0("r = ",Smooth_range, ", k = ",length(unique(coordata$rank)))]][["cluster"]][[rownames(coordata)[i]]]=factor(coordata[i,"rank"],levels=unique(coordata$rank))
+  #for (i in 1:nrow(coordata)){
+  #skm@resultData[[paste0("r = ",Smooth_range, ", k = ",length(unique(coordata$rank)))]][["cluster"]][[rownames(coordata)[i]]]=factor(coordata[i,"rank"],levels=unique(coordata$rank))
     
-  }
+  #}
   
   #Cardinal::image(imdata, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], key=FALSE, ann=FALSE,axes=FALSE,groups =pattern)
   
@@ -2581,11 +2670,11 @@ PMF_Cardinal_Datafilelist<-function(datafile,Peptide_Summary_searchlist,
       bty="n",pty="s",xaxt="n",
       yaxt="n",
       no.readonly = TRUE,ann=FALSE)
-  
-  Cardinal::image(skm, col=brewer.pal_n(length(unique(coordata$rank)),colorstyle), key=FALSE, ann=FALSE,axes=FALSE)
+  print(image(imdata, region_pattern ~ x * y,col=brewer.pal_n(length(unique(coordata$rank)),colorstyle), key=TRUE))
+  #print(Cardinal::image(skm, col=brewer.pal_n(length(unique(coordata$rank)),colorstyle), key=FALSE, ann=FALSE,axes=FALSE))
   
   #Cardinal::image(msset,feature=1:3, col=brewer.pal_n(length(unique(coordata$pattern)),colorstyle),strip=T,superpose=T, key=FALSE, ann=FALSE,axes=FALSE,groups =region_pattern)
-  legend("topright", legend=paste(radius_rank$Rank,radius_rank$Name), fill=brewer.pal_n(length(unique(coordata$pattern)),colorstyle), col=brewer.pal_n(length(unique(coordata$pattern)),"Paired"), bg="transparent",xpd=TRUE,cex = 1)
+  #legend("topright", legend=paste(radius_rank$Rank,radius_rank$Name), fill=brewer.pal_n(length(unique(coordata$pattern)),colorstyle), col=brewer.pal_n(length(unique(coordata$pattern)),"Paired"), bg="transparent",xpd=TRUE,cex = 1)
 
   dev.off()
   
@@ -2605,7 +2694,7 @@ if(PMFsearch){
    }else{
     instrument_ppm=10
    }
-    imdata <- Load_Cardinal_imaging(datafile[z],preprocessing = F,resolution = ppm,rotate = rotate[z],as="MSImageSet")
+    imdata <- Load_Cardinal_imaging(datafile[z],preprocessing = F,resolution = ppm,rotate = rotate[z])
     if (dir.exists(paste0(gsub(".imzML$","",datafile[z])  ," ID"))==FALSE){dir.create(paste0(gsub(".imzML$","",datafile[z])  ," ID"))}
     setwd(paste0(gsub(".imzML$","",datafile[z])  ," ID"))
     #cl=makeCluster(8)SPECTRUM_for_average
@@ -2615,21 +2704,40 @@ if(PMFsearch){
     for (SPECTRUM_batch in names(x)){
       if (dir.exists(paste0(datafile[z] ," ID/",SPECTRUM_batch,"/"))==FALSE){dir.create(paste0(datafile[z] ," ID/",SPECTRUM_batch,"/"))}
     #PMFsearch_para<-function(SPECTRUM_batch,x,imdata,name,ppm,cl,Peptide_Summary_file,Peptide_Summary_file_regions){
-    if(ppm<25){imdata_ed <- batchProcess(imdata, normalize=FALSE, smoothSignal=F, reduceBaseline=F,
-                           peakPick=T, peakAlign=FALSE, pixel=pixels(imdata)[unlist(x[SPECTRUM_batch])])}
-    if(ppm>=25){imdata_ed <- batchProcess(imdata, normalize=FALSE, smoothSignal=T, reduceBaseline=T,
-                                           peakPick=T, peakAlign=FALSE, pixel=pixels(imdata)[unlist(x[SPECTRUM_batch])])}
-    #selectedpixel<-get_coord_info(names(pixels(imdata)[unlist(x[SPECTRUM_batch])]))
-
-    if(class(imdata_ed)=="MSImageSet"){
-    spectrum_file_table=imdata_ed@featureData@data
+      imdata_sb<-imdata[,unlist(x[SPECTRUM_batch])]
+      if(ppm<25){
+      #imdata_ed <- batchProcess(imdata, normalize=FALSE, smoothSignal=F, reduceBaseline=F,
+      #                     peakPick=T, peakAlign=FALSE, pixel=pixels(imdata)[unlist(x[SPECTRUM_batch])])
+      imdata_ed<-imdata_sb %>% 
+        smoothSignal(method="gaussian") %>% 
+        #reduceBaseline(method="locmin") %>%
+        peakPick(method="adaptive") %>%
+        peakAlign(tolerance=ppm, units="ppm") %>%
+        #peakFilter(mse_pre, freq.min=0.00) %>%
+        process()
+      }
+    if(ppm>=25){
+      #imdata_ed <- batchProcess(imdata, normalize=FALSE, smoothSignal=T, reduceBaseline=T,
+      #                                     peakPick=T, peakAlign=FALSE, pixel=pixels(imdata)[unlist(x[SPECTRUM_batch])])
+      imdata_ed<-imdata_sb %>% 
+        smoothSignal(method="gaussian") %>% 
+        reduceBaseline(method="locmin") %>%
+        peakPick(method="adaptive") %>%
+        peakAlign(tolerance=ppm, units="ppm") %>%
+        #peakFilter(mse_pre, freq.min=0.00) %>%
+        process()
+      }
+    
+    spectrum_file_table<- summarize(imdata_ed, .stat="mean")
+    spectrum_file_table<-as.data.frame(spectrum_file_table)
+    peaklist<-spectrum_file_table
+    colnames(peaklist)<-c("m.z","intensities")
     savename=paste(name,SPECTRUM_batch)
     message(paste("PMF_analysis",name,"region",SPECTRUM_batch))
-    peaklist<-imdata_ed@featureData@data
     #
     write.csv(peaklist,paste0(datafile[z] ," ID/",SPECTRUM_batch,"/Spectrum.csv"),row.names = F)
-    peaklist<-peaklist[peaklist$mean>0,]
-    colnames(peaklist)<-c("m.z","intensities")
+    #peaklist<-peaklist[peaklist$mean>0,]
+    #colnames(peaklist)<-c("m.z","intensities")
     peaklist<-peaklist[peaklist$intensities>0,]
     peaklist_pmf<-peaklist[peaklist$intensities>(max(peaklist$intensities)*threshold),]
     deconv_peaklist<-isopattern_ppm_filter_peaklist(peaklist,ppm=ppm,threshold=threshold)
@@ -2826,7 +2934,7 @@ if(PMFsearch){
     }
     Peptide_Summary_file_regions<-rbind(Peptide_Summary_file_regions,Peptide_plot_list_2nd)
     #return(list(Peptide_Summary_file,Peptide_Summary_file_regions))
-    }
+    
     }
         
     #PMF_result_file=parallel::parLapply(cl,names(x),PMFsearch_para,x,imdata,name,ppm,cl,Peptide_Summary_file,Peptide_Summary_file_regions)
@@ -4489,8 +4597,8 @@ isopattern_ppm_filter_peaklist<-function(pattern,ppm,threshold=0.001,verbose=T){
 }
 
 PMF_Cardinal_Datafilelist_quant<-function (datafile, Peptide_Summary_searchlist, SPECTRUM_for_average = 5, 
-          threshold = 0.1, ppm, spatialKMeans = FALSE, Smooth_range = 1, 
-          colorstyle = "Set1", Virtual_segmentation = FALSE, 
+          threshold = 0.1, ppm,  Segmentation=c("spatialKMeans","spatialShrunkenCentroids","Virtual_segmentation","none") , Smooth_range = 1, 
+          colorstyle = "Set1", 
           Virtual_segmentation_rankfile = "Z:\\George skyline results\\maldiimaging\\Maldi_imaging - Copy\\radius_rank.csv", 
           PMFsearch = TRUE, rotate = NULL, BPPARAM = bpparam(), ...) 
 {
@@ -4540,9 +4648,9 @@ PMF_Cardinal_Datafilelist_quant<-function (datafile, Peptide_Summary_searchlist,
       dir.create(paste0(datafile[z], " ID"))
     }
     setwd(paste0(datafile[z], " ID"))
-    if (spatialKMeans) {
+    if (Segmentation=="spatialKMeans") {
       set.seed(1)
-      message(paste0("spatialKMeans computing for ", 
+      message(paste0("spatialKMeans Clustering for ", 
                      name))
       skm <- spatialKMeans(imdata, r = Smooth_range, k = SPECTRUM_for_average, 
                            method = "adaptive")
@@ -4591,7 +4699,59 @@ PMF_Cardinal_Datafilelist_quant<-function (datafile, Peptide_Summary_searchlist,
         x[[listname]] <- y[y[, 1] == regions[i], "pixel"]
       }
     }
-    else if (Virtual_segmentation) {
+    else if (Segmentation=="spatialShrunkenCentroids"){
+
+      set.seed(1)
+      message(paste0("spatialShrunkenCentroids Clustering for ", 
+                     name))
+      skm <- spatialShrunkenCentroids(imdata, r = Smooth_range, k = SPECTRUM_for_average, 
+                           method = "adaptive",...)
+      message(paste0("spatialShrunkenCentroids finished for ", 
+                     name))
+      png(paste(getwd(), "\\", "spatialShrunkenCentroids_image_plot", 
+                ".png", sep = ""), width = 1024, 
+          height = 720)
+      par(oma = c(0, 0, 0, 0), tcl = NA, mar = c(0, 0, 
+                                                 1, 1), mfrow = c(1, 2), bty = "n", pty = "s", 
+          xaxt = "n", yaxt = "n", no.readonly = TRUE, 
+          ann = FALSE)
+      Cardinal::image(skm, col = brewer.pal_n(SPECTRUM_for_average, 
+                                              colorstyle), key = FALSE, ann = FALSE, axes = FALSE)
+      legend("topright", legend = 1:SPECTRUM_for_average, 
+             fill = brewer.pal_n(SPECTRUM_for_average, colorstyle), 
+             col = brewer.pal_n(SPECTRUM_for_average, "Paired"), 
+             bg = "transparent", xpd = TRUE, cex = 1)
+      Cardinal::plot(skm, col = brewer.pal_n(SPECTRUM_for_average, 
+                                             colorstyle), type = c("p", "h"), 
+                     key = FALSE, mode = "withinss")
+      legend("topright", legend = 1:SPECTRUM_for_average, 
+             fill = brewer.pal_n(SPECTRUM_for_average, colorstyle), 
+             col = brewer.pal_n(SPECTRUM_for_average, "Paired"), 
+             bg = "transparent", xpd = TRUE, cex = 1)
+      dev.off()
+      withinss = skm@resultData[[1]][["withinss"]]
+      centers = skm@resultData[[1]][["centers"]]
+      cluster = as.data.frame(skm@resultData[[1]][["cluster"]])
+      cluster$Coor = rownames(cluster)
+      write.csv(withinss, paste("spatialShrunkenCentroids_RESULT", 
+                                "withinss.csv"), row.names = F)
+      write.csv(centers, paste("spatialShrunkenCentroids_RESULT", 
+                               "centers.csv"), row.names = F)
+      write.csv(cluster, paste("spatialShrunkenCentroids_RESULT", 
+                               "cluster.csv"), row.names = F)
+      y = skm@resultData[[paste0("r = ", Smooth_range, 
+                                 ", k = ", SPECTRUM_for_average)]][["cluster"]]
+      y = as.data.frame(y)
+      rownames(y) = 1:nrow(y)
+      y$pixel = 1:nrow(y)
+      regions = unique(y[, 1])
+      x = NULL
+      for (i in 1:length(regions)) {
+        listname = as.character(regions[i])
+        x[[listname]] <- y[y[, 1] == regions[i], "pixel"]
+      }
+      }
+    else if (Segmentation=="Virtual_segmentation") {
       radius_rank = read.csv(file = Virtual_segmentation_rankfile)
       radius_rank = radius_rank[order(radius_rank$Rank), 
                                 ]

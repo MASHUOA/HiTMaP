@@ -106,6 +106,7 @@ Protein_feature_list_fun<-function(workdir=getwd(),
                                    database,
                                    Digestion_site="[G]",
                                    missedCleavages=0:1,
+                                   Multiple_mode=c("sequential","parallel"),
                                    adducts=c("M+H","M+NH4","M+Na"),
                                    BPPARAM=bpparam(),
                                    Decoy_search=T,
@@ -138,14 +139,17 @@ Protein_feature_list_fun<-function(workdir=getwd(),
     not_found_rule<-not_found_enzyme[!(not_found_enzyme %in% (Cleavage_rules))]
     Digestion_site_rule<-Cleavage_rules[found_enzyme] 
     Digestion_site_final<- unique(c(Digestion_site_rule,found_rule,not_found_rule))
-     message("Found enzyme: ",found_enzyme)
-     message("Found rule: \"",found_rule,"\"")
+     message("Found enzyme: ",paste(found_enzyme,collapse  = " "))
+     message("Found rule: \"",paste(found_rule,collapse = " "),"\"")
      message("Found customized rule: \"",not_found_rule,"\"")
     Digestion_site_final
    }
    
    Digestion_site<-parse_cleavage_rule(Digestion_site)
    
+   if ('&'(length(Digestion_site)>=2,Multiple_mode=="sequential")){
+     Digestion_site<-paste0(Digestion_site,collapse = "|")
+   }
   
   missedCleavages<<-missedCleavages
   Decoy_adducts=Decoy_adducts[!(Decoy_adducts %in% adducts)]
