@@ -1,8 +1,6 @@
 ---
 title: "HiTMaP"
 output:
-  word_document: default
-  pdf_document: default
   html_document: 
     keep_md: yes
     toc: yes
@@ -14,6 +12,8 @@ output:
     highlight: zenburn
     fig_width: 10
     fig_height: 10
+  pdf_document: default
+  word_document: default
   md_document:
     variant: markdown_github
 bibliography: references.bib
@@ -88,10 +88,10 @@ The HitMaP comes with a series of Maildi imaging data sets acquired from either 
 You can download the example file mannually through this link: "https://github.com/MASHUOA/HiTMaP/releases/download/0.99/Data.tar.gz"
 
 ```{r eval=FALSE, message=FALSE, warning=FALSE, include=TRUE}
-#install.packages("piggyback")
+install.packages("piggyback")
 library(piggyback)
 library(HiTMaP)
-Sys.setenv(GITHUB_TOKEN="a124a067ed1c84f8fd577c972845573922f1bb0f")
+Sys.setenv(GITHUB_TOKEN="cf6d877f8b6ada1865987b13f9e9996c1883014a")
 #made sure that this foler has enough space
 wd=paste0(file.path(path.package(package="HiTMaP")),"/data/")
 setwd(wd)
@@ -113,7 +113,7 @@ library(HiTMaP)
 #set project folder that contains imzML, .ibd and fasta files
 wd=paste0(file.path(path.package(package="HiTMaP")),"/data/")
 #set a series of imzML files to be processed
-datafile=c("Bovin_lens")
+datafile=c("Bovinlens_Trypsin_FT/Bovin_lens.imzML")
 
 
 
@@ -138,7 +138,7 @@ imaging_identification(
                output_candidatelist=T,
 #==============Set the parameters for image segmentation
                spectra_segments_per_file=5,
-               spatialKMeans=TRUE,
+               Segmentation=c("spatialKMeans","spatialShrunkenCentroids","Virtual_segmentation","none"),
                Smooth_range=1,
                Virtual_segmentation=FALSE,
                Virtual_segmentation_rankfile=NULL,
@@ -419,8 +419,9 @@ grid.ftable(Cleavage_df, gp = gpar(fontsize=9,fill = rep(c("grey90", "grey95")))
 Below is a list of commands including the parameters for the example data sets.
 
 ```{r eval=FALSE, include=TRUE}
-
-
+wd=paste0(file.path(path.package(package="HiTMaP")),"/data/")
+setwd(wd)
+#Navigate to the corresponding example data folder ad select the file(s) for a MSI annotation
 #Bovin lens FTICR 
 ##Identifiction
 imaging_identification(Digestion_site="trypsin",Fastadatabase="uniprot-Bovin.fasta",output_candidatelist=T,spectra_segments_per_file=4,use_previous_candidates=F,peptide_ID_filter=3,threshold = 0.005)

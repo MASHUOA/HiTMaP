@@ -12,13 +12,6 @@ URL: \tab
 \usage{
 Generatespectrum_workflow_maldiquant()
 }
-\description{
-\tabular{ll}{
-Package: \tab HiTMaP \cr
-License: \tab GPL (>= 2)\cr
-URL: \tab 
-}
-}
 \references{
 TBD
 }

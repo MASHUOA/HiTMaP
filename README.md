@@ -36,10 +36,10 @@ This is an tutorial for use of HiTMaP (An R package of High-resolution Informati
 ```r
 #install the git package
 install.packages("remotes")
-Sys.setenv(R_REMOTES_NO_ERRORS_FROM_WARNINGS=T)
+install.packages("devtools")
 #library(devtools)
 library(remotes)
-install_github("MASHUOA/HiTMaP",auth_token ="6b325a9ea13b64d40cbdf5d73e7495e8ecc574c3",force=T)
+install_github("MASHUOA/HiTMaP",auth_token ="cf6d877f8b6ada1865987b13f9e9996c1883014a",force=T)
 3
 no
 #Update all dependencies
@@ -47,6 +47,7 @@ BiocManager::install(ask = F)
 yes
 library(HiTMaP)
 ```
+ For windows users, Rtools (*https://cran.r-project.org/bin/windows/Rtools/*) is required.
 
 ### For Linux OS users
 Run the codes as below to enable the required components in Linux console.
@@ -82,7 +83,29 @@ https://www.xquartz.org/
 + Use the following link to download and install the correct tcltk package for your OS version.
 https://cran.r-project.org/bin/macosx/tools/
 
+
+## Example data
+The HitMaP comes with a series of Maildi imaging data sets acquired from either FT-ICR or TOF. By the following codes, you can download these raw data set into a local folder.  
+You can download the example file mannually through this link: "https://github.com/MASHUOA/HiTMaP/releases/download/0.99/Data.tar.gz"
+
+
+```r
+install.packages("piggyback")
+library(piggyback)
+library(HiTMaP)
+Sys.setenv(GITHUB_TOKEN="cf6d877f8b6ada1865987b13f9e9996c1883014a")
+#made sure that this foler has enough space
+wd=paste0(file.path(path.package(package="HiTMaP")),"/data/")
+setwd(wd)
+pb_download("Data.tar.gz", repo = "MASHUOA/HiTMaP", dest = ".")
+untar('Data.tar.gz',exdir =".",  tar="tar")
+#unlink('Data.tar.gz')
+list.dirs()
+```
+
+
 ## Proteomics identification on Maldi imaging data file 
+
 
 Now the HiTMaP is upon running. You could build the candidate list of your target proteome and perform image identification by using the function as below:
 
@@ -93,7 +116,7 @@ library(HiTMaP)
 #set project folder that contains imzML, .ibd and fasta files
 wd=paste0(file.path(path.package(package="HiTMaP")),"/data/")
 #set a series of imzML files to be processed
-datafile=c("Bovin_lens")
+datafile=c("Bovinlens_Trypsin_FT/Bovin_lens.imzML")
 
 
 
@@ -118,7 +141,7 @@ imaging_identification(
                output_candidatelist=T,
 #==============Set the parameters for image segmentation
                spectra_segments_per_file=5,
-               spatialKMeans=TRUE,
+               Segmentation=c("spatialKMeans","spatialShrunkenCentroids","Virtual_segmentation","none"),
                Smooth_range=1,
                Virtual_segmentation=FALSE,
                Virtual_segmentation_rankfile=NULL,
@@ -227,13 +250,23 @@ print(p_pmf)
 ```
 
 ```
+## Warning: `...` is not empty.
+## 
+## We detected these problematic arguments:
+## * `needs_dots`
+## 
+## These dots only exist to allow future extensions and should be empty.
+## Did you misspecify an argument?
+```
+
+```
 ## # A tibble: 1 x 7
 ##   format width height colorspace matte filesize density
 ##   <chr>  <int>  <int> <chr>      <lgl>    <int> <chr>  
 ## 1 PNG     1980   1080 sRGB       FALSE    17664 72x72
 ```
 
-<img src="README_files/figure-html/unnamed-chunk-3-1.png" width="1980" />
+<img src="README_files/figure-html/unnamed-chunk-4-1.png" width="1980" />
 
 list of Peptides and proteins of each region has also been created so that you may check each individual region's result.
 
@@ -244,25 +277,45 @@ head(peptide_pmf_result)
 ```
 
 ```
+## Warning: `...` is not empty.
+## 
+## We detected these problematic arguments:
+## * `needs_dots`
+## 
+## These dots only exist to allow future extensions and should be empty.
+## Did you misspecify an argument?
+```
+
+```
 ## # A tibble: 6 x 23
 ##   Protein    mz Protein_coverage isdecoy Peptide Modification pepmz formula
-##     <int> <dbl>            <dbl>   <int> <fct>   <lgl>        <dbl> <fct>  
+##     <int> <dbl>            <dbl>   <int> <chr>   <lgl>        <dbl> <chr>  
 ## 1      48 1301.           0.0688       0 HLEQFA~ NA           1300. C57H90~
 ## 2      48 1301.           0.0688       0 QYFLDL~ NA           1300. C60H94~
 ## 3      48 1325.           0.0688       0 GSKCIL~ NA           1324. C62H94~
 ## 4      53 1329.           0.0554       0 FKNINP~ NA           1328. C64H98~
 ## 5      53 1450.           0.0554       0 AVQNFT~ NA           1449. C65H97~
 ## 6      53 1606.           0.0554       0 AVQNFT~ NA           1605. C71H10~
-## # ... with 15 more variables: adduct <fct>, charge <int>, start <int>,
+## # ... with 15 more variables: adduct <chr>, charge <int>, start <int>,
 ## #   end <int>, pro_end <int>, mz_align <dbl>, Score <dbl>, Rank <int>,
-## #   moleculeNames <fct>, Region <int>, Delta_ppm <dbl>, Intensity <dbl>,
-## #   peptide_count <int>, desc.x <fct>, desc.y <fct>
+## #   moleculeNames <chr>, Region <int>, Delta_ppm <dbl>, Intensity <dbl>,
+## #   peptide_count <int>, desc.x <chr>, desc.y <chr>
 ```
 
 
 ```r
 protein_pmf_result<-read.csv(paste0(wd,datafile," ID/Protein_segment_PMF_RESULT_3.csv"))
 head(protein_pmf_result)
+```
+
+```
+## Warning: `...` is not empty.
+## 
+## We detected these problematic arguments:
+## * `needs_dots`
+## 
+## These dots only exist to allow future extensions and should be empty.
+## Did you misspecify an argument?
 ```
 
 ```
@@ -275,7 +328,7 @@ head(protein_pmf_result)
 ## 4   10659   0.112        0   327352. 0.745             3           0.164 
 ## 5   10888   0.0798       0   532832. 1.24              3           0.0672
 ## 6   11270   0.107        0  2944154. 1.33              3           0.0745
-## # ... with 2 more variables: Intensity_norm <dbl>, desc <fct>
+## # ... with 2 more variables: Intensity_norm <dbl>, desc <chr>
 ```
 
 ## Scoring system for protein and peptide
@@ -288,6 +341,7 @@ head(protein_pmf_result)
 $Intensity\_Score=\log(PeakCount_{Observed}/PeakCount_{Theoritical})-\log(\sqrt{\frac{\sum_{x = 1}^{n} (Theoritical\_intensity_x-Observed\_intensity_x)^2}{\sum_{x = 1}^{n} (Theoritical\_intensity_x)^2(Observed\_intensity_x)^2}}$
 
 $Mass\_error\_Score=|(p\_norm\_dist(\frac{mean\_ppm\_error}{ppm\_tolerance})-0.5)|$
+
 
 $Pepscore=Intensity\_Score-Mass\_error\_Score$
 
@@ -304,19 +358,29 @@ head(Identification_summary_table)
 ```
 
 ```
+## Warning: `...` is not empty.
+## 
+## We detected these problematic arguments:
+## * `needs_dots`
+## 
+## These dots only exist to allow future extensions and should be empty.
+## Did you misspecify an argument?
+```
+
+```
 ## # A tibble: 6 x 23
 ##   Protein    mz Protein_coverage isdecoy Peptide Modification pepmz formula
-##     <int> <dbl>            <dbl>   <int> <fct>   <lgl>        <dbl> <fct>  
+##     <int> <dbl>            <dbl>   <int> <chr>   <lgl>        <dbl> <chr>  
 ## 1      24 1144.           0.0612       0 GFPGQD~ NA           1143. C51H79~
 ## 2      24 1685.           0.0612       0 DGANGI~ NA           1684. C72H11~
 ## 3      24  742.           0.0612       0 GDSGPP~ NA            741. C29H48~
 ## 4      24 1694.           0.0612       0 LLSTEG~ NA           1693. C72H11~
 ## 5      24 1882.           0.0612       0 GQPGVM~ NA           1881. C82H12~
 ## 6      48 1217.           0.0348       0 ASTSVQ~ NA           1216. C51H94~
-## # ... with 15 more variables: adduct <fct>, charge <int>, start <int>,
+## # ... with 15 more variables: adduct <chr>, charge <int>, start <int>,
 ## #   end <int>, pro_end <int>, mz_align <dbl>, Score <dbl>, Rank <int>,
-## #   moleculeNames <fct>, Region <int>, Delta_ppm <dbl>, Intensity <dbl>,
-## #   peptide_count <int>, desc.x <fct>, desc.y <fct>
+## #   moleculeNames <chr>, Region <int>, Delta_ppm <dbl>, Intensity <dbl>,
+## #   peptide_count <int>, desc.x <chr>, desc.y <chr>
 ```
 
 The details of protein/peptide identification process has been save to the folder named by the segmentation:
@@ -445,17 +509,18 @@ Now you could visualized the interest proteins and their associated peptides' di
 
 ```r
 library(magick)
-```
-
-```
-## Linking to ImageMagick 6.9.9.14
-## Enabled features: cairo, freetype, fftw, ghostscript, lcms, pango, rsvg, webp
-## Disabled features: fontconfig, x11
-```
-
-```r
 p_cluster1<-image_read(paste0(wd,"/Summary folder/cluster Ion images/791_cluster_imaging.png"))
 print(p_cluster1)
+```
+
+```
+## Warning: `...` is not empty.
+## 
+## We detected these problematic arguments:
+## * `needs_dots`
+## 
+## These dots only exist to allow future extensions and should be empty.
+## Did you misspecify an argument?
 ```
 
 ```
@@ -473,6 +538,16 @@ print(p_cluster2)
 ```
 
 ```
+## Warning: `...` is not empty.
+## 
+## We detected these problematic arguments:
+## * `needs_dots`
+## 
+## These dots only exist to allow future extensions and should be empty.
+## Did you misspecify an argument?
+```
+
+```
 ## # A tibble: 1 x 7
 ##   format width height colorspace matte filesize density
 ##   <chr>  <int>  <int> <chr>      <lgl>    <int> <chr>  
@@ -484,6 +559,16 @@ print(p_cluster2)
 ```r
 p_cluster3<-image_read(paste0(wd,"/Summary folder/cluster Ion images/5479_cluster_imaging.png"))
 print(p_cluster3)
+```
+
+```
+## Warning: `...` is not empty.
+## 
+## We detected these problematic arguments:
+## * `needs_dots`
+## 
+## These dots only exist to allow future extensions and should be empty.
+## Did you misspecify an argument?
 ```
 
 ```
@@ -558,6 +643,16 @@ unimod.df[["positions"]]
 ```
 
 ```
+## Warning: `...` is not empty.
+## 
+## We detected these problematic arguments:
+## * `needs_dots`
+## 
+## These dots only exist to allow future extensions and should be empty.
+## Did you misspecify an argument?
+```
+
+```
 ## # A tibble: 6 x 2
 ##   record_id position      
 ##   <chr>     <chr>         
@@ -592,69 +687,43 @@ library(gridExtra)
 grid.ftable(Cleavage_df, gp = gpar(fontsize=9,fill = rep(c("grey90", "grey95"))))
 ```
 
-![](README_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
+![](README_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
 
 
 
-## Example data
-The HitMaP comes with a series of Maildi imaging data sets acquired from either FT-ICR or TOF. By the following codes, you can download these raw data set into a local folder.  
 
-
-```r
-#install.packages("piggyback")
-library(piggyback)
-library(HiTMaP)
-Sys.setenv(GITHUB_TOKEN="a124a067ed1c84f8fd577c972845573922f1bb0f")
-#made sure that this foler has enough space
-wd=paste0(file.path(path.package(package="HiTMaP")),"/data/")
-setwd(wd)
-pb_download("Data.tar.gz", repo = "MASHUOA/HiTMaP", dest = ".")
-untar('Data.tar.gz',exdir =".",  tar="tar")
-#unlink('Data.tar.gz')
-list.dirs()
-```
-
+## Example workflow command
 Below is a list of commands including the parameters for the example data sets.
 
 
 ```r
-#matrisome
-imaging_identification(Digestion_site="(?<=[P]\\w)G(?=\\w)|(?<=[P]\\w)\\w(?=L)",Fastadatabase="matrisome.fasta",spectra_segments_per_file=3)
+wd=paste0(file.path(path.package(package="HiTMaP")),"/data/")
+setwd(wd)
+#Navigate to the corresponding example data folder ad select the file(s) for a MSI annotation
+#Bovin lens FTICR 
+##Identifiction
+imaging_identification(Digestion_site="trypsin",Fastadatabase="uniprot-Bovin.fasta",output_candidatelist=T,spectra_segments_per_file=4,use_previous_candidates=F,peptide_ID_filter=3,threshold = 0.005)
 
-#Human brain FTICR
-imaging_identification(Digestion_site="trypsin",Fastadatabase="uniprot-Human_w_cali.fasta",output_candidatelist=T,spectra_segments_per_file=4,use_previous_candidates=F,ppm=5)
-
-imaging_identification(Digestion_site="trypsin",Fastadatabase="uniprot-Human_w_cali.fasta",output_candidatelist=T,spectra_segments_per_file=4,use_previous_candidates=T,ppm=10,missedCleavages=0:5,Protein_desc_of_interest=c("Histone ","GN=MBP","ACTIN"))
-
-imaging_identification(Digestion_site="trypsin",Fastadatabase="uniprot-Human.fasta",output_candidatelist=T,spectra_segments_per_file=4,use_previous_candidates=T,ppm=12.5,PMF_analysis=T,plot_cluster_image_grid=T,Protein_desc_of_interest=c("Histone ","GN=MBP","ACTIN"))
-
-imaging_identification(Digestion_site="trypsin",Fastadatabase="uniprot-Human.fasta",output_candidatelist=T,spectra_segments_per_file=4,use_previous_candidates=T,ppm=12.5,PMF_analysis=F,plot_cluster_image_grid=T,Protein_desc_of_interest=c("Histone ","GN=MBP","ACTIN"))
-
-imaging_identification(Digestion_site="trypsin",Fastadatabase="uniprot-Human.fasta",output_candidatelist=T,spectra_segments_per_file=4,use_previous_candidates=T,ppm=10,FDR_cutoff = 0.1,PMF_analysis=T,plot_cluster_image_grid=T,Protein_desc_of_interest=c("Histone ","GN=MBP","ACTIN"))
-
-#Bovin lens FTICR
-imaging_identification(Digestion_site="trypsin",Fastadatabase="uniprot-Bovin.fasta",output_candidatelist=T,spectra_segments_per_file=4,use_previous_candidates=T,threshold=0.005)
-
-imaging_identification(Digestion_site="trypsin",Fastadatabase="uniprot-Bovin.fasta",output_candidatelist=T,spectra_segments_per_file=4,use_previous_candidates=T,peptide_ID_filter=3,threshold = 0.005)
-
-imaging_identification(Digestion_site="trypsin",Fastadatabase="uniprot-Bovin.fasta",output_candidatelist=F,spectra_segments_per_file=4,use_previous_candidates=T,peptide_ID_filter=3,threshold = 0.005,FDR_cutoff=0.05)
-
+##Cluster image plotting
 imaging_identification(Digestion_site="trypsin",Fastadatabase="uniprot-Bovin.fasta",output_candidatelist=T,spectra_segments_per_file=4,use_previous_candidates=T,peptide_ID_filter=3,threshold = 0.005,FDR_cutoff=0.05,PMF_analysis=F,plot_cluster_image_grid=T,Protein_desc_of_interest=c("crystallin","ACTIN","Vimentin","Filensin","Phakinin"))
 
 
-#protein calibrant
-imaging_identification(Digestion_site="trypsin",Fastadatabase="cali.fasta",output_candidatelist=T,spectra_segments_per_file=4,use_previous_candidates=F,ppm=5,peptide_ID_filter=1,missedCleavages=0:5)
-
-imaging_identification(Digestion_site="trypsin",Fastadatabase="uniprot_cali.fasta",output_candidatelist=T,spectra_segments_per_file=1,use_previous_candidates=F,ppm=10,Protein_desc_of_interest="Pro_CALI",peptide_ID_filter=3,threshold=0.005)
-
-imaging_identification(Digestion_site="trypsin",Fastadatabase="3protein_cali.fasta",output_candidatelist=T,spectra_segments_per_file=1,use_previous_candidates=F,ppm=10,Protein_desc_of_interest="Pro_CALI",peptide_ID_filter=3,threshold=0.005)
-
-imaging_identification(Digestion_site="trypsin",Fastadatabase="uniprot_cali.fasta",output_candidatelist=T,spectra_segments_per_file=1,use_previous_candidates=T,ppm=5,Protein_desc_of_interest="Pro_CALI",threshold=0.005,FDR_cutoff=0.1)
-
-imaging_identification(Digestion_site="trypsin",Fastadatabase="uniprot_cali.fasta",output_candidatelist=T,spectra_segments_per_file=1,use_previous_candidates=T,ppm=5,Protein_desc_of_interest="Pro_CALI",threshold=0.005,FDR_cutoff=0.05)
 
 #peptide calibrant
 imaging_identification(
+  Digestion_site="trypsin",
+  Fastadatabase="uniprot_cali.fasta",
+  output_candidatelist=T,
+  plot_matching_score=T,
+  spectra_segments_per_file=1,
+  use_previous_candidates=F,
+  peptide_ID_filter=1,ppm=5,missedCleavages=0:5,
+  Modifications=list(fixed=NULL,fixmod_position=NULL,variable=c("Amide"),varmod_position=c(6)),
+  FDR_cutoff=0.1,
+  Substitute_AA=list(AA=c("X"),AA_new_formula=c("C5H5NO2"),Formula_with_water=c(FALSE)))
+
+imaging_identification(
+  adducts = c("M+H","M+Na"),
   Digestion_site="trypsin",
   Fastadatabase="uniprot_cali.fasta",
   output_candidatelist=T,
@@ -688,16 +757,9 @@ imaging_identification(
   FDR_cutoff=100,
   Substitute_AA=list(AA=c("X"),AA_new_formula=c("C5H5NO2"),Formula_with_water=c(FALSE)),Thread = 1)
 
-imaging_identification(Digestion_site="trypsin",Fastadatabase="uniprot_cali.fasta",output_candidatelist=T,spectra_segments_per_file=1,use_previous_candidates=T,peptide_ID_filter=1,ppm=5,missedCleavages=0:5)
 
 #Ultraflex data
-imaging_identification(Digestion_site="trypsin",Fastadatabase="uniprot-bovin.fasta",output_candidatelist=T,spectra_segments_per_file=4,use_previous_candidates=T,ppm=25,peptide_ID_filter=3,Protein_desc_of_interest<-c("Crystallin","Actin"))
-
-imaging_identification(Digestion_site="trypsin",Fastadatabase="uniprot-Human.fasta",output_candidatelist=T,spectra_segments_per_file=4,use_previous_candidates=F,ppm=25,peptide_ID_filter=3,Protein_desc_of_interest<-c("Crystallin","Actin"))
-
 imaging_identification(Digestion_site="trypsin",Fastadatabase="uniprot-bovin.fasta",output_candidatelist=T,spectra_segments_per_file=4,use_previous_candidates=F,ppm=25)
-
-imaging_identification(Digestion_site="trypsin",Fastadatabase="uniprot-mus.fasta",output_candidatelist=T,spectra_segments_per_file=4,use_previous_candidates=F,ppm=25)
 ```
 
 

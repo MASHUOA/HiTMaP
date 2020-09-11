@@ -22,12 +22,12 @@ imaging_Spatial_Quant(
   plot_ion_image = FALSE,
   parallel = detectCores()/2,
   spectra_segments_per_file = 5,
-  spatialKMeans = F,
   Smooth_range = 1,
-  Virtual_segmentation = T,
+  Segmentation = c("spatialKMeans", "spatialShrunkenCentroids", "Virtual_segmentation",
+    "none"),
   Virtual_segmentation_rankfile = tk_choose.files(default =
-    "Z:/George skyline results/maldiimaging/Maldi_imaging - Copy/radius_rank.csv", caption
-    = "Choose Virtual segmentation rank info file"),
+    "Z:/George skyline results/maldiimaging/Maldi_imaging - Copy/radius_rank.csv",
+    caption = "Choose Virtual segmentation rank info file"),
   Spectrum_feature_summary = T,
   Region_feature_summary = T,
   Region_feature_analysis = T,
@@ -68,11 +68,9 @@ imaging_Spatial_Quant(
 
 \item{spectra_segments_per_file}{optimal number of distinctive regions in the imaging, a virtual segmentation will be applied to the image files with this value. To have a better PMF result you may set a value that in the sweet point of sensitivety and false discovery rate (FDR).}
 
-\item{spatialKMeans}{set true to enable a \code{"spatialKMeans"}  method for the automatic virtual segmentation. If a region rank file was supplied, you can disable this to perform a mannual segmentation.}
+\item{Smooth_range}{\code{"Segmentation"} pixel smooth range}
 
-\item{Smooth_range}{\code{"spatialKMeans"} pixel smooth range}
-
-\item{Virtual_segmentation}{set \code{"TRUE"} if you want to overide the automaitic segmentation}
+\item{Segmentation}{set as "spatialKMeans" to enable a \code{"spatialKMeans"} Segmentation; set as "spatialShrunkenCentroids" to enable a \code{"spatialShrunkenCentroids"} Segmentation; If a region rank file was supplied, you can set this as "Virtual_segmentation" to perform a manual segmentation; Set it as "none" to bypass the segmentation.}
 
 \item{Virtual_segmentation_rankfile}{specify a region rank file contains region information for manualy region segmentation}
 

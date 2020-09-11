@@ -28,7 +28,7 @@ Imports:
     spdep,zoo,FTICRMS,KEGGREST,OrgMassSpecR,
     enviPat,rgl,tkrplot,multtest,XML,
     BiocManager,randomForest,rfviz,
-    rcdk,igraph,colorspace,UniProt.ws,
+    rcdk,igraph,colorspace,
     gridExtra,grid,gtable,ChemmineR
 VignetteBuilder: knitr
 Suggests: 
@@ -36,6 +36,7 @@ Suggests:
     rmarkdown,
     devtools,
     plotly,
+    UniProt.ws,
     bitops
 RoxygenNote: 7.1.1
 biocViews: Software, Infrastructure, Proteomics, Lipidomics,

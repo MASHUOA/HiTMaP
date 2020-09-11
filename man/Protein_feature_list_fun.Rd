@@ -9,6 +9,7 @@ Protein_feature_list_fun(
   database,
   Digestion_site = "[G]",
   missedCleavages = 0:1,
+  Multiple_mode = c("sequential", "parallel"),
   adducts = c("M+H", "M+NH4", "M+Na"),
   BPPARAM = bpparam(),
   Decoy_search = T,

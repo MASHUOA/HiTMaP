@@ -32,9 +32,9 @@ imaging_identification(
   plot_ion_image = FALSE,
   parallel = detectCores(),
   spectra_segments_per_file = 5,
-  spatialKMeans = TRUE,
+  Segmentation = c("spatialKMeans", "spatialShrunkenCentroids", "Virtual_segmentation",
+    "none"),
   Smooth_range = 1,
-  Virtual_segmentation = !spatialKMeans,
   Virtual_segmentation_rankfile = NULL,
   Rotate_IMG = NULL,
   Region_feature_summary = FALSE,
@@ -64,6 +64,8 @@ imaging_identification(
 )
 }
 \arguments{
+\item{datafile}{the data files' path for the analysis, leave it as blank to enable a graphical user interface to select the data}
+
 \item{threshold}{specify the intensities threshold (0 to 1 in percentage)to report a identified molecule}
 
 \item{ppm}{the mz tolerance (in ppm) for peak integration}
@@ -104,11 +106,9 @@ imaging_identification(
 
 \item{spectra_segments_per_file}{optimal number of distinctive regions in the imaging, a virtual segmentation will be applied to the image files with this value. To have a better PMF result you may set a value that in the sweet point of sensitivety and false discovery rate (FDR).}
 
-\item{spatialKMeans}{set true to enable a \code{"spatialKMeans"}  method for the automatic virtual segmentation. If a region rank file was supplied, you can disable this to perform a mannual segmentation.}
+\item{Segmentation}{set as "spatialKMeans" to enable a \code{"spatialKMeans"} Segmentation; set as "spatialShrunkenCentroids" to enable a \code{"spatialShrunkenCentroids"} Segmentation; If a region rank file was supplied, you can set this as "Virtual_segmentation" to perform a manual segmentation; Set it as "none" to bypass the segmentation.}
 
-\item{Smooth_range}{\code{"spatialKMeans"} pixel smooth range}
-
-\item{Virtual_segmentation}{set \code{"TRUE"} if you want to overide the automaitic segmentation}
+\item{Smooth_range}{\code{"Segmentation"} pixel smooth range}
 
 \item{Virtual_segmentation_rankfile}{specify a region rank file contains region information for manualy region segmentation}
 
@@ -140,6 +140,8 @@ imaging_identification(
 
 \item{cluster_color_scale}{Set as "blackwhite" to use only black and white color in the cluster image plotting. using "blackwhite" in cluster_color_scale will overwrite the components' color setting.}
 
+\item{plot_layout}{Set as \code{"line"} to plot cluster and component images for multiple data file or as \code{"grid"} to plot cluster images for single data file. In "grid" mode, Image's will be rendered into a grid with 5 columns.}
+
 \item{export_Header_table}{Set as \code{"TRUE"} to plot the header in the cluster image plotting. Header table includes the basic information of cluster and components.}
 
 \item{export_footer_table}{Set as \code{"TRUE"} to plot the footer in the cluster image plotting. Footer shows the protein coverage in the Proteomics mode.}
@@ -160,7 +162,7 @@ imaging_identification(threshold=0.05, ppm=5,Digestion_site="[G]",
                        adducts=c("M+H","M+NH4","M+Na"),PMF_analysis=TRUE,
                        Protein_feature_summary=TRUE,plot_cluster_image=TRUE,
                        Peptide_feature_summary=TRUE,plot_ion_image=FALSE,
-                       parallel=3,spectra_segments_per_file=5,spatialKMeans=TRUE
+                       parallel=3,spectra_segments_per_file=5,Segmentation="spatialKMeans"
                        )
 
 }
