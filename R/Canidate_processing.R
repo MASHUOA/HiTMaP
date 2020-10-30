@@ -19,15 +19,16 @@
 
 Meta_feature_list_fun<-function(database,
                                 workdir=getwd(),
-                                adducts=adducts,
+                                adducts=c("M-H","M+Cl"),
                                 cal.mz=TRUE,
                                 bypass=FALSE,
                                 BPPARAM=bpparam()){
-   suppressMessages(suppressWarnings(require("Rcpp")))
-   suppressMessages(suppressWarnings(require(dplyr)))
-   suppressMessages(suppressWarnings(require(Rdisop)))
-   suppressMessages(suppressWarnings(require(Biostrings)))
-   suppressMessages(suppressWarnings(require(OrgMassSpecR)))
+  suppressMessages(suppressWarnings(require("Rcpp")))
+  suppressMessages(suppressWarnings(require(dplyr)))
+  suppressMessages(suppressWarnings(require(Rdisop)))
+  suppressMessages(suppressWarnings(require(Biostrings)))
+  suppressMessages(suppressWarnings(require(OrgMassSpecR)))
+  suppressMessages(suppressWarnings(require(BiocParallel)))
   adductslist<-Build_adduct_list()
   candidates<-read.csv(paste0(workdir,"/",database),as.is = TRUE)
   
@@ -41,50 +42,76 @@ Meta_feature_list_fun<-function(database,
     required_col=c("moleculeNames")
     candidates=data_test_rename(required_col,candidates)
     
-       candidates$mass<-NULL
+    candidates$mass<-NULL
     if (cal.mz==F){
-    required_col=c("mz")
-    candidates=data_test_rename(required_col,candidates)
-      if (sum(candidates$adducts!=0)>0){
-        candidates$adducts_mass=0
-        candidates$adducts_mass=unlist(bplapply(1:nrow(candidates),function(i,adducts,adductslist,adducts_mass){
-          adducts_mass[i]<-adductslist[adductslist$Name==adducts[i],"Mass"]*abs(as.numeric(as.character(adductslist[adductslist$Name==adducts[i],"Charge"])))
-        },candidates$adducts,adductslist,candidates$adducts_mass,BPPARAM=BPPARAM))
-        candidates$mass<-candidates$mz-candidates$adducts_mass
+      required_col=c("mz")        
+      candidates$adduct=candidates$adducts
+      candidates$adducts<-NULL
+      candidates=data_test_rename(required_col,candidates)
+      if (sum(candidates$adduct!=0)>0){
+        
+        adduct_df<-do.call(rbind,(lapply(unique(candidates$adduct),function(x,adductslist){
+          adducts_mass<-adductslist[adductslist$Name==x,"Mass"]
+          adducts_Charge<-adductslist[adductslist$Name==x,"Charge"]
+          return(data.frame(adduct=x,adducts_mass=adducts_mass,charge=adducts_Charge))
+        },adductslist)))
+        
+        candidates$adducts_mass<-NULL
+        candidates<-merge(candidates,adduct_df,by="adduct",all.x=T)
+        candidates$mass<-candidates$mz*abs(as.numeric(candidates$charge))-0.0005485799*as.numeric(candidates$charge)-(candidates$adducts_mass*abs(as.numeric(candidates$charge)))
       }else{
         candidates$mass<-candidates$mz
-        }
-      }else{
-
-        required_col=c("formula")
-        candidates=data_test_rename(required_col,candidates)
-        unique_formula<-unique(candidates$formula)
-        unique_formula_list<-lapply(unique_formula,get_atoms)
-        masslist<-lapply(unique_formula_list,MonoisotopicMass)
-        uniquemass<-unlist(masslist)
-        mass_DF<-data.frame(formula=unique_formula,mass=uniquemass,stringsAsFactors = F)
-        candidates<-base::merge(candidates,mass_DF)
-        
-        
+      }
+    }else{
+      
+      required_col=c("formula")
+      candidates=data_test_rename(required_col,candidates)
+      unique_formula<-unique(candidates$formula)
+      unique_formula_list<-lapply(unique_formula,get_atoms)
+      masslist<-lapply(unique_formula_list,MonoisotopicMass)
+      uniquemass<-unlist(masslist)
+      mass_DF<-data.frame(formula=unique_formula,mass=uniquemass,stringsAsFactors = F)
+      candidates<-base::merge(candidates,mass_DF,by="formula")
+      
+      
       #candidates_mass<-candidates$formula %>% lapply(getMonomass) 
       #candidates$mass<-as.numeric(unlist(candidates_mass))
     }
+    
     candidates<-candidates[duplicated(names(candidates))==FALSE]
     
     Meta_Summary<-NULL
+    required_col=c("mz","adduct","moleculeNames","mass","Charge","formula")
+    candidates=data_test_rename(required_col,candidates) 
+    candidates$formula<-as.character(candidates$formula)
+    meta_symbol<-lapply(unique(candidates$formula),get_atoms)
+    symbol_adducts=bplapply(adducts,convert_peptide_adduct_list,meta_symbol,BPPARAM = BPPARAM,adductslist=adductslist,ConvertPeptide=ConvertPeptide)
+    symbol_adducts_df=lapply(symbol_adducts,
+                             function(x,names_x){
+                               data.frame(formula=names_x,formula_adduct=x)
+                             },unique(candidates$formula))
+
     
     for (i in 1:length(adducts)){
+      candidates_adduct<-unique(candidates[,c("mz","adduct","moleculeNames","mass","Charge","formula")])
+      candidates_adduct<-candidates_adduct[!duplicated(candidates_adduct[,c("moleculeNames","formula")]),]
       adductmass<-as.numeric(as.character(adductslist[adductslist$Name==adducts[i],"Mass"]))
-      candidates$mz<-as.numeric(candidates$mass+adductmass)
-      candidates$adduct<-adducts[i]
-      Meta_Summary<-rbind.data.frame(Meta_Summary,candidates)
+      adducts_Charge<-as.numeric(adductslist[adductslist$Name==adducts[i],"Charge"])
+      candidates_adduct$mz<-(as.numeric(candidates_adduct$mass+adductmass))/abs(adducts_Charge)
+      candidates_adduct$adduct<-adducts[i]
+      candidates_adduct$charge<-adducts_Charge
+      candidates_adduct<-merge(candidates_adduct,symbol_adducts_df[i])
+      unique_formula<-unique(as.character(candidates_adduct$formula))
+      formula_adduct<-lapply(unique_formula, get_atoms) %>% merge_atoms(get_atoms(adductslist[adductslist$Name==adducts[i],"Charge"]))
+      
+      Meta_Summary<-rbind.data.frame(Meta_Summary,unique(candidates_adduct))
+      
+      
     }
-    } 
-    return(Meta_Summary)                
+  } 
+  return(Meta_Summary)                
   
-} 
-
-
+}
 #' Protein_feature_list_fun
 #'
 #' This is a function that prepare the candiate list for maldi imaging data qualitative or quantitative analysis.
@@ -508,7 +535,6 @@ Protein_feature_list_fun<-function(workdir=getwd(),
     write.csv(Index_of_protein_sequence,paste(workdir,"/Summary folder/protein_index.csv",sep=""),row.names = F)
     message("Candidate list has been exported.")
   }
-  
   }
 
   if(use_previous_candidates){
@@ -908,11 +934,11 @@ convert_peptide_fixmod<-function(mod.df,peptide_symbol,ConvertPeptide,peptide_in
   
 }
 
-convert_peptide_adduct_list<-function(adductsname,peptide_symbol,multiplier=c(1,1),adductslist=Build_adduct_list(),ConvertPeptide){
+convert_peptide_adduct_list<-function(adductsname,peptide_symbol,multiplier=c(1,1),adductslist=Build_adduct_list(),ConvertPeptide=NULL){
    suppressMessages(suppressWarnings(require(rcdk)))
    suppressMessages(suppressWarnings(require(OrgMassSpecR)))
 
-  merge_atoms<-function(atoms,addelements,check_merge=T,mode=c("add","ded"),multiplier=c(1,1)){
+  merge_atoms<-function(atoms,addelements,check_merge=F,mode=c("add","ded"),multiplier=c(1,1)){
     
     atomsorg=atoms
     
@@ -932,7 +958,7 @@ convert_peptide_adduct_list<-function(adductsname,peptide_symbol,multiplier=c(1,
       } 
     }
     
-    if (check_merge==F){
+    if (check_merge==T){
       for (x in names(atoms)){
         if (atoms[[x]]<0){
           stop("add atoms failed due to incorrect number of",x)
@@ -988,18 +1014,13 @@ convert_peptide_adduct_list<-function(adductsname,peptide_symbol,multiplier=c(1,
 }
 #' get_atoms
 #'
-#' This is a function that prepare the candiate list for maldi imaging data qualitative or quantitative analysis.
-#' this function will read the candidate list file and generate mz for the adducts list defined in \code{"adducts"}. 
-#' @param database the file name of candidate list
-#' @param workdir the folder that contains candidate list
-#' @param adducts  the adducts list to be used for generating the PMF search candidates
-#' @param cal.mz If set with \code{"TRUE"}, the function will recalculate the mz value according to the column named "formula" in the \code{database} and the specified adducts.
-#' @param mzlist_bypass  Set \code{"TRUE"} if you want to bypass the mzlist generating process, the function will keep the mz and adduct as it is for the furture analysis. Be sure that the table contains "mz", "adduct" and "moleculeNames" as they are essential for later steps.
-#' @param BPPARAM parallel processing parameter for BiocParallel
-#' @return a table of candiate list
+#' This is a function that prepare the atoms list for candidate molecules.
+#' 
+#' @param Symbol the Symbol of the molecule
+#' @return a atoms list
 #'
 #' @examples
-#' Meta_feature_list_fun(database="lipid candidates.csv",adducts=c("M-H","M+Cl"))
+#' get_atoms(Symbol="C7H13O8P")
 #'
 #' @export
 #' 
@@ -1020,21 +1041,19 @@ get_atoms<-function(Symbol){
 
 #' merge_atoms
 #'
-#' This is a function that prepare the candiate list for maldi imaging data qualitative or quantitative analysis.
-#' this function will read the candidate list file and generate mz for the adducts list defined in \code{"adducts"}. 
-#' @param database the file name of candidate list
-#' @param workdir the folder that contains candidate list
-#' @param adducts  the adducts list to be used for generating the PMF search candidates
-#' @param cal.mz If set with \code{"TRUE"}, the function will recalculate the mz value according to the column named "formula" in the \code{database} and the specified adducts.
-#' @param mzlist_bypass  Set \code{"TRUE"} if you want to bypass the mzlist generating process, the function will keep the mz and adduct as it is for the furture analysis. Be sure that the table contains "mz", "adduct" and "moleculeNames" as they are essential for later steps.
-#' @param BPPARAM parallel processing parameter for BiocParallel
-#' @return a table of candiate list
+#' This is a function that merge the atoms to a melecule atom list . 
+#' @param atoms the file name of candidate list
+#' @param addelements the folder that contains candidate list
+#' @param check_merge  Check the final formula for any negative number of atom(s).
+#' @param mode add the elements to the formula by using "add", and deduct the elements by using "ded".
+#' @param multiplier  Two number to define the atom and adding elements' proportion respectively.
+#' @return an atom list
 #'
 #' @examples
-#' Meta_feature_list_fun(database="lipid candidates.csv",adducts=c("M-H","M+Cl"))
+#' merge_atoms(atoms=get_atoms("C7H13O8P"),addelements=list(H=1),check_merge=T,mode="ded",multiplier=c(1,2))
 #'
 #' @export
-merge_atoms<-function(atoms,addelements,check_merge=T,mode=c("add","ded"),multiplier=c(1,1)){
+merge_atoms<-function(atoms,addelements,check_merge=F,mode=c("add","ded"),multiplier=c(1,1)){
   
   atomsorg=atoms
   
@@ -1054,7 +1073,7 @@ merge_atoms<-function(atoms,addelements,check_merge=T,mode=c("add","ded"),multip
     } 
   }
   
-  if (check_merge==F){
+  if (check_merge==T){
     for (x in names(atoms)){
       if (atoms[[x]]<0){
       stop("add atoms failed due to incorrect number of",x)

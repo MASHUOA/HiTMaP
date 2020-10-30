@@ -7,26 +7,15 @@
 get_atoms(Symbol)
 }
 \arguments{
-\item{database}{the file name of candidate list}
-
-\item{workdir}{the folder that contains candidate list}
-
-\item{adducts}{the adducts list to be used for generating the PMF search candidates}
-
-\item{cal.mz}{If set with \code{"TRUE"}, the function will recalculate the mz value according to the column named "formula" in the \code{database} and the specified adducts.}
-
-\item{mzlist_bypass}{Set \code{"TRUE"} if you want to bypass the mzlist generating process, the function will keep the mz and adduct as it is for the furture analysis. Be sure that the table contains "mz", "adduct" and "moleculeNames" as they are essential for later steps.}
-
-\item{BPPARAM}{parallel processing parameter for BiocParallel}
+\item{Symbol}{the Symbol of the molecule}
 }
 \value{
-a table of candiate list
+a atoms list
 }
 \description{
-This is a function that prepare the candiate list for maldi imaging data qualitative or quantitative analysis.
-this function will read the candidate list file and generate mz for the adducts list defined in \code{"adducts"}.
+This is a function that prepare the atoms list for candidate molecules.
 }
 \examples{
-Meta_feature_list_fun(database="lipid candidates.csv",adducts=c("M-H","M+Cl"))
+get_atoms(Symbol="C7H13O8P")
 
 }

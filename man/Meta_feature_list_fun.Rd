@@ -7,7 +7,7 @@
 Meta_feature_list_fun(
   database,
   workdir = getwd(),
-  adducts = adducts,
+  adducts = c("M-H", "M+Cl"),
   cal.mz = TRUE,
   bypass = FALSE,
   BPPARAM = bpparam()

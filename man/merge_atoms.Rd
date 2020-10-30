@@ -7,32 +7,29 @@
 merge_atoms(
   atoms,
   addelements,
-  check_merge = T,
+  check_merge = F,
   mode = c("add", "ded"),
   multiplier = c(1, 1)
 )
 }
 \arguments{
-\item{database}{the file name of candidate list}
+\item{atoms}{the file name of candidate list}
 
-\item{workdir}{the folder that contains candidate list}
+\item{addelements}{the folder that contains candidate list}
 
-\item{adducts}{the adducts list to be used for generating the PMF search candidates}
+\item{check_merge}{Check the final formula for any negative number of atom(s).}
 
-\item{cal.mz}{If set with \code{"TRUE"}, the function will recalculate the mz value according to the column named "formula" in the \code{database} and the specified adducts.}
+\item{mode}{add the elements to the formula by using "add", and deduct the elements by using "ded".}
 
-\item{mzlist_bypass}{Set \code{"TRUE"} if you want to bypass the mzlist generating process, the function will keep the mz and adduct as it is for the furture analysis. Be sure that the table contains "mz", "adduct" and "moleculeNames" as they are essential for later steps.}
-
-\item{BPPARAM}{parallel processing parameter for BiocParallel}
+\item{multiplier}{Two number to define the atom and adding elements' proportion respectively.}
 }
 \value{
-a table of candiate list
+an atom list
 }
 \description{
-This is a function that prepare the candiate list for maldi imaging data qualitative or quantitative analysis.
-this function will read the candidate list file and generate mz for the adducts list defined in \code{"adducts"}.
+This is a function that merge the atoms to a melecule atom list .
 }
 \examples{
-Meta_feature_list_fun(database="lipid candidates.csv",adducts=c("M-H","M+Cl"))
+merge_atoms(atoms=get_atoms("C7H13O8P"),addelements=list(H=1),check_merge=T,mode="ded",multiplier=c(1,2))
 
 }
