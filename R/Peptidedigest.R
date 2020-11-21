@@ -2753,8 +2753,8 @@ if(PMFsearch){
         process()
       }
     
-    spectrum_file_table<- summarize(imdata_ed, .stat="mean")
-    spectrum_file_table<-as.data.frame(spectrum_file_table)
+    spectrum_file_table<- summarizeFeatures(imdata_ed)
+    spectrum_file_table<-data.frame(mz=spectrum_file_table@featureData@mz,mean=spectrum_file_table@featureData@listData[["mean"]])
     peaklist<-spectrum_file_table
     colnames(peaklist)<-c("m.z","intensities")
     savename=paste(name,SPECTRUM_batch)
