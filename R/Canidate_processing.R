@@ -37,11 +37,12 @@ Meta_feature_list_fun<-function(database,
     required_col=c("mz","adduct","moleculeNames")
     candidates=data_test_rename(required_col,candidates)
     Meta_Summary=candidates[is.na(candidates$mz)!=T,]
+    Meta_Summary$Metabolite.Name=Meta_Summary$moleculeNames
     
   }else{
     required_col=c("moleculeNames")
     candidates=data_test_rename(required_col,candidates)
-    
+    Meta_Summary$Metabolite.Name=Meta_Summary$moleculeNames
     candidates$mass<-NULL
     if (cal.mz==F){
       required_col=c("mz")        
@@ -66,7 +67,7 @@ Meta_feature_list_fun<-function(database,
       
       required_col=c("formula")
       candidates=data_test_rename(required_col,candidates)
-      unique_formula<-unique(candidates$formula)
+      unique_formula<-as.character(unique(candidates$formula))
       unique_formula_list<-lapply(unique_formula,get_atoms)
       masslist<-lapply(unique_formula_list,MonoisotopicMass)
       uniquemass<-unlist(masslist)
@@ -79,11 +80,13 @@ Meta_feature_list_fun<-function(database,
     }
     
     candidates<-candidates[duplicated(names(candidates))==FALSE]
-    
+    if (is.null(candidates$Metabolite.Name)){candidates$Metabolite.Name<-candidates$moleculeNames}
     Meta_Summary<-NULL
-    required_col=c("mz","adduct","moleculeNames","mass","Charge","formula")
+    required_col=c("mz","Metabolite.Name","mass","formula")
     candidates=data_test_rename(required_col,candidates) 
     candidates$formula<-as.character(candidates$formula)
+    candidates<-candidates[candidates$formula!="",]
+    candidates<-candidates[!grepl(")n",candidates$formula),]
     meta_symbol<-lapply(unique(candidates$formula),get_atoms)
     symbol_adducts=bplapply(adducts,convert_peptide_adduct_list,meta_symbol,BPPARAM = BPPARAM,adductslist=adductslist,ConvertPeptide=ConvertPeptide)
     symbol_adducts_df=lapply(symbol_adducts,
@@ -93,17 +96,16 @@ Meta_feature_list_fun<-function(database,
 
     
     for (i in 1:length(adducts)){
-      candidates_adduct<-unique(candidates[,c("mz","adduct","moleculeNames","mass","Charge","formula")])
-      candidates_adduct<-candidates_adduct[!duplicated(candidates_adduct[,c("moleculeNames","formula")]),]
+      candidates_adduct<-unique(candidates[,c("Metabolite.Name","mass","formula")])
+      candidates_adduct<-candidates_adduct[!duplicated(candidates_adduct[,c("Metabolite.Name","formula")]),]
       adductmass<-as.numeric(as.character(adductslist[adductslist$Name==adducts[i],"Mass"]))
       adducts_Charge<-as.numeric(adductslist[adductslist$Name==adducts[i],"Charge"])
       candidates_adduct$mz<-(as.numeric(candidates_adduct$mass+adductmass))/abs(adducts_Charge)
       candidates_adduct$adduct<-adducts[i]
       candidates_adduct$charge<-adducts_Charge
       candidates_adduct<-merge(candidates_adduct,symbol_adducts_df[i])
-      unique_formula<-unique(as.character(candidates_adduct$formula))
-      formula_adduct<-lapply(unique_formula, get_atoms) %>% merge_atoms(get_atoms(adductslist[adductslist$Name==adducts[i],"Charge"]))
-      
+      candidates_adduct$formula<-candidates_adduct$formula_adduct
+      candidates_adduct$formula_adduct<-NULL
       Meta_Summary<-rbind.data.frame(Meta_Summary,unique(candidates_adduct))
       
       
@@ -1002,7 +1004,8 @@ convert_peptide_adduct_list<-function(adductsname,peptide_symbol,multiplier=c(1,
   peptide_formula<-as.character()
   #formula<-ConvertPeptide(peptide)
   for (formula in 1:length(peptide_symbol)){
-   formula_with_adducts<-merge_atoms(peptide_symbol[[formula]],adductsformula,check_merge = T,mode = "add", multiplier = multiplier) 
+  #if(is.null(peptide_symbol[[formula]])) peptide_symbol[[formula]]=list(H=0)
+   formula_with_adducts<-merge_atoms(peptide_symbol[[formula]],adductsformula,check_merge = F,mode = "add", multiplier = multiplier) 
    for (name in names(formula_with_adducts)){
     if(formula_with_adducts[[name]]==0){ formula_with_adducts[[name]]=NULL}
    }

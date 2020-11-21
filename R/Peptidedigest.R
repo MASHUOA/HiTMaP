@@ -2183,15 +2183,17 @@ PMF_Cardinal_Datafilelist<-function(datafile,Peptide_Summary_searchlist,
       bty="n",pty="s",xaxt="n",
       yaxt="n",
       no.readonly = TRUE,ann=FALSE)
-  Cardinal::image(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], key=FALSE, ann=FALSE,axes=FALSE)
+  {Cardinal::image(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], key=FALSE, ann=FALSE,axes=FALSE)
   legend("topright", legend=1:SPECTRUM_for_average, fill=brewer.pal_n(SPECTRUM_for_average,colorstyle), col=brewer.pal_n(SPECTRUM_for_average,"Paired"), bg="transparent",xpd=TRUE,cex = 1)
-  
+  }
   #Cardinal::plot(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], type=c('p','h'), key=T)
   #Cardinal::plot(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], type=c('p','h'), key=FALSE,mode="centers")
   #Cardinal::plot(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], type=c('p','h'), key=FALSE,mode="betweenss")
-  Cardinal::plot(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], type=c('p','h'), key=T)
+  {Cardinal::plot(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], type=c('p','h'), key=T)
   
   legend("topright", legend=1:SPECTRUM_for_average, fill=brewer.pal_n(SPECTRUM_for_average,colorstyle), col=brewer.pal_n(SPECTRUM_for_average,"Paired"), bg="transparent",xpd=TRUE,cex = 1)
+  }
+  
   dev.off()
   png(paste(getwd(),"\\","spatialKMeans_image.png",sep=""),width = 720,height = 720)
   #plot(skm, col=c("pink", "blue", "red","orange","navyblue"), type=c('p','h'), key=FALSE)
@@ -2200,9 +2202,10 @@ PMF_Cardinal_Datafilelist<-function(datafile,Peptide_Summary_searchlist,
       bty="n",pty="s",xaxt="n",
       yaxt="n",
       no.readonly = TRUE,ann=FALSE)
+  {
   Cardinal::image(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], key=FALSE, ann=FALSE,axes=FALSE)
   legend("topright", legend=1:SPECTRUM_for_average, fill=brewer.pal_n(SPECTRUM_for_average,colorstyle), col=brewer.pal_n(SPECTRUM_for_average,"Paired"), bg="transparent",xpd=TRUE,cex = 1)
-  
+  }
   #Cardinal::plot(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], type=c('p','h'), key=T)
   #Cardinal::plot(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], type=c('p','h'), key=FALSE,mode="centers")
   #Cardinal::plot(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], type=c('p','h'), key=FALSE,mode="betweenss")
@@ -2275,15 +2278,16 @@ PMF_Cardinal_Datafilelist<-function(datafile,Peptide_Summary_searchlist,
         bty="n",pty="s",xaxt="n",
         yaxt="n",
         no.readonly = TRUE,ann=FALSE)
+    {
     Cardinal::image(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], key=FALSE, ann=FALSE,axes=FALSE)
     legend("topright", legend=1:SPECTRUM_for_average, fill=brewer.pal_n(SPECTRUM_for_average,colorstyle), col=brewer.pal_n(SPECTRUM_for_average,"Paired"), bg="transparent",xpd=TRUE,cex = 1)
-    
+    }
     #Cardinal::plot(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], type=c('p','h'), key=T)
     #Cardinal::plot(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], type=c('p','h'), key=FALSE,mode="centers")
     #Cardinal::plot(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], type=c('p','h'), key=FALSE,mode="betweenss")
-    Cardinal::plot(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], type=c('p','h'), key=T)
-    
+    {Cardinal::plot(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], type=c('p','h'), key=T)
     legend("topright", legend=1:SPECTRUM_for_average, fill=brewer.pal_n(SPECTRUM_for_average,colorstyle), col=brewer.pal_n(SPECTRUM_for_average,"Paired"), bg="transparent",xpd=TRUE,cex = 1)
+    }
     dev.off()
     png(paste(getwd(),"\\","spatialShrunkenCentroids_image.png",sep=""),width = 720,height = 720)
     #plot(skm, col=c("pink", "blue", "red","orange","navyblue"), type=c('p','h'), key=FALSE)
@@ -2292,9 +2296,9 @@ PMF_Cardinal_Datafilelist<-function(datafile,Peptide_Summary_searchlist,
         bty="n",pty="s",xaxt="n",
         yaxt="n",
         no.readonly = TRUE,ann=FALSE)
-    Cardinal::image(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], key=FALSE, ann=FALSE,axes=FALSE)
+    {Cardinal::image(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], key=FALSE, ann=FALSE,axes=FALSE)
     legend("topright", legend=1:SPECTRUM_for_average, fill=brewer.pal_n(SPECTRUM_for_average,colorstyle), col=brewer.pal_n(SPECTRUM_for_average,"Paired"), bg="transparent",xpd=TRUE,cex = 1)
-    
+    }
     #Cardinal::plot(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], type=c('p','h'), key=T)
     #Cardinal::plot(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], type=c('p','h'), key=FALSE,mode="centers")
     #Cardinal::plot(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], type=c('p','h'), key=FALSE,mode="betweenss")
