@@ -2179,20 +2179,29 @@ PMF_Cardinal_Datafilelist<-function(datafile,Peptide_Summary_searchlist,
   png(paste(getwd(),"\\","spatialKMeans_image_plot_",SPECTRUM_for_average,"_segs.png",sep=""),width = 1024,height = 720)
   #plot(skm, col=c("pink", "blue", "red","orange","navyblue"), type=c('p','h'), key=FALSE)
   #par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(1+ceiling(SPECTRUM_for_average/2), 2),
+  #plot.new()
   par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(1, 2),
       bty="n",pty="s",xaxt="n",
       yaxt="n",
-      no.readonly = TRUE,ann=FALSE)
-  {Cardinal::image(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], key=FALSE, ann=FALSE,axes=FALSE,add=T)
-  legend("topright", legend=1:SPECTRUM_for_average, fill=brewer.pal_n(SPECTRUM_for_average,colorstyle), col=brewer.pal_n(SPECTRUM_for_average,"Paired"), bg="transparent",xpd=TRUE,cex = 1)
+      no.readonly = TRUE,ann=F)
+  
+  
+  
+  {
+  imagefile<-Cardinal::image(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], key=T, ann=FALSE,axes=FALSE)
+  #legend("topright", legend=1:SPECTRUM_for_average, fill=brewer.pal_n(SPECTRUM_for_average,colorstyle), col=brewer.pal_n(SPECTRUM_for_average,"Paired"), bg="transparent",xpd=TRUE,cex = 1)
   }
   #Cardinal::plot(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], type=c('p','h'), key=T)
   #Cardinal::plot(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], type=c('p','h'), key=FALSE,mode="centers")
   #Cardinal::plot(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], type=c('p','h'), key=FALSE,mode="betweenss")
-  {Cardinal::plot(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], type=c('p','h'), key=T,add=T)
   
-  legend("topright", legend=1:SPECTRUM_for_average, fill=brewer.pal_n(SPECTRUM_for_average,colorstyle), col=brewer.pal_n(SPECTRUM_for_average,"Paired"), bg="transparent",xpd=TRUE,cex = 1)
+  #plot.new()
+  {
+    #specfile<-Cardinal::plot(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], key=T)
+  #legend("topright", legend=1:SPECTRUM_for_average, fill=brewer.pal_n(SPECTRUM_for_average,colorstyle), col=brewer.pal_n(SPECTRUM_for_average,"Paired"), bg="transparent",xpd=TRUE,cex = 1)
   }
+  print(imagefile)
+  #print(specfile)
   
   dev.off()
   png(paste(getwd(),"\\","spatialKMeans_image.png",sep=""),width = 720,height = 720)
@@ -2204,7 +2213,7 @@ PMF_Cardinal_Datafilelist<-function(datafile,Peptide_Summary_searchlist,
       no.readonly = TRUE,ann=FALSE)
   {
   Cardinal::image(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], key=FALSE, ann=FALSE,axes=FALSE)
-  legend("topright", legend=1:SPECTRUM_for_average, fill=brewer.pal_n(SPECTRUM_for_average,colorstyle), col=brewer.pal_n(SPECTRUM_for_average,"Paired"), bg="transparent",xpd=TRUE,cex = 1)
+  #legend("topright", legend=1:SPECTRUM_for_average, fill=brewer.pal_n(SPECTRUM_for_average,colorstyle), col=brewer.pal_n(SPECTRUM_for_average,"Paired"), bg="transparent",xpd=TRUE,cex = 1)
   }
   #Cardinal::plot(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], type=c('p','h'), key=T)
   #Cardinal::plot(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], type=c('p','h'), key=FALSE,mode="centers")
@@ -2217,7 +2226,7 @@ PMF_Cardinal_Datafilelist<-function(datafile,Peptide_Summary_searchlist,
   png(paste(getwd(),"\\","spatialKMeans_image_plot_",SPECTRUM_for_average,"_segs.png",sep=""),width = 1024,height = 480*((SPECTRUM_for_average)))
   centers=skm@resultData[[1]][["centers"]]
   
-  centers_mz<-skm@featureData@data[["mz"]]
+  centers_mz<-skm@featureData@mz
   #centers_mz<-mz(imdata)
   suppressMessages(suppressWarnings(require(ggplot2)))
   sp<-NULL
@@ -2250,7 +2259,7 @@ PMF_Cardinal_Datafilelist<-function(datafile,Peptide_Summary_searchlist,
  #cluster=skm@resultData[["r = 1, k = 5"]][["cluster"]]
 
   
-  y=skm@resultData[[paste0("r = ",Smooth_range,", k = ", SPECTRUM_for_average)]][["cluster"]]
+  y=skm@resultData[[1]][["cluster"]]
   y=as.data.frame(y)
   rownames(y)=1:nrow(y)
   y$pixel=1:nrow(y)
@@ -2270,24 +2279,33 @@ PMF_Cardinal_Datafilelist<-function(datafile,Peptide_Summary_searchlist,
     #message(paste0("spatialShrunkenCentroids computing for ",name))
     skm <-  suppressMessages(suppressWarnings(spatialShrunkenCentroids(imdata, r=Smooth_range, k=SPECTRUM_for_average, method="adaptive")))
     message(paste0("spatialShrunkenCentroids finished for ",name))
-    #skm@resultData[["new"]]=skm@resultData[["r = 1, k = 5"]]
     png(paste(getwd(),"\\","spatialShrunkenCentroids_image_plot_",SPECTRUM_for_average,"_segs.png",sep=""),width = 1024,height = 720)
     #plot(skm, col=c("pink", "blue", "red","orange","navyblue"), type=c('p','h'), key=FALSE)
     #par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(1+ceiling(SPECTRUM_for_average/2), 2),
+    #plot.new()
     par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(1, 2),
         bty="n",pty="s",xaxt="n",
         yaxt="n",
-        no.readonly = TRUE,ann=FALSE)
+        no.readonly = TRUE,ann=F)
+    
+    
+    
     {
-    Cardinal::image(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], key=FALSE, ann=FALSE,axes=FALSE)
-    legend("topright", legend=1:SPECTRUM_for_average, fill=brewer.pal_n(SPECTRUM_for_average,colorstyle), col=brewer.pal_n(SPECTRUM_for_average,"Paired"), bg="transparent",xpd=TRUE,cex = 1)
+      imagefile<-Cardinal::image(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], key=T, ann=FALSE,axes=FALSE)
+      #legend("topright", legend=1:SPECTRUM_for_average, fill=brewer.pal_n(SPECTRUM_for_average,colorstyle), col=brewer.pal_n(SPECTRUM_for_average,"Paired"), bg="transparent",xpd=TRUE,cex = 1)
     }
     #Cardinal::plot(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], type=c('p','h'), key=T)
     #Cardinal::plot(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], type=c('p','h'), key=FALSE,mode="centers")
     #Cardinal::plot(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], type=c('p','h'), key=FALSE,mode="betweenss")
-    {Cardinal::plot(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], type=c('p','h'), key=T)
-    legend("topright", legend=1:SPECTRUM_for_average, fill=brewer.pal_n(SPECTRUM_for_average,colorstyle), col=brewer.pal_n(SPECTRUM_for_average,"Paired"), bg="transparent",xpd=TRUE,cex = 1)
+    
+    #plot.new()
+    {
+      #specfile<-Cardinal::plot(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], key=T)
+      #legend("topright", legend=1:SPECTRUM_for_average, fill=brewer.pal_n(SPECTRUM_for_average,colorstyle), col=brewer.pal_n(SPECTRUM_for_average,"Paired"), bg="transparent",xpd=TRUE,cex = 1)
     }
+    print(imagefile)
+    #print(specfile)
+    
     dev.off()
     png(paste(getwd(),"\\","spatialShrunkenCentroids_image.png",sep=""),width = 720,height = 720)
     #plot(skm, col=c("pink", "blue", "red","orange","navyblue"), type=c('p','h'), key=FALSE)
@@ -2296,8 +2314,9 @@ PMF_Cardinal_Datafilelist<-function(datafile,Peptide_Summary_searchlist,
         bty="n",pty="s",xaxt="n",
         yaxt="n",
         no.readonly = TRUE,ann=FALSE)
-    {Cardinal::image(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], key=FALSE, ann=FALSE,axes=FALSE)
-    legend("topright", legend=1:SPECTRUM_for_average, fill=brewer.pal_n(SPECTRUM_for_average,colorstyle), col=brewer.pal_n(SPECTRUM_for_average,"Paired"), bg="transparent",xpd=TRUE,cex = 1)
+    {
+      Cardinal::image(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], key=FALSE, ann=FALSE,axes=FALSE)
+      #legend("topright", legend=1:SPECTRUM_for_average, fill=brewer.pal_n(SPECTRUM_for_average,colorstyle), col=brewer.pal_n(SPECTRUM_for_average,"Paired"), bg="transparent",xpd=TRUE,cex = 1)
     }
     #Cardinal::plot(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], type=c('p','h'), key=T)
     #Cardinal::plot(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], type=c('p','h'), key=FALSE,mode="centers")
@@ -2310,7 +2329,7 @@ PMF_Cardinal_Datafilelist<-function(datafile,Peptide_Summary_searchlist,
     png(paste(getwd(),"\\","spatialShrunkenCentroids_image_plot_",SPECTRUM_for_average,"_segs.png",sep=""),width = 1024,height = 480*((SPECTRUM_for_average)))
     centers=skm@resultData[[1]][["centers"]]
     
-    centers_mz<-skm@featureData@data[["mz"]]
+    centers_mz<-skm@featureData@mz
     #centers_mz<-mz(imdata)
     suppressMessages(suppressWarnings(require(ggplot2)))
     sp<-NULL
@@ -2343,7 +2362,7 @@ PMF_Cardinal_Datafilelist<-function(datafile,Peptide_Summary_searchlist,
     #cluster=skm@resultData[["r = 1, k = 5"]][["cluster"]]
     
     
-    y=skm@resultData[[paste0("r = ",Smooth_range,", k = ", SPECTRUM_for_average)]][["cluster"]]
+    y=skm@resultData[[1]][["cluster"]]
     y=as.data.frame(y)
     rownames(y)=1:nrow(y)
     y$pixel=1:nrow(y)
@@ -2353,6 +2372,8 @@ PMF_Cardinal_Datafilelist<-function(datafile,Peptide_Summary_searchlist,
       listname=as.character(regions[i])
       x[[listname]]<-y[y[, 1] == regions[i], "pixel"]
     }
+    
+    
     
     
     
