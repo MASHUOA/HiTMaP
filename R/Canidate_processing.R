@@ -351,7 +351,8 @@ Protein_feature_list_fun<-function(workdir=getwd(),
   
   
   message(paste("Generating peptide formula..."))
-  peptide_symbol=bplapply(tempdf$Peptide,ConvertPeptide,BPPARAM = BPPARAM,Substitute_AA=Substitute_AA)
+  uniquepep=(tempdf$Peptide)
+  peptide_symbol=bplapply(uniquepep,ConvertPeptide,BPPARAM = BPPARAM,Substitute_AA=Substitute_AA)
   
   if (!is.null(Modifications$fixed)){
     mod.df<-Peptide_modification(retrive_ID = Modifications$fixed,mod_position=Modifications$fixmod_position)
@@ -1133,6 +1134,7 @@ ConvertPeptide<-function (sequence, output = "elements",Substitute_AA=NULL)
     aa_compo<-union(c("C","H","N","O","S"),unique(unlist(lapply(Substitute_AA$aavector,names))))
     resultsVector<-rep(0,length(aa_compo))
     names(resultsVector)=aa_compo
+    to_add<-NULL
     for (i in 1:length(peptideVector)) {
       to_add<-FindElement(peptideVector[i],Substitute_AA = Substitute_AA) 
       to_add[aa_compo[(!(aa_compo %in% names(to_add)))]]=0

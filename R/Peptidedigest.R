@@ -140,9 +140,11 @@ imaging_identification<-function(
     parallel=try(detectCores()/2)
   if (parallel<1 | is.null(parallel)){parallel=1}
   BPPARAM=Parallel.OS(parallel) 
+  setCardinalBPPARAM(BPPARAM = BPPARAM)
   }else{
   parallel=Thread
   BPPARAM=Parallel.OS(parallel) 
+  setCardinalBPPARAM(BPPARAM = BPPARAM)
   }
   
   
