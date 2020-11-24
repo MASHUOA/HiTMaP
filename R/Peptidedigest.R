@@ -125,12 +125,13 @@ imaging_identification<-function(
                ...
                ){
   library("pacman")
-  suppressMessages(suppressWarnings(p_load(RColorBrewer,RCurl,bitops,magick,ggplot2,reticulate,dplyr,stringr,tcltk,
+  suppressMessages(suppressWarnings(p_load(RColorBrewer,RCurl,bitops,magick,ggplot2,reticulate,dplyr,stringr,
          data.table,iterators,foreach,protViz,MALDIquant,
          XVector,IRanges,S4Vectors,stats4,EBImage,BiocParallel,
          BiocGenerics,parallel,stats,graphics,grDevices,datasets,methods)))
-  if (missing(datafile)) {datafile=tk_choose.files(filter = matrix(c( "imzml file", ".imzML","Text", ".txt", "All files", "*"),3, 2, byrow = TRUE),
-                                        caption  = "Choose single or multiple file(s) for analysis")}
+#if (missing(datafile)) {datafile=tk_choose.files(filter = matrix(c( "imzml file", ".imzML","Text", ".txt", "All files", "*"),3, 2, byrow = TRUE),
+#                                       caption  = "Choose single or multiple file(s) for analysis")}
+  if (missing(datafile)) stop("Missing data file, Choose single or multiple imzml file(s) for analysis")
   datafile_imzML<-datafile
   datafile<-gsub(".imzML$", "", datafile)
   workdir<-base::dirname(datafile[1])
