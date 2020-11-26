@@ -56,10 +56,17 @@ Run the codes as below to enable the required components in Linux console.
 ```{bash eval=FALSE, include=T}
 sudo apt-get install tcl-dev tk-dev
 sudo apt-get install r-cran-ncdf4
+apt-get install libz-dev
 sudo apt install libxml2-dev
 sudo apt install libssl-dev
 sudo apt install libcurl4-openssl-dev
 sudo apt-get install libnss-winbind winbind
+sudo apt install dirmngr gnupg apt-transport-https ca-certificates software-properties-common
+sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E298A3A825C0D65DFD57CBB651716619E084DAB9
+sudo add-apt-repository 'deb https://cloud.r-project.org/bin/linux/ubuntu focal-cran40/'
+sudo apt-get install r-base
+sudo apt-get install libmagick++-dev
+apt-get install libfftw3-dev
 ```
 
 ### For Mac OS users

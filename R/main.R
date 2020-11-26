@@ -10,7 +10,6 @@
 #' @author George GUO \email{George.GUO@@auckland.ac.nz}
 #' @references TBD
 #' @keywords package
-#' @import tcltk
 #' @import S4Vectors
 #' @import multtest
 #' @import XML
