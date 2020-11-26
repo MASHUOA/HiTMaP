@@ -4254,7 +4254,7 @@ protein_scoring<-function(Protein_feature_list,Peptide_plot_list_rank,scoretype=
     
     if (protein_nr_grouping){
       protein_nr<-function(Protein_feature_list_rank){
-     suppressMessages(suppressWarnings(require(igraph)))
+     #suppressMessages(suppressWarnings(require(igraph)))
      suppressMessages(suppressWarnings(require(Biostrings)))
      suppressMessages(suppressWarnings(require(dplyr)))
     
