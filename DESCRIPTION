@@ -15,7 +15,7 @@ Encoding: UTF-8
 Packaged: 
 BugReports:
 Imports: 
-    pryr,colortools,CAMERA,pacman,purrr,
+    pryr,colortools,pacman,purrr,
     RColorBrewer,magick,ggplot2,reticulate,
     dplyr,stringr,data.table,doParallel,
     iterators,foreach,protViz,cleaver,
@@ -26,7 +26,7 @@ Imports:
     datasets,methods,Rdisop,Rcpp,
     pacman,devtools,fs,processx,S4Vectors,
     spdep,zoo,FTICRMS,KEGGREST,OrgMassSpecR,
-    enviPat,rgl,tkrplot,multtest,XML,
+    enviPat,rgl,multtest,XML,
     BiocManager,randomForest,rfviz,
     rcdk,igraph,colorspace,
     gridExtra,grid,gtable,ChemmineR

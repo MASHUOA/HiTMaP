@@ -13,7 +13,6 @@
 #' @import S4Vectors
 #' @import multtest
 #' @import XML
-#' @import doParallel
 #' @import BiocManager
 #' @import pacman
 #' @import BiocParallel
