@@ -40,6 +40,7 @@ Meta_feature_list_fun<-function(database,
     Meta_Summary$Metabolite.Name=Meta_Summary$moleculeNames
     
   }else{
+    Meta_Summary=candidates
     required_col=c("moleculeNames")
     candidates=data_test_rename(required_col,candidates)
     Meta_Summary$Metabolite.Name=Meta_Summary$moleculeNames
@@ -89,6 +90,8 @@ Meta_feature_list_fun<-function(database,
     candidates<-candidates[!grepl(")n",candidates$formula),]
     meta_symbol<-lapply(unique(candidates$formula),get_atoms)
     symbol_adducts=bplapply(adducts,convert_peptide_adduct_list,meta_symbol,BPPARAM = BPPARAM,adductslist=adductslist,ConvertPeptide=ConvertPeptide)
+
+    
     symbol_adducts_df=lapply(symbol_adducts,
                              function(x,names_x){
                                data.frame(formula=names_x,formula_adduct=x)
@@ -202,6 +205,7 @@ Protein_feature_list_fun<-function(workdir=getwd(),
                                             skip=0L, 
                                             seek.first.rec=FALSE
                                             ) 
+  
     if (Decoy_search && ("sequence" %in% Decoy_mode)){
     list_of_protein_sequence_rev<-Biostrings::reverse(list_of_protein_sequence)
     names(list_of_protein_sequence_rev)<-paste0("Decoy_",names(list_of_protein_sequence_rev))
@@ -352,8 +356,10 @@ Protein_feature_list_fun<-function(workdir=getwd(),
   
   message(paste("Generating peptide formula..."))
   uniquepep=(tempdf$Peptide)
-  peptide_symbol=bplapply(uniquepep,ConvertPeptide,BPPARAM = BPPARAM,Substitute_AA=Substitute_AA)
-  
+  uniqueAA=unique(strsplit(paste0(uniquepep,collapse = ""), "")[[1]])
+  Element_tbl<-BuildElement(Substitute_AA=Substitute_AA,uniqueAA=uniqueAA)
+  peptide_symbol=bplapply(uniquepep,ConvertPeptide,BPPARAM = BPPARAM,Substitute_AA=Substitute_AA,Element_tbl=Element_tbl)
+  #peptide_symbol=bplapply(uniquepep[1:100],ConvertPeptide,BPPARAM = BPPARAM1,Substitute_AA=Substitute_AA)
   if (!is.null(Modifications$fixed)){
     mod.df<-Peptide_modification(retrive_ID = Modifications$fixed,mod_position=Modifications$fixmod_position)
     if(length(unique(mod.df$full_name))==length(Modifications$fixed)){
@@ -361,7 +367,7 @@ Protein_feature_list_fun<-function(workdir=getwd(),
     #peptide_symbol=bplapply(mod.df,convert_peptide_fixmod,peptide_symbol,BPPARAM = BPPARAM,pep_sequence=tempdf$Peptide,ConvertPeptide=ConvertPeptide)
 
     
-    peptide_symbol_var=convert_peptide_fixmod(mod.df,peptide_symbol,ConvertPeptide=ConvertPeptide,peptide_info=tempdf,BPPARAM = BPPARAM)
+    peptide_symbol_var=convert_peptide_fixmod(mod.df,peptide_symbol,peptide_info=tempdf,BPPARAM = BPPARAM)
     message(paste("Merge modification formula done."))
     tempdf_var<-tempdf
     reserve_entry<-rep(FALSE,nrow(tempdf_var))
@@ -387,7 +393,7 @@ Protein_feature_list_fun<-function(workdir=getwd(),
     if(length(unique(mod.df$full_name))==length(Modifications$variable)){
       message(paste("variable modifications:",unique(mod.df$full_name),"found in unimod DB",sep=" ",collapse = ", "))
       #peptide_symbol=bplapply(mod.df,convert_peptide_fixmod,peptide_symbol,BPPARAM = BPPARAM,pep_sequence=tempdf$Peptide,ConvertPeptide=ConvertPeptide)
-      peptide_symbol_var<-convert_peptide_fixmod(mod.df,peptide_symbol,ConvertPeptide=ConvertPeptide,peptide_info=tempdf,BPPARAM = BPPARAM)
+      peptide_symbol_var<-convert_peptide_fixmod(mod.df,peptide_symbol,peptide_info=tempdf,BPPARAM = BPPARAM)
       message(paste("Merge modification formula done."))
       tempdf_var<-tempdf
       reserve_entry<-rep(FALSE,nrow(tempdf_var))
@@ -413,7 +419,7 @@ Protein_feature_list_fun<-function(workdir=getwd(),
   }
   
   message(paste("Generating peptide formula with adducts:",paste(adducts,collapse = " ")))
-  peptides_symbol_adducts=bplapply(adducts,convert_peptide_adduct_list,peptide_symbol,BPPARAM = BPPARAM,adductslist=adductslist,ConvertPeptide=ConvertPeptide)
+  peptides_symbol_adducts=bplapply(adducts,convert_peptide_adduct_list,peptide_symbol,BPPARAM = BPPARAM,adductslist=adductslist)
   
   for (i in 1:length(adducts)){
     adductmass <- as.numeric(as.character(adductslist[adductslist$Name == adducts[i], "Mass"]))
@@ -438,7 +444,7 @@ Protein_feature_list_fun<-function(workdir=getwd(),
   
   if (length(Decoy_adducts)>0 && Decoy_search && ("adducts" %in% Decoy_mode)){
     message(paste("Generating peptide formula with Decoy adducts:",paste(Decoy_adducts,collapse = " ")))
-    peptides_symbol_adducts=bplapply(Decoy_adducts,convert_peptide_adduct_list,peptide_symbol,BPPARAM = BPPARAM,adductslist=adductslist,ConvertPeptide=ConvertPeptide)
+    peptides_symbol_adducts=bplapply(Decoy_adducts,convert_peptide_adduct_list,peptide_symbol,BPPARAM = BPPARAM,adductslist=adductslist)
   for (i in 1:length(Decoy_adducts)){
     adductmass <- as.numeric(as.character(adductslist[adductslist$Name == Decoy_adducts[i], "Mass"]))
     charge=as.numeric(as.character(adductslist$Charge[adductslist$Name==Decoy_adducts[i]]))
@@ -711,7 +717,7 @@ fastafile_utils<-function(){
   
 }
 
-convert_peptide_adduct<-function(peptide,adductsname,multiplier=c(1,1),adductslist=Build_adduct_list(),ConvertPeptide){
+convert_peptide_adduct<-function(peptide_formula,adductsname,multiplier=c(1,1),adductslist=Build_adduct_list()){
    suppressMessages(suppressWarnings(require(rcdk)))
    suppressMessages(suppressWarnings(require(OrgMassSpecR)))
   
@@ -774,9 +780,7 @@ convert_peptide_adduct<-function(peptide,adductsname,multiplier=c(1,1),adductsli
   
   adductsformula<-merge_atoms(adductsformula_add,adductsformula_ded,check_merge = F,mode = "ded")
   
-  formula<-ConvertPeptide(peptide)
-  
-  formula_with_adducts<-merge_atoms(formula,adductsformula,check_merge = T,mode = "add", multiplier = multiplier)
+  formula_with_adducts<-merge_atoms(peptide_formula,adductsformula,check_merge = T,mode = "add", multiplier = multiplier)
   
   for (name in names(formula_with_adducts)){
     if(formula_with_adducts[[name]]==0){ formula_with_adducts[[name]]=NULL}
@@ -787,7 +791,7 @@ convert_peptide_adduct<-function(peptide,adductsname,multiplier=c(1,1),adductsli
 }
 
 
-convert_peptide_fixmod<-function(mod.df,peptide_symbol,ConvertPeptide,peptide_info,BPPARAM=BPPARAM){
+convert_peptide_fixmod<-function(mod.df,peptide_symbol,peptide_info,BPPARAM=BPPARAM){
   
   
    suppressMessages(suppressWarnings(require(rcdk)))
@@ -937,7 +941,7 @@ convert_peptide_fixmod<-function(mod.df,peptide_symbol,ConvertPeptide,peptide_in
   
 }
 
-convert_peptide_adduct_list<-function(adductsname,peptide_symbol,multiplier=c(1,1),adductslist=Build_adduct_list(),ConvertPeptide=NULL){
+convert_peptide_adduct_list<-function(adductsname,peptide_symbol,multiplier=c(1,1),adductslist=Build_adduct_list()){
    suppressMessages(suppressWarnings(require(rcdk)))
    suppressMessages(suppressWarnings(require(OrgMassSpecR)))
 
@@ -986,7 +990,9 @@ convert_peptide_adduct_list<-function(adductsname,peptide_symbol,multiplier=c(1,
       return(list)
     }else{return(NULL)}
   }
+  
    if (missing(multiplier)){
+     multiplier<-NULL
      multiplier[1]= as.numeric(as.character(adductslist[adductslist$Name==adductsname,"Mult"]))
      multiplier[2]=1
    }
@@ -1094,7 +1100,7 @@ get_formula_from_atom<-function(atoms){
 }
   
 
-ConvertPeptide<-function (sequence, output = "elements",Substitute_AA=NULL) 
+ConvertPeptide_depr<-function (sequence, output = "elements",Substitute_AA=NULL) 
 {
   peptideVector <- strsplit(sequence, split = "")[[1]]
   if (output == "elements") {
@@ -1134,13 +1140,14 @@ ConvertPeptide<-function (sequence, output = "elements",Substitute_AA=NULL)
     aa_compo<-union(c("C","H","N","O","S"),unique(unlist(lapply(Substitute_AA$aavector,names))))
     resultsVector<-rep(0,length(aa_compo))
     names(resultsVector)=aa_compo
-    to_add<-NULL
+    resultsVector_bak<-resultsVector
+    
     for (i in 1:length(peptideVector)) {
+      to_add<-resultsVector_bak
       to_add<-FindElement(peptideVector[i],Substitute_AA = Substitute_AA) 
       to_add[aa_compo[(!(aa_compo %in% names(to_add)))]]=0
       to_add<-to_add[aa_compo]
       resultsVector <- to_add +  resultsVector
-      #print(resultsVector)
     }
     
     resultsVector["H"] <- resultsVector["H"] + 2
@@ -1195,6 +1202,196 @@ ConvertPeptide<-function (sequence, output = "elements",Substitute_AA=NULL)
     return(paste(codes, collapse = ""))
   }
 }
+
+BuildElement <- function(Substitute_AA=NULL,uniqueAA=c("A")) {
+  if (is.null(Substitute_AA)){
+    Element_tbl<-list(
+      A=c(C = 3L, H = 5L, N = 1L, O = 1L, S = 0L),
+      R=c(C = 6L, H = 12L, N = 4L, O = 1L, S = 0L),
+      N=c(C = 4L, H = 6L, N = 2L, O = 2L, S = 0L),
+      D=c(C = 4L, H = 5L, N = 1L, O = 3L, S = 0L),
+      E=c(C = 5L, H = 7L, N = 1L, O = 3L, S = 0L),
+      Q=c(C = 5L, H = 8L, N = 2L, O = 2L, S = 0L),
+      G=c(C = 2L, H = 3L, N = 1L, O = 1L, S = 0L),
+      H=c(C = 6L, H = 7L, N = 3L, O = 1L, S = 0L),
+      I=c(C = 6L, H = 11L, N = 1L, O = 1L, S = 0L),
+      L=c(C = 6L, H = 11L, N = 1L, O = 1L, S = 0L),
+      K=c(C = 6L, H = 12L, N = 2L, O = 1L, S = 0L),
+      M=c(C = 5L, H = 9L, N = 1L, O = 1L, S = 1L),
+      F=c(C = 9L, H = 9L, N = 1L, O = 1L, S = 0L),
+      P=c(C = 5L, H = 7L, N = 1L, O = 1L, S = 0L),
+      S=c(C = 3L, H = 5L, N = 1L, O = 2L, S = 0L),
+      T=c(C = 4L, H = 7L, N = 1L, O = 2L, S = 0L),
+      W=c(C = 11L, H = 10L, N = 2L, O = 1L, S = 0L),
+      Y=c(C = 9L, H = 9L, N = 1L, O = 2L, S = 0L),
+      V=c(C = 5L, H = 9L, N = 1L, O = 1L, S = 0L),
+      C=c(C = 3L, H = 5L, N = 1L, O = 1L, S = 1L),
+      B=c(C = 4L, H = 5L, N = 1L, O = 3L, S = 0L),
+      Z=c(C = 5L, H = 7L, N = 1L, O = 3L, S = 0L),
+      J=c(C = 6L, H = 11L, N = 1L, O = 1L, S = 0L))
+  }
+  if (!is.null(Substitute_AA)){
+    common_ele<-c("C","H","N","O","S")
+    aa_compo<-union(common_ele,unique(unlist(lapply(Substitute_AA$aavector,names))))
+    aa_sub<-aa_compo[!(aa_compo %in% common_ele)]
+    Element_tbl<-list(
+      A=c(C = 3L, H = 5L, N = 1L, O = 1L, S = 0L),
+      R=c(C = 6L, H = 12L, N = 4L, O = 1L, S = 0L),
+      N=c(C = 4L, H = 6L, N = 2L, O = 2L, S = 0L),
+      D=c(C = 4L, H = 5L, N = 1L, O = 3L, S = 0L),
+      E=c(C = 5L, H = 7L, N = 1L, O = 3L, S = 0L),
+      Q=c(C = 5L, H = 8L, N = 2L, O = 2L, S = 0L),
+      G=c(C = 2L, H = 3L, N = 1L, O = 1L, S = 0L),
+      H=c(C = 6L, H = 7L, N = 3L, O = 1L, S = 0L),
+      I=c(C = 6L, H = 11L, N = 1L, O = 1L, S = 0L),
+      L=c(C = 6L, H = 11L, N = 1L, O = 1L, S = 0L),
+      K=c(C = 6L, H = 12L, N = 2L, O = 1L, S = 0L),
+      M=c(C = 5L, H = 9L, N = 1L, O = 1L, S = 1L),
+      F=c(C = 9L, H = 9L, N = 1L, O = 1L, S = 0L),
+      P=c(C = 5L, H = 7L, N = 1L, O = 1L, S = 0L),
+      S=c(C = 3L, H = 5L, N = 1L, O = 2L, S = 0L),
+      T=c(C = 4L, H = 7L, N = 1L, O = 2L, S = 0L),
+      W=c(C = 11L, H = 10L, N = 2L, O = 1L, S = 0L),
+      Y=c(C = 9L, H = 9L, N = 1L, O = 2L, S = 0L),
+      V=c(C = 5L, H = 9L, N = 1L, O = 1L, S = 0L),
+      C=c(C = 3L, H = 5L, N = 1L, O = 1L, S = 1L),
+      B=c(C = 4L, H = 5L, N = 1L, O = 3L, S = 0L),
+      Z=c(C = 5L, H = 7L, N = 1L, O = 3L, S = 0L),
+      J=c(C = 6L, H = 11L, N = 1L, O = 1L, S = 0L))
+    
+    for (AA in Substitute_AA$AA){
+      aasub_ele_list<-Substitute_AA$aavector[Substitute_AA$AA==AA][[1]]
+      if(Substitute_AA$Formula_with_water[Substitute_AA$AA==AA][[1]]){
+        aasub_ele_list[["H"]]<-aasub_ele_list[["H"]]-2
+        aasub_ele_list[["O"]]<-aasub_ele_list[["O"]]-1
+      }
+      mode(aasub_ele_list)<- "integer"
+      Element_tbl[[AA]]<-aasub_ele_list
+    }
+    
+    for (AA in names(Element_tbl)){      
+      to_add<-Element_tbl[[AA]]
+      to_add[aa_compo[(!(aa_compo %in% names(to_add)))]]=0L
+      to_add<-to_add[aa_compo]
+      #print(to_add)
+      Element_tbl[[AA]] <- to_add
+      
+    }  
+  }
+  
+  if(length(uniqueAA[!(uniqueAA %in% names(Element_tbl))])>0){
+    for (AA in uniqueAA[!(uniqueAA %in% names(Element_tbl))]){
+      to_add<-Element_tbl[["A"]]
+      to_add=rep(0L,length(to_add))
+      names(to_add)<-names(Element_tbl[["A"]])
+      #print(to_add)
+      Element_tbl[[AA]] <- to_add
+      message(paste(AA,"is found in database as an uncommon amino acid, use Substitute_AA to define a formula for",AA))
+    }
+  }
+  
+  return(Element_tbl)
+}
+
+BuildElement_1 <- function(Substitute_AA=NULL) {
+  if (is.null(Substitute_AA)){
+    Element_tbl<-list(
+      A=c(C = 3, H = 5, N = 1, O = 1, S = 0),
+      R=c(C = 6, H = 12, N = 4, O = 1, S = 0),
+      N=c(C = 4, H = 6, N = 2, O = 2, S = 0),
+      D=c(C = 4, H = 5, N = 1, O = 3, S = 0),
+      E=c(C = 5, H = 7, N = 1, O = 3, S = 0),
+      Q=c(C = 5, H = 8, N = 2, O = 2, S = 0),
+      G=c(C = 2, H = 3, N = 1, O = 1, S = 0),
+      H=c(C = 6, H = 7, N = 3, O = 1, S = 0),
+      I=c(C = 6, H = 11, N = 1, O = 1, S = 0),
+      L=c(C = 6, H = 11, N = 1, O = 1, S = 0),
+      K=c(C = 6, H = 12, N = 2, O = 1, S = 0),
+      M=c(C = 5, H = 9, N = 1, O = 1, S = 1),
+      F=c(C = 9, H = 9, N = 1, O = 1, S = 0),
+      P=c(C = 5, H = 7, N = 1, O = 1, S = 0),
+      S=c(C = 3, H = 5, N = 1, O = 2, S = 0),
+      T=c(C = 4, H = 7, N = 1, O = 2, S = 0),
+      W=c(C = 11, H = 10, N = 2, O = 1, S = 0),
+      Y=c(C = 9, H = 9, N = 1, O = 2, S = 0),
+      V=c(C = 5, H = 9, N = 1, O = 1, S = 0),
+      C=c(C = 3, H = 5, N = 1, O = 1, S = 1),
+      Z=c(C = 3, H = 3, N = 1, O = 1, S = 1))
+  }
+  if (!is.null(Substitute_AA)){
+    common_ele<-c("C","H","N","O","S")
+    aa_compo<-union(common_ele,unique(unlist(lapply(Substitute_AA$aavector,names))))
+    aa_sub<-aa_compo[!(aa_compo %in% common_ele)]
+    Element_tbl<-list(
+      A=c(C = 3, H = 5, N = 1, O = 1, S = 0),
+      R=c(C = 6, H = 12, N = 4, O = 1, S = 0),
+      N=c(C = 4, H = 6, N = 2, O = 2, S = 0),
+      D=c(C = 4, H = 5, N = 1, O = 3, S = 0),
+      E=c(C = 5, H = 7, N = 1, O = 3, S = 0),
+      Q=c(C = 5, H = 8, N = 2, O = 2, S = 0),
+      G=c(C = 2, H = 3, N = 1, O = 1, S = 0),
+      H=c(C = 6, H = 7, N = 3, O = 1, S = 0),
+      I=c(C = 6, H = 11, N = 1, O = 1, S = 0),
+      L=c(C = 6, H = 11, N = 1, O = 1, S = 0),
+      K=c(C = 6, H = 12, N = 2, O = 1, S = 0),
+      M=c(C = 5, H = 9, N = 1, O = 1, S = 1),
+      F=c(C = 9, H = 9, N = 1, O = 1, S = 0),
+      P=c(C = 5, H = 7, N = 1, O = 1, S = 0),
+      S=c(C = 3, H = 5, N = 1, O = 2, S = 0),
+      T=c(C = 4, H = 7, N = 1, O = 2, S = 0),
+      W=c(C = 11, H = 10, N = 2, O = 1, S = 0),
+      Y=c(C = 9, H = 9, N = 1, O = 2, S = 0),
+      V=c(C = 5, H = 9, N = 1, O = 1, S = 0),
+      C=c(C = 3, H = 5, N = 1, O = 1, S = 1),
+      Z=c(C = 3, H = 3, N = 1, O = 1, S = 1)) 
+    
+    for (AA in Substitute_AA$AA){
+      aasub_ele_list<-Substitute_AA$aavector[Substitute_AA$AA==AA][[1]]
+      if(Substitute_AA$Formula_with_water[Substitute_AA$AA==AA][[1]]){
+        aasub_ele_list[["H"]]<-aasub_ele_list[["H"]]-2
+        aasub_ele_list[["O"]]<-aasub_ele_list[["O"]]-1
+      }
+      #mode(aasub_ele_list)<- "integer"
+      Element_tbl[[AA]]<-aasub_ele_list
+    }
+    
+    for (AA in names(Element_tbl)){
+      to_add<-Element_tbl[[AA]]
+      to_add[aa_compo[(!(aa_compo %in% names(to_add)))]]=0
+      to_add<-to_add[aa_compo]
+      #print(to_add)
+      Element_tbl[[AA]] <- to_add
+    }  
+  }
+  
+  return(Element_tbl)
+}
+
+ConvertPeptide<-function(sequence,Substitute_AA=NULL, Element_tbl=BuildElement(Substitute_AA)){
+  peptideVector<- strsplit(sequence, split = "")[[1]]
+  #L<-lapply(peptideVector, function(x,Element_tbl){Element_tbl[[x]]},Element_tbl)
+  
+  #resultsVector<-tapply(unlist(L), names(unlist(L)), sum)
+  
+  
+  for (i in 1:length(peptideVector)) {
+    if(i==1){
+      resultsVector<-Element_tbl[[peptideVector[1]]]
+    }else{
+    to_add<-Element_tbl[[peptideVector[i]]]
+    resultsVector <- to_add +  resultsVector
+    }
+  }
+  
+  resultsVector["H"] <- resultsVector["H"] + 2L
+  resultsVector["O"] <- resultsVector["O"] + 1L
+  
+  resultsVector<- resultsVector[which(resultsVector!=0)]
+  
+  return(resultsVector)
+}
+
+
 
 Peptide_Summary_para<- function(Proteins,peplist){
   

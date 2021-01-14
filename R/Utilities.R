@@ -151,14 +151,16 @@ Load_Cardinal_imaging<-function(datafile=tk_choose.files(filter = Filters,
   datafile<-gsub("\\\\", "/", datafile)
   datafiles<-gsub(".imzML", "", datafile)
   workdir<-base::dirname(datafiles) 
-  name <-gsub(paste0(base::dirname(datafiles),"/"),"",datafiles)
+  name <-basename(datafiles)
   folder<-base::dirname(datafiles)
   if (rotate==0){
     imdata <-  suppressMessages(suppressWarnings(Cardinal::readImzML(name, folder, attach.only=attach.only,as=as,resolution=resolution, units="ppm",BPPARAM=BPPARAM,mass.range=mzrange,is_centroided=is_centroided)))
     
   }else  {
     imdata <-  suppressMessages(suppressWarnings(Cardinal::readImzML(name, folder, attach.only=attach.only,as=as,resolution=resolution, units="ppm",rotate = rotate,BPPARAM=BPPARAM,mass.range=mzrange,is_centroided=is_centroided)))
-  }
+    imdata <-  rotateMSI(imdata=imdata,rotation_degree=rotate)
+    }
+  
   if (preprocessing){
     imdata <- try(batchProcess(imdata, normalize=FALSE, smoothSignal=TRUE, reduceBaseline=list(method = "median",blocks=500, fun=min, spar=1),
                                peakPick=list(SNR=12), peakAlign=TRUE,BPPARAM=BPPARAM))
@@ -558,14 +560,16 @@ cluster_image_grid<-function(clusterID,
                              plot_layout=c("line","grid"),
                              export_Header_table=F,
                              export_footer_table=F,
-                             
                              plot_style=c("fleximaging","ClusterOnly","rainbow"),
                              protein_coverage=F,
                              footer_style="Length",
                              output_png_width_limit=1980,
                              attach_summary_cluster=T,
                              cluster_color_scale=c("blackwhite","fleximaging"),
-                             remove_cluster_from_grid=T){
+                             remove_cluster_from_grid=T,
+                             img_brightness= 100,
+                             list_of_protein_sequence,
+                             workdir=getwd()){
   #complementary(color="red", plot = TRUE, bg = "white", labcol = NULL, cex = 0.8, title = TRUE)
   windows_filename<- function(stringX){
     stringX<-stringr::str_remove_all(stringX,"[><*?:\\/\\\\]")
@@ -577,25 +581,25 @@ cluster_image_grid<-function(clusterID,
    suppressMessages(suppressWarnings(require(magick)))
    suppressMessages(suppressWarnings(require(stringr)))
    suppressMessages(suppressWarnings(require(data.table)))
-   Sys.setenv("PATH" = paste(paste(unique(str_split(Sys.getenv("PATH"),.Platform$path.sep)[[1]]), sep = .Platform$path.sep,collapse = .Platform$path.sep), "C:/ProgramData/Anaconda3/orca_app", sep = .Platform$path.sep))
+   #Sys.setenv("PATH" = paste(paste(unique(str_split(Sys.getenv("PATH"),.Platform$path.sep)[[1]]), sep = .Platform$path.sep,collapse = .Platform$path.sep), "C:/ProgramData/Anaconda3/orca_app", sep = .Platform$path.sep))
    suppressMessages(suppressWarnings(require(grid)))
    suppressMessages(suppressWarnings(require(plotly)))
    suppressMessages(suppressWarnings(require(dplyr)))
    suppressMessages(suppressWarnings(require(colortools)))
   #rotate the image
   #imdata@pixelData@data<-rotatetmp
-  outputpngsum=paste(getwd(),"\\",windows_filename(substr(clusterID, 1, 15)),"_cluster_imaging",'.png',sep="")
+  outputpngsum=paste(workdir,"/",windows_filename(substr(clusterID, 1, 15)),"_cluster_imaging",'.png',sep="")
   
-  message(outputpngsum)
+  #message(outputpngsum)
   SMPLIST=as.data.frame(SMPLIST)
-  outputpng=paste(getwd(),"\\",windows_filename(substr(clusterID, 1, 10)),"_cluster_plot",'.png',sep="")  
+  outputpng=paste(workdir,"/",windows_filename(substr(clusterID, 1, 10)),"_cluster_plot",'.png',sep="")  
   #message(outputpng)
   candidate=SMPLIST[SMPLIST[[ClusterID_colname]]==clusterID,]
   #candidate=candidate[order(as.character())]
-  if ("Peptide" %in% colnames(candidate)){
-  candidate_u<- candidate %>% group_by(mz) %>% dplyr::summarise(Peptide=Peptide[1])
+  if (componentID_colname %in% colnames(candidate)){
+  candidate_u<- candidate %>% dplyr::group_by(mz) %>% dplyr::summarise(Peptide=Peptide[1], .groups = 'drop')
 
-  candidate<-merge(data.frame(candidate_u),candidate,by=c("mz","Peptide"),sort=F)
+  candidate<-merge(data.frame(candidate_u),candidate,by=c("mz",componentID_colname),sort=F)
   }
   candidateunique=as.numeric(as.character(unique(candidate[,"mz"])))
   candidateunique=candidateunique[order(as.character(candidateunique))]
@@ -628,7 +632,9 @@ cluster_image_grid<-function(clusterID,
   #meancoldf<-colSums(mycolrgb@coords)/max(colSums(mycolrgb@coords))
   #meancol<-RGB(R=meancoldf[1],G=meancoldf[2],B=meancoldf[3])
   #colorspace::hex(meancol)
-  
+  #print(length(candidateunique))
+  #print(Component_plot_threshold)
+  #print(length(candidateunique)>=Component_plot_threshold)
   if (length(candidateunique)>=Component_plot_threshold){
     
     if (is.null(imdata)){
@@ -935,7 +941,7 @@ cluster_image_grid<-function(clusterID,
         pngfile_big<-image_average(img_com)
         pngfile<-pngfile_big
         pngfile_big<-image_border(pngfile_big, bg, "30x30")
-        pngfile_big<-image_modulate(pngfile_big, brightness = 100 + 25 * length(candidateunique), saturation = 100)
+        pngfile_big<-image_modulate(pngfile_big, brightness = img_brightness + 25 * length(candidateunique), saturation = 100)
         pngfile_big<-image_threshold(pngfile_big,type = "white", threshold = "50%",channel = "All")
         #pngfile_big<-image_annotate(pngfile_big,paste(cluster_desc),gravity = "north",size = 50,color = "white")
         pngfile_big<-image_annotate(pngfile_big,cluster_desc,gravity = "north",size = 30*40/nchar(cluster_desc),color = "white")
@@ -947,7 +953,7 @@ cluster_image_grid<-function(clusterID,
         #pngfile<-image_average(img_com)
         #pngfile<-image_threshold(pngfile, type = "black",  threshold = "50%")
         pngfile<-image_border(pngfile, bg, "30x30")
-        pngfile<-image_modulate(pngfile, brightness = 150)
+        pngfile<-image_modulate(pngfile, brightness = img_brightness + 50)
       }
         
         pngfile<-image_annotate(pngfile,paste(clusterID),gravity = "north",size = 30,color = "white")
@@ -1182,7 +1188,7 @@ cluster_image_grid<-function(clusterID,
           axis.title.y = element_text(color="#993333", size=14, face="bold")
         )}
       
-      footerpng<-paste(getwd(),"\\",windows_filename(substr(clusterID, 1, 10)),"_footer.png",sep="")
+      footerpng<-paste(workdir,"/",windows_filename(substr(clusterID, 1, 10)),"_footer.png",sep="")
       
       if (footer_style=="Protein"){
       png(footerpng,width = 5*length(candidateunique+1),height = 5*ceiling(ncharrow/10),units = "in",res = 300)
@@ -1280,10 +1286,20 @@ cluster_image_grid<-function(clusterID,
     #///rm(temp_component_png)
     
   }
+    
     removetempfile(tmp_dir,matchword=c(".png$","^magick-"))
     
     rm(pngcompfile)
+    
+    message("Cluster image rendering done:", clusterID ,cluster_desc)
+    
+  }else{
+    
+  message("Cluster image rendering Skipped:", clusterID ,cluster_desc)
+    
   }
+  
+  
   }
 
 orca_initial<-function(){
@@ -1430,7 +1446,7 @@ removetempfile<-function(temp_dir=tempdir(),matchword=c(".png$","^magick-"), int
   }else{
     test=grep(paste0(matchword,collapse = "|"),filelist,ignore.case = T)
   }
-  file.remove(paste0(temp_dir,"\\",filelist[test]))
+  file.remove(paste0(temp_dir,"/",filelist[test]))
   
   
 }
@@ -1992,4 +2008,19 @@ Parallel.OS<-function(Thread=1,bpprogressbar_t=TRUE){
   
   bpprogressbar(BPPARAM)=bpprogressbar_t
   return(BPPARAM)
+}
+
+
+rotateMSI<-function(imdata,rotation_degree=0){
+  
+  rotatetmp<-as.data.frame(imdata@elementMetadata@coord@listData)
+  
+  rotatenew<-affine(rotatetmp[,c("x","y")],rotate=rotation_degree,grid = T)
+  
+  #sum(duplicated(rotatenew))
+  
+  rownames(rotatenew)<-paste0("x = ",rotatenew$x,", ","y = ",rotatenew$y,", ","z = ",rotatenew$z)
+  rotatenew$z=rotatetmp$z
+  imdata@elementMetadata@coord@listData<-as.list(rotatenew)
+  return(imdata)
 }
