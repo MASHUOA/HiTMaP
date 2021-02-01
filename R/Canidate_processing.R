@@ -179,7 +179,7 @@ Protein_feature_list_fun<-function(workdir=getwd(),
    
    Digestion_site<-parse_cleavage_rule(Digestion_site)
    
-   if ('&'(length(Digestion_site)>=2,Multiple_mode=="sequential")){
+   if ('&'(length(Digestion_site)>=2,Multiple_mode[1]=="sequential")){
      Digestion_site<-paste0(Digestion_site,collapse = "|")
    }
   

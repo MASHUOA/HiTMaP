@@ -63,9 +63,11 @@ sudo apt install libssl-dev
 sudo apt install libcurl4-openssl-dev
 sudo apt-get install libnss-winbind winbind
 sudo apt install dirmngr gnupg apt-transport-https ca-certificates software-properties-common
-sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E298A3A825C0D65DFD57CBB651716619E084DAB9
+sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys
 sudo add-apt-repository 'deb https://cloud.r-project.org/bin/linux/ubuntu focal-cran40/'
-sudo apt-get install r-base
+sudo apt-cache policy r-base
+apt list r-base -a
+sudo apt-get install r-base="4.0.2-1.2004.0"
 sudo apt-get install libmagick++-dev
 apt-get install libfftw3-dev
 sudo apt-get install r-base-dev texlive-full
@@ -525,7 +527,38 @@ imaging_identification(datafile=paste0(wd,datafile),Digestion_site="([KR](?=[^P]
 library(HiTMaP)
 datafile=c("MouseBrain_Trypsin_FT/Mouse_brain.imzML")
 wd="~/expdata/"
-imaging_identification(datafile=paste0(wd,datafile),Digestion_site="([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=P))",Fastadatabase="uniprot_mouse_20210107.fasta",output_candidatelist=F,spectra_segments_per_file=4,use_previous_candidates=T,ppm=5,FDR_cutoff = 0.1,Rotate_IMG="file_rotationbk.csv",Segmentation = "none",IMS_analysis=F,plot_cluster_image_grid=T,peptide_ID_filter = 4,export_Header_table=T)
+imaging_identification(datafile=paste0(wd,datafile),Digestion_site="([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=P))",Fastadatabase="uniprot_mouse_20210107.fasta",output_candidatelist=F,spectra_segments_per_file=4,use_previous_candidates=T,ppm=5,FDR_cutoff = 0.1,Rotate_IMG="file_rotationbk.csv",Segmentation = "none",IMS_analysis=F,plot_cluster_image_grid=T,peptide_ID_filter = 2,export_Header_table=T, img_brightness=160, plot_cluster_image_overwrite=T)
+
+
+library(HiTMaP)
+datafile=c("MouseBrain_Trypsin_FT_200brit/Mouse_brain.imzML")
+wd="~/expdata/"
+imaging_identification(datafile=paste0(wd,datafile),Digestion_site="([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=P))",Fastadatabase="uniprot_mouse_20210107.fasta",output_candidatelist=F,spectra_segments_per_file=4,use_previous_candidates=T,ppm=5,FDR_cutoff = 0.1,Rotate_IMG="file_rotationbk.csv",Segmentation = "none",IMS_analysis=F,plot_cluster_image_grid=T,peptide_ID_filter = 2,export_Header_table=T, img_brightness=250, plot_cluster_image_overwrite=T,cluster_rds_path = "preprocessed_imdata.RDS")
+
+
+library(HiTMaP)
+datafile=c("MouseBrain_Trypsin_FT_200brit_man_seg/Mouse_brain.imzML")
+wd="~/expdata/"
+imaging_identification(datafile=paste0(wd,datafile),Digestion_site="([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=P))",Fastadatabase="uniprot_mouse_20210107.fasta",output_candidatelist=F,spectra_segments_per_file=4,use_previous_candidates=T,ppm=5,FDR_cutoff = 0.1,Rotate_IMG="file_rotationbk.csv",Segmentation = "none",IMS_analysis=F,plot_cluster_image_grid=T,peptide_ID_filter = 2,export_Header_table=T, img_brightness=250, plot_cluster_image_overwrite=T,cluster_rds_path = "preprocessed_imdata.RDS")
+
+library(HiTMaP)
+datafile=c("MouseBrain_Trypsin_FT_200brit/Mouse_brain.imzML")
+wd="~/expdata/"
+imaging_identification(datafile=paste0(wd,datafile),Digestion_site="([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=P))",Fastadatabase="uniprot_mouse_20210107.fasta",output_candidatelist=F,spectra_segments_per_file=4,use_previous_candidates=T,ppm=5,FDR_cutoff = 0.1,Rotate_IMG="file_rotationbk.csv",Segmentation = "none",IMS_analysis=F,plot_cluster_image_grid=T,peptide_ID_filter = 1,export_Header_table=T, img_brightness=250, plot_cluster_image_overwrite=F,cluster_rds_path = "preprocessed_imdata.RDS")
+
+
+library(HiTMaP)
+datafile=c("MouseBrain_Trypsin_FT_200brit_man_seg/Mouse_brain.imzML")
+wd="~/expdata/"
+imaging_identification(datafile=paste0(wd,datafile),Digestion_site="([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=P))",Fastadatabase="uniprot_mouse_20210107.fasta",output_candidatelist=F,spectra_segments_per_file=4,use_previous_candidates=T,ppm=5,FDR_cutoff = 0.1,Rotate_IMG="file_rotationbk.csv",Segmentation = "none",IMS_analysis=F,plot_cluster_image_grid=T,peptide_ID_filter = 1,export_Header_table=T, img_brightness=250, plot_cluster_image_overwrite=F,cluster_rds_path = "preprocessed_imdata.RDS")
+
+
+library(HiTMaP)
+datafile=c("MouseBrain_Trypsin_FT_man_seg/Mouse_brain.imzML")
+wd="~/expdata/"
+imaging_identification(datafile=paste0(wd,datafile),Digestion_site="([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=P))",Fastadatabase="uniprot_mouse_20210107.fasta",output_candidatelist=F,spectra_segments_per_file=4,use_previous_candidates=T,ppm=5,FDR_cutoff = 0.1,Rotate_IMG="file_rotationbk.csv",Segmentation = "none",IMS_analysis=F,plot_cluster_image_grid=T,peptide_ID_filter = 2,export_Header_table=T, img_brightness=200, plot_cluster_image_overwrite=T)
+
+
 
 library(HiTMaP)
 datafile=c("MouseBrain_Trypsin_FT/Mouse_brain.imzML")

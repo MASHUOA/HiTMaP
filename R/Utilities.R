@@ -148,8 +148,10 @@ Load_Cardinal_imaging<-function(datafile=tk_choose.files(filter = Filters,
                                 rotate=0,as="MSImagingExperiment",
                                 mzrange=NULL,is_centroided=F){
   #imdata_meta <- importImzMl(datafile, coordinates = matrix(c(2, 4),nrow=1, ncol=2),removeEmptySpectra = F, centroided = T)
+  suppressMessages(suppressWarnings(library(stringr)))
+  suppressMessages(suppressWarnings(library(BiocParallel)))
   datafile<-gsub("\\\\", "/", datafile)
-  datafiles<-gsub(".imzML", "", datafile)
+  datafiles<-str_remove(datafile,regex("\\.imzML$", ignore_case = T))
   workdir<-base::dirname(datafiles) 
   name <-basename(datafiles)
   folder<-base::dirname(datafiles)
@@ -546,9 +548,14 @@ cluster_image_cardinal_allinone<-function(clusterID,
   
 }
 
+#' cluster_image_grid
+#'
+#' This function renders the clustered images for maldi imaging data set
+#'
+#' @export
+
 cluster_image_grid<-function(clusterID,
                              SMPLIST,
-                             ppm=20,
                              imdata,
                              ClusterID_colname="Protein",
                              componentID_colname="Peptide",
@@ -567,9 +574,10 @@ cluster_image_grid<-function(clusterID,
                              attach_summary_cluster=T,
                              cluster_color_scale=c("blackwhite","fleximaging"),
                              remove_cluster_from_grid=T,
-                             img_brightness= 100,
+                             img_brightness= 100,ppm=20,
                              list_of_protein_sequence,
-                             workdir=getwd()){
+                             workdir=getwd(),
+                             pixel_size_um=200){
   #complementary(color="red", plot = TRUE, bg = "white", labcol = NULL, cex = 0.8, title = TRUE)
   windows_filename<- function(stringX){
     stringX<-stringr::str_remove_all(stringX,"[><*?:\\/\\\\]")
@@ -586,6 +594,8 @@ cluster_image_grid<-function(clusterID,
    suppressMessages(suppressWarnings(require(plotly)))
    suppressMessages(suppressWarnings(require(dplyr)))
    suppressMessages(suppressWarnings(require(colortools)))
+   suppressMessages(suppressWarnings(require(data.table)))
+   suppressMessages(suppressWarnings(require(Cardinal)))
   #rotate the image
   #imdata@pixelData@data<-rotatetmp
   outputpngsum=paste(workdir,"/",windows_filename(substr(clusterID, 1, 15)),"_cluster_imaging",'.png',sep="")
@@ -603,6 +613,11 @@ cluster_image_grid<-function(clusterID,
   }
   candidateunique=as.numeric(as.character(unique(candidate[,"mz"])))
   candidateunique=candidateunique[order(as.character(candidateunique))]
+  
+  #check if candidates' mz within the dataset range
+  candidateunique<-candidateunique[which(between(candidateunique,range(mz(imdata))[1],range(mz(imdata))[2]))]
+  candidate<-candidate[candidate$mz %in% candidateunique,]
+  
   if(is.null(candidate$desc)){
     candidate_unique_table=unique(candidate[,c("mz",componentID_colname,"formula","adduct")])
     cluster_desc<-"-"
@@ -730,7 +745,7 @@ cluster_image_grid<-function(clusterID,
       else if(plot_style=="fleximaging"){
         
         ##################################
-        darkmode()
+        lightmode()
         tmp_dir <- tempdir()
         temp_cluster_png=tempfile(pattern = "file", tmpdir = tempdir(), fileext = ".png")
         temp_component_png=list()
@@ -757,18 +772,7 @@ cluster_image_grid<-function(clusterID,
         
         col.regions <- gradient.colors(100, start="black", end=levels(mycol)[1])
         
-       if (F){clusterimg=image(imdata, mz=candidateunique, 
- #            col=levels(mycol),
-              colorscale =col.regions,
-              #contrast.enhance = contrast.enhance,
-              contrast.enhance = "none",
-              smooth.image = smooth.image ,
-              superpose=F,normalize.image="linear",
-              plusminus=round(mean(ppm*candidateunique/1000000),digits = 4),
-              layout=c(length(levels(Cardinal::run(imdata))),1),key=F
-              )
 
-        print(clusterimg)}
         
         dev.off()
         #if (length(candidateunique)==2){
@@ -794,6 +798,7 @@ cluster_image_grid<-function(clusterID,
             #col.regions=gradient.colors(100, start="#030303", end=levels(mycol)[i])
             col=levels(mycol)[i]
           }
+          
           if(cluster_color_scale=="blackwhite"){
             col.regions.mono=gradient.colors(100, start="black", end="white")
             col.regions=gradient.colors(100, start="black", end="white")
@@ -806,12 +811,12 @@ cluster_image_grid<-function(clusterID,
                                     colorscale=col.regions.mono,
                                     col=col,
                                     normalize.image="linear",
-                                    plusminus=round(ppm*candidateunique[i]/1000000,digits = 4),
+                                    plusminus=round(ppm*candidateunique[i]/1000000*2,digits = 5),
                                     key=F,
                                     xlab=NULL,
-                                    layout=c( length(levels(Cardinal::run(imdata))),1)
-            )
-            temp_component_png[[i]]=tempfile(pattern = "file", tmpdir = tempdir(), fileext = ".png")
+                                    layout=c( length(levels(Cardinal::run(imdata))),1),
+                                    bg = bg)
+            #temp_component_png[[i]]=tempfile(pattern = "file", tmpdir = tempdir(), fileext = ".png")
             
             #png(temp_component_png.mono[[i]],width = 5,height = 5 * length( levels(Cardinal::run(imdata))), bg = bg,units = "in",res = 300)
             temp_component_png[[i]]<-image_graph(width = 750,height = 750 * length( levels(Cardinal::run(imdata))), bg = bg,res = 150)
@@ -831,7 +836,7 @@ cluster_image_grid<-function(clusterID,
                                       colorscale=col.regions,
                                       col=col,
                                       normalize.image="linear",
-                                      plusminus=round(ppm*candidateunique[i]/1000000,digits = 4),
+                                      plusminus=round(ppm*candidateunique[i]/1000000*2,digits = 5),
                                       key=F,
                                       xlab=NULL,
                                       layout=c( length(levels(Cardinal::run(imdata))),1)
@@ -896,6 +901,7 @@ cluster_image_grid<-function(clusterID,
         
 
         
+        
         pngcompfile_output<-pngcompfile[[1]]
         for (i in 2: length(pngcompfile)){
           pngcompfile_output<-c(pngcompfile_output,unlist(pngcompfile[[i]]))
@@ -929,7 +935,21 @@ cluster_image_grid<-function(clusterID,
          pngfile_big<-image_annotate(pngfile_big,"0%        Relative intensity        100%",location = "+55+160",gravity = "northeast",size = 30,color = "white",degree=270)
          #pngfile_big<-image_annotate(pngfile_big,"0                                               100",location = "+52+165",gravity = "northeast",size = 30,color = "white",degree=270)
          #pngfile_big<-image_annotate(pngfile_big,"                 Relative intensity                  ",location = "+55+160",gravity = "northeast",size = 30,color = "white",degree=270)
+         pngfile_big <- image_draw(pngfile_big)
+         #rect(20, 20, 200, 100, border = "red", lty = "dashed", lwd = 5)
+         pixel_size_um_bar<-200
+         pixel_size<-pixel_size_um_bar*pixel_size_um/1000
+         if(is.integer(pixel_size)){
+           pixel_size<-ceiling(pixel_size)
+           pixel_size_um_bar<-pixel_size*1000/pixel_size_um
+         }
          
+         rect(750-pixel_size_um_bar-60, 740,750-pixel_size_um_bar-60+pixel_size_um_bar,  740+15, border  = 'white',col  = 'white', lwd = 0)
+         text(750, 750, paste0(pixel_size ," mm"),col  = 'white', cex = 3, srt = 0)
+         #palette(rainbow(11, end = 0.9))
+         #symbols(rep(200, 11), seq(0, 400, 40), circles = runif(11, 5, 35),
+         #        bg = 1:11, inches = FALSE, add = TRUE)
+         dev.off()
          #pngfile<-image_average(img_com)
          #pngfile<-image_threshold(pngfile, type = "black",  threshold = "50%")
          pngfile<-image_border(pngfile, bg, "30x30")
@@ -1210,8 +1230,8 @@ cluster_image_grid<-function(clusterID,
       par(oma=c(0, 0, 0, 0),mar=c(1, 0, 0, 0))
       component_int_plot$x=as.factor(1)
       component_int_plot$y=1
-      p<- ggplot(data=component_int_plot, aes(x=site, y=1,group=site,fill=col)) +
-        geom_bar(stat="identity",fill=component_int_plot$col)+ 
+      p<- ggplot(data=component_int_plot, aes(x=site, y=1,group=site,fill=component_int_plot$col,col=component_int_plot$col)) +
+        geom_bar(stat="identity",fill=component_int_plot$col,col=component_int_plot$col)+ 
         theme(axis.line=element_blank(),
               axis.text.y=element_blank(),axis.ticks=element_blank(),
               axis.title.y=element_blank(),legend.position="none",
@@ -2024,3 +2044,60 @@ rotateMSI<-function(imdata,rotation_degree=0){
   imdata@elementMetadata@coord@listData<-as.list(rotatenew)
   return(imdata)
 }
+
+PCA_ncomp_selection<-function(imdata,variance_coverage=0.80,outputdir=NULL){
+  suppressMessages(suppressWarnings(library(Cardinal)))
+  suppressMessages(suppressWarnings(library(ggplot2)))
+  suppressMessages(suppressWarnings(library(gtable)))
+  suppressMessages(suppressWarnings(library(egg)))
+  percent<-function(x, digits = 2, format = "f", ...) {
+    paste0(formatC(100 * x, format = format, digits = digits, ...), "%")
+  }
+  
+  PCA_imdata<-Cardinal::PCA(imdata,ncomp=12)
+  PCA_imdata_df<-as.data.frame(summary(PCA_imdata))
+  PCA_imdata_df$Standard.deviation<-PCA_imdata_df$Standard.deviation/sum(PCA_imdata_df$Standard.deviation)
+  PCA_imdata_df$Component<-as.factor(PCA_imdata_df$Component)
+  PCA_imdata_df$Percentage<-percent(PCA_imdata_df$Standard.deviation,digits =1)
+  PCA_imdata_df$Percent<-PCA_imdata_df$Standard.deviation/sum(PCA_imdata_df$Standard.deviation)
+  PCA_imdata_df <- within(PCA_imdata_df, cumulate <- cumsum(Percent))
+  for (PC_cum in PCA_imdata_df$cumulate){
+    if (PC_cum<variance_coverage){
+      PCA_imdata_df$Include[which(PCA_imdata_df$cumulate==PC_cum)]<-"Yes"
+    }else if(`&`(PC_cum>variance_coverage,which(PCA_imdata_df$cumulate==PC_cum)==1)){
+      PCA_imdata_df$Include[which(PCA_imdata_df$cumulate==PC_cum)]<-"Yes"
+    }else if(`&`(PC_cum>variance_coverage,PCA_imdata_df$cumulate[which(PCA_imdata_df$cumulate==PC_cum)-1]<variance_coverage)){
+      PCA_imdata_df$Include[which(PCA_imdata_df$cumulate==PC_cum)]<-"Yes"
+    }else{
+      PCA_imdata_df$Include[which(PCA_imdata_df$cumulate==PC_cum)]<-"No"
+    }  
+  }
+  
+  ncomp<-max(which(PCA_imdata_df$Include=="Yes"))
+  PCA_imdata_df$Include<-factor(PCA_imdata_df$Include,levels = c("Yes","No"))
+  actual_coverage<-percent(PCA_imdata_df$cumulate[ncomp])  
+  if (!is.null(outputdir)){
+  png(paste(outputdir,"\\","PCA_image.png",sep=""),width = 1024,height = 720)
+    
+  print(image(PCA_imdata, values="scores", superpose=FALSE, layout=c(3,4),normalize.image = c("linear"),contrast.enhance = c("histogram")))
+  
+  dev.off()
+  png(paste(outputdir,"\\","PCA_plot.png",sep=""),width = 1024,height = 720 ,res=150) 
+  print(ggplot(PCA_imdata_df, aes(x = Component,y = Percent,label=Percentage,fill=Include)) +
+    geom_histogram(aes(y = Standard.deviation),stat="identity",color="black",show.legend=T)+
+    labs(title ="",x = "Component",y = "Variation coverage")+
+    geom_label(
+      colour = "Black",
+      position = position_stack(vjust = 0.5),
+      angle = 90,show.legend = FALSE)+
+    scale_y_continuous(labels = scales::percent)+
+    theme_article()+ theme(legend.position = c(0.85, 0.8))+ ggtitle(paste("Principle components variance Actual coverage:",actual_coverage))
+  )
+  dev.off()
+    
+    
+  }
+
+  return(ncomp)
+}
+

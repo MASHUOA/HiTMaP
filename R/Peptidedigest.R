@@ -84,7 +84,7 @@ imaging_identification<-function(
                Decoy_search=TRUE,
                Decoy_adducts=c("M+ACN+H","M+IsoProp+H","M+DMSO+H","M+Co","M+Ag","M+Cu","M+He","M+Ne","M+Ar","M+Kr","M+Xe","M+Rn"),
                Decoy_mode = "isotope",
-               mzrange=c(700,4000),
+               mzrange=c(500,4000),
                adjust_score = FALSE,
                IMS_analysis=TRUE,
                PMFsearch=IMS_analysis,
@@ -96,7 +96,14 @@ imaging_identification<-function(
                plot_ion_image=FALSE,
                parallel=detectCores(),
                spectra_segments_per_file=5,
-               Segmentation=c("spatialKMeans","spatialShrunkenCentroids","Virtual_segmentation","none"),
+               Segmentation=c("spatialKMeans","spatialShrunkenCentroids","Virtual_segmentation","none","def_file"),
+               Segmentation_def="Segmentation_def.csv",
+               Segmentation_ncomp="auto-detect",
+               Segmentation_variance_coverage=0.8,
+               preprocess=list(force_preprocess=FALSE,use_preprocessRDS=TRUE,smoothSignal=list(method="gaussian"),
+                               reduceBaseline=list(method="locmin"),
+                               peakPick=list(method="adaptive"),
+                               peakAlign=list(tolerance=ppm, units="ppm")),
                Smooth_range=1,
                Virtual_segmentation_rankfile=NULL,
                Rotate_IMG=NULL,
@@ -106,6 +113,8 @@ imaging_identification<-function(
                use_previous_candidates=FALSE,
                score_method="SQRTP",
                plot_cluster_image_grid=FALSE,
+               plot_cluster_image_maxretry=2,
+               plot_cluster_image_overwrite=F,
                smooth.image="gaussian",
                componentID_colname="Peptide",
                ClusterID_colname="Protein",
@@ -115,14 +124,17 @@ imaging_identification<-function(
                FDR_cutoff=0.05,
                use_top_rank=NULL,
                plot_matching_score=F,
-               Component_plot_coloure=c("mono", "as.cluster"),
-               cluster_color_scale=c("blackwhite",NULL),
+               Component_plot_coloure="mono",
+               cluster_color_scale="blackwhite",
                plot_layout="line",
                export_Header_table=T,
                export_footer_table=T,
                attach_summary_cluster=T,
                remove_cluster_from_grid=attach_summary_cluster,
+               pixel_size_um=25,
+               img_brightness=100,
                Thread=NULL,
+               cluster_rds_path=NULL,
                ...
                ){
   library("pacman")
@@ -199,8 +211,9 @@ imaging_identification<-function(
                                                   Peptide_Summary_searchlist,
                                                   SPECTRUM_for_average=spectra_segments_per_file,
                                                   threshold=threshold,rotate = Rotate_IMG,
-                                                  ppm=ppm,
+                                                  ppm=ppm,mzrange=mzrange,
                                                   Segmentation=Segmentation,
+                                                  Segmentation_ncomp=Segmentation_ncomp,
                                                   PMFsearch = PMFsearch,
                                                   Virtual_segmentation_rankfile = Virtual_segmentation_rankfile,
                                                   BPPARAM = BPPARAM,
@@ -212,7 +225,9 @@ imaging_identification<-function(
                                                   peptide_ID_filter=peptide_ID_filter,
                                                   Protein_desc_of_interest=Protein_desc_of_interest,
                                                   plot_matching_score_t=plot_matching_score,
-                                                  FDR_cutoff= FDR_cutoff)
+                                                  FDR_cutoff= FDR_cutoff,
+                                                  Segmentation_variance_coverage=Segmentation_variance_coverage,
+                                                  preprocess=preprocess)
   
   }
   #Summarize the peptide list
@@ -425,6 +440,7 @@ imaging_identification<-function(
     
     imdata=combinedimdata
     message("imdata loaded.")
+    if (!is.null(cluster_rds_path)){imdata=readRDS(cluster_rds_path)}
     outputfolder=paste(workdir,"/Summary folder/cluster Ion images/",sep="")
     if (dir.exists(outputfolder)==FALSE){dir.create(outputfolder)}
 
@@ -444,26 +460,104 @@ imaging_identification<-function(
     write.csv(Protein_feature_list_trimmed,paste(workdir,"/Summary folder/Protein_feature_list_trimmed.csv",sep=""),row.names = F)
     }
     
-    save()
-    
-    lapply(unique(Protein_feature_list_trimmed$Protein),
-           cluster_image_grid,
-           imdata=imdata,
-           SMPLIST=Protein_feature_list,
-           ppm=ppm,ClusterID_colname=ClusterID_colname,
-           componentID_colname=componentID_colname,
-           plot_layout=plot_layout,
-           export_Header_table=export_Header_table,
-           export_footer_table=export_footer_table,
-           attach_summary_cluster=attach_summary_cluster,
-           remove_cluster_from_grid=remove_cluster_from_grid,
-           plot_style="fleximaging",
-           smooth.image=smooth.image,
-           Component_plot_coloure=Component_plot_coloure,
-           cluster_color_scale=cluster_color_scale,
-           list_of_protein_sequence=list_of_protein_sequence,
-           workdir=outputfolder,
-           Component_plot_threshold=peptide_ID_filter)
+    save(list=c("Protein_feature_list_trimmed",
+                "imdata",
+                "Protein_feature_list",
+                "ClusterID_colname",
+                "componentID_colname",
+                "plot_layout",
+                "export_Header_table",
+                "export_footer_table",
+                "attach_summary_cluster",
+                "remove_cluster_from_grid",
+                "smooth.image",
+                "Component_plot_coloure",
+                "cluster_color_scale",
+                "list_of_protein_sequence",
+                "outputfolder",
+                "peptide_ID_filter",
+                "ppm",
+                "img_brightness",
+                "pixel_size_um"
+                ),
+         file=paste0(workdir,"/cluster_img_grid.RData"), ascii = T,compress  = FALSE
+         )
+
+    for (clusterID in unique(Protein_feature_list_trimmed$Protein)){
+      n_component<-nrow(unique(Protein_feature_list_trimmed[Protein_feature_list_trimmed[[ClusterID_colname]]==clusterID,c(ClusterID_colname,componentID_colname,"moleculeNames","adduct","Modification")]))
+      if (n_component>=peptide_ID_filter){
+      fileConn<-file(paste0(workdir,"/cluster_img_scource.R"),)
+      writeLines(c("suppressMessages(suppressWarnings(require(HiTMaP)))",
+                   paste0("clusterID=",clusterID),
+                   paste0("suppressMessages(suppressWarnings(load(file =\"", workdir,"/cluster_img_grid.RData\")))"),
+                   "suppressMessages(suppressWarnings(cluster_image_grid(clusterID = clusterID,
+                                      imdata=imdata,
+                                      SMPLIST=Protein_feature_list,
+                                      ppm=ppm,
+                                      ClusterID_colname=ClusterID_colname,
+                                      componentID_colname=componentID_colname,
+                                      plot_layout=plot_layout,
+                                      export_Header_table=export_Header_table,
+                                      export_footer_table=export_footer_table,
+                                      attach_summary_cluster=attach_summary_cluster,
+                                      remove_cluster_from_grid=remove_cluster_from_grid,
+                                      plot_style=\"fleximaging\",
+                                      smooth.image=smooth.image,
+                                      Component_plot_coloure=Component_plot_coloure,
+                                      cluster_color_scale=cluster_color_scale,
+                                      list_of_protein_sequence=list_of_protein_sequence,
+                                      workdir=outputfolder,
+                                      pixel_size_um=pixel_size_um,
+                                      img_brightness=img_brightness,
+                                      Component_plot_threshold=peptide_ID_filter)))"),
+                 fileConn)
+      close(fileConn)
+      cluster_desc<-unique(Protein_feature_list_trimmed$desc[Protein_feature_list_trimmed[[ClusterID_colname]]==clusterID])
+      cluster_desc<-gsub(stringr::str_extract(cluster_desc,"OS=.{1,}"),"",cluster_desc)
+      if(file.exists(paste0(outputfolder,clusterID,"_cluster_imaging.png"))){
+      if(plot_cluster_image_overwrite){
+        system(paste0("Rscript \"",paste0(workdir,"/cluster_img_scource.R\"")))
+      }else{
+        message("Cluster image rendering Skipped file exists: No.",clusterID," ",cluster_desc)
+      }
+        
+        }else{
+        system(paste0("Rscript \"",paste0(workdir,"/cluster_img_scource.R\"")))
+      }
+      
+      
+      
+      if(file.exists(paste0(outputfolder,clusterID,"_cluster_imaging.png"))){
+       message("Cluster image rendering Done: No.",clusterID," ",cluster_desc)
+       
+      }else{
+        retrytime=1
+        repeat{
+          
+          message("Cluster image rendering failed and retry ",retrytime,": No.",clusterID," ",cluster_desc)
+          system(paste0("Rscript \"",paste0(workdir,"/cluster_img_scource.R\"")))
+          
+          if (file.exists(paste0(outputfolder,clusterID,"_cluster_imaging.png"))){
+            message("Cluster image rendering Done: No.",clusterID," ",cluster_desc)
+            
+            break
+          }else if(retrytime>=plot_cluster_image_maxretry){
+            message("Cluster image rendering reaches maximum Retry Attempts: No.",clusterID," ",cluster_desc)
+            
+            break
+          }
+          retrytime=1+retrytime
+        }
+        
+      }
+      
+      }else{
+        message("Cluster image rendering Skipped: No.",clusterID," ",cluster_desc)
+      }
+      
+      
+
+    }
 
     if(F){
     Pngclusterkmean=NULL
@@ -2106,8 +2200,11 @@ PMF_Cardinal_Datafilelist<-function(datafile,
                                     Peptide_Summary_searchlist, 
                                     SPECTRUM_for_average=5,threshold=0.1,
                                     ppm,
-                                    Segmentation=c("spatialKMeans","spatialShrunkenCentroids","Virtual_segmentation","none"),
-                                    segmentation_ncomp=3,
+                                    mzrange=c(500,4000),
+                                    Segmentation=c("spatialKMeans","spatialShrunkenCentroids","Virtual_segmentation","none","def_file"),
+                                    Segmentation_def="sementation_def.csv",
+                                    Segmentation_ncomp="auto-detect",
+                                    Segmentation_variance_coverage=0.8,
                                     Smooth_range=1,
                                     colorstyle="Set1",
                                     Virtual_segmentation_rankfile=NULL,
@@ -2128,7 +2225,7 @@ PMF_Cardinal_Datafilelist<-function(datafile,
                                     Protein_desc_of_interest=".",
                                     FDR_cutoff=0.1,
                                     use_top_rank=NULL,
-                                    preprocess=list(smoothSignal=list(method="gaussian"),
+                                    preprocess=list(force_preprocess=FALSE,use_preprocessRDS=TRUE,smoothSignal=list(method="gaussian"),
                                                     reduceBaseline=list(method="locmin"),
                                                     peakPick=list(method="adaptive"),
                                                     peakAlign=list(tolerance=ppm, units="ppm")),
@@ -2138,7 +2235,7 @@ PMF_Cardinal_Datafilelist<-function(datafile,
    suppressMessages(suppressWarnings(require(RColorBrewer)))
    suppressMessages(suppressWarnings(require(stringr)))
    getPalette = colorRampPalette(brewer.pal_n(9, colorstyle))
-   
+   setCardinalBPPARAM(BPPARAM)
   if (!is.null(rotate)){
     message("Found rotation info")
     #rotatedegrees=rotate[rotate$filenames==datafile,"rotation"]
@@ -2196,16 +2293,65 @@ PMF_Cardinal_Datafilelist<-function(datafile,
         datafile_imzML[z]<-paste0(datafile[z],".imzML")
   }
   setwd(workdir)
-  message("porject dir",workdir)
-  imdata <- Cardinal::readMSIData(datafile_imzML[z],  attach.only=T,as="MSImagingExperiment",resolution=200, units="ppm",BPPARAM=BPPARAM)
-  if(!is.na(rotate[datafile_imzML[z]])){
-    imdata <-rotateMSI(imdata=imdata,rotation_degree=rotate[datafile_imzML[z]])
-  }else if(!is.na(rotate[datafile[z]])){
-    imdata <-rotateMSI(imdata=imdata,rotation_degree=rotate[datafile[z]])
-  }
+  message("Porject dir",workdir)
+  # imdata <- Cardinal::readMSIData(datafile_imzML[z],  attach.only=T,as="MSImagingExperiment",resolution=200, units="ppm",BPPARAM=BPPARAM,mass.range =mzrange)
+  # if(!is.na(rotate[datafile_imzML[z]])){
+  #   imdata <-rotateMSI(imdata=imdata,rotation_degree=rotate[datafile_imzML[z]])
+  # }else if(!is.na(rotate[datafile[z]])){
+  #   imdata <-rotateMSI(imdata=imdata,rotation_degree=rotate[datafile[z]])
+  # }
+  # 
+  if (ppm>=25) {
+    instrument_ppm=50
+  }else{
+    instrument_ppm=10
+  }      
+  if (dir.exists(paste0(gsub(".imzML$","",datafile[z]) ," ID"))==FALSE){dir.create(paste0(gsub(".imzML$","",datafile[z])  ," ID"))}
+  if ('&'(preprocess$use_preprocessRDS,file.exists(paste0(gsub(".imzML$","",datafile[z])  ," ID/preprocessed_imdata.RDS")))){
+          message("Using image data: ",paste0(gsub(".imzML$","",datafile[z])  ," ID/preprocessed_imdata.RDS"))
+    
+          imdata<-readRDS(paste0(gsub(".imzML$","",datafile[z])  ," ID/preprocessed_imdata.RDS"))
+          imdata_ed<-imdata
+      }else{
+          message("Using image data: ",paste0(gsub(".imzML$","",datafile[z]), ".imzML$"))
+          imdata <- Cardinal::readMSIData(datafile_imzML[z],  attach.only=T,as="MSImagingExperiment",resolution=ppm, units="ppm",BPPARAM=BPPARAM,mass.range =mzrange)
+        if(!is.na(rotate[datafile_imzML[z]])){
+          imdata <-rotateMSI(imdata=imdata,rotation_degree=rotate[datafile_imzML[z]])
+        }else if(!is.na(rotate[datafile[z]])){
+          imdata <-rotateMSI(imdata=imdata,rotation_degree=rotate[datafile[z]])
+        }
+          if (!is.null(preprocess)){
+            imdata_ed<-imdata
+            if ('|'(imdata@metadata[["ibd binary type"]]!="processed",preprocess$force_preprocess)){
+              if  ( ppm<25){
+                imdata_ed<-imdata %>% 
+                  #smoothSignal(method="gaussian") %>% 
+                  #reduceBaseline(method="locmin") %>%
+                  peakPick(method="adaptive") %>%
+                  peakAlign(tolerance=ppm, units="ppm") %>%
+                  #peakFilter(mse_pre, freq.min=0.00) %>%
+                  process()
+              } else if(ppm>=25){
+                imdata_ed<-imdata %>% 
+                  smoothSignal(method="gaussian") %>% 
+                  reduceBaseline(method="locmin") %>%
+                  peakPick(method="adaptive") %>%
+                  peakAlign(tolerance=ppm, units="ppm") %>%
+                  #peakFilter(mse_pre, freq.min=0.00) %>%
+                  process()
+              }
+            saveRDS(imdata_ed,paste0(gsub(".imzML$","",datafile[z])  ," ID/preprocessed_imdata.RDS"),compress = F)  
+            }
+            
+          }else{
+            imdata_ed<-imdata
+          }  
+      }
+    
+  imdata<-imdata_ed
   
   coordata=as.data.frame(imdata@elementMetadata@coord)
-  if (dir.exists(paste0(gsub(".imzML$","",datafile[z]) ," ID"))==FALSE){dir.create(paste0(gsub(".imzML$","",datafile[z])  ," ID"))}
+
   setwd(paste0(gsub(".imzML$","",datafile[z])  ," ID")) 
     
     
@@ -2214,64 +2360,31 @@ PMF_Cardinal_Datafilelist<-function(datafile,
      #cl=autoStopCluster(makeCluster(6))
 
   
-    if (Segmentation=="spatialKMeans") {
+    if (Segmentation[1]=="spatialKMeans" && SPECTRUM_for_average!=1) {
+  if ('&'(Segmentation_ncomp=="auto-detect",Segmentation_variance_coverage>0)){
+    Segmentation_ncomp<-PCA_ncomp_selection(imdata=imdata,variance_coverage=Segmentation_variance_coverage,outputdir=paste0(getwd(),"/"))
+  }
     set.seed(1)
-  #message(paste0("spatialKMeans computing for ",name))
-  skm <-  suppressMessages(suppressWarnings(spatialKMeans(imdata, r=Smooth_range, k=SPECTRUM_for_average, method="adaptive",ncomp=segmentation_ncomp,BPPARAM =BPPARAM )))
-  message(paste0("spatialKMeans finished for ",name))
-  #skm@resultData[["new"]]=skm@resultData[["r = 1, k = 5"]]
-  png(paste(getwd(),"\\","spatialKMeans_image_plot_",SPECTRUM_for_average,"_segs.png",sep=""),width = 1024,height = 720)
-  #plot(skm, col=c("pink", "blue", "red","orange","navyblue"), type=c('p','h'), key=FALSE)
-  #par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(1+ceiling(SPECTRUM_for_average/2), 2),
-  #plot.new()
+    
+  skm <-  suppressMessages(suppressWarnings(spatialKMeans(imdata, r=Smooth_range, k=SPECTRUM_for_average, method="adaptive",ncomp=Segmentation_ncomp,BPPARAM =BPPARAM )))
+  message(paste0(Segmentation[1], " finished: ",name))
+  png(paste(getwd(),"\\",Segmentation[1],"_image_plot_",SPECTRUM_for_average,"_segs.png",sep=""),width = 1024,height = 720)
+
   par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(1, 2),
       bty="n",pty="s",xaxt="n",
       yaxt="n",
       no.readonly = TRUE,ann=F)
-  
-  
-  
-  {
   imagefile<-Cardinal::image(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], key=T, ann=FALSE,axes=FALSE)
-  #legend("topright", legend=1:SPECTRUM_for_average, fill=brewer.pal_n(SPECTRUM_for_average,colorstyle), col=brewer.pal_n(SPECTRUM_for_average,"Paired"), bg="transparent",xpd=TRUE,cex = 1)
-  }
-  #Cardinal::plot(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], type=c('p','h'), key=T)
-  #Cardinal::plot(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], type=c('p','h'), key=FALSE,mode="centers")
-  #Cardinal::plot(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], type=c('p','h'), key=FALSE,mode="betweenss")
-  
-  #plot.new()
-  {
-    #specfile<-Cardinal::plot(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], key=T)
-  #legend("topright", legend=1:SPECTRUM_for_average, fill=brewer.pal_n(SPECTRUM_for_average,colorstyle), col=brewer.pal_n(SPECTRUM_for_average,"Paired"), bg="transparent",xpd=TRUE,cex = 1)
-  }
   print(imagefile)
-  #print(specfile)
-  
   dev.off()
-  # png(paste(getwd(),"\\","spatialKMeans_image.png",sep=""),width = 720,height = 720)
-  # #plot(skm, col=c("pink", "blue", "red","orange","navyblue"), type=c('p','h'), key=FALSE)
-  # #par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(1+ceiling(SPECTRUM_for_average/2), 2),
-  # par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(1, 1),
-  #     bty="n",pty="s",xaxt="n",
-  #     yaxt="n",
-  #     no.readonly = TRUE,ann=FALSE)
-  # {
-  # Cardinal::image(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], key=FALSE, ann=FALSE,axes=FALSE)
-  # #legend("topright", legend=1:SPECTRUM_for_average, fill=brewer.pal_n(SPECTRUM_for_average,colorstyle), col=brewer.pal_n(SPECTRUM_for_average,"Paired"), bg="transparent",xpd=TRUE,cex = 1)
-  # }
-  # #Cardinal::plot(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], type=c('p','h'), key=T)
-  # #Cardinal::plot(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], type=c('p','h'), key=FALSE,mode="centers")
-  # #Cardinal::plot(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], type=c('p','h'), key=FALSE,mode="betweenss")
-  # dev.off()
   suppressMessages(suppressWarnings(require(magick)))
-  skmimg<-image_read(paste(getwd(),"\\","spatialKMeans_image_plot_",SPECTRUM_for_average,"_segs.png",sep=""))
+  skmimg<-image_read(paste(getwd(),"\\",Segmentation[1],"_image_plot_",SPECTRUM_for_average,"_segs.png",sep=""))
   
   
-  png(paste(getwd(),"\\","spatialKMeans_image_plot_",SPECTRUM_for_average,"_segs_spec.png",sep=""),width = 1024,height = 480*((SPECTRUM_for_average)))
+  png(paste(getwd(),"\\",Segmentation[1],"_image_plot_",SPECTRUM_for_average,"_segs_spec.png",sep=""),width = 1024,height = 480*((SPECTRUM_for_average)))
   centers=skm@resultData[[1]][["centers"]]
   
   centers_mz<-skm@featureData@mz
-  #centers_mz<-mz(imdata)
   suppressMessages(suppressWarnings(require(ggplot2)))
   sp<-NULL
   sp_plot<-NULL
@@ -2286,18 +2399,18 @@ PMF_Cardinal_Datafilelist<-function(datafile,
   grid.arrange( grobs = sp,ncol=1, nrow = ceiling(SPECTRUM_for_average) )
   dev.off()
   
-  skmimg_spec<-image_read(paste(getwd(),"\\","spatialKMeans_image_plot_",SPECTRUM_for_average,"_segs_spec.png",sep=""))
+  skmimg_spec<-image_read(paste(getwd(),"\\",Segmentation[1],"_image_plot_",SPECTRUM_for_average,"_segs_spec.png",sep=""))
   skmimg<-image_append(c(skmimg,skmimg_spec),stack = T)
-  image_write(skmimg,paste(getwd(),"\\","spatialKMeans_image_plot_",SPECTRUM_for_average,"_segs_append.png",sep=""))
-  withinss=as.data.frame(skm@resultData[[1]][["withinss"]])
-  withinss[,"mz"]<-as.numeric(gsub("m/z = ","",rownames(withinss)))
+  image_write(skmimg,paste(getwd(),"\\",Segmentation[1],"_image_plot_",SPECTRUM_for_average,"_segs_append.png",sep=""))
+  correlation=as.data.frame(skm@resultData@listData[[1]][["correlation"]])
+  correlation[,"mz"]<-as.numeric(gsub("m/z = ","",rownames(correlation)))
   centers=as.data.frame(skm@resultData[[1]][["centers"]])
   centers[,"mz"]<-as.numeric(gsub("m/z = ","",rownames(centers)))
   cluster=as.data.frame(skm@resultData[[1]][["cluster"]])
   cluster$Coor=rownames(cluster)
-  write.csv(withinss,paste("spatialKMeans_RESULT","withinss",SPECTRUM_for_average,"segs.csv"),row.names = F)
-  write.csv(centers,paste("spatialKMeans_RESULT","centers",SPECTRUM_for_average,"segs.csv"),row.names = F)
-  write.csv(cluster,paste("spatialKMeans_RESULT","cluster",SPECTRUM_for_average,"segs.csv"),row.names = F)
+  write.csv(correlation,paste(Segmentation[1],"_RESULT","correlation",SPECTRUM_for_average,"segs.csv"),row.names = F)
+  write.csv(centers,paste(Segmentation[1],"_RESULT","centers",SPECTRUM_for_average,"segs.csv"),row.names = F)
+  write.csv(cluster,paste(Segmentation[1],"_RESULT","cluster",SPECTRUM_for_average,"segs.csv"),row.names = F)
   
   
  #cluster=skm@resultData[["r = 1, k = 5"]][["cluster"]]
@@ -2318,63 +2431,31 @@ PMF_Cardinal_Datafilelist<-function(datafile,
   
   
   }
-    else if (Segmentation=="spatialShrunkenCentroids") {
+    else if (Segmentation[1]=="spatialShrunkenCentroids" && SPECTRUM_for_average!=1) {
     set.seed(1)
+      if ('&'(Segmentation_ncomp=="auto-detect",Segmentation_variance_coverage>0)){
+        Segmentation_ncomp<-PCA_ncomp_selection(imdata=imdata,variance_coverage=Segmentation_variance_coverage,outputdir=paste0(getwd(),"/"))
+      }
     #message(paste0("spatialShrunkenCentroids computing for ",name))
-    skm <-  suppressMessages(suppressWarnings(spatialShrunkenCentroids(imdata, r=Smooth_range, k=SPECTRUM_for_average, method="adaptive",ncomp=segmentation_ncomp,BPPARAM =BPPARAM)))
-    message(paste0("spatialShrunkenCentroids finished for ",name))
-    png(paste(getwd(),"\\","spatialShrunkenCentroids_image_plot_",SPECTRUM_for_average,"_segs.png",sep=""),width = 1024,height = 720)
-    #plot(skm, col=c("pink", "blue", "red","orange","navyblue"), type=c('p','h'), key=FALSE)
-    #par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(1+ceiling(SPECTRUM_for_average/2), 2),
-    #plot.new()
+    skm <-  suppressMessages(suppressWarnings(spatialShrunkenCentroids(imdata, r=Smooth_range, k=SPECTRUM_for_average, method="adaptive",ncomp=Segmentation_ncomp,BPPARAM =BPPARAM)))
+    message(paste0(Segmentation[1], " finished: ",name))
+    png(paste(getwd(),"\\",Segmentation[1],"_image_plot_",SPECTRUM_for_average,"_segs.png",sep=""),width = 1024,height = 720)
+    
     par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(1, 2),
         bty="n",pty="s",xaxt="n",
         yaxt="n",
         no.readonly = TRUE,ann=F)
-    
-    
-    
-    {
-      imagefile<-Cardinal::image(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], key=T, ann=FALSE,axes=FALSE)
-      #legend("topright", legend=1:SPECTRUM_for_average, fill=brewer.pal_n(SPECTRUM_for_average,colorstyle), col=brewer.pal_n(SPECTRUM_for_average,"Paired"), bg="transparent",xpd=TRUE,cex = 1)
-    }
-    #Cardinal::plot(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], type=c('p','h'), key=T)
-    #Cardinal::plot(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], type=c('p','h'), key=FALSE,mode="centers")
-    #Cardinal::plot(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], type=c('p','h'), key=FALSE,mode="betweenss")
-    
-    #plot.new()
-    {
-      #specfile<-Cardinal::plot(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], key=T)
-      #legend("topright", legend=1:SPECTRUM_for_average, fill=brewer.pal_n(SPECTRUM_for_average,colorstyle), col=brewer.pal_n(SPECTRUM_for_average,"Paired"), bg="transparent",xpd=TRUE,cex = 1)
-    }
+    imagefile<-Cardinal::image(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], key=T, ann=FALSE,axes=FALSE)
     print(imagefile)
-    #print(specfile)
-    
-    dev.off()
-    png(paste(getwd(),"\\","spatialShrunkenCentroids_image.png",sep=""),width = 720,height = 720)
-    #plot(skm, col=c("pink", "blue", "red","orange","navyblue"), type=c('p','h'), key=FALSE)
-    #par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(1+ceiling(SPECTRUM_for_average/2), 2),
-    par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(1, 1),
-        bty="n",pty="s",xaxt="n",
-        yaxt="n",
-        no.readonly = TRUE,ann=FALSE)
-    {
-      Cardinal::image(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], key=FALSE, ann=FALSE,axes=FALSE)
-      #legend("topright", legend=1:SPECTRUM_for_average, fill=brewer.pal_n(SPECTRUM_for_average,colorstyle), col=brewer.pal_n(SPECTRUM_for_average,"Paired"), bg="transparent",xpd=TRUE,cex = 1)
-    }
-    #Cardinal::plot(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], type=c('p','h'), key=T)
-    #Cardinal::plot(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], type=c('p','h'), key=FALSE,mode="centers")
-    #Cardinal::plot(skm, col=brewer.pal_n(SPECTRUM_for_average,colorstyle)[1:SPECTRUM_for_average], type=c('p','h'), key=FALSE,mode="betweenss")
     dev.off()
     suppressMessages(suppressWarnings(require(magick)))
-    skmimg<-image_read(paste(getwd(),"\\","spatialShrunkenCentroids_image_plot_",SPECTRUM_for_average,"_segs.png",sep=""))
+    skmimg<-image_read(paste(getwd(),"\\",Segmentation[1],"_image_plot_",SPECTRUM_for_average,"_segs.png",sep=""))
     
     
-    png(paste(getwd(),"\\","spatialShrunkenCentroids_image_plot_",SPECTRUM_for_average,"_segs.png",sep=""),width = 1024,height = 480*((SPECTRUM_for_average)))
+    png(paste(getwd(),"\\",Segmentation[1],"_image_plot_",SPECTRUM_for_average,"_segs_spec.png",sep=""),width = 1024,height = 480*((SPECTRUM_for_average)))
     centers=skm@resultData[[1]][["centers"]]
     
     centers_mz<-skm@featureData@mz
-    #centers_mz<-mz(imdata)
     suppressMessages(suppressWarnings(require(ggplot2)))
     sp<-NULL
     sp_plot<-NULL
@@ -2389,21 +2470,19 @@ PMF_Cardinal_Datafilelist<-function(datafile,
     grid.arrange( grobs = sp,ncol=1, nrow = ceiling(SPECTRUM_for_average) )
     dev.off()
     
-    skmimg_spec<-image_read(paste(getwd(),"\\","spatialShrunkenCentroids_image_plot_",SPECTRUM_for_average,"_segs.png",sep=""))
+    skmimg_spec<-image_read(paste(getwd(),"\\",Segmentation[1],"_image_plot_",SPECTRUM_for_average,"_segs_spec.png",sep=""))
     skmimg<-image_append(c(skmimg,skmimg_spec),stack = T)
-    image_write(skmimg,paste(getwd(),"\\","spatialShrunkenCentroids_image_plot_",SPECTRUM_for_average,"_segs.png",sep=""))
-    withinss=as.data.frame(skm@resultData[[1]][["withinss"]])
-    withinss[,"mz"]<-as.numeric(gsub("m/z = ","",rownames(withinss)))
+    image_write(skmimg,paste(getwd(),"\\",Segmentation[1],"_image_plot_",SPECTRUM_for_average,"_segs_append.png",sep=""))
+    correlation=as.data.frame(skm@resultData@listData[[1]][["correlation"]])
+    correlation[,"mz"]<-as.numeric(gsub("m/z = ","",rownames(correlation)))
     centers=as.data.frame(skm@resultData[[1]][["centers"]])
     centers[,"mz"]<-as.numeric(gsub("m/z = ","",rownames(centers)))
     cluster=as.data.frame(skm@resultData[[1]][["cluster"]])
     cluster$Coor=rownames(cluster)
-    write.csv(withinss,paste("spatialShrunkenCentroids_RESULT","withinss",SPECTRUM_for_average,"segs.csv"),row.names = F)
-    write.csv(centers,paste("spatialShrunkenCentroids_RESULT","centers",SPECTRUM_for_average,"segs.csv"),row.names = F)
-    write.csv(cluster,paste("spatialShrunkenCentroids_RESULT","cluster",SPECTRUM_for_average,"segs.csv"),row.names = F)
+    write.csv(correlation,paste(Segmentation[1],"_RESULT","correlation",SPECTRUM_for_average,"segs.csv"),row.names = F)
+    write.csv(centers,paste(Segmentation[1],"_RESULT","centers",SPECTRUM_for_average,"segs.csv"),row.names = F)
+    write.csv(cluster,paste(Segmentation[1],"_RESULT","cluster",SPECTRUM_for_average,"segs.csv"),row.names = F)
     
-    
-    #cluster=skm@resultData[["r = 1, k = 5"]][["cluster"]]
     
     
     y=skm@resultData[[1]][["cluster"]]
@@ -2423,7 +2502,7 @@ PMF_Cardinal_Datafilelist<-function(datafile,
     
     
   }else if
-    (Segmentation=="Virtual_segmentation"){
+    (Segmentation[1]=="Virtual_segmentation"){
   radius_rank=read.csv(file = Virtual_segmentation_rankfile)
   radius_rank=radius_rank[order(radius_rank$Rank),]
   if (is.null(radius_rank$Core)) radius_rank$Core="central"
@@ -2740,21 +2819,54 @@ PMF_Cardinal_Datafilelist<-function(datafile,
       yaxt="n",
       no.readonly = TRUE,ann=FALSE)
   print(image(imdata, region_pattern ~ x * y,col=brewer.pal_n(length(unique(coordata$rank)),colorstyle), key=TRUE))
-  #print(Cardinal::image(skm, col=brewer.pal_n(length(unique(coordata$rank)),colorstyle), key=FALSE, ann=FALSE,axes=FALSE))
-  
-  #Cardinal::image(msset,feature=1:3, col=brewer.pal_n(length(unique(coordata$pattern)),colorstyle),strip=T,superpose=T, key=FALSE, ann=FALSE,axes=FALSE,groups =region_pattern)
-  #legend("topright", legend=paste(radius_rank$Rank,radius_rank$Name), fill=brewer.pal_n(length(unique(coordata$pattern)),colorstyle), col=brewer.pal_n(length(unique(coordata$pattern)),"Paired"), bg="transparent",xpd=TRUE,cex = 1)
 
   dev.off()
   
   
   
-  }else{
+  }else if(Segmentation=="def_file"){
+    
+    Segmentation_def_tbl<-read.csv(paste0(workdir,"/", Segmentation_def))
+    
+    Segmentation_def_tbl<-Segmentation_def_tbl[Segmentation_def_tbl$datafile==datafile[z],]
+    
+    Segmentation_def_tbl<-Segmentation_def_tbl[order(Segmentation_def_tbl$pixel),]
+    
+    Segmentation_def_tbl$label<-as.factor(Segmentation_def_tbl$label)
+    
+    x=NULL
+    
+    for (label in levels(Segmentation_def_tbl$label)){
+      
+      x[[label]]<-Segmentation_def_tbl$pixel[Segmentation_def_tbl$label==label]
+      
+    }
+    
+    message("Segmentation_def_tbl loaded, labelled regions: ", paste(names(x),collapse = ", "))
+    png(paste(getwd(),"\\","Segmentation_def_file","_image_plot_",length(levels(Segmentation_def_tbl$label)),"_segs.png",sep=""),width = 1024,height = 720)
+    
+    par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(1, 2),
+        bty="n",pty="s",xaxt="n",
+        yaxt="n",
+        no.readonly = TRUE,ann=F)
+    imagefile<-Cardinal::image(imdata, factor(Segmentation_def_tbl$label) ~ x * y, key=T, ann=FALSE,axes=FALSE)
+    print(imagefile)
+    dev.off()
+    
+    }else{
 
   x=1:length(pixels(imdata))
   x=split(x, sort(x%%1)) 
   names(x)="1"
-    
+  png(paste(getwd(),"\\","Segmentation_none","_image_plot_",SPECTRUM_for_average,"_segs.png",sep=""),width = 1024,height = 720)
+  
+  par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(1, 2),
+      bty="n",pty="s",xaxt="n",
+      yaxt="n",
+      no.readonly = TRUE,ann=F)
+  imagefile<-Cardinal::image(imdata, factor(rep(1,length(pixels(imdata)))) ~ x * y, key=T, ann=FALSE,axes=FALSE)
+  print(imagefile)
+  dev.off()
   } 
   
 if(PMFsearch){   
@@ -2765,12 +2877,12 @@ if(PMFsearch){
    }
    setwd(workdir)
     #imdata <- Load_Cardinal_imaging(datafile[z],preprocessing = F,resolution = ppm,rotate = rotate[z])
-    imdata <- Cardinal::readMSIData(datafile_imzML[z],  attach.only=T,as="MSImagingExperiment",resolution=ppm, units="ppm",BPPARAM=BPPARAM)
-    if(!is.na(rotate[datafile_imzML[z]])){
-      imdata <-rotateMSI(imdata=imdata,rotation_degree=rotate[datafile_imzML[z]])
-    }else if(!is.na(rotate[datafile[z]])){
-      imdata <-rotateMSI(imdata=imdata,rotation_degree=rotate[datafile[z]])
-    }
+    # imdata <- Cardinal::readMSIData(datafile_imzML[z],  attach.only=T,as="MSImagingExperiment",resolution=ppm, units="ppm",BPPARAM=BPPARAM,mass.range =mzrange)
+    # if(!is.na(rotate[datafile_imzML[z]])){
+    #   imdata <-rotateMSI(imdata=imdata,rotation_degree=rotate[datafile_imzML[z]])
+    # }else if(!is.na(rotate[datafile[z]])){
+    #   imdata <-rotateMSI(imdata=imdata,rotation_degree=rotate[datafile[z]])
+    # }
     if (dir.exists(paste0(gsub(".imzML$","",datafile[z])  ," ID"))==FALSE){dir.create(paste0(gsub(".imzML$","",datafile[z])  ," ID"))}
     setwd(paste0(gsub(".imzML$","",datafile[z])  ," ID"))
     #cl=makeCluster(8)SPECTRUM_for_average
@@ -2781,35 +2893,35 @@ if(PMFsearch){
       if (dir.exists(paste0(workdir,"/",datafile[z] ," ID/",SPECTRUM_batch,"/"))==FALSE){dir.create(paste0(workdir,"/",datafile[z] ," ID/",SPECTRUM_batch,"/"))}
     #PMFsearch_para<-function(SPECTRUM_batch,x,imdata,name,ppm,cl,Peptide_Summary_file,Peptide_Summary_file_regions){
       imdata_sb<-imdata[,unlist(x[SPECTRUM_batch])]
-      if (!is.null(preprocess)){
-      if ('&'(ppm<25,imdata@metadata[["ibd binary type"]]!="processed")){
-      #imdata_ed <- batchProcess(imdata, normalize=FALSE, smoothSignal=F, reduceBaseline=F,
-      #                     peakPick=T, peakAlign=FALSE, pixel=pixels(imdata)[unlist(x[SPECTRUM_batch])])
-      imdata_ed<-imdata_sb %>% 
-        smoothSignal(method="gaussian") %>% 
-        #reduceBaseline(method="locmin") %>%
-        peakPick(method="adaptive") %>%
-        peakAlign(tolerance=ppm, units="ppm") %>%
-        #peakFilter(mse_pre, freq.min=0.00) %>%
-        process()
-      } else if('&'(ppm>=25,imdata@metadata[["ibd binary type"]]!="processed")){
-      #imdata_ed <- batchProcess(imdata, normalize=FALSE, smoothSignal=T, reduceBaseline=T,
-      #                                     peakPick=T, peakAlign=FALSE, pixel=pixels(imdata)[unlist(x[SPECTRUM_batch])])
-      imdata_ed<-imdata_sb %>% 
-        smoothSignal(method="gaussian") %>% 
-        reduceBaseline(method="locmin") %>%
-        peakPick(method="adaptive") %>%
-        peakAlign(tolerance=ppm, units="ppm") %>%
-        #peakFilter(mse_pre, freq.min=0.00) %>%
-        process()
-      }else{
-        imdata_ed<-imdata_sb}
-     
-      }else{
+      # if (!is.null(preprocess)){
+      # if ('|'(imdata@metadata[["ibd binary type"]]!="processed",preprocess$force_preprocess)){
+      # #imdata_ed <- batchProcess(imdata, normalize=FALSE, smoothSignal=F, reduceBaseline=F,
+      # #                     peakPick=T, peakAlign=FALSE, pixel=pixels(imdata)[unlist(x[SPECTRUM_batch])])
+      # if  ( ppm<25){
+      #   imdata_ed<-imdata_sb %>% 
+      #   smoothSignal(method="gaussian") %>% 
+      #   #reduceBaseline(method="locmin") %>%
+      #   peakPick(method="adaptive") %>%
+      #   peakAlign(tolerance=ppm, units="ppm") %>%
+      #   #peakFilter(mse_pre, freq.min=0.00) %>%
+      #   process()
+      # } else if(ppm>=25){
+      # #imdata_ed <- batchProcess(imdata, normalize=FALSE, smoothSignal=T, reduceBaseline=T,
+      # #                                     peakPick=T, peakAlign=FALSE, pixel=pixels(imdata)[unlist(x[SPECTRUM_batch])])
+      # imdata_ed<-imdata_sb %>% 
+      #   smoothSignal(method="gaussian") %>% 
+      #   reduceBaseline(method="locmin") %>%
+      #   peakPick(method="adaptive") %>%
+      #   peakAlign(tolerance=ppm, units="ppm") %>%
+      #   #peakFilter(mse_pre, freq.min=0.00) %>%
+      #   process()
+      # }
+      # }
+      # }else{
         imdata_ed<-imdata_sb
-      }
+      # }
 
-    spectrum_file_table<- summarizeFeatures(imdata_ed)
+    spectrum_file_table<- summarizeFeatures(imdata_ed, FUN = "mean")
     spectrum_file_table<-data.frame(mz=spectrum_file_table@featureData@mz,mean=spectrum_file_table@featureData@listData[["mean"]])
     peaklist<-spectrum_file_table
     colnames(peaklist)<-c("m.z","intensities")
@@ -2826,7 +2938,7 @@ if(PMFsearch){
     message(paste(nrow(deconv_peaklist),"mz features found in the spectrum") )
     #MassSpecWavelet_fun(peaklist = peaklist)
     #mz_feature_list<-Do_PMF_search(deconv_peaklist,Peptide_Summary_searchlist,BPPARAM=BPPARAM,ppm = ppm)
-    mz_feature_list<-Do_PMF_search(peaklist_pmf,Peptide_Summary_searchlist,BPPARAM=BPPARAM,ppm = instrument_ppm)
+    mz_feature_list<-Do_PMF_search(peaklist_pmf,Peptide_Summary_searchlist,BPPARAM=BPPARAM,ppm = ppm)
     mz_feature_list<-unique(mz_feature_list)
     
     message("Iterating peptide information...")

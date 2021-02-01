@@ -14,7 +14,7 @@ imaging_Spatial_Quant(
   adducts = c("M-H", "M+Cl"),
   cal.mz = F,
   mzlist_bypass = T,
-  PMF_analysis = TRUE,
+  IMS_analysis = TRUE,
   Protein_feature_summary = T,
   plot_cluster_image = T,
   plot_style = "fleximaging",
@@ -58,7 +58,7 @@ imaging_Spatial_Quant(
 
 \item{mzlist_bypass}{Set \code{"true"} if you want to bypass the mzlist generating process}
 
-\item{Protein_feature_summary}{\code{"PMF_analysis"} follow-up process that will collect all the identified peptide information and associate them with possible proteins}
+\item{Protein_feature_summary}{\code{"IMS_analysis"} follow-up process that will collect all the identified peptide information and associate them with possible proteins}
 
 \item{plot_cluster_image}{\code{"Protein_feature_summary"} follow-up process that will plot the protein cluster image}
 
@@ -74,7 +74,7 @@ imaging_Spatial_Quant(
 
 \item{Virtual_segmentation_rankfile}{specify a region rank file contains region information for manualy region segmentation}
 
-\item{Peptide_feature_summarya}{\code{"PMF_analysis"} follow-up process that will summarize all datafiles identified peptides and generats a \code{"peptide shortlist"} in the result summary folder}
+\item{Peptide_feature_summarya}{\code{"IMS_analysis"} follow-up process that will summarize all datafiles identified peptides and generats a \code{"peptide shortlist"} in the result summary folder}
 }
 \value{
 None
@@ -86,7 +86,7 @@ this function will read the candidate list file and generate quantification resu
 \examples{
 imaging_Spatial_Quant(threshold=0.05, ppm=5,Digestion_site="[G]",
                        missedCleavages=0:1,Fastadatabase="murine_matrisome.fasta",
-                       adducts=c("M+H","M+NH4","M+Na"),PMF_analysis=TRUE,
+                       adducts=c("M+H","M+NH4","M+Na"),IMS_analysis=TRUE,
                        Protein_feature_summary=TRUE,plot_cluster_image=TRUE,
                        Peptide_feature_summary=TRUE,plot_ion_image=FALSE,
                        parallel=3,spectra_segments_per_file=5,spatialKMeans=TRUE

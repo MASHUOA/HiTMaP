@@ -6,7 +6,8 @@
 \usage{
 imaging_identification(
   datafile,
-  threshold = 0.01,
+  projectfolder = NULL,
+  threshold = 0.005,
   ppm = 5,
   mode = c("Proteomics", "Metabolomics"),
   Digestion_site = "trypsin",
@@ -22,9 +23,9 @@ imaging_identification(
   Decoy_mode = "isotope",
   mzrange = c(700, 4000),
   adjust_score = FALSE,
-  PMF_analysis = TRUE,
-  PMFsearch = PMF_analysis,
-  Load_candidatelist = PMF_analysis || plot_cluster_image_grid,
+  IMS_analysis = TRUE,
+  PMFsearch = IMS_analysis,
+  Load_candidatelist = IMS_analysis || plot_cluster_image_grid,
   Bypass_generate_spectrum = FALSE,
   peptide_ID_filter = 2,
   Protein_feature_summary = TRUE,
@@ -92,13 +93,13 @@ imaging_identification(
 
 \item{mzrange}{define the mz range for the experiment, default is 700 to 4000 m/z.}
 
-\item{PMF_analysis}{Set \code{"true"} if you want to have a PMF search, set \code{"false"} if you want to bypass it}
+\item{IMS_analysis}{Set \code{"true"} if you want to have a PMF search, set \code{"false"} if you want to bypass it}
 
 \item{peptide_ID_filter}{set the minimal count of peptides needed to identify a protein}
 
-\item{Protein_feature_summary}{\code{"PMF_analysis"} follow-up process that will collect all the identified peptide information and associate them with possible proteins}
+\item{Protein_feature_summary}{\code{"IMS_analysis"} follow-up process that will collect all the identified peptide information and associate them with possible proteins}
 
-\item{Peptide_feature_summary}{\code{"PMF_analysis"} follow-up process that will summarize all datafiles identified peptides and generats a \code{"peptide shortlist"} in the result summary folder}
+\item{Peptide_feature_summary}{\code{"IMS_analysis"} follow-up process that will summarize all datafiles identified peptides and generats a \code{"peptide shortlist"} in the result summary folder}
 
 \item{plot_ion_image}{\code{"Peptide_feature_summarya"} follow-up process that will plot every connponents in the \code{"peptide shortlist"}}
 
@@ -114,7 +115,7 @@ imaging_identification(
 
 \item{Rotate_IMG}{specify a configuration file to further change the rotation of the images}
 
-\item{Region_feature_summary}{\code{"PMF_analysis"} follow-up process that will summarize mz feature of all regions of all data files into the summary folder}
+\item{Region_feature_summary}{\code{"IMS_analysis"} follow-up process that will summarize mz feature of all regions of all data files into the summary folder}
 
 \item{use_previous_candidates}{set as TRUE to reload the previously generated candidate list.}
 
@@ -159,7 +160,7 @@ This is a peptide mass fingerprint search function for maldi imaging data analys
 \examples{
 imaging_identification(threshold=0.05, ppm=5,Digestion_site="[G]",
                        missedCleavages=0:1,Fastadatabase="murine_matrisome.fasta",
-                       adducts=c("M+H","M+NH4","M+Na"),PMF_analysis=TRUE,
+                       adducts=c("M+H","M+NH4","M+Na"),IMS_analysis=TRUE,
                        Protein_feature_summary=TRUE,plot_cluster_image=TRUE,
                        Peptide_feature_summary=TRUE,plot_ion_image=FALSE,
                        parallel=3,spectra_segments_per_file=5,Segmentation="spatialKMeans"
