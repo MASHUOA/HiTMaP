@@ -33,6 +33,7 @@ FAKE_DATA_INFORMATION <- "FAKE_DATA_INFORMATION"
 folder_file_DTDT<-"folder_file_DTDT"
 
 
+
 Pre_process_par<-c("imzml_file_Pre_processing","RDA_imzml_file_stats","workdir","Segmentation_per_file_pre","tolerance" ,
                    "mzrange_pre", "Segmentation_pre" ,"Segmentation_def_pre" ,"Segmentation_ncomp_pre","peakAlign_pre",
                    "Segmentation_variance_coverage_pre","Smooth_range_pre","rotate_pre","force_Pre_process_pre",
@@ -51,6 +52,8 @@ Proteomics_par<-c("Fastadatabase","Digestion_site","Digestion_site_2","adducts",
 # Define server logic required to draw a histogram
 #shiny::shinyServer(function(input, output, session) {
 server<-function(input,output,session){    
+    setwd(WorkingDir_global)
+    
     shinyDirChoose(input, 'Projectdir', roots =  c(Root=getwd()))
     
     

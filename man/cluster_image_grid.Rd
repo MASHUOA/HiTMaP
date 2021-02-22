@@ -28,7 +28,9 @@ cluster_image_grid(
   img_brightness = 100,
   ppm = 20,
   list_of_protein_sequence,
-  workdir = getwd()
+  workdir = getwd(),
+  pixel_size_um = 200,
+  Score_thres = NULL
 )
 }
 \description{

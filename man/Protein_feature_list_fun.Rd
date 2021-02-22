@@ -22,7 +22,8 @@ Protein_feature_list_fun(
   Modifications = list(fixed = NULL, fixmod_position = NULL, variable = NULL,
     varmod_position = NULL),
   use_previous_candidates = F,
-  Protein_desc_of_exclusion = NULL
+  Protein_desc_of_exclusion = NULL,
+  Database_stats = T
 )
 }
 \arguments{

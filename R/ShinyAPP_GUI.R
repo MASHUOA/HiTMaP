@@ -2,26 +2,30 @@
 #' 
 #'
 #' @docType function
-#' @name shinyWYSIWYG-GUI
-#' @rdname shinyWYSIWYG-GUI
+#' @name HiTMaP_GUI
+#' @rdname HiTMaP_GUI
 #'
 #' @examples
 #' ## Start the GUI
 #' \dontrun{
-#' shinyWYSIWYG()
+#' HiTMaP_GUI()
 #' }
 #'
 #' @import shiny
 #'
 #' @export HiTMaP_GUI
 #'
-HiTMaP_GUI <- function() {
-  appDir <- system.file("shiny", "HiTMaP_GUI", package = "HiTMaP")
+HiTMaP_GUI <- function(wd="", port = 3838) {
+  library(shiny)
+  appDir <- system.file("HiTMaP_GUI", package = "HiTMaP")
   if (appDir == "") {
     stop("Could not find GUI directory. Try re-install `HiTMaP`.",
          call. = FALSE
     )
   }
+  if (wd=="") wd=appDir
   
-  runApp(appDir,port = 3838, launch.browser = T )
+  WorkingDir_global<<-wd
+  
+  runApp(appDir,port = port)
 }
