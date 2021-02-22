@@ -149,7 +149,9 @@ Protein_feature_list_fun<-function(workdir=getwd(),
                                    output_candidatelist=T,
                                    Modifications=list(fixed=NULL,fixmod_position=NULL,variable=NULL,varmod_position=NULL),
                                    use_previous_candidates=F,
-                                   Protein_desc_of_exclusion=NULL){
+                                   Protein_desc_of_exclusion=NULL,
+                                   Database_stats=T
+                                   ){
   
    suppressMessages(suppressWarnings(require(Biostrings)))
    suppressMessages(suppressWarnings(require(cleaver)))
@@ -176,7 +178,7 @@ Protein_feature_list_fun<-function(workdir=getwd(),
      message("Found customized rule: \"",not_found_rule,"\"")
     Digestion_site_final
    }
-   
+   Digestion_site<-Digestion_site[Digestion_site!=""]
    Digestion_site<-parse_cleavage_rule(Digestion_site)
    
    if ('&'(length(Digestion_site)>=2,Multiple_mode[1]=="sequential")){
@@ -206,7 +208,7 @@ Protein_feature_list_fun<-function(workdir=getwd(),
                                             seek.first.rec=FALSE
                                             ) 
   
-    if (Decoy_search && ("sequence" %in% Decoy_mode)){
+  if (Decoy_search && ("sequence" %in% Decoy_mode)){
     list_of_protein_sequence_rev<-Biostrings::reverse(list_of_protein_sequence)
     names(list_of_protein_sequence_rev)<-paste0("Decoy_",names(list_of_protein_sequence_rev))
     list_of_protein_sequence<-c(list_of_protein_sequence,list_of_protein_sequence_rev)
@@ -224,6 +226,21 @@ Protein_feature_list_fun<-function(workdir=getwd(),
   names(list_of_protein_sequence) <- names_pro$recno
   Index_of_protein_sequence<<-Index_of_protein_sequence
   list_of_protein_sequence<<-list_of_protein_sequence
+  
+  if(use_previous_candidates){
+    #if (dir.exists(paste(workdir,"/Summary folder",sep=""))==FALSE){dir.create(paste(workdir,"/Summary folder",sep=""))}
+    if (sum(c("candidatelist.csv","protein_index.csv") %in% dir(paste(workdir,"/Summary folder",sep="")))==2){
+      Protein_Summary<-read.csv(paste(workdir,"/Summary folder/candidatelist.csv",sep=""),)
+      Protein_Summary$Modification[is.na(Protein_Summary$Modification)]<-""
+      Index_of_protein_sequence<<-read.csv(paste(workdir,"/Summary folder/protein_index.csv",sep=""))
+      message("Candidate list has been loaded.") 
+    }else{
+      message("Can not find the previously established candidate list.")
+      use_previous_candidates=F
+      }
+    
+  }
+  
   if(use_previous_candidates!=T){
   
   Index_of_protein_sequence$Degestion=""
@@ -544,16 +561,66 @@ Protein_feature_list_fun<-function(workdir=getwd(),
     write.csv(Index_of_protein_sequence,paste(workdir,"/Summary folder/protein_index.csv",sep=""),row.names = F)
     message("Candidate list has been exported.")
   }
+  
+  
+  
   }
 
-  if(use_previous_candidates){
-    #if (dir.exists(paste(workdir,"/Summary folder",sep=""))==FALSE){dir.create(paste(workdir,"/Summary folder",sep=""))}
-    if (sum(c("candidatelist.csv","protein_index.csv") %in% dir(paste(workdir,"/Summary folder",sep="")))==2){
-     Protein_Summary<-read.csv(paste(workdir,"/Summary folder/candidatelist.csv",sep=""),)
-     Protein_Summary$Modification[is.na(Protein_Summary$Modification)]<-""
-    Index_of_protein_sequence<<-read.csv(paste(workdir,"/Summary folder/protein_index.csv",sep=""))
-    message("Candidate list has been loaded.") 
-    }else{stop("Can not find the previously established candidate list.")}
+  if(Database_stats){
+    
+    suppressMessages(suppressWarnings(library(dplyr)))
+    suppressMessages(suppressWarnings(library(egg)))
+    suppressMessages(suppressWarnings(library(RColorBrewer)))
+    mz_vs_formula<-Protein_Summary %>% group_by(mz) %>% summarize(Intnsity=length(unique(formula)))
+    
+    bin_mz_ppm<-function(mz_vs_peptide,ppm_test_list=c(1,2,5)){
+      mz_vs_peptide_filtered<-list() 
+      ppm_test_list<-sort(ppm_test_list,decreasing = T)
+      for (ppm_test in ppm_test_list){
+        
+        mz_vs_peptide_filtered[[as.character(paste(ppm_test,"ppm"))]]<-isopattern_ppm_filter_peaklist_par(mz_vs_peptide,ppm_test,threshold=0.00)
+      
+      }
+
+      #mz_vs_peptide_filtered_order <- mz_vs_peptide_filtered %>%  rlist::list.subset(paste(ppm_test_list,"ppm"))
+      
+      mz_vs_peptide_filtered<-lapply(mz_vs_peptide_filtered,`colnames<-`,c("mz","unique_formula"))
+      
+
+      mycol=RColorBrewer::brewer.pal(name = "Set1",n=length(names(mz_vs_peptide_filtered)))
+      names(mycol)=names(mz_vs_peptide_filtered)
+      mycol_name<-mycol
+      names(mycol_name)<-mycol
+      sp<-ggplot2::ggplot() 
+      sp <-sp + geom_segment(data=mz_vs_peptide_filtered[[1]],mapping = aes(x=mz, y=unique_formula,xend=mz,yend=rep(0,length(unique_formula)),col=names(mycol)[1]),size=0.1)
+      sp <-sp + geom_segment(data=mz_vs_peptide_filtered[[2]],mapping = aes(x=mz, y=unique_formula,xend=mz,yend=rep(0,length(unique_formula)),col=names(mycol)[2]),size=0.1)
+      sp <-sp + geom_segment(data=mz_vs_peptide_filtered[[3]],mapping = aes(x=mz, y=unique_formula,xend=mz,yend=rep(0,length(unique_formula)),col=names(mycol)[3]),size=0.1)
+      
+      # for(i in 1:length(mz_vs_peptide_filtered)){
+      #   sp <-sp + geom_segment(data=mz_vs_peptide_filtered[[i]][1:10000,],mapping = aes(x=mz, y=unique_formula,xend=mz,yend=rep(0,length(unique_formula)),color=mycol[i]),color=mycol[i],size=0.1)
+      # }
+
+      #sp <-sp + scale_color_manual(name="m/z bin size") 
+      sp <- sp + theme_article() + 
+            
+            theme(legend.position = "top",axis.text=element_text(size=12),
+                  axis.title=element_text(size=14,face="bold"),
+                  legend.text =element_text(size=14,face="bold"),
+                  legend.title =element_text(size=14,face="bold"),
+                  legend.key = element_rect(fill = "white"))+
+            guides(color=guide_legend("m/z bin size"),override.aes = list(linetype = 0, size = 5)) +
+            labs(title = "",y = "Unique formula",x = "m/z")
+      
+      return(sp)
+      
+    }
+    bin_mz_ppm_pic<-bin_mz_ppm(mz_vs_formula)
+    
+    png(paste(workdir,"/Summary folder/DB_stats_bin_mz_ppm.png",sep=""),width = 1200,height = 800,res = 150)
+    
+    print(bin_mz_ppm_pic)
+    
+    dev.off()
     
   }
   
@@ -1457,12 +1524,19 @@ Peptide_modification<-function(retrive_ID=NULL,mod_position=NULL,update_unimod=F
     retrive_mod<-data.frame(retrive_ID,mod_position,stringsAsFactors = F)
     unimod.modification.df<-merge(unimod.df$modifications,unimod.df$specificity,by.x=c("record_id"),by.y=c("mod_key"),all.x=T)
     unimod.modification.df=unimod.modification.df[unimod.modification.df$hidden==0,]
+    unimod.df$positions_new<-unimod.df$positions
+    unimod.df$positions_new$position_ext<-str_replace(unimod.df$positions_new$position,"Anywhere|Any N-term|Any C-term","Peptide")
+    unimod.df$positions_new$position_ext<-str_replace(unimod.df$positions_new$position_ext,"Protein N-term|Protein C-term","Protein")
+    
+    unimod.modification.df<-merge(unimod.modification.df,unimod.df$positions_new,by.x="position_key",by.y="record_id")
     return_mod.df<-suppressWarnings(lapply(1:nrow(retrive_mod),function(x,retrive_mod,unimod.modification.df){
     if (is.na(as.numeric(retrive_mod$retrive_ID[x]))){
       unimod.modification.df['&'(unimod.modification.df$code_name==as.character(retrive_mod$retrive_ID[x]),unimod.modification.df$position_key==retrive_mod$mod_position[x]),]
-    }else{
+    
+      }else{
       unimod.modification.df[`&`(unimod.modification.df$record_id==as.character(retrive_mod$retrive_ID[x]),unimod.modification.df$position_key==retrive_mod$mod_position[x]),]
-    }
+    
+      }
     
     },retrive_mod,unimod.modification.df))
     

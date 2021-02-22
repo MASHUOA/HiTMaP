@@ -577,7 +577,8 @@ cluster_image_grid<-function(clusterID,
                              img_brightness= 100,ppm=20,
                              list_of_protein_sequence,
                              workdir=getwd(),
-                             pixel_size_um=200){
+                             pixel_size_um=200,
+                             Score_thres=NULL){
   #complementary(color="red", plot = TRUE, bg = "white", labcol = NULL, cex = 0.8, title = TRUE)
   windows_filename<- function(stringX){
     stringX<-stringr::str_remove_all(stringX,"[><*?:\\/\\\\]")
@@ -605,6 +606,9 @@ cluster_image_grid<-function(clusterID,
   outputpng=paste(workdir,"/",windows_filename(substr(clusterID, 1, 10)),"_cluster_plot",'.png',sep="")  
   #message(outputpng)
   candidate=SMPLIST[SMPLIST[[ClusterID_colname]]==clusterID,]
+  
+  if(!is.null(Score_thres)){candidate=candidate[candidate$Score>=Score_thres,]}
+  
   #candidate=candidate[order(as.character())]
   if (componentID_colname %in% colnames(candidate)){
   candidate_u<- candidate %>% dplyr::group_by(mz) %>% dplyr::summarise(Peptide=Peptide[1], .groups = 'drop')
@@ -636,9 +640,12 @@ cluster_image_grid<-function(clusterID,
   } else if (length(candidateunique)==3){
     #mycol=splitComp("red")
     mycol=c("#FF0000", "#00FF00", "#0000FF")
-  } else if (length(candidateunique)<=2){
+  } else if (length(candidateunique)==2){
     #mycol=complementary("red")
     mycol=c("#FF0000", "#00FFFF")
+  } else if (length(candidateunique)==1){
+    #mycol=complementary("red")
+    mycol=c("#FF0000")
   }
     
   mycol <- as.factor(as.character(mycol))  
@@ -817,7 +824,22 @@ cluster_image_grid<-function(clusterID,
                                     layout=c( length(levels(Cardinal::run(imdata))),1),
                                     bg = bg)
             #temp_component_png[[i]]=tempfile(pattern = "file", tmpdir = tempdir(), fileext = ".png")
+            componentimg.mono[[i]][["par"]][["ann"]]=F
+            componentimg.mono[[i]][["par"]][["bty"]]="n"
+            componentimg.mono[[i]][["par"]][["pty"]]="s"
+            componentimg.mono[[i]][["par"]][["xaxt"]]="n"
+            componentimg.mono[[i]][["par"]][["yaxt"]]="n"
+            componentimg.mono[[i]][["par"]][["fg"]]="white"
+            componentimg.mono[[i]][["par"]][["oma"]]=c(0, 0, 0, 0)
+            #componentimg.mono[[i]][["par"]][["mar"]]=c(0, 0, 0, 1)
+            attr(componentimg.mono[[i]][["facets"]][[1]],"strip")$strip=F
+            #attr(componentimg.mono[[i]][["facets"]][[1]],"colorkey")$colorkey=c("0%","100%")
+            attr(componentimg.mono[[i]][["facets"]][[1]],"colorkey")$colorkey=T
             
+            # componentimg.mono[[i]][["facets"]][[1]][[1]][["dpage"]]="a"
+            # componentimg.mono[[i]][["facets"]][[1]][[1]][["facet"]][[".feature.groups"]]="a"
+            # componentimg.mono[[i]][["fids"]][[".feature.groups"]]="a"
+            # componentimg.mono[[i]][["dpages"]]="a"
             #png(temp_component_png.mono[[i]],width = 5,height = 5 * length( levels(Cardinal::run(imdata))), bg = bg,units = "in",res = 300)
             temp_component_png[[i]]<-image_graph(width = 750,height = 750 * length( levels(Cardinal::run(imdata))), bg = bg,res = 150)
             par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(length( levels(Cardinal::run(imdata))),1),
@@ -903,17 +925,19 @@ cluster_image_grid<-function(clusterID,
         
         
         pngcompfile_output<-pngcompfile[[1]]
+        if (length(pngcompfile)>=2){
         for (i in 2: length(pngcompfile)){
           pngcompfile_output<-c(pngcompfile_output,unlist(pngcompfile[[i]]))
-        } 
+        } }
         
         #img_com<-(temp_component_png[[1]])
         #img_com<-image_flatten(c(img_com,makeacover))
         #pngcompfile_org[[1]]<-NULL
         img_com<-pngcompfile_org[[1]]
+        if (length(pngcompfile)>=2){
         for (i in 2: length(pngcompfile_org)){
           img_com<-c(img_com,unlist(pngcompfile_org[[i]]))
-        }
+        }}
         #img_com<-rbind(unlist(pngcompfile_org))
         
         
@@ -1009,7 +1033,9 @@ cluster_image_grid<-function(clusterID,
       candidate_unique_table=unique(candidate[,c(componentID_colname,"mz","formula","adduct")])
       cluster_desc<-unique(candidate$desc)[1]
     }
-    
+     candidate_unique_table_Score<-candidate %>% group_by(mz) %>% summarise(Score=max(Score))
+     candidate_unique_table_Score$Score<-round(candidate_unique_table_Score$Score,digits = 2)
+     candidate_unique_table<-merge(candidate_unique_table,candidate_unique_table_Score)
      suppressMessages(suppressWarnings(require(reshape2)))
     
     Header_table<-NULL
@@ -1017,7 +1043,8 @@ cluster_image_grid<-function(clusterID,
     Header_table<-data.frame(Header_table)
     Header_table=base::merge(Header_table,candidate_unique_table,all.x=T,by="mz",all.y=F)
     Header_table=Header_table[order(as.character(Header_table$mz)),]
-    Header_table<-as.data.frame(Header_table[,c(componentID_colname,"mz","formula","adduct")])
+    Header_table<-as.data.frame(Header_table[,c(componentID_colname,"mz","formula","adduct","Score")])
+    
     #Header_table$ID=candidate[[componentID_colname]][candidate$mz==as.numeric(candidateunique)]
     #componentnames=unique(Header_table[[componentID_colname]][Header_table$mz==as.numeric(candidateunique[i])])
     t_Header_table<-as.data.frame(t(Header_table))
@@ -2101,3 +2128,751 @@ PCA_ncomp_selection<-function(imdata,variance_coverage=0.80,outputdir=NULL){
   return(ncomp)
 }
 
+Preprocessing_segmentation<-function(datafile,
+                                     workdir=NULL,
+                                     segmentation_num=5,threshold=0.001,
+                                     ppm,Bypass_Segmentation=F,
+                                     mzrange=c(500,4000),
+                                     Segmentation=c("spatialKMeans","spatialShrunkenCentroids","Virtual_segmentation","none","def_file"),
+                                     Segmentation_def="segmentation_def.csv",
+                                     Segmentation_ncomp="auto-detect",
+                                     Segmentation_variance_coverage=0.8,
+                                     Smooth_range=1,
+                                     colorstyle="Set1",
+                                     Virtual_segmentation_rankfile=NULL,
+                                     rotate=NULL,
+                                     BPPARAM=bpparam(),
+                                     preprocess=list(force_preprocess=FALSE,use_preprocessRDS=TRUE,smoothSignal=list(method="gaussian"),
+                                                     reduceBaseline=list(method="locmin"),
+                                                     peakPick=list(method="adaptive"),
+                                                     peakAlign=list(tolerance=ppm, units="ppm")),
+                                     ...){
+  
+  suppressMessages(suppressWarnings(require(data.table)))
+  suppressMessages(suppressWarnings(require(Cardinal)))
+  suppressMessages(suppressWarnings(require(RColorBrewer)))
+  suppressMessages(suppressWarnings(require(stringr)))
+  #getPalette = colorRampPalette(brewer.pal_n(9, colorstyle))
+  setCardinalBPPARAM(BPPARAM)
+  
+  # if (is.null(workdir)){
+  #   workdir<-base::dirname(datafile[1])
+  #   datafile<-basename(datafile)
+  # }else{ workdir<-workdir }
+  datafile <- paste0(workdir,"/",datafile)
+  workdir <- dirname(datafile)
+  datafile <- basename(datafile)
+  if (!is.null(rotate)){
+    message("Found rotation info")
+    if (typeof(rotate)=="character"){rotate=read.csv(paste0(workdir[1],"/",rotate),stringsAsFactors = F)}
+    
+    #rotatedegrees=rotate[rotate$filenames==datafile,"rotation"]
+    rotatedegrees=sapply(datafile,function(x,df){
+      library(stringr)
+      if (!str_detect(x,".imzML$")){
+        x<-paste0(x,".imzML")
+      }
+      degree=df[df$filenames==(x),"rotation"]
+      if (length(degree)==0) {
+        message("Missing rotation data please check the rotation configuration file: ",x)
+        degree=0
+      }
+      degree
+    },rotate)
+    rotate=unlist(rotatedegrees)
+  }else{rotate=rep(0,length(datafile))}
+
+  
+
+  datafile_imzML<-datafile
+  for (z in 1:length(datafile)){
+    Segmentation_ncomp_running<-Segmentation_ncomp
+    name <-basename(datafile[z])
+    name <-gsub(".imzML$","",name)
+    name <-gsub("/$","",name)
+    folder<-base::dirname(datafile[z])
+    #imdata <- Cardinal::readImzML(datafile[z],preprocessing = F,attach.only = T,resolution = 200,rotate = rotate[z],as="MSImageSet",BPPARAM = BPPARAM)
+    if (!str_detect(datafile[z],".imzML$")){
+      datafile_imzML[z]<-paste0(datafile[z],".imzML")
+    }
+    setwd(workdir[z])
+    #message("Porject dir",workdir)
+    # imdata <- Cardinal::readMSIData(datafile_imzML[z],  attach.only=T,as="MSImagingExperiment",resolution=200, units="ppm",BPPARAM=BPPARAM,mass.range =mzrange)
+    # if(!is.na(rotate[datafile_imzML[z]])){
+    #   imdata <-rotateMSI(imdata=imdata,rotation_degree=rotate[datafile_imzML[z]])
+    # }else if(!is.na(rotate[datafile[z]])){
+    #   imdata <-rotateMSI(imdata=imdata,rotation_degree=rotate[datafile[z]])
+    # }
+    # 
+    if (ppm>=25) {
+      instrument_ppm=50
+    }else{
+      instrument_ppm=10
+    }      
+    
+    
+    if (dir.exists(paste0(gsub(".imzML$","",datafile[z]) ," ID"))==FALSE){
+      dir.create(paste0(gsub(".imzML$","",datafile[z])  ," ID"))
+    }
+    
+    if (!file.exists(paste0(gsub(".imzML$","",datafile[z])  ," ID/preprocessed_imdata.RDS"))){
+      message("Preparing image data for statistical analysis: ",paste0(gsub(".imzML$","",datafile[z]), ".imzML"))
+      imdata <- Cardinal::readMSIData(datafile_imzML[z],  attach.only=T,as="MSImagingExperiment",resolution=ppm, units="ppm",BPPARAM=BPPARAM,mass.range =mzrange)
+      if(!is.na(rotate[datafile_imzML[z]])){
+        imdata <-rotateMSI(imdata=imdata,rotation_degree=rotate[datafile_imzML[z]])
+      }else if(!is.na(rotate[datafile[z]])){
+        imdata <-rotateMSI(imdata=imdata,rotation_degree=rotate[datafile[z]])
+      }
+      if (!is.null(preprocess)){
+        if  ( ppm<25){
+          imdata_ed<-imdata %>% 
+            #smoothSignal(method="gaussian") %>% 
+            #reduceBaseline(method="locmin") %>%
+            peakPick(method=preprocess$peakPick$method) %>%
+            peakAlign(tolerance=preprocess$peakAlign$tolerance, units="ppm") %>%
+            #peakFilter(mse_pre, freq.min=0.00) %>%
+            process()
+        } else if(ppm>=25){
+          imdata_ed<-imdata %>% 
+            smoothSignal(method=preprocess$smoothSignal$method) %>% 
+            reduceBaseline(method=preprocess$reduceBaseline$method) %>%
+            peakPick(method=preprocess$peakPick$method) %>%
+            peakAlign(tolerance=preprocess$peakAlign$tolerance, units="ppm") %>%
+            #peakFilter(mse_pre, freq.min=0.00) %>%
+            process()
+        }
+        saveRDS(imdata_ed,paste0(gsub(".imzML$","",datafile[z])  ," ID/preprocessed_imdata.RDS"),compress = F)  
+      }}else{
+        imdata_ed<-readRDS(paste0(gsub(".imzML$","",datafile[z])  ," ID/preprocessed_imdata.RDS"))
+      }
+    
+    if ('&'(preprocess$use_preprocessRDS,file.exists(paste0(gsub(".imzML$","",datafile[z])  ," ID/preprocessed_imdata.RDS")))){
+      message("Using image data: ",paste0(gsub(".imzML$","",datafile[z])  ," ID/preprocessed_imdata.RDS"))
+      
+      imdata_ed<-readRDS(paste0(gsub(".imzML$","",datafile[z])  ," ID/preprocessed_imdata.RDS"))
+      #imdata_ed<-imdata
+      imdata <- Cardinal::readMSIData(datafile_imzML[z],  attach.only=T,as="MSImagingExperiment",resolution=ppm, units="ppm",BPPARAM=BPPARAM,mass.range =mzrange)
+      
+    }else{
+      message("Using image data: ",paste0(gsub(".imzML$","",datafile[z]), ".imzML"))
+      imdata <- Cardinal::readMSIData(datafile_imzML[z],  attach.only=T,as="MSImagingExperiment",resolution=ppm, units="ppm",BPPARAM=BPPARAM,mass.range =mzrange)
+      if(!is.na(rotate[datafile_imzML[z]])){
+        imdata <-rotateMSI(imdata=imdata,rotation_degree=rotate[datafile_imzML[z]])
+      }else if(!is.na(rotate[datafile[z]])){
+        imdata <-rotateMSI(imdata=imdata,rotation_degree=rotate[datafile[z]])
+      }
+      if (!is.null(preprocess)){
+        #imdata_ed<-imdata
+        if ('|'(imdata@metadata[["ibd binary type"]]!="processed",preprocess$force_preprocess)){
+          imdata_ed<-readRDS(paste0(gsub(".imzML$","",datafile[z])  ," ID/preprocessed_imdata.RDS"))
+        }else{
+          imdata_ed<-imdata
+        }
+        
+      }else{
+        imdata_ed<-imdata
+      }  
+    }
+    imdata_org<-imdata  
+    imdata<-imdata_ed
+    
+    coordata=as.data.frame(imdata@elementMetadata@coord)
+    
+    setwd(paste0(gsub(".imzML$","",datafile[z])  ," ID")) 
+    
+    
+    if (Bypass_Segmentation!=T){
+      message("Segmentation in progress...")
+      #cl=autoStopCluster(makeCluster(6))
+      if (Segmentation[1]=="PCA") {
+        if ('&'(Segmentation_ncomp=="auto-detect",Segmentation_variance_coverage>0)){
+
+          Segmentation_ncomp_running<-PCA_ncomp_selection(imdata=imdata,variance_coverage=Segmentation_variance_coverage,outputdir=paste0(getwd(),"/"))
+        }else{Segmentation_ncomp_running<-Segmentation_ncomp}
+      }
+      else if (Segmentation[1]=="spatialKMeans" && segmentation_num!=1) {
+        if ('&'(Segmentation_ncomp=="auto-detect",Segmentation_variance_coverage>0)){
+          Segmentation_ncomp_running<-PCA_ncomp_selection(imdata=imdata,variance_coverage=Segmentation_variance_coverage,outputdir=paste0(getwd(),"/"))
+        }else{Segmentation_ncomp_running<-Segmentation_ncomp}
+        set.seed(1)
+        
+        skm <-  suppressMessages(suppressWarnings(spatialKMeans(imdata, r=Smooth_range, k=segmentation_num, method="adaptive",ncomp=Segmentation_ncomp_running,BPPARAM =BPPARAM )))
+        message(paste0(Segmentation[1], " finished: ",name))
+        png(paste(getwd(),"\\",Segmentation[1],"_image_plot_",segmentation_num,"_segs.png",sep=""),width = 1024,height = 720)
+        
+        par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(1, 2),
+            bty="n",pty="s",xaxt="n",
+            yaxt="n",
+            no.readonly = TRUE,ann=F)
+        imagefile<-Cardinal::image(skm, col=brewer.pal_n(segmentation_num,colorstyle)[1:segmentation_num], key=T, ann=FALSE,axes=FALSE)
+        print(imagefile)
+        dev.off()
+        suppressMessages(suppressWarnings(require(magick)))
+        skmimg<-image_read(paste(getwd(),"\\",Segmentation[1],"_image_plot_",segmentation_num,"_segs.png",sep=""))
+        
+        
+        png(paste(getwd(),"\\",Segmentation[1],"_image_plot_",segmentation_num,"_segs_spec.png",sep=""),width = 1024,height = 480*((segmentation_num)))
+        centers=skm@resultData[[1]][["centers"]]
+        
+        centers_mz<-skm@featureData@mz
+        suppressMessages(suppressWarnings(require(ggplot2)))
+        sp<-NULL
+        sp_plot<-NULL
+        for (region in colnames(centers)){
+          sp_plot[[region]]<-data.frame(mz=centers_mz,intensity=centers[,region])
+          sp[[region]]<-ggplot2::ggplot(data=sp_plot[[region]], size=1 ,aes(x=mz, y=intensity,xend=mz,yend=rep(0,length( sp_plot[[region]]$intensity)),colour =brewer.pal_n(segmentation_num,colorstyle)[as.numeric(region)])) +
+            geom_segment(show.legend=F,colour =brewer.pal_n(segmentation_num,colorstyle)[as.numeric(region)]) +
+            theme_classic() +
+            ggtitle(paste("Mean spectrum"," Segmentation:",region),)
+        }
+        suppressMessages(suppressWarnings(require(gridExtra)))
+        grid.arrange( grobs = sp,ncol=1, nrow = ceiling(segmentation_num) )
+        dev.off()
+        
+        skmimg_spec<-image_read(paste(getwd(),"\\",Segmentation[1],"_image_plot_",segmentation_num,"_segs_spec.png",sep=""))
+        skmimg<-image_append(c(skmimg,skmimg_spec),stack = T)
+        image_write(skmimg,paste(getwd(),"\\",Segmentation[1],"_image_plot_",segmentation_num,"_segs_append.png",sep=""))
+        correlation=as.data.frame(skm@resultData@listData[[1]][["correlation"]])
+        correlation[,"mz"]<-as.numeric(gsub("m/z = ","",rownames(correlation)))
+        centers=as.data.frame(skm@resultData[[1]][["centers"]])
+        centers[,"mz"]<-as.numeric(gsub("m/z = ","",rownames(centers)))
+        cluster=as.data.frame(skm@resultData[[1]][["cluster"]])
+        cluster$Coor=rownames(cluster)
+        cluster_df<-data.frame(Coor=rownames(cluster),class=skm@resultData[[1]][["cluster"]])
+        ##write.csv(correlation,paste(Segmentation[1],"_RESULT","correlation",segmentation_num,"segs.csv"),row.names = F)
+        #write.csv(centers,paste(Segmentation[1],"_RESULT","centers",segmentation_num,"segs.csv"),row.names = F)
+        write.csv(cluster_df,paste(Segmentation[1],"_RESULT","cluster",segmentation_num,"segs.csv"),row.names = F)
+        
+        
+        #cluster=skm@resultData[["r = 1, k = 5"]][["cluster"]]
+        
+        
+        y=skm@resultData[[1]][["cluster"]]
+        y=as.data.frame(y)
+        rownames(y)=1:nrow(y)
+        y$pixel=1:nrow(y)
+        regions=unique(y[,1])
+        x=NULL
+        for (i in 1:length(regions)){
+          listname=as.character(regions[i])
+          x[[listname]]<-y[y[, 1] == regions[i], "pixel"]
+        }
+        
+        
+        
+        
+      }
+      else if (Segmentation[1]=="spatialShrunkenCentroids" && segmentation_num!=1) {
+        set.seed(1)
+        if ('&'(Segmentation_ncomp=="auto-detect",Segmentation_variance_coverage>0)){
+          Segmentation_ncomp_running<-PCA_ncomp_selection(imdata=imdata,variance_coverage=Segmentation_variance_coverage,outputdir=paste0(getwd(),"/"))
+        }else{Segmentation_ncomp_running<-Segmentation_ncomp}
+        #message(paste0("spatialShrunkenCentroids computing for ",name))
+        skm <-  suppressMessages(suppressWarnings(spatialShrunkenCentroids(imdata, r=Smooth_range, k=segmentation_num, method="adaptive",s=3,BPPARAM =BPPARAM)))
+        message(paste0(Segmentation[1], " finished: ",name))
+        png(paste(getwd(),"\\",Segmentation[1],"_image_plot_",segmentation_num,"_segs.png",sep=""),width = 1024,height = 720)
+        
+        par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(1, 2),
+            bty="n",pty="s",xaxt="n",
+            yaxt="n",
+            no.readonly = TRUE,ann=F)
+        imagefile<-Cardinal::image(skm, col=brewer.pal_n(segmentation_num,colorstyle)[1:segmentation_num], key=T, ann=FALSE,axes=FALSE, model=list(s=3), values="class")
+        print(imagefile)
+        dev.off()
+        suppressMessages(suppressWarnings(require(magick)))
+        skmimg<-image_read(paste(getwd(),"\\",Segmentation[1],"_image_plot_",segmentation_num,"_segs.png",sep=""))
+        
+        
+        png(paste(getwd(),"\\",Segmentation[1],"_image_plot_",segmentation_num,"_segs_spec.png",sep=""),width = 1024,height = 480*((segmentation_num)))
+        centers=skm@resultData[[1]][["centers"]]
+        
+        centers_mz<-skm@featureData@mz
+        suppressMessages(suppressWarnings(require(ggplot2)))
+        sp<-NULL
+        sp_plot<-NULL
+        for (region in colnames(centers)){
+          sp_plot[[region]]<-data.frame(mz=centers_mz,intensity=centers[,region])
+          sp[[region]]<-ggplot2::ggplot(data=sp_plot[[region]], size=1 ,aes(x=mz, y=intensity,xend=mz,yend=rep(0,length( sp_plot[[region]]$intensity)),colour =brewer.pal_n(segmentation_num,colorstyle)[as.numeric(region)])) +
+            geom_segment(show.legend=F,colour =brewer.pal_n(segmentation_num,colorstyle)[as.numeric(region)]) +
+            theme_classic() +
+            ggtitle(paste("Mean spectrum"," Segmentation:",region),)
+        }
+        suppressMessages(suppressWarnings(require(gridExtra)))
+        grid.arrange( grobs = sp,ncol=1, nrow = ceiling(segmentation_num) )
+        dev.off()
+        
+        skmimg_spec<-image_read(paste(getwd(),"\\",Segmentation[1],"_image_plot_",segmentation_num,"_segs_spec.png",sep=""))
+        skmimg<-image_append(c(skmimg,skmimg_spec),stack = T)
+        image_write(skmimg,paste(getwd(),"\\",Segmentation[1],"_image_plot_",segmentation_num,"_segs_append.png",sep=""))
+        correlation=as.data.frame(skm@resultData@listData[[1]][["correlation"]])
+        correlation[,"mz"]<-as.numeric(gsub("m/z = ","",rownames(correlation)))
+        centers=as.data.frame(skm@resultData[[1]][["centers"]])
+        centers[,"mz"]<-as.numeric(gsub("m/z = ","",rownames(centers)))
+        cluster=as.data.frame(skm@resultData[[1]][["class"]])
+        cluster$Coor=rownames(cluster)
+        cluster_df<-data.frame(Coor=rownames(cluster),class=skm@resultData[[1]][["class"]])
+        #write.csv(correlation,paste(Segmentation[1],"_RESULT","correlation",segmentation_num,"segs.csv"),row.names = F)
+        write.csv(cluster_df,paste(Segmentation[1],"_RESULT","centers",segmentation_num,"segs.csv"),row.names = F)
+        #write.csv(cluster,paste(Segmentation[1],"_RESULT","cluster",segmentation_num,"segs.csv"),row.names = F)
+        
+        
+        
+        y=skm@resultData@listData[[1]][["class"]]
+        y=as.data.frame(y)
+        rownames(y)=1:nrow(y)
+        y$pixel=1:nrow(y)
+        regions=unique(y[,1])
+        x=NULL
+        for (i in 1:length(regions)){
+          listname=as.character(regions[i])
+          x[[listname]]<-y[y[, 1] == regions[i], "pixel"]
+        }
+        
+        
+        
+        
+        
+        
+      }
+      else if (Segmentation[1]=="Virtual_segmentation"){
+        radius_rank=read.csv(file = Virtual_segmentation_rankfile)
+        radius_rank=radius_rank[order(radius_rank$Rank),]
+        if (is.null(radius_rank$Core)) radius_rank$Core="central"
+        
+        coordist_para=function(i,coordata){
+          
+          coordist_para=NULL
+          for( j in 1  :  nrow(coordata)){
+            coordist_para[j]=sqrt((coordata$x[i]-coordata$x[j])^2+(coordata$y[i]-coordata$y[j])^2)
+          }
+          coordist_para
+        }
+        
+        
+        #coordistmatrix<-matrix(nrow=nrow(coordata),ncol=nrow(coordata))
+        #coordistmatrix<-NULL
+        #cl=autoStopCluster(cl)
+        #coordistmatrix=parLapply(cl=cl,1:  nrow(coordata),coordist_para,coordata)
+        coordistmatrix=bplapply(1:  nrow(coordata),coordist_para,coordata,BPPARAM = BPPARAM)
+        coordistmatrix=matrix(unlist(coordistmatrix),nrow = nrow(coordata),ncol = nrow(coordata))
+        coordistmatrix=as.data.table(coordistmatrix)
+        coordistmatrix$sum=0
+        coordistmatrix$sum=base::unlist(bplapply(1:nrow(coordata),function(j,coordistmatrix,coordata){coordistmatrix$sum[j]=sum(coordistmatrix[j,1:nrow(coordata)])},coordistmatrix,coordata,BPPARAM = BPPARAM))
+        coorrange=max(coordistmatrix$sum)-min(coordistmatrix$sum)
+        
+        
+        
+        findedge<-function(coordata,center_type=c("central","southeast","northeast","northwest","southwest")){
+          if (is.null(center_type)) center_type="central"
+          
+          if (center_type=="central"){
+            uniquex=unique(coordata$x)
+            uniquey=unique(coordata$y)
+            coordata$edge=FALSE
+            for (x in uniquex){
+              
+              min=min(coordata[coordata$x==x,"y"])
+              max=max(coordata[coordata$x==x,"y"])
+              coordata['&'(coordata$y==max,coordata$x==x),"edge"]=TRUE
+              coordata['&'(coordata$y==min,coordata$x==x),"edge"]=TRUE
+            }
+            
+            for (y in uniquey){
+              min=min(coordata[coordata$y==y,"x"])
+              max=max(coordata[coordata$y==y,"x"])
+              coordata['&'(coordata$x==max,coordata$y==y),"edge"]=TRUE
+              coordata['&'(coordata$x==min,coordata$y==y),"edge"]=TRUE
+            }
+            
+          }else { 
+            if(center_type=="southeast"){
+              uniquex=unique(coordata$x)
+              uniquey=unique(coordata$y)
+              coordata$edge=FALSE
+              for (x in uniquex){
+                
+                min=min(coordata[coordata$x==x,"y"])
+                max=max(coordata[coordata$x==x,"y"])
+                #coordata['&'(coordata$y==max,coordata$x==x),"edge"]=TRUE
+                coordata['&'(coordata$y==min,coordata$x==x),"edge"]=TRUE
+              }
+              
+              for (y in uniquey){
+                min=min(coordata[coordata$y==y,"x"])
+                max=max(coordata[coordata$y==y,"x"])
+                #coordata['&'(coordata$x==max,coordata$y==y),"edge"]=TRUE
+                coordata['&'(coordata$x==min,coordata$y==y),"edge"]=TRUE
+              }
+            } else if(center_type=="northeast"){
+              uniquex=unique(coordata$x)
+              uniquey=unique(coordata$y)
+              coordata$edge=FALSE
+              for (x in uniquex){
+                
+                min=min(coordata[coordata$x==x,"y"])
+                max=max(coordata[coordata$x==x,"y"])
+                coordata['&'(coordata$y==max,coordata$x==x),"edge"]=TRUE
+                #coordata['&'(coordata$y==min,coordata$x==x),"edge"]=TRUE
+              }
+              
+              for (y in uniquey){
+                min=min(coordata[coordata$y==y,"x"])
+                max=max(coordata[coordata$y==y,"x"])
+                #coordata['&'(coordata$x==max,coordata$y==y),"edge"]=TRUE
+                coordata['&'(coordata$x==min,coordata$y==y),"edge"]=TRUE
+              }
+            }else if(center_type=="northwest"){
+              uniquex=unique(coordata$x)
+              uniquey=unique(coordata$y)
+              coordata$edge=FALSE
+              for (x in uniquex){
+                
+                min=min(coordata[coordata$x==x,"y"])
+                max=max(coordata[coordata$x==x,"y"])
+                coordata['&'(coordata$y==max,coordata$x==x),"edge"]=TRUE
+                #coordata['&'(coordata$y==min,coordata$x==x),"edge"]=TRUE
+              }
+              
+              for (y in uniquey){
+                min=min(coordata[coordata$y==y,"x"])
+                max=max(coordata[coordata$y==y,"x"])
+                coordata['&'(coordata$x==max,coordata$y==y),"edge"]=TRUE
+                #coordata['&'(coordata$x==min,coordata$y==y),"edge"]=TRUE
+              }
+            }else if(center_type=="southwest"){
+              uniquex=unique(coordata$x)
+              uniquey=unique(coordata$y)
+              coordata$edge=FALSE
+              for (x in uniquex){
+                
+                min=min(coordata[coordata$x==x,"y"])
+                max=max(coordata[coordata$x==x,"y"])
+                #coordata['&'(coordata$y==max,coordata$x==x),"edge"]=TRUE
+                coordata['&'(coordata$y==min,coordata$x==x),"edge"]=TRUE
+              }
+              
+              for (y in uniquey){
+                min=min(coordata[coordata$y==y,"x"])
+                max=max(coordata[coordata$y==y,"x"])
+                coordata['&'(coordata$x==max,coordata$y==y),"edge"]=TRUE
+                #coordata['&'(coordata$x==min,coordata$y==y),"edge"]=TRUE
+              }
+            }}
+          
+          return(coordata)
+          
+        }
+        
+        coordata=findedge(coordata,center_type=unique(radius_rank$Core))
+        
+        
+        
+        #paste0("v",colnames(coordistmatrix[coordistmatrix$sum==min(coordistmatrix$sum),]))
+        
+        #center_dist=t(coordistmatrix[which.min(coordistmatrix$sum),])
+        
+        
+        #plot(rownames(coordistmatrix),coordistmatrix$sum)
+        
+        #write.csv(radius_rank,file = "radius_rank.csv", row.names = F)
+        
+        
+        
+        rank_pixel<-function(coordata,coordistmatrix,radius_rank){
+          #coordata[coordata$edge==TRUE,]=coordata[coordata$edge==TRUE,]
+          
+          if (unique(radius_rank$Core)=="central"){
+            shape_center=coordata[coordistmatrix$sum==min(coordistmatrix$sum),]
+            center_dist=t(coordistmatrix[which.min(coordistmatrix$sum),1:nrow(coordata)])
+            library(useful)
+            From <- shape_center[rep(seq_len(nrow(shape_center)), each=nrow(coordata)),1:2]
+            To <- coordata[,1:2]
+            df=To-From
+            center_edge_angle=cbind(coordata[,1:2],cart2pol(df$x, df$y, degrees = F),edge=coordata[,"edge"])
+            center_edge_angle_sdge=center_edge_angle[center_edge_angle$edge==TRUE,]
+            coordata$rank=0 
+            coordata$pattern=""       
+            
+            for (i in 1: (nrow(coordata))){
+              
+              
+              #From <- coordata[i,][rep(seq_len(nrow(coordata[i,])), each=nrow(coordata[coordata$edge==TRUE,])),1:2]
+              #To <- coordata[coordata$edge==TRUE,][,1:2]
+              
+              if (coordata$edge[i]!=TRUE){      
+                df=coordata[i,1:2]-shape_center[,1:2]
+                point_center_angle=cbind(coordata[i,1:2],cart2pol(df$x, df$y, degrees = F))
+                pointedge=center_edge_angle_sdge[which(abs(center_edge_angle_sdge$theta-point_center_angle$theta)==min(abs(center_edge_angle_sdge$theta-point_center_angle$theta))),]
+                #message(pointedge)
+                
+                pointedge=pointedge[which.min(pointedge$r),]
+                to_edge=coordistmatrix[[i]]['&'(coordata$x==pointedge$x,coordata$y==pointedge$y)]
+              }else{to_edge=0}
+              
+              
+              to_center=center_dist[i]
+              total=to_edge+to_center
+              
+              norm_center_dist=to_center/total*max(radius_rank$Radius_U)
+              if(length(radius_rank$Rank['&'(radius_rank$Radius_L<=norm_center_dist,radius_rank$Radius_U>=norm_center_dist)])==1){
+                coordata$rank[i]=as.character(radius_rank$Rank['&'(radius_rank$Radius_L<=norm_center_dist,radius_rank$Radius_U>=norm_center_dist)])
+                coordata$pattern[i]=as.character(radius_rank$Name['&'(radius_rank$Radius_L<=norm_center_dist,radius_rank$Radius_U>=norm_center_dist)])
+              }else{
+                coordata$rank[i]="Undefined"
+                coordata$pattern[i]="Undefined"
+              }
+            }
+            coordata$rank<-factor(coordata$rank)
+            coordata
+          }else { 
+            if(unique(radius_rank$Core)=="southeast"){
+              #shape_center=coordata['&'(coordata$x>=max(coordata$x)-1,coordata$y>=max(coordata$y)-1),]
+              shape_center=coordata[1,]
+              shape_center$x=max(coordata$x)
+              shape_center$y=max(coordata$y)
+              coordata_new<-rbind(coordata,shape_center)
+              center_dist=bplapply(nrow(coordata_new),coordist_para,coordata_new,BPPARAM = BPPARAM)[[1]]
+              #center_dist=t(coordistmatrix[which.min(coordistmatrix$sum),1:nrow(coordata)])
+            } else if(unique(radius_rank$Core)=="northeast"){
+              #shape_center=coordata['&'(coordata$x>=max(coordata$x)-1,coordata$y>=max(coordata$y)-1),]
+              shape_center=coordata[1,]
+              shape_center$x=max(coordata$x)
+              shape_center$y=min(coordata$y)
+              
+            }else if(unique(radius_rank$Core)=="northwest"){
+              #shape_center=coordata['&'(coordata$x>=max(coordata$x)-1,coordata$y>=max(coordata$y)-1),]
+              shape_center=coordata[1,]
+              shape_center$x=min(coordata$x)
+              shape_center$y=min(coordata$y)
+              
+            }else if(unique(radius_rank$Core)=="southwest"){
+              #shape_center=coordata['&'(coordata$x>=max(coordata$x)-1,coordata$y>=max(coordata$y)-1),]
+              shape_center=coordata[1,]
+              shape_center$x=min(coordata$x)
+              shape_center$y=max(coordata$y)
+              
+            }
+            
+            library(useful)
+            coordata$rank=0 
+            coordata$pattern=""       
+            From <- shape_center[rep(seq_len(nrow(shape_center)), each=nrow(coordata)),1:2]
+            To <- coordata[,1:2]
+            df=To-From
+            center_edge_angle=cbind(coordata[,1:2],cart2pol(df$x, df$y, degrees = F),edge=coordata[,"edge"])
+            center_edge_angle_sdge=center_edge_angle[center_edge_angle$edge==TRUE,]
+            coordata$rank=0 
+            coordata$pattern=""      
+            for (i in 1: (nrow(coordata))){
+              
+              
+              #From <- coordata[i,][rep(seq_len(nrow(coordata[i,])), each=nrow(coordata[coordata$edge==TRUE,])),1:2]
+              #To <- coordata[coordata$edge==TRUE,][,1:2]
+              
+              df=coordata[i,1:2]-shape_center[,1:2]
+              point_center_angle=cbind(coordata[i,1:2],cart2pol(df$x, df$y, degrees = F))
+              pointedge=center_edge_angle_sdge[which(abs(center_edge_angle_sdge$theta-point_center_angle$theta)==min(abs(center_edge_angle_sdge$theta-point_center_angle$theta))),]
+              #message(pointedge)
+              
+              pointedge=pointedge[which.min(pointedge$r),]
+              to_edge=coordistmatrix[[i]]['&'(coordata$x==pointedge$x,coordata$y==pointedge$y)]
+              
+              
+              to_center=center_dist[i]
+              total=to_edge+to_center
+              
+              norm_center_dist=to_center/total*max(radius_rank$Radius_U)
+              if(length(radius_rank$Rank['&'(radius_rank$Radius_L<=norm_center_dist,radius_rank$Radius_U>=norm_center_dist)])==1){
+                coordata$rank[i]=as.character(radius_rank$Rank['&'(radius_rank$Radius_L<=norm_center_dist,radius_rank$Radius_U>=norm_center_dist)])
+                coordata$pattern[i]=as.character(radius_rank$Name['&'(radius_rank$Radius_L<=norm_center_dist,radius_rank$Radius_U>=norm_center_dist)])
+              }else{
+                coordata$rank[i]="Undefined"
+                coordata$pattern[i]="Undefined"
+              }
+            }
+            coordata$rank<-factor(coordata$rank)
+            coordata
+            
+          }
+          
+          
+          
+        }
+        
+        coordata=rank_pixel(coordata,coordistmatrix,radius_rank)
+        
+        
+        x=NULL
+        
+        for (rank in coordata$rank){
+          
+          x[[rank]]=which(coordata$rank==rank)
+          
+        }
+        write.csv(coordata,"coordata.csv",row.names = F)
+        
+        region_pattern <- factor(coordata$pattern,levels=unique(coordata$pattern), labels=unique(coordata$pattern))
+        #image(imdata, region_pattern ~ x * y, key=T)
+        
+        #set.seed(1)
+        #skm <- spatialKMeans(imdata, r=Smooth_range, k=length(unique(coordata$rank)), method="adaptive")
+        #png(paste(getwd(),"\\","spatialKMeans_image",'.png',sep=""),width = 1024,height = 1024)
+        #plot(skm, col=c("pink", "blue", "red","orange","navyblue"), type=c('p','h'), key=FALSE)
+        #par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(1+ceiling(segmentation_num/2), 2),
+        #par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(1, 1),
+        #    bty="n",pty="s",xaxt="n",
+        #    yaxt="n",
+        #    no.readonly = TRUE,ann=FALSE)
+        #print(Cardinal::image(imdata, col=brewer.pal_n(segmentation_num,colorstyle)[1:segmentation_num], key=FALSE, ann=FALSE,axes=FALSE))
+        
+        #legend("topright", legend=1:segmentation_num, fill=brewer.pal_n(segmentation_num,colorstyle), col=brewer.pal_n(segmentation_num,"Paired"), bg="transparent",xpd=TRUE,cex = 1)
+        
+        #Cardinal::plot(skm, col=brewer.pal_n(segmentation_num,colorstyle)[1:segmentation_num], type=c('p','h'), key=FALSE)
+        #Cardinal::plot(skm, col=brewer.pal_n(segmentation_num,colorstyle)[1:segmentation_num], type=c('p','h'), key=FALSE,mode="centers")
+        #Cardinal::plot(skm, col=brewer.pal_n(segmentation_num,colorstyle)[1:segmentation_num], type=c('p','h'), key=FALSE,mode="betweenss")
+        #dev.off()
+        
+        #for (i in 1:nrow(coordata)){
+        #skm@resultData[[paste0("r = ",Smooth_range, ", k = ",length(unique(coordata$rank)))]][["cluster"]][[rownames(coordata)[i]]]=factor(coordata[i,"rank"],levels=unique(coordata$rank))
+        
+        #}
+        
+        #Cardinal::image(imdata, col=brewer.pal_n(segmentation_num,colorstyle)[1:segmentation_num], key=FALSE, ann=FALSE,axes=FALSE,groups =pattern)
+        
+        #msset <- generateImage(region_pattern, coord=coordata[,1:2],
+        #                        range=c(1000, 5000), centers=c(2000, 3000, 4000),
+        #                        resolution=100, step=3.3, as="MSImageSet")
+        #msset@pixelData@data[["sample"]]=region_pattern
+        png(paste(getwd(),"\\","Virtual_segmentation",gsub("/"," ",name),'.png',sep=""),width = 1024,height = 1024)
+        #plot(skm, col=c("pink", "blue", "red","orange","navyblue"), type=c('p','h'), key=FALSE)
+        #par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(1+ceiling(segmentation_num/2), 2),
+        par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(1, 1),
+            bty="n",pty="s",xaxt="n",
+            yaxt="n",
+            no.readonly = TRUE,ann=FALSE)
+        print(image(imdata, region_pattern ~ x * y,col=brewer.pal_n(length(unique(coordata$rank)),colorstyle), key=TRUE))
+        
+        dev.off()
+        
+        
+        
+      }
+      else if (Segmentation=="def_file"){
+        
+        Segmentation_def_tbl<-read.csv(paste0(workdir[z],"/", Segmentation_def))
+        
+        if(c("datafile") %in% colnames(Segmentation_def_tbl) ){
+         Segmentation_def_tbl<-Segmentation_def_tbl[Segmentation_def_tbl$datafile==datafile[z],] 
+        }
+        
+        if(c("pixel") %in% colnames(Segmentation_def_tbl) ){
+        Segmentation_def_tbl<-Segmentation_def_tbl[order(Segmentation_def_tbl$pixel),]
+        }else if (c("Coor") %in% colnames(Segmentation_def_tbl)){
+        Segmentation_def_tbl<-Segmentation_def_tbl[order(Segmentation_def_tbl$Coor),]
+        }
+        if(c("label") %in% colnames(Segmentation_def_tbl) ){
+        Segmentation_def_tbl$label<-as.factor(Segmentation_def_tbl$label)
+        }else if (c("class") %in% colnames(Segmentation_def_tbl)){
+        Segmentation_def_tbl$label<-as.factor(Segmentation_def_tbl$class)
+        }
+        x=NULL
+        
+        for (label in levels(Segmentation_def_tbl$label)){
+          
+          x[[label]]<-Segmentation_def_tbl$pixel[Segmentation_def_tbl$label==label]
+          
+        }
+        
+        message("Segmentation_def_tbl loaded, labelled regions: ", paste(names(x),collapse = ", "))
+        png(paste(getwd(),"\\","Segmentation_def_file","_image_plot_",length(levels(Segmentation_def_tbl$label)),"_segs.png",sep=""),width = 1024,height = 720)
+        
+        par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(1, 2),
+            bty="n",pty="s",xaxt="n",
+            yaxt="n",
+            no.readonly = TRUE,ann=F)
+        imagefile<-Cardinal::image(imdata, factor(Segmentation_def_tbl$label) ~ x * y, key=T, ann=FALSE,axes=FALSE)
+        print(imagefile)
+        dev.off()
+        
+      }
+      else {
+        
+        x=1:length(pixels(imdata))
+        x=split(x, sort(x%%1)) 
+        names(x)="1"
+        png(paste(getwd(),"\\","Segmentation_none","_image_plot_",segmentation_num,"_segs.png",sep=""),width = 1024,height = 720)
+        
+        par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(1, 2),
+            bty="n",pty="s",xaxt="n",
+            yaxt="n",
+            no.readonly = TRUE,ann=F)
+        imagefile<-Cardinal::image(imdata, factor(rep(1,length(pixels(imdata)))) ~ x * y, key=T, ann=FALSE,axes=FALSE)
+        print(imagefile)
+        dev.off()
+      } 
+    }
+  }
+  return("workflow successfully completed")
+}
+
+
+remove_pep_score_outlier<-function(SMPLIST,IQR_LB=0.75,outputdir=getwd(),abs_cutoff=-2){
+  #if (!require(OneR)) install.packages("OneR")
+  suppressMessages(suppressWarnings(library(OneR)))
+  suppressMessages(suppressWarnings(library(dplyr)))
+  nbins = floor(length(SMPLIST$mz)/500)
+  if(nbins>=2){
+    SMPLIST$mzbin<-(bin(SMPLIST$mz, nbins = floor(length(SMPLIST$mz)/500),method = "content"))
+  }else{
+    Message("Insufficient mz features to find the outlier")
+    return(SMPLIST)
+  }
+  
+
+  remove_outliers <- function(x, na.rm = TRUE,IQR_LB=0.75,...) {
+    qnt <- quantile(x, probs=c(.25, .75), na.rm = na.rm, ...)
+    H <- IQR_LB * IQR(x, na.rm = na.rm)
+    y <- x
+    y[x < (qnt[1] - H)] <- NA
+    #y[x > (qnt[2] + H)] <- NA
+    y
+  }
+
+
+  
+  
+  SMPLIST_bin_quantile <-SMPLIST %>% group_by(mzbin) %>% summarise(mz=mz,Score=remove_outliers(Score),mzbin=unique(mzbin)) %>% ungroup
+  #SMPLIST_bin_1SD <-SMPLIST %>% group_by(mzbin) %>% summarise(mz=min(mz),Score_mean=mean(Score),ScoreSD=sd(Score),ScoreLB= mean(Score)-1*sd(Score),mzbin=unique(mzbin))
+  SMPLIST_bin_quantile<-SMPLIST_bin_quantile[!is.na(SMPLIST_bin_quantile$Score),]
+  SMPLIST_abs_cutoff<-SMPLIST_bin_quantile[SMPLIST_bin_quantile$Score<abs_cutoff,]
+  SMPLIST_bin_quantile<-SMPLIST_bin_quantile[SMPLIST_bin_quantile$Score>=abs_cutoff,]
+  
+  p<-ggplot(data = SMPLIST, mapping = aes(x=mz,y=Score,color=mzbin,group=mzbin)) + 
+    #geom_jitter(aes(color='blue'),alpha=0.2) +
+    #geom_boxplot(fill="bisque",color="black",alpha=0.3,coef=0.75) + 
+    #stat_boxplot(geom ='errorbar')+
+    #geom_point(data=SMPLIST_bin_1.5SD,mapping = aes(x=mz,y=ScoreLB),color="blue",group="Cut-off") +
+    geom_point(data=SMPLIST,mapping = aes(x=mz,y=Score),
+               color="darkblue"
+               ,group="Cut-off",col="Removed Features") +
+    geom_point(data=SMPLIST_bin_quantile,mapping = aes(x=mz,y=Score),
+               color="red",
+               group="Cut-off",col="Kept Features") +
+    # geom_point(data=SMPLIST_abs_cutoff,mapping = aes(x=mz,y=Score),
+    #            color="green",
+    #            group="Cut-off",col="Kept Features") +
+    #stat_smooth(data=SMPLIST_bin_1SD,mapping = aes(x=mz,y=ScoreLB),method = "lm", formula = y ~ poly(x, 4), se = FALSE,fill="black") +
+    guides(color=guide_legend("m/z bin size")) +
+    labs(x='m/z') +
+    
+    theme_classic() 
+  
+  
+  if(!is.null(outputdir)){
+    png(paste(outputdir,"/Summary folder/Peptide_score_outlier.png",sep=""),width = 1200,height = 800,res = 150)
+    print(p)
+    dev.off()
+    
+  }
+  return(SMPLIST[SMPLIST$mz %in% SMPLIST_bin_quantile$mz,])
+}

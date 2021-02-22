@@ -1,0 +1,13 @@
+name: HiTMaP_GUI
+title: HiTMaP_GUI
+username:
+account: guoguodigital
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 3580881
+bundleId: 4180044
+url: https://guoguodigital.shinyapps.io/HiTMaP_GUI/
+when: 1612439636.89015
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: app2.R|app3.R|app4.R

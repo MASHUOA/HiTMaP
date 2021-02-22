@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<msms_pipeline_analysis xmlns="http://regis-web.systemsbiology.net/pepXML" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://regis-web.systemsbiology.net/pepXML http://mascot/mascot/xmlns/schema/pepXML_v18/pepXML_v18.xsd" date="2010-08-25T08:20:07Z" summary_xml="F000000.xml">
+  <msms_run_summary base_name="" raw_data_type="" raw_data="">
+    <sample_enzyme name="Trypsin" description="" fidelity="specific" independent="0">
+      <specificity sense="C" min_spacing="1" cut="KR" no_cut="P"/>
+    </sample_enzyme>
+    <search_summary base_name="http://mascot/mascot/cgi/master_results.pl?file=../data/20100705/F000000.dat" search_engine="MASCOT" precursor_mass_type="monoisotopic" fragment_mass_type="monoisotopic" out_data_type="" out_data="" search_id="1">
+      <search_database local_path="/proteomics/mascot/sequence/Erwinia/current/erwinia_pro.fasta" database_name="Erwinia" database_release_identifier="erwinia_pro.fasta" size_in_db_entries="4497" size_of_residues="1456285" type="AA"/>
+      <enzymatic_search_constraint enzyme="Trypsin" max_num_internal_cleavages="1" min_number_termini="2"/>
+      <aminoacid_modification aminoacid="K" massdiff="+144.1021" mass="272.197026" variable="N" binary="N" description="iTRAQ4plex (K)"/>
+      <aminoacid_modification aminoacid="C" massdiff="+45.9877" mass="148.996906" variable="N" binary="N" description="Methylthio (C)"/>
+      <aminoacid_modification aminoacid="Y" massdiff="+144.1021" mass="307.165392" variable="Y" binary="N" description="iTRAQ4plex (Y)"/>
+      <aminoacid_modification aminoacid="M" massdiff="+15.9949" mass="147.0354" variable="Y" binary="N" description="Oxidation (M)"/>
+      <terminal_modification terminus="n" massdiff="+144.1021" mass="145.109888" variable="N" protein_terminus="" description="iTRAQ4plex (N-term)"/>
+      <parameter name="CHARGE" value="2+ and 3+"/>
+      <parameter name="CLE" value="Trypsin"/>
+      <parameter name="COM" value="experiment.centroided.mgf"/>
+      <parameter name="DB" value="Erwinia"/>
+      <parameter name="DECOY" value="1"/>
+      <parameter name="FILE" value="experiment.centroided.mgf"/>
+      <parameter name="FORMAT" value="Mascot generic"/>
+      <parameter name="FORMVER" value="1.01"/>
+      <parameter name="INSTRUMENT" value="ESI-QUAD-TOF"/>
+      <parameter name="INTERNALS" value="0.0,700.0"/>
+      <parameter name="ITOL" value="0.8"/>
+      <parameter name="ITOLU" value="Da"/>
+      <parameter name="IT_MODS" value="iTRAQ4plex (Y),Oxidation (M)"/>
+      <parameter name="LICENSE" value="Licensed to: University of Cambridge, Dept. of Biochemistry (PH  678388), (2 processors)."/>
+      <parameter name="MASS" value="Monoisotopic"/>
+      <parameter name="MODS" value="iTRAQ4plex (K),iTRAQ4plex (N-term),Methylthio (C)"/>
+      <parameter name="PEAK" value="AUTO"/>
+      <parameter name="PFA" value="1"/>
+      <parameter name="QUANTITATION" value="None"/>
+      <parameter name="REPORT" value="AUTO"/>
+      <parameter name="REPTYPE" value="peptide"/>
+      <parameter name="RULES" value="1,2,8,9,10,13,14,15"/>
+      <parameter name="SEARCH" value="MIS"/>
+      <parameter name="TAXONOMY" value="All entries"/>
+      <parameter name="TOL" value="1.2"/>
+      <parameter name="TOLU" value="Da"/>
+      <parameter name="USEREMAIL" value="lg390@cam.ac.uk"/>
+      <parameter name="USERNAME" value="Laurent Gatto"/>
+    </search_summary>
+<spectrum_query spectrum="679_c403.2119_u403.2178_r63.12" start_scan="0" end_scan="0" precursor_neutral_mass="402.204624" assumed_charge="1" index="1"/>
+<spectrum_query spectrum="511_c402.2474_u402.2695_r41.13" start_scan="0" end_scan="0" precursor_neutral_mass="401.240124" assumed_charge="1" index="2">
+  <search_result search_id="1">
+    <search_hit hit_rank="1" peptide="VAIGR" peptide_prev_aa="R" peptide_next_aa="A" protein="ECA0851" num_tot_proteins="4" num_matched_ions="4" calc_neutral_pep_mass="658.424789" massdiff="+0.9550" num_missed_cleavages="0" is_rejected="0" protein_descr="putative sugar ABC transporter ATP-binding protein" protein_mw="43111">
+      <alternative_protein protein="ECA1395"/>
+      <alternative_protein protein="ECA3174"/>
+      <alternative_protein protein="ECA3748"/>
+      <search_score name="ionscore" value="4.73"/>
+      <search_score name="identityscore" value="28"/>
+      <search_score name="homologyscore" value="15"/>
+      <search_score name="expect" value="12"/>
+    </search_hit>
+  </search_result>
+</spectrum_query>
+<spectrum_query spectrum="186_c660.3871_u662.3625_r58.85" start_scan="0" end_scan="0" precursor_neutral_mass="659.379824" assumed_charge="1" index="3">
+  <search_result search_id="1">
+    <search_hit hit_rank="1" peptide="VAIGR" peptide_prev_aa="R" peptide_next_aa="A" protein="ECA0851" num_tot_proteins="4" num_matched_ions="4" calc_neutral_pep_mass="658.424789" massdiff="+0.9550" num_missed_cleavages="0" is_rejected="0" protein_descr="putative sugar ABC transporter ATP-binding protein" protein_mw="43111">
+      <alternative_protein protein="ECA3748"/>
+      <search_score name="ionscore" value="2.22"/>
+      <search_score name="identityscore" value="28"/>
+      <search_score name="homologyscore" value="15"/>
+      <search_score name="expect" value="12"/>
+    </search_hit>
+  </search_result>
+  <search_result search_id="2">
+    <search_hit hit_rank="1" peptide="TPVSEK" peptide_prev_aa="K" peptide_next_aa="V" protein="BSA" num_tot_proteins="1" num_matched_ions="5" calc_neutral_pep_mass="947.553131" massdiff="+0.0019" num_missed_cleavages="0" is_rejected="0" protein_descr=" = bovine serum albumin" protein_mw="79648">
+      <search_score name="ionscore" value="34.67"/>
+      <search_score name="identityscore" value="27"/>
+      <search_score name="homologyscore" value="22"/>
+      <search_score name="expect" value="0.0089"/>
+    </search_hit>
+    <search_hit hit_rank="2" peptide="VAIGR" peptide_prev_aa="R" peptide_next_aa="A" protein="ECA0851" num_tot_proteins="4" num_matched_ions="4" calc_neutral_pep_mass="658.424789" massdiff="+0.9550" num_missed_cleavages="0" is_rejected="0" protein_descr="putative sugar ABC transporter ATP-binding protein" protein_mw="43111">
+       <alternative_protein protein="ECA3174"/>
+      <alternative_protein protein="ECA3748"/>
+      <search_score name="ionscore" value="4.73"/>
+      <search_score name="identityscore" value="28"/>
+      <search_score name="homologyscore" value="15"/>
+      <search_score name="expect" value="12"/>
+    </search_hit>
+  </search_result>
+</spectrum_query>
+<spectrum_query spectrum="40_c402.7615_u402.7805_r41.44" start_scan="0" end_scan="0" precursor_neutral_mass="803.508448" assumed_charge="2" index="4">
+  <search_result search_id="1">
+    <search_hit hit_rank="1" peptide="EIAGK" peptide_prev_aa="R" peptide_next_aa="V" protein="ECA2929" num_tot_proteins="1" num_matched_ions="3" calc_neutral_pep_mass="804.494873" massdiff="-0.9864" num_missed_cleavages="0" is_rejected="0" protein_descr="putative efflux protein" protein_mw="118079">
+      <search_score name="ionscore" value="10.71"/>
+      <search_score name="identityscore" value="27"/>
+      <search_score name="homologyscore" value="23"/>
+      <search_score name="expect" value="2.4"/>
+    </search_hit>
+    <search_hit hit_rank="2" peptide="QIAGK" peptide_prev_aa="R" peptide_next_aa="R" protein="ECA2628" num_tot_proteins="1" num_matched_ions="3" calc_neutral_pep_mass="803.510864" massdiff="-0.0024" num_missed_cleavages="0" is_rejected="0" protein_descr="phage-related protein" protein_mw="41794">
+      <search_score name="ionscore" value="10.71"/>
+      <search_score name="identityscore" value="27"/>
+      <search_score name="homologyscore" value="23"/>
+      <search_score name="expect" value="2.4"/>
+    </search_hit>
+    <search_hit hit_rank="3" peptide="ELGAK" peptide_prev_aa="R" peptide_next_aa="V" protein="ECA0700" num_tot_proteins="2" num_matched_ions="3" calc_neutral_pep_mass="804.494873" massdiff="-0.9864" num_missed_cleavages="0" is_rejected="0" protein_descr="phosphoglucosamine mutase" protein_mw="51755">
+      <alternative_protein protein="ECA4053"/>
+      <search_score name="ionscore" value="9.79"/>
+      <search_score name="identityscore" value="27"/>
+      <search_score name="homologyscore" value="23"/>
+      <search_score name="expect" value="2.9"/>
+    </search_hit>
+    <search_hit hit_rank="4" peptide="QGNDAR" peptide_prev_aa="R" peptide_next_aa="R" protein="ECA3977" num_tot_proteins="1" num_matched_ions="3" calc_neutral_pep_mass="803.400757" massdiff="+0.1077" num_missed_cleavages="0" is_rejected="0" protein_descr="conserved hypothetical protein" protein_mw="41392">
+      <search_score name="ionscore" value="8.77"/>
+      <search_score name="identityscore" value="27"/>
+      <search_score name="homologyscore" value="23"/>
+      <search_score name="expect" value="3.7"/>
+    </search_hit>
+    <search_hit hit_rank="5" peptide="EIDER" peptide_prev_aa="K" peptide_next_aa="C" protein="ECA0960" num_tot_proteins="2" num_matched_ions="3" calc_neutral_pep_mass="804.409912" massdiff="-0.9015" num_missed_cleavages="0" is_rejected="0" protein_descr="putative restriction enzyme" protein_mw="108189">
+      <alternative_protein protein="ECA1568"/>
+      <search_score name="ionscore" value="6.75"/>
+      <search_score name="identityscore" value="27"/>
+      <search_score name="homologyscore" value="23"/>
+      <search_score name="expect" value="5.9"/>
+    </search_hit>
+    <search_hit hit_rank="6" peptide="EIEDR" peptide_prev_aa="K" peptide_next_aa="I" protein="ECA3122" num_tot_proteins="1" num_matched_ions="3" calc_neutral_pep_mass="804.409912" massdiff="-0.9015" num_missed_cleavages="0" is_rejected="0" protein_descr="type I restriction enzyme EcoEI R protein" protein_mw="102761">
+      <search_score name="ionscore" value="6.75"/>
+      <search_score name="identityscore" value="27"/>
+      <search_score name="homologyscore" value="23"/>
+      <search_score name="expect" value="5.9"/>
+    </search_hit>
+    <search_hit hit_rank="7" peptide="EIFPR" peptide_prev_aa="R" peptide_next_aa="L" protein="ECA2148" num_tot_proteins="1" num_matched_ions="3" calc_neutral_pep_mass="804.461563" massdiff="-0.9531" num_missed_cleavages="0" is_rejected="0" protein_descr="putative ABC transport ATP-binding subunit" protein_mw="27251">
+      <search_score name="ionscore" value="6.75"/>
+      <search_score name="identityscore" value="27"/>
+      <search_score name="homologyscore" value="23"/>
+      <search_score name="expect" value="5.9"/>
+    </search_hit>
+    <search_hit hit_rank="8" peptide="ELDER" peptide_prev_aa="R" peptide_next_aa="Q" protein="ECA0404" num_tot_proteins="1" num_matched_ions="3" calc_neutral_pep_mass="804.409912" massdiff="-0.9015" num_missed_cleavages="0" is_rejected="0" protein_descr="cytosolic aminopeptidase" protein_mw="58868">
+      <search_score name="ionscore" value="6.75"/>
+      <search_score name="identityscore" value="27"/>
+      <search_score name="homologyscore" value="23"/>
+      <search_score name="expect" value="5.9"/>
+    </search_hit>
+    <search_hit hit_rank="9" peptide="ELEDR" peptide_prev_aa="R" peptide_next_aa="R" protein="ECA4122" num_tot_proteins="1" num_matched_ions="3" calc_neutral_pep_mass="804.409912" massdiff="-0.9015" num_missed_cleavages="0" is_rejected="0" protein_descr="putative RNA binding protein" protein_mw="91284">
+      <search_score name="ionscore" value="6.75"/>
+      <search_score name="identityscore" value="27"/>
+      <search_score name="homologyscore" value="23"/>
+      <search_score name="expect" value="5.9"/>
+    </search_hit>
+    <search_hit hit_rank="10" peptide="ELMLR" peptide_prev_aa="R" peptide_next_aa="Q" protein="ECA2610" num_tot_proteins="1" num_matched_ions="3" calc_neutral_pep_mass="804.46492" massdiff="-0.9565" num_missed_cleavages="0" is_rejected="0" protein_descr="phage baseplate assembly protein" protein_mw="32750">
+      <search_score name="ionscore" value="6.75"/>
+      <search_score name="identityscore" value="27"/>
+      <search_score name="homologyscore" value="23"/>
+      <search_score name="expect" value="5.9"/>
+    </search_hit>
+  </search_result>
+</spectrum_query>
+</msms_run_summary>
+</msms_pipeline_analysis>
