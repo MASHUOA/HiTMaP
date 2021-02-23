@@ -51,7 +51,9 @@ Proteomics_par<-c("Fastadatabase","Digestion_site","Digestion_site_2","adducts",
 
 # Define server logic required to draw a histogram
 #shiny::shinyServer(function(input, output, session) {
-server<-function(input,output,session){    
+server<-function(input,output,session,WorkingDir_global){ 
+    WorkingDir_global<-get("WorkingDir_global", envir = .GlobalEnv)
+    
     setwd(WorkingDir_global)
     
     shinyDirChoose(input, 'Projectdir', roots =  c(Root=getwd()))
@@ -507,7 +509,7 @@ server<-function(input,output,session){
     
     observeEvent(input$Proteomics_run,
                  {   
-                     task_type<-substitute(input$Proteomics_run)
+                     task_type<-("Proteomics_run")
                      task_type<-str_split(as.character(task_type),regex("\\$"))[[3]]
                      seesion_task_no <<- seesion_task_no + 1
                      workdir=paste0(getwd(),"/",paste0(unlist(Projectdir()[[1]]),collapse = '/',sep=""),"/")
@@ -621,7 +623,7 @@ server<-function(input,output,session){
                      
                      close(fileConn)
                      
-                     dataName <- paste0("task_type", "_", seesion_task_no)
+                     dataName <- paste0(task_type, "_", seesion_task_no)
                      system_fun<-function(x) { system(paste0("Rscript \"",x,"\"")) }
                      
                      startAsyncTask(
