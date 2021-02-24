@@ -3,6 +3,8 @@ sudo apt-get install libfftw3-dev
 sudo apt-get install librsvg2-dev
 sudo apt-get install tcl-dev tk-dev
 sudo apt-get install r-cran-ncdf4
+apt install openjdk-11-jre-headless
+apt install openjdk-11-jdk-headless
 apt-get install libz-dev
 sudo apt install libxml2-dev
 sudo apt install libssl-dev
@@ -17,3 +19,6 @@ sudo apt-get install r-base-core="4.0.2-1.2004.0"
 sudo apt-get install libmagick++-dev
 apt-get install libfftw3-dev
 sudo apt-get install r-base-dev texlive-full
+sudo apt-get install libudunits2-dev
+sudo apt-get install libgdal-dev
+sudo R CMD javareconf

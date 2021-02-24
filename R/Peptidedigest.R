@@ -137,6 +137,8 @@ imaging_identification<-function(
                Thread=NULL,
                cluster_rds_path=NULL,
                remove_score_outlier=T,
+               Plot_score_IQR_cutoff=0.75,
+               Plot_score_abs_cutoff=0,
                ...
                ){
   library("pacman")
@@ -171,7 +173,7 @@ imaging_identification<-function(
   
   
   
-  setwd(workdir[1])
+  setwd(paste0(workdir[1],"/"))
   message(paste(try(detectCores()), "Cores detected,",parallel, "threads will be used for computing"))
 
   message(paste(length(datafile), "files were selected and will be used for Searching"))
@@ -379,7 +381,7 @@ imaging_identification<-function(
     #Protein_feature_list=merge(Protein_feature_list,Index_of_protein_sequence[,c("recno","desc")],by.x="Protein",by.y="recno",sort=F)
     #Protein_feature_list_crystallin<-Protein_feature_list[grepl("crystallin",Protein_feature_list$desc,ignore.case = T),]
     if (remove_score_outlier){
-      Protein_feature_list <- remove_pep_score_outlier(Protein_feature_list)
+      Protein_feature_list <- remove_pep_score_outlier(Protein_feature_list,abs_cutoff=Plot_score_abs_cutoff,IQR_LB = Plot_score_IQR_cutoff)
     }   
     
     if (sum(Protein_desc_of_interest!=".")>=1){
@@ -2851,7 +2853,7 @@ PMF_Cardinal_Datafilelist<-function(datafile,
         
         
       }
-      else if (Segmentation=="def_file"){
+      else if (Segmentation[1]=="def_file"){
         
         Segmentation_def_tbl<-read.csv(paste0(workdir[z],"/", Segmentation_def))
         
@@ -2889,7 +2891,7 @@ PMF_Cardinal_Datafilelist<-function(datafile,
         dev.off()
         
       }
-    } else {
+    } else if (Segmentation[1]=="none"){
         
         x=1:length(pixels(imdata))
         x=split(x, sort(x%%1)) 

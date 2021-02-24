@@ -39,7 +39,7 @@ Pre_process_par<-c("imzml_file_Pre_processing","RDA_imzml_file_stats","workdir",
                    "Segmentation_variance_coverage_pre","Smooth_range_pre","rotate_pre","force_Pre_process_pre",
                    "use_Pre_processRDS_pre","reduceBaseline_pre","smoothSignal_pre","peakpick_pre","tolerance_pre")
 
-Proteomics_par<-c("Fastadatabase","Digestion_site","Digestion_site_2","adducts","Modifications_fix","Modifications_var","Load_candidatelist",
+Proteomics_par<-c("Database_stats","Fastadatabase","Digestion_site","Digestion_site_2","adducts","Modifications_fix","Modifications_var","Load_candidatelist",
                   "imzml_file","RDA_imzml_file_stats","workdir","Segmentation_per_file","tolerance" ,"peakAlign",
                   "mzrange", "Segmentation" ,"Segmentation_def" ,"Segmentation_ncomp",
                   "Segmentation_variance_coverage","Smooth_range","rotate","force_Pre_process",
@@ -571,6 +571,7 @@ server<-function(input,output,session,WorkingDir_global){
                              adjust_score = FALSE,
                              IMS_analysis=TRUE,
                              Load_candidatelist=T,
+                             Database_stats=input_future$Database_stats,
                              Bypass_generate_spectrum=FALSE,
                              peptide_ID_filter=input_future$peptide_ID_filter,
                              Protein_feature_summary=input_future$Protein_feature_summary,

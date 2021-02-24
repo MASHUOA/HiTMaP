@@ -288,6 +288,7 @@ fluidPage(
                       checkboxInput("Substitute_AA_mol_wwater",label = "Formula without dehydration",value = T),
                       checkboxInput("use_previous_candidates", label = "Load previously generated candidate", value = TRUE),
                       checkboxInput("output_candidatelist", label = "Output generated candidate", value = TRUE),
+                      checkboxInput("Database_stats", label = "Output generated candidate", value = FALSE),
                       
                       
                       br()
