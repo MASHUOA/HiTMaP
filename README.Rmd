@@ -568,12 +568,80 @@ imaging_identification(datafile=paste0(wd,datafile),Digestion_site="([KR](?=[^P]
 library(HiTMaP)
 datafile=c("MouseBrain_Trypsin_FT_200brit_man_seg/Mouse_brain.imzML")
 wd="~/expdata/"
-imaging_identification(datafile=paste0(wd,datafile),Digestion_site="([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=P))",Fastadatabase="uniprot_mouse_20210107.fasta",output_candidatelist=F,spectra_segments_per_file=4,use_previous_candidates=T,ppm=5,FDR_cutoff = 0.1,Rotate_IMG="file_rotationbk.csv",Segmentation = "none",IMS_analysis=F,plot_cluster_image_grid=T,peptide_ID_filter = 1,export_Header_table=T, img_brightness=250, plot_cluster_image_overwrite=F,cluster_rds_path = "preprocessed_imdata.RDS")
+imaging_identification(datafile=paste0(wd,datafile),Digestion_site="([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=P))",Fastadatabase="uniprot_mouse_20210107.fasta",output_candidatelist=F,spectra_segments_per_file=4,use_previous_candidates=T,ppm=5,FDR_cutoff = 0.01,Rotate_IMG="file_rotationbk.csv",Segmentation = "none",IMS_analysis=F,plot_cluster_image_grid=T,peptide_ID_filter = 1,export_Header_table=T, img_brightness=250, plot_cluster_image_overwrite=F,cluster_rds_path = "preprocessed_imdata.RDS")
+
+library(HiTMaP)
+datafile=c("Bovinlens_Trypsin_FT_16seg\\Bovin_lens.imzML")
+wd="~/expdata/"
+imaging_identification(datafile=paste0(wd,datafile),Digestion_site="([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=P))",Fastadatabase="uniprot-bovin.fasta",output_candidatelist=F,spectra_segments_per_file=4,use_previous_candidates=T,ppm=5,FDR_cutoff = 0.01,Rotate_IMG=NULL,Segmentation = "none",IMS_analysis=F,plot_cluster_image_grid=T,peptide_ID_filter = 1,export_Header_table=T, img_brightness=250, plot_cluster_image_overwrite=T,cluster_rds_path = "preprocessed_imdata.RDS",pixel_size_um = 150,
+               Plot_score_abs_cutoff=-0.1,remove_score_outlier=F)
+
+library(HiTMaP)
+datafile=c("Bovinlens_Trypsin_FT_16seg\\Bovin_lens.imzML")
+wd="~/expdata/"
+imaging_identification(datafile=paste0(wd,datafile),Digestion_site="([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=P))",Fastadatabase="uniprot-bovin.fasta",output_candidatelist=F,spectra_segments_per_file=4,use_previous_candidates=T,ppm=5,FDR_cutoff = 0.01,Rotate_IMG=NULL,Segmentation = "none",IMS_analysis=F,plot_cluster_image_grid=T,peptide_ID_filter = 1,export_Header_table=T, img_brightness=250, plot_cluster_image_overwrite=T,cluster_rds_path = "preprocessed_imdata.RDS",pixel_size_um = 150,
+               Plot_score_abs_cutoff=-0.1,remove_score_outlier=T,
+               Protein_desc_of_interest=c("Crystallin","Phakinin","Filensin","Actin","Vimetin","Cortactin","Visinin","Arpin","Tropomyosin","Myosin Light Chain 3","Kinesin Family Member 14","Dyenin Regulatory Complex","Ankyrin Repeat Domain 45"))
+
+library(HiTMaP)
+datafile=c("Bovinlens_Trypsin_FT_16seg\\Bovin_lens.imzML")
+wd="~/expdata/"
+imaging_identification(datafile=paste0(wd,datafile),Digestion_site="([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=P))",Fastadatabase="uniprot-bovin.fasta",output_candidatelist=F,spectra_segments_per_file=4,use_previous_candidates=T,ppm=5,FDR_cutoff = 0.01,Rotate_IMG=NULL,Segmentation = "none",IMS_analysis=F,plot_cluster_image_grid=T,peptide_ID_filter = 1,export_Header_table=T, img_brightness=250, plot_cluster_image_overwrite=T,cluster_rds_path = "preprocessed_imdata.RDS",pixel_size_um = 150,
+               Plot_score_abs_cutoff=-0.1,remove_score_outlier=T,
+               Protein_desc_of_interest=c("Crystallin","Phakinin","Filensin","Actin","Vimentin","Cortactin","Visinin","Arpin","Tropomyosin","Myosin Light Chain 3","Kinesin Family Member 14","Dynein Regulatory Complex","Ankyrin Repeat Domain 45"))
+
+library(HiTMaP)
+datafile=c("Bovinlens_Trypsin_FT_4seg\\Bovin_lens.imzML")
+wd="~/expdata/"
+imaging_identification(datafile=paste0(wd,datafile),Digestion_site="([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=P))",Fastadatabase="uniprot-bovin.fasta",output_candidatelist=F,spectra_segments_per_file=4,use_previous_candidates=T,ppm=5,FDR_cutoff = 0.01,Rotate_IMG=NULL,Segmentation = "none",IMS_analysis=F,plot_cluster_image_grid=T,peptide_ID_filter = 1,export_Header_table=T, img_brightness=250, plot_cluster_image_overwrite=T,cluster_rds_path = "preprocessed_imdata.RDS",pixel_size_um = 150,
+               Plot_score_abs_cutoff=-0.1,remove_score_outlier=F,
+               Protein_desc_of_interest=c("Crystallin","Phakinin","Filensin","Actin","Vimentin","Cortactin","Visinin","Arpin","Tropomyosin","Myosin Light Chain 3","Kinesin Family Member 14","Dynein Regulatory Complex","Ankyrin Repeat Domain 45"))
+
+library(HiTMaP)
+datafile=c("Bovinlens_Trypsin_FT_4segf\\Bovin_lens.imzML")
+wd="~/expdata/"
+imaging_identification(datafile=paste0(wd,datafile),Digestion_site="([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=P))",Fastadatabase="uniprot-bovin.fasta",output_candidatelist=F,spectra_segments_per_file=4,use_previous_candidates=T,ppm=5,FDR_cutoff = 0.01,Rotate_IMG=NULL,Segmentation = "none",IMS_analysis=F,plot_cluster_image_grid=T,peptide_ID_filter = 1,export_Header_table=T, img_brightness=250, plot_cluster_image_overwrite=T,cluster_rds_path = "preprocessed_imdata.RDS",pixel_size_um = 150,
+               Plot_score_abs_cutoff=-0.1,remove_score_outlier=T,
+               Protein_desc_of_interest=c("Crystallin","Phakinin","Filensin","Actin","Vimentin","Cortactin","Visinin","Arpin","Tropomyosin","Myosin Light Chain 3","Kinesin Family Member 14","Dynein Regulatory Complex","Ankyrin Repeat Domain 45"))
+
+library(HiTMaP)
+datafile=c("Bovinlens_Trypsin_FT fdr01\\Bovin_lens.imzML")
+wd="~/expdata/"
+imaging_identification(datafile=paste0(wd,datafile),Digestion_site="([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=P))",Fastadatabase="uniprot-bovin.fasta",output_candidatelist=F,spectra_segments_per_file=4,use_previous_candidates=T,ppm=5,FDR_cutoff = 0.01,Rotate_IMG=NULL,Segmentation = "none",IMS_analysis=F,plot_cluster_image_grid=T,peptide_ID_filter = 1,export_Header_table=T, img_brightness=250, plot_cluster_image_overwrite=T,cluster_rds_path = "preprocessed_imdata.RDS",pixel_size_um = 150,
+               Plot_score_abs_cutoff=-0.1,remove_score_outlier=F,
+               Protein_desc_of_interest=c("Crystallin","Phakinin","Filensin","Actin","Vimentin","Cortactin","Visinin","Arpin","Tropomyosin","Myosin Light Chain 3","Kinesin Family Member 14","Dynein Regulatory Complex","Ankyrin Repeat Domain 45"))
+
+library(HiTMaP)
+datafile=c("Bovinlens_Trypsin_FT fdr01f\\Bovin_lens.imzML")
+wd="~/expdata/"
+imaging_identification(datafile=paste0(wd,datafile),Digestion_site="([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=P))",Fastadatabase="uniprot-bovin.fasta",output_candidatelist=F,spectra_segments_per_file=4,use_previous_candidates=T,ppm=5,FDR_cutoff = 0.01,Rotate_IMG=NULL,Segmentation = "none",IMS_analysis=F,plot_cluster_image_grid=T,peptide_ID_filter = 1,export_Header_table=T, img_brightness=250, plot_cluster_image_overwrite=T,cluster_rds_path = "preprocessed_imdata.RDS",pixel_size_um = 150,
+               Plot_score_abs_cutoff=-0.1,remove_score_outlier=T,
+               Protein_desc_of_interest=c("Crystallin","Phakinin","Filensin","Actin","Vimentin","Cortactin","Visinin","Arpin","Tropomyosin","Myosin Light Chain 3","Kinesin Family Member 14","Dynein Regulatory Complex","Ankyrin Repeat Domain 45"))
+
+library(HiTMaP)
+datafile=c("MouseBrain_Trypsin_FT_200brit_man_seg2f/Mouse_brain.imzML")
+wd="~/expdata/"
+imaging_identification(datafile=paste0(wd,datafile),Digestion_site="([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=P))",Fastadatabase="uniprot_mouse_20210107.fasta",output_candidatelist=F,spectra_segments_per_file=4,use_previous_candidates=T,ppm=5,FDR_cutoff = 0.1,Rotate_IMG="file_rotationbk.csv",Segmentation = "none",IMS_analysis=F,plot_cluster_image_grid=T,peptide_ID_filter = 1,export_Header_table=T, img_brightness=250,pixel_size_um = 50, plot_cluster_image_overwrite=T,cluster_rds_path = "preprocessed_imdata.RDS",Protein_desc_of_interest=c("Secernin","GN=MBP","Cytochrome"),
+               Plot_score_abs_cutoff=-0.1,remove_score_outlier=T)
+
+library(HiTMaP)
+datafile=c("MouseBrain_Trypsin_FT_200brit_man_seg2/Mouse_brain.imzML")
+wd="~/expdata/"
+imaging_identification(datafile=paste0(wd,datafile),Digestion_site="([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=P))",Fastadatabase="uniprot_mouse_20210107.fasta",output_candidatelist=F,spectra_segments_per_file=4,use_previous_candidates=T,ppm=5,FDR_cutoff = 0.1,Rotate_IMG="file_rotationbk.csv",Segmentation = "none",IMS_analysis=F,plot_cluster_image_grid=T,peptide_ID_filter = 1,export_Header_table=T, img_brightness=250,pixel_size_um = 50, plot_cluster_image_overwrite=T,cluster_rds_path = "preprocessed_imdata.RDS",Protein_desc_of_interest=c("Secernin","GN=MBP","Cytochrome"),
+               Plot_score_abs_cutoff=-0.1,remove_score_outlier=F)
+
+
+library(HiTMaP)
+datafile=c("MouseBrain_Trypsin_FT_200brit_man_segf/Mouse_brain.imzML")
+wd="~/expdata/"
+imaging_identification(datafile=paste0(wd,datafile),Digestion_site="([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=P))",Fastadatabase="uniprot_mouse_20210107.fasta",output_candidatelist=F,spectra_segments_per_file=4,use_previous_candidates=T,ppm=5,FDR_cutoff = 0.1,Rotate_IMG="file_rotationbk.csv",Segmentation = "none",IMS_analysis=F,plot_cluster_image_grid=T,peptide_ID_filter = 1,export_Header_table=T, img_brightness=250,pixel_size_um = 50, plot_cluster_image_overwrite=T,cluster_rds_path = "preprocessed_imdata.RDS",
+               Plot_score_abs_cutoff=-0.1,remove_score_outlier=T)
 
 library(HiTMaP)
 datafile=c("MouseBrain_Trypsin_FT_200brit_man_seg/Mouse_brain.imzML")
 wd="~/expdata/"
-imaging_identification(datafile=paste0(wd,datafile),Digestion_site="([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=P))",Fastadatabase="uniprot_mouse_20210107.fasta",output_candidatelist=F,spectra_segments_per_file=4,use_previous_candidates=T,ppm=5,FDR_cutoff = 0.1,Rotate_IMG="file_rotationbk.csv",Segmentation = "none",IMS_analysis=F,plot_cluster_image_grid=T,peptide_ID_filter = 1,export_Header_table=T, img_brightness=250, plot_cluster_image_overwrite=T,cluster_rds_path = "preprocessed_imdata.RDS",Protein_desc_of_interest=c("Secernin","GN=MBP","Cytochrome"))
+imaging_identification(datafile=paste0(wd,datafile),Digestion_site="([KR](?=[^P]))|((?<=W)K(?=P))|((?<=M)R(?=P))",Fastadatabase="uniprot_mouse_20210107.fasta",output_candidatelist=F,spectra_segments_per_file=4,use_previous_candidates=T,ppm=5,FDR_cutoff = 0.1,Rotate_IMG="file_rotationbk.csv",Segmentation = "none",IMS_analysis=F,plot_cluster_image_grid=T,peptide_ID_filter = 1,export_Header_table=T, img_brightness=250,pixel_size_um = 50, plot_cluster_image_overwrite=T,cluster_rds_path = "preprocessed_imdata.RDS",
+               Plot_score_abs_cutoff=-0.1,remove_score_outlier=F)
 
 
 library(HiTMaP)

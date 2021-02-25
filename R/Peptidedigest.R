@@ -132,13 +132,13 @@ imaging_identification<-function(
                export_footer_table=T,
                attach_summary_cluster=T,
                remove_cluster_from_grid=attach_summary_cluster,
-               pixel_size_um=25,
+               pixel_size_um=50,
                img_brightness=100,
                Thread=NULL,
                cluster_rds_path=NULL,
                remove_score_outlier=T,
                Plot_score_IQR_cutoff=0.75,
-               Plot_score_abs_cutoff=0,
+               Plot_score_abs_cutoff=-0.1,
                ...
                ){
   library("pacman")
@@ -393,7 +393,7 @@ imaging_identification<-function(
       if(nrow(Protein_feature_list[idx_iterest_desc,])!=0){
       Protein_feature_list_interest<-rbind(Protein_feature_list_interest,Protein_feature_list[idx_iterest_desc,])
       }
-      num_of_interest[interest_desc]<-length(unique(Protein_feature_list[idx_iterest_desc,"Protein"]))
+      num_of_interest[interest_desc]<-nrow(unique(Protein_feature_list[idx_iterest_desc,"Protein"]))
       }
     #Protein_feature_list_crystallin$Protein=as.character(Protein_feature_list_crystallin$desc)
     Protein_feature_list=Protein_feature_list_interest

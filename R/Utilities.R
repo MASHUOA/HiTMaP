@@ -577,7 +577,7 @@ cluster_image_grid<-function(clusterID,
                              img_brightness= 100,ppm=20,
                              list_of_protein_sequence,
                              workdir=getwd(),
-                             pixel_size_um=200,
+                             pixel_size_um=50,
                              Score_thres=NULL){
   #complementary(color="red", plot = TRUE, bg = "white", labcol = NULL, cex = 0.8, title = TRUE)
   windows_filename<- function(stringX){
@@ -949,6 +949,29 @@ cluster_image_grid<-function(clusterID,
        if ((Component_plot_coloure=="mono")) {
          
          pngfile_big<-image_average(img_com)
+         pngfile_big_info=magick::image_info(pngfile_big)
+         
+         pngfile_big_ratio<-c(diff(range(imdata@elementMetadata@coord@listData[["x"]])),diff(range(imdata@elementMetadata@coord@listData[["y"]])))/c(pngfile_big_info$width-1*150,pngfile_big_info$height-1*150)
+         
+
+         
+         pngfile_big <- image_draw(pngfile_big)
+         #rect(20, 20, 200, 100, border = "red", lty = "dashed", lwd = 5)
+         pixel_size_um_bar<-200
+         pixel_size<-pixel_size_um_bar*pixel_size_um/(1/max(pngfile_big_ratio))/1000
+         if(!is.integer(pixel_size)){
+           pixel_size<-ceiling(pixel_size)
+           pixel_size_um_bar<-pixel_size*1000/pixel_size_um*(1/max(pngfile_big_ratio))
+         }
+         
+         rect(690-pixel_size_um_bar-60, 680,690-pixel_size_um_bar-60+pixel_size_um_bar,  680+13, border  = 'white',col  = 'white', lwd = 0)
+         text(690, 690, paste0(pixel_size ," mm"),col  = 'white', cex = 3, srt = 0)
+         #palette(rainbow(11, end = 0.9))
+         #symbols(rep(200, 11), seq(0, 400, 40), circles = runif(11, 5, 35),
+         #        bg = 1:11, inches = FALSE, add = TRUE)
+         dev.off()
+         
+         
          pngfile<-pngfile_big
          pngfile_big<-image_border(pngfile_big, bg, "30x30")
          #pngfile_big<-image_modulate(pngfile_big, brightness = 100 + 25 * length(candidateunique), saturation = 100)
@@ -959,21 +982,7 @@ cluster_image_grid<-function(clusterID,
          pngfile_big<-image_annotate(pngfile_big,"0%        Relative intensity        100%",location = "+55+160",gravity = "northeast",size = 30,color = "white",degree=270)
          #pngfile_big<-image_annotate(pngfile_big,"0                                               100",location = "+52+165",gravity = "northeast",size = 30,color = "white",degree=270)
          #pngfile_big<-image_annotate(pngfile_big,"                 Relative intensity                  ",location = "+55+160",gravity = "northeast",size = 30,color = "white",degree=270)
-         pngfile_big <- image_draw(pngfile_big)
-         #rect(20, 20, 200, 100, border = "red", lty = "dashed", lwd = 5)
-         pixel_size_um_bar<-200
-         pixel_size<-pixel_size_um_bar*pixel_size_um/1000
-         if(is.integer(pixel_size)){
-           pixel_size<-ceiling(pixel_size)
-           pixel_size_um_bar<-pixel_size*1000/pixel_size_um
-         }
-         
-         rect(750-pixel_size_um_bar-60, 740,750-pixel_size_um_bar-60+pixel_size_um_bar,  740+15, border  = 'white',col  = 'white', lwd = 0)
-         text(750, 750, paste0(pixel_size ," mm"),col  = 'white', cex = 3, srt = 0)
-         #palette(rainbow(11, end = 0.9))
-         #symbols(rep(200, 11), seq(0, 400, 40), circles = runif(11, 5, 35),
-         #        bg = 1:11, inches = FALSE, add = TRUE)
-         dev.off()
+  
          #pngfile<-image_average(img_com)
          #pngfile<-image_threshold(pngfile, type = "black",  threshold = "50%")
          pngfile<-image_border(pngfile, bg, "30x30")
@@ -983,6 +992,27 @@ cluster_image_grid<-function(clusterID,
          }
         else if ((Component_plot_coloure=="as.cluster")){
         pngfile_big<-image_average(img_com)
+        pngfile_big_info=magick::image_info(pngfile_big)
+        
+        pngfile_big_ratio<-c(diff(range(imdata@elementMetadata@coord@listData[["x"]])),diff(range(imdata@elementMetadata@coord@listData[["y"]])))/c(pngfile_big_info$width-1*150,pngfile_big_info$height-1*150)
+        
+        
+        
+        pngfile_big <- image_draw(pngfile_big)
+        #rect(20, 20, 200, 100, border = "red", lty = "dashed", lwd = 5)
+        pixel_size_um_bar<-200
+        pixel_size<-pixel_size_um_bar*pixel_size_um/(1/max(pngfile_big_ratio))/1000
+        if(!is.integer(pixel_size)){
+          pixel_size<-ceiling(pixel_size)
+          pixel_size_um_bar<-pixel_size*1000/pixel_size_um*(1/max(pngfile_big_ratio))
+        }
+        
+        rect(690-pixel_size_um_bar-60, 680,690-pixel_size_um_bar-60+pixel_size_um_bar,  680+13, border  = 'white',col  = 'white', lwd = 0)
+        text(690, 690, paste0(pixel_size ," mm"),col  = 'white', cex = 3, srt = 0)
+        #palette(rainbow(11, end = 0.9))
+        #symbols(rep(200, 11), seq(0, 400, 40), circles = runif(11, 5, 35),
+        #        bg = 1:11, inches = FALSE, add = TRUE)
+        dev.off()
         pngfile<-pngfile_big
         pngfile_big<-image_border(pngfile_big, bg, "30x30")
         pngfile_big<-image_modulate(pngfile_big, brightness = img_brightness + 25 * length(candidateunique), saturation = 100)
@@ -2824,7 +2854,8 @@ remove_pep_score_outlier<-function(SMPLIST,IQR_LB=0.75,outputdir=getwd(),abs_cut
   if(nbins>=2){
     SMPLIST$mzbin<-(bin(SMPLIST$mz, nbins = floor(length(SMPLIST$mz)/500),method = "content"))
   }else{
-    Message("Insufficient mz features to find the outlier")
+    message("Insufficient mz features to find the outlier")
+    SMPLIST<-SMPLIST[SMPLIST$Score>=abs_cutoff,]
     return(SMPLIST)
   }
   
