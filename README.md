@@ -12,8 +12,8 @@ output:
     highlight: zenburn
     fig_width: 10
     fig_height: 10
-  pdf_document: default
   word_document: default
+  pdf_document: default
   md_document:
     variant: markdown_github
 bibliography: references.bib
@@ -715,7 +715,12 @@ Below is a list of commands including the parameters for the example data sets.
 
 ```r
 #peptide calibrant
-imaging_identification(
+library(HiTMaP)
+datafile=c("Peptide_calibrants_FT/trypsin_non-decell_w.calibrant_FTICR")
+wd="~/expdata/"
+
+# Calibrants dataset analysis with modification
+imaging_identification(datafile=paste0(wd,datafile),
   Digestion_site="trypsin",
   Fastadatabase="uniprot_cali.fasta",
   output_candidatelist=T,
@@ -727,20 +732,8 @@ imaging_identification(
   FDR_cutoff=0.1,
   Substitute_AA=list(AA=c("X"),AA_new_formula=c("C5H5NO2"),Formula_with_water=c(FALSE)))
 
-imaging_identification(
-  adducts = c("M+H","M+Na"),
-  Digestion_site="trypsin",
-  Fastadatabase="uniprot_cali.fasta",
-  output_candidatelist=T,
-  plot_matching_score=T,
-  spectra_segments_per_file=1,
-  use_previous_candidates=F,
-  peptide_ID_filter=1,ppm=5,missedCleavages=0:5,
-  Modifications=list(fixed=NULL,fixmod_position=NULL,variable=c("Amide"),varmod_position=c(6)),
-  FDR_cutoff=0.1,
-  Substitute_AA=list(AA=c("X"),AA_new_formula=c("C5H5NO2"),Formula_with_water=c(FALSE)))
-
-imaging_identification(
+# Calibrants dataset analysis with no modification
+imaging_identification(datafile=paste0(wd,datafile),
   Digestion_site="trypsin",
   Fastadatabase="uniprot_cali.fasta",
   output_candidatelist=T,
@@ -750,7 +743,8 @@ imaging_identification(
   peptide_ID_filter=1,ppm=5,missedCleavages=0:5,
   FDR_cutoff=0.1)
 
-imaging_identification(
+# Calibrants dataset analysis with modification 
+imaging_identification(datafile=paste0(wd,datafile),
   Digestion_site="trypsin",
   Fastadatabase="calibrants.fasta",
   output_candidatelist=T,
@@ -762,6 +756,85 @@ imaging_identification(
   FDR_cutoff=100,
   Substitute_AA=list(AA=c("X"),AA_new_formula=c("C5H5NO2"),Formula_with_water=c(FALSE)),Thread = 1)
 ```
+
+### Bovin lens
+
+```r
+library(HiTMaP)
+datafile=c("Bovinlens_Trypsin_FT/Bovin_lens.imzML")
+wd="~/expdata/"
+
+# Data pre-processing and proteomics annotation
+library(HiTMaP)
+imaging_identification(datafile=paste0(wd,datafile),Digestion_site="trypsin",
+                       Fastadatabase="uniprot-bovin.fasta",output_candidatelist=T,
+                       preprocess=list(force_preprocess=TRUE,
+                               use_preprocessRDS=TRUE,
+                               smoothSignal=list(method="gaussian"),
+                               reduceBaseline=list(method="locmin"),
+                               peakPick=list(method="adaptive"),
+                               peakAlign=list(tolerance=ppm, units="ppm"),
+                               normalize=list(method=c("rms","tic","reference")[1],mz=1)),
+                       spectra_segments_per_file=9,use_previous_candidates=F,ppm=5,FDR_cutoff = 0.5,IMS_analysis=T,
+                       Rotate_IMG="file_rotationbk.csv",
+                       mzrange = c(500,4000),plot_cluster_image_grid=F)
+
+# Re-analysis and cluster image rendering
+
+library(HiTMaP)
+datafile=c("Bovinlens_Trypsin_FT fdr01f/Bovin_lens.imzML")
+wd="~/expdata/"
+imaging_identification(datafile=paste0(wd,datafile),Digestion_site="trypsin",
+                       Fastadatabase="uniprot-bovin.fasta",
+                       use_previous_candidates=T,ppm=5,IMS_analysis=F,
+                       plot_cluster_image_grid=T,
+                       export_Header_table=T, 
+                       img_brightness=250, 
+                       plot_cluster_image_overwrite=T,
+                       cluster_rds_path = "/Bovin_lens ID/preprocessed_imdata.RDS",pixel_size_um = 150,
+                       Plot_score_abs_cutoff=-0.1,
+                       remove_score_outlier=T,
+                       Protein_desc_of_interest=c("Crystallin","Phakinin","Filensin","Actin","Vimentin","Cortactin","Visinin","Arpin","Tropomyosin","Myosin Light Chain 3","Kinesin Family Member 14","Dynein Regulatory Complex","Ankyrin Repeat Domain 45"))
+```
+
+
+### Mouse brain
+
+```r
+library(HiTMaP)
+datafile=c("MouseBrain_Trypsin_FT/Mouse_brain.imzML")
+wd="~/expdata/"
+
+# Data pre-processing and proteomics annotation
+library(HiTMaP)
+imaging_identification(datafile=paste0(wd,datafile),Digestion_site="trypsin",
+                       Fastadatabase="uniprot_mouse_20210107.fasta",output_candidatelist=T,
+                       preprocess=list(force_preprocess=TRUE,
+                               use_preprocessRDS=TRUE,
+                               smoothSignal=list(method="gaussian"),
+                               reduceBaseline=list(method="locmin"),
+                               peakPick=list(method="adaptive"),
+                               peakAlign=list(tolerance=ppm, units="ppm"),
+                               normalize=list(method=c("rms","tic","reference")[1],mz=1)),
+                       spectra_segments_per_file=9,use_previous_candidates=F,ppm=5,FDR_cutoff = 0.5,IMS_analysis=T,
+                       Rotate_IMG="file_rotationbk.csv",
+                       mzrange = c(500,4000),plot_cluster_image_grid=F)
+
+# Re-analysis and cluster image rendering
+
+imaging_identification(datafile=paste0(wd,datafile),Digestion_site="trypsin",
+                       Fastadatabase="uniprot_mouse_20210107.fasta",
+                       preprocess=list(force_preprocess=FALSE),
+                       spectra_segments_per_file=9,use_previous_candidates=T,ppm=5,FDR_cutoff = 0.5,IMS_analysis=F,
+                       mzrange = c(500,4000),plot_cluster_image_grid=T,
+                       img_brightness=250, plot_cluster_image_overwrite=T,
+                       cluster_rds_path = "/Mouse_brain ID/preprocessed_imdata.RDS",
+                       pixel_size_um = 150,
+                       Plot_score_abs_cutoff=-0.1,
+                       remove_score_outlier=T,
+                       Protein_desc_of_interest=c("Crystallin","Phakinin","Filensin","Actin","Vimetin","Cortactin","Visinin","Arpin","Tropomyosin","Myosin Light Chain 3","Kinesin Family Member 14","Dyenin Regulatory Complex","Ankyrin Repeat Domain 45"))
+```
+
 
 
 
