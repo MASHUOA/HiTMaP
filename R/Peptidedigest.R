@@ -412,7 +412,7 @@ imaging_identification<-function(
     
     
     if (!is.null(cluster_rds_path)){
-      imdata=readRDS(cluster_rds_path)
+      imdata=readRDS(paste0(workdir[1],"/",cluster_rds_path))
     }else{if ('&'(!is.null(Rotate_IMG),typeof(Rotate_IMG)=="string")){Rotate_IMG=read.csv(Rotate_IMG,stringsAsFactors = F)}
     imdata=list()
     combinedimdata=NULL
