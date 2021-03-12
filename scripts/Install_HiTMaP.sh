@@ -22,3 +22,4 @@ sudo apt-get install r-base-dev texlive-full
 sudo apt-get install libudunits2-dev
 sudo apt-get install libgdal-dev
 sudo R CMD javareconf
+sudo Rscript -e "HiTMaP::HiTMaP_GUI(wd='~/',port = 8787)"

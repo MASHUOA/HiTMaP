@@ -2158,11 +2158,13 @@ PCA_ncomp_selection<-function(imdata,variance_coverage=0.80,outputdir=NULL){
   return(ncomp)
 }
 
+
+
 Preprocessing_segmentation<-function(datafile,
                                      workdir=NULL,
-                                     segmentation_num=5,threshold=0.001,
-                                     ppm,Bypass_Segmentation=F,
-                                     mzrange=c(500,4000),
+                                     segmentation_num=5,
+                                     ppm=3,import_ppm=3,Bypass_Segmentation=F,
+                                     mzrange="auto-detect",
                                      Segmentation=c("spatialKMeans","spatialShrunkenCentroids","Virtual_segmentation","none","def_file"),
                                      Segmentation_def="segmentation_def.csv",
                                      Segmentation_ncomp="auto-detect",
@@ -2175,7 +2177,8 @@ Preprocessing_segmentation<-function(datafile,
                                      preprocess=list(force_preprocess=FALSE,use_preprocessRDS=TRUE,smoothSignal=list(method="gaussian"),
                                                      reduceBaseline=list(method="locmin"),
                                                      peakPick=list(method="adaptive"),
-                                                     peakAlign=list(tolerance=ppm, units="ppm")),
+                                                     peakAlign=list(tolerance=ppm, units="ppm"),
+                                                     normalize=list(method=c("rms","tic","reference")[1],mz=1)),
                                      ...){
   
   suppressMessages(suppressWarnings(require(data.table)))
@@ -2237,7 +2240,7 @@ Preprocessing_segmentation<-function(datafile,
     if (ppm>=25) {
       instrument_ppm=50
     }else{
-      instrument_ppm=10
+      instrument_ppm=8
     }      
     
     
@@ -2245,31 +2248,118 @@ Preprocessing_segmentation<-function(datafile,
       dir.create(paste0(gsub(".imzML$","",datafile[z])  ," ID"))
     }
     
-    if (!file.exists(paste0(gsub(".imzML$","",datafile[z])  ," ID/preprocessed_imdata.RDS"))){
+    message("Preparing image data for statistical analysis: ",paste0(gsub(".imzML$","",datafile[z]), ".imzML"))
+    if(mzrange=="auto-detect"){
+      imdata <- Cardinal::readMSIData(datafile_imzML[z],  attach.only=T,as="MSImagingExperiment",resolution=import_ppm, units="ppm",BPPARAM=SerialParam())
+    }else {
+      imdata <- Cardinal::readMSIData(datafile_imzML[z],  attach.only=T,as="MSImagingExperiment",resolution=import_ppm, units="ppm",BPPARAM=SerialParam(),mass.range =mzrange)
+    }
+    if(!is.na(rotate[datafile_imzML[z]])){
+      imdata <-rotateMSI(imdata=imdata,rotation_degree=rotate[datafile_imzML[z]])
+    }else if(!is.na(rotate[datafile[z]])){
+      imdata <-rotateMSI(imdata=imdata,rotation_degree=rotate[datafile[z]])
+    }
+    
+    
+    
+    if ('|'(!file.exists(paste0(gsub(".imzML$","",datafile[z])  ," ID/preprocessed_imdata.RDS")),
+            preprocess$force_preprocess)){
       message("Preparing image data for statistical analysis: ",paste0(gsub(".imzML$","",datafile[z]), ".imzML"))
-      imdata <- Cardinal::readMSIData(datafile_imzML[z],  attach.only=T,as="MSImagingExperiment",resolution=ppm, units="ppm",BPPARAM=BPPARAM,mass.range =mzrange)
-      if(!is.na(rotate[datafile_imzML[z]])){
-        imdata <-rotateMSI(imdata=imdata,rotation_degree=rotate[datafile_imzML[z]])
-      }else if(!is.na(rotate[datafile[z]])){
-        imdata <-rotateMSI(imdata=imdata,rotation_degree=rotate[datafile[z]])
-      }
       if (!is.null(preprocess)){
         if  ( ppm<25){
-          imdata_ed<-imdata %>% 
+          imdata_ed<-imdata 
             #smoothSignal(method="gaussian") %>% 
             #reduceBaseline(method="locmin") %>%
-            peakPick(method=preprocess$peakPick$method) %>%
-            peakAlign(tolerance=preprocess$peakAlign$tolerance, units="ppm") %>%
-            #peakFilter(mse_pre, freq.min=0.00) %>%
-            process()
+            if (preprocess$smoothSignal$method=="Disable") {
+            }else if (!is.null(preprocess$smoothSignal$method)){
+              imdata_ed<- imdata_ed %>% smoothSignal(method=preprocess$smoothSignal$method)
+            }else{
+              imdata_ed<- imdata_ed %>% smoothSignal(method="gaussian")
+            }
+          
+            if (!is.null(preprocess$reduceBaseline$method)){
+              imdata_ed<- imdata_ed %>% reduceBaseline(method=preprocess$reduceBaseline$method)
+            }else{
+              
+            }
+            
+            if (preprocess$peakPick$method=="Disable") {
+            }else if (!is.null(preprocess$peakPick$method)){
+              imdata_ed<- imdata_ed %>% peakPick(method=preprocess$peakPick$method)
+            }else{
+              imdata_ed<- imdata_ed %>% peakPick(method="adaptive")
+            }
+          
+            if (preprocess$peakAlign$tolerance==0) {
+            }else if ('&'(!is.null(preprocess$peakAlign$tolerance),!is.null(preprocess$peakAlign$tolerance))){
+              imdata_ed<- imdata_ed %>% peakAlign(tolerance=preprocess$peakAlign$tolerance, units=preprocess$peakAlign$units)
+            }else {
+              imdata_ed<- imdata_ed %>% peakAlign(tolerance=ppm, units="ppm")
+            }
+          
+            imdata_ed<- imdata_ed %>% process()
+          
+            if (!is.null(preprocess$normalize)){
+            if (preprocess$normalize$method=="Disable") { 
+              } else if (preprocess$normalize$method %in% c("rms","tic")){
+              imdata_ed<- imdata_ed %>% normalize(method=preprocess$normalize$method) %>% process()
+            } else if ('&'(preprocess$normalize$method == "reference", !is.null(preprocess$normalize$mz))){
+              norm_feature<-which(dplyr::between(imdata_ed@featureData@mz,
+                                          preprocess$normalize$mz*(1-ppm/1000000),
+                                          preprocess$normalize$mz*(1+ppm/1000000)))
+              if (length(norm_feature)>=1){
+              imdata_ed<- imdata_ed %>% normalize(method=preprocess$normalize$method, feature = norm_feature) %>% process(BPPARAM=SerialParam())
+              }
+            } else {
+              imdata_ed<- imdata_ed %>% normalize(method="rms") %>% process()
+            }
+            }
+            
         } else if(ppm>=25){
-          imdata_ed<-imdata %>% 
-            smoothSignal(method=preprocess$smoothSignal$method) %>% 
-            reduceBaseline(method=preprocess$reduceBaseline$method) %>%
-            peakPick(method=preprocess$peakPick$method) %>%
-            peakAlign(tolerance=preprocess$peakAlign$tolerance, units="ppm") %>%
-            #peakFilter(mse_pre, freq.min=0.00) %>%
-            process()
+          imdata_ed<-imdata 
+          #smoothSignal(method="gaussian") %>% 
+          #reduceBaseline(method="locmin") %>%
+          if (!is.null(preprocess$smoothSignal$method)){
+            imdata_ed<- imdata_ed %>% smoothSignal(method=preprocess$smoothSignal$method)
+          }else{
+            imdata_ed<- imdata_ed %>% smoothSignal(method="gaussian")
+          }
+          
+          if (!is.null(preprocess$reduceBaseline$method)){
+            imdata_ed<- imdata_ed %>% reduceBaseline(method=preprocess$reduceBaseline$method)
+          }else{
+            imdata_ed<- imdata_ed %>% reduceBaseline(method="locmin")
+          }
+          
+          if (!is.null(preprocess$peakPick$method)){
+            imdata_ed<- imdata_ed %>% peakPick(method=preprocess$peakPick$method)
+          }else{
+            imdata_ed<- imdata_ed %>% peakPick(method="adaptive")
+          }
+          
+          if ('&'(!is.null(preprocess$peakAlign$tolerance),!is.null(preprocess$peakAlign$tolerance))){
+            imdata_ed<- imdata_ed %>% peakAlign(tolerance=preprocess$peakAlign$tolerance, units=preprocess$peakAlign$units)
+          }else{
+            imdata_ed<- imdata_ed %>% peakAlign(tolerance=ppm, units="ppm")
+          }
+          
+          imdata_ed<- imdata_ed %>% process()
+          
+          if (!is.null(preprocess$normalize)){
+            if (preprocess$normalize$method %in% c("rms","tic")){
+              imdata_ed<- imdata_ed %>% normalize(method=preprocess$normalize$method) %>% process()
+            } else if ('&'(preprocess$normalize$method == "reference", !is.null(preprocess$normalize$mz))){
+              norm_feature<-which(dplyr::between(imdata_ed@featureData@mz,
+                                                 preprocess$normalize$mz*(1-ppm/1000000),
+                                                 preprocess$normalize$mz*(1+ppm/1000000)))
+              if (length(norm_feature)>=1){
+                imdata_ed<- imdata_ed %>% normalize(method=preprocess$normalize$method, feature = norm_feature) %>% process(BPPARAM=SerialParam())
+                
+              }
+            } else {
+              imdata_ed<- imdata_ed %>% normalize(method="rms") %>% process()
+            }
+          }
         }
         saveRDS(imdata_ed,paste0(gsub(".imzML$","",datafile[z])  ," ID/preprocessed_imdata.RDS"),compress = F)  
       }}else{
@@ -2281,11 +2371,18 @@ Preprocessing_segmentation<-function(datafile,
       
       imdata_ed<-readRDS(paste0(gsub(".imzML$","",datafile[z])  ," ID/preprocessed_imdata.RDS"))
       #imdata_ed<-imdata
-      imdata <- Cardinal::readMSIData(datafile_imzML[z],  attach.only=T,as="MSImagingExperiment",resolution=ppm, units="ppm",BPPARAM=BPPARAM,mass.range =mzrange)
-      
+      if(mzrange=="auto-detect"){
+        imdata <- Cardinal::readMSIData(datafile_imzML[z],  attach.only=T,as="MSImagingExperiment",resolution=import_ppm, units="ppm",BPPARAM=SerialParam())
+      }else {
+        imdata <- Cardinal::readMSIData(datafile_imzML[z],  attach.only=T,as="MSImagingExperiment",resolution=import_ppm, units="ppm",BPPARAM=SerialParam(),mass.range =mzrange)
+      }
     }else{
       message("Using image data: ",paste0(gsub(".imzML$","",datafile[z]), ".imzML"))
-      imdata <- Cardinal::readMSIData(datafile_imzML[z],  attach.only=T,as="MSImagingExperiment",resolution=ppm, units="ppm",BPPARAM=BPPARAM,mass.range =mzrange)
+      if(mzrange=="auto-detect"){
+        imdata <- Cardinal::readMSIData(datafile_imzML[z],  attach.only=T,as="MSImagingExperiment",resolution=import_ppm, units="ppm",BPPARAM=SerialParam())
+      }else {
+        imdata <- Cardinal::readMSIData(datafile_imzML[z],  attach.only=T,as="MSImagingExperiment",resolution=import_ppm, units="ppm",BPPARAM=SerialParam(),mass.range =mzrange)
+      }
       if(!is.na(rotate[datafile_imzML[z]])){
         imdata <-rotateMSI(imdata=imdata,rotation_degree=rotate[datafile_imzML[z]])
       }else if(!is.na(rotate[datafile[z]])){
@@ -2771,7 +2868,7 @@ Preprocessing_segmentation<-function(datafile,
         
         #msset <- generateImage(region_pattern, coord=coordata[,1:2],
         #                        range=c(1000, 5000), centers=c(2000, 3000, 4000),
-        #                        resolution=100, step=3.3, as="MSImageSet")
+        #                        resolution=import_ppm00, step=3.3, as="MSImageSet")
         #msset@pixelData@data[["sample"]]=region_pattern
         png(paste(getwd(),"\\","Virtual_segmentation",gsub("/"," ",name),'.png',sep=""),width = 1024,height = 1024)
         #plot(skm, col=c("pink", "blue", "red","orange","navyblue"), type=c('p','h'), key=FALSE)

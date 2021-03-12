@@ -26,6 +26,6 @@ HiTMaP_GUI <- function(wd="", port = 3838) {
   if (wd=="") wd=appDir
   
   WorkingDir_global<<-wd
-  
+  message(WorkingDir_global)
   runApp(appDir,port = port)
 }

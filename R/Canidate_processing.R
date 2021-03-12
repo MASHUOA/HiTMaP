@@ -622,6 +622,40 @@ Protein_feature_list_fun<-function(workdir=getwd(),
     
     dev.off()
     
+    mz_unqiue<-unique(Protein_Summary$mz)
+    
+    mz_unqiue_formula<-Protein_Summary %>% group_by(mz) %>% summarize(formula=paste(unique(formula),sep="; "))
+    
+    mz_unqiue<-sort(mz_unqiue)
+    
+    mz_unqiue_diff<-diff(mz_unqiue)
+    
+    mz_unqiue_center<-zoo::rollapply(mz_unqiue, 2, mean, by = 1, align = "left", partial = FALSE)
+    
+    dif_kmeans=kmeans(1/(mz_vs_resolution$mz_unqiue_diff),centers = 200,iter.max = 500)
+    
+    min_formula_L<-mz_unqiue_formula[sort(which(mz_unqiue_diff==min(mz_unqiue_diff))),]
+    min_formula_R<-mz_unqiue_formula[sort(which(mz_unqiue_diff==min(mz_unqiue_diff))+1),]
+    
+    png(paste(workdir,"/Summary folder/DB_stats_mz_diff_resolution.png",sep=""),width = 1200,height = 800,res = 150)
+    
+    mz_vs_resolution<-data.frame(mz=mz_unqiue_center,Resolution=mz_unqiue_center/mz_unqiue_diff,mz_unqiue_diff=mz_unqiue_diff)
+
+    sp<-ggplot2::ggplot() 
+    sp <-sp + geom_point(data=mz_vs_resolution,mapping = aes(x=mz, y=Resolution),size=0.3,alpha=0.4)+
+    theme_article() + 
+      
+      theme(legend.position = "top",axis.text=element_text(size=12),
+            axis.title=element_text(size=14,face="bold"),
+            legend.text =element_text(size=14,face="bold"),
+            legend.title =element_text(size=14,face="bold"),
+            legend.key = element_rect(fill = "white"))+
+      guides(color=guide_legend("m/z bin size"),override.aes = list(linetype = 0, size = 5)) +
+      labs(title = "",y = "Required resolution",x = "m/z")
+    print(sp)
+    
+    dev.off()
+    
   }
   
   if(F){if (Decoy_search && ("isotope" %in% Decoy_mode)){

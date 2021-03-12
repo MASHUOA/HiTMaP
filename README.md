@@ -32,6 +32,39 @@ vignette: >
 ## Package installation
 This is an tutorial for use of HiTMaP (An R package of High-resolution Informatics Toolbox for Maldi-imaging Proteomics). To access the software use the installation codes as below: 
 
+### Installation from Docker image
+
+HiTMaP has been encapsulated as an docker image for each release. User can download the latest version by using the code as below.
+
+
+```bash
+docker login --username mashuoa
+0a9da0ae-8d7b-4e11-8587-be46e21ee937
+docker pull mashuoa/hitmap
+```
+
+Setup and run the container:
+
+```bash
+#for windows user, run the image with a local user\Documents\expdata folder mapped to the docker container:
+docker run --name hitmap -v %userprofile%\Documents\expdata:/root/expdata -a stdin -a stdout -i -t mashuoa/hitmap /bin/bash 
+
+#for linux user, run the image with a local user/expdata folder mapped to the docker container:
+docker run --name hitmap -v ~/expdata:/root/expdata -a stdin -a stdout -i -t mashuoa/hitmap /bin/bash 
+
+#Restart the shell 
+docker container exec -it hitmap /bin/bash
+
+#Run R console
+R
+
+```
+
+If You are using docker GUI, pull the docker image using the codes above and follow the image as below to setup the container.
+
+![Docker GUI setting](Resource/docker_gui_setting.png)
+
+### Installation code for R console installation
 
 ```r
 #install the git package
@@ -39,7 +72,8 @@ install.packages("remotes")
 install.packages("devtools")
 #library(devtools)
 library(remotes)
-install_github("MASHUOA/HiTMaP",auth_token ="cf6d877f8b6ada1865987b13f9e9996c1883014a",force=T)
+Sys.setenv("R_REMOTES_NO_ERRORS_FROM_WARNINGS" = "true")
+remotes::install_github("MASHUOA/HiTMaP",auth_token ="cf6d877f8b6ada1865987b13f9e9996c1883014a",force=T)
 3
 no
 #Update all dependencies
@@ -47,22 +81,35 @@ BiocManager::install(ask = F)
 yes
 library(HiTMaP)
 ```
- For windows users, Rtools (*https://cran.r-project.org/bin/windows/Rtools/*) is required.
 
-### For Linux OS users
+For windows users, Rtools (*https://cran.r-project.org/bin/windows/Rtools/*) is required.
+
+### Codes for Linux OS building enviornment
 Run the codes as below to enable the required components in Linux console.
 
 
 ```bash
 sudo apt-get install tcl-dev tk-dev
 sudo apt-get install r-cran-ncdf4
+apt-get install libz-dev
 sudo apt install libxml2-dev
 sudo apt install libssl-dev
 sudo apt install libcurl4-openssl-dev
 sudo apt-get install libnss-winbind winbind
+sudo apt install dirmngr gnupg apt-transport-https ca-certificates software-properties-common
+sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys
+sudo add-apt-repository 'deb https://cloud.r-project.org/bin/linux/ubuntu focal-cran40/'
+sudo apt-cache policy r-base
+apt-get purge r-base
+sudo apt-get install r-base-core="4.0.2-1.2004.0"
+sudo apt-get install libmagick++-dev
+apt-get install libfftw3-dev
+sudo apt-get install r-base-dev texlive-full
+sudo apt-get install libudunits2-dev
+sudo apt-get install libgdal-dev
 ```
 
-### For Mac OS users
+### Codes for Mac OS building enviornment
 
 You may need to update the Xcode. Go to your Mac OS terminal and input:
 
@@ -84,25 +131,40 @@ https://www.xquartz.org/
 https://cran.r-project.org/bin/macosx/tools/
 
 
+
+
+
+
+
+
 ## Example data
 The HitMaP comes with a series of Maildi imaging data sets acquired from either FT-ICR or TOF. By the following codes, you can download these raw data set into a local folder.  
-You can download the example file mannually through this link: "https://github.com/MASHUOA/HiTMaP/releases/download/0.99/Data.tar.gz"
 
+You can download the example file manually through this link: "https://github.com/MASHUOA/HiTMaP/releases/download/1.0/Data.tar.gz"
+
+
+Or download the files in a R console:
 
 ```r
-install.packages("piggyback")
+if(!require(piggyback)) install.packages("piggyback")
 library(piggyback)
-library(HiTMaP)
+
 Sys.setenv(GITHUB_TOKEN="cf6d877f8b6ada1865987b13f9e9996c1883014a")
-#made sure that this foler has enough space
-wd=paste0(file.path(path.package(package="HiTMaP")),"/data/")
+
+#made sure that this folder has enough space
+wd="~/expdata/"
+dir.create(wd)
 setwd(wd)
 pb_download("Data.tar.gz", repo = "MASHUOA/HiTMaP", dest = ".")
 untar('Data.tar.gz',exdir =".",  tar="tar")
+
 #unlink('Data.tar.gz')
 list.dirs()
 ```
-
+The example file contains three folder for three IMS dataset, configuration files, and the fasta database, respectively:
+*"./Bovinlens_Trypsin_FT" 
+"./MouseBrain_Trypsin_FT"
+"./Peptide_calibrants_FT"*
 
 ## Proteomics identification on Maldi imaging data file 
 
@@ -114,10 +176,10 @@ Now the HiTMaP is upon running. You could build the candidate list of your targe
 #creat candidate list
 library(HiTMaP)
 #set project folder that contains imzML, .ibd and fasta files
-wd=paste0(file.path(path.package(package="HiTMaP")),"/data/")
+#wd=paste0(file.path(path.package(package="HiTMaP")),"/data/")
 #set a series of imzML files to be processed
 datafile=c("Bovinlens_Trypsin_FT/Bovin_lens.imzML")
-
+wd="~/expdata/"
 
 
 imaging_identification(
@@ -134,14 +196,22 @@ imaging_identification(
                Fastadatabase="uniprot-bovin.fasta",
 #==============Set the possible adducts and fixed modifications
                adducts=c("M+H"),
-               Modifications=list(fixed=NULL),
+               Modifications=list(fixed=NULL,fixmod_position=NULL,variable=NULL,varmod_position=NULL),
 #==============The decoy mode: could be one of the "adducts", "elements" or "isotope"
                Decoy_mode = "isotope",
                use_previous_candidates=F,
                output_candidatelist=T,
+#==============The pre-processing param
+               preprocess=list(force_preprocess=TRUE,
+                               use_preprocessRDS=TRUE,
+                               smoothSignal=list(method="gaussian"),
+                               reduceBaseline=list(method="locmin"),
+                               peakPick=list(method="adaptive"),
+                               peakAlign=list(tolerance=ppm, units="ppm"),
+                               normalize=list(method=c("rms","tic","reference")[1],mz=1)),
 #==============Set the parameters for image segmentation
-               spectra_segments_per_file=5,
-               Segmentation=c("spatialKMeans","spatialShrunkenCentroids","Virtual_segmentation","none"),
+               spectra_segments_per_file=4,
+               Segmentation="spatialKMeans",
                Smooth_range=1,
                Virtual_segmentation=FALSE,
                Virtual_segmentation_rankfile=NULL,
@@ -250,23 +320,13 @@ print(p_pmf)
 ```
 
 ```
-## Warning: `...` is not empty.
-## 
-## We detected these problematic arguments:
-## * `needs_dots`
-## 
-## These dots only exist to allow future extensions and should be empty.
-## Did you misspecify an argument?
-```
-
-```
 ## # A tibble: 1 x 7
 ##   format width height colorspace matte filesize density
 ##   <chr>  <int>  <int> <chr>      <lgl>    <int> <chr>  
 ## 1 PNG     1980   1080 sRGB       FALSE    17664 72x72
 ```
 
-<img src="README_files/figure-html/unnamed-chunk-4-1.png" width="1980" />
+<img src="README_files/figure-html/unnamed-chunk-6-1.png" width="1980" />
 
 list of Peptides and proteins of each region has also been created so that you may check each individual region's result.
 
@@ -274,16 +334,6 @@ list of Peptides and proteins of each region has also been created so that you m
 ```r
 peptide_pmf_result<-read.csv(paste0(wd,datafile," ID/Peptide_segment_PMF_RESULT_3.csv"))
 head(peptide_pmf_result)
-```
-
-```
-## Warning: `...` is not empty.
-## 
-## We detected these problematic arguments:
-## * `needs_dots`
-## 
-## These dots only exist to allow future extensions and should be empty.
-## Did you misspecify an argument?
 ```
 
 ```
@@ -306,16 +356,6 @@ head(peptide_pmf_result)
 ```r
 protein_pmf_result<-read.csv(paste0(wd,datafile," ID/Protein_segment_PMF_RESULT_3.csv"))
 head(protein_pmf_result)
-```
-
-```
-## Warning: `...` is not empty.
-## 
-## We detected these problematic arguments:
-## * `needs_dots`
-## 
-## These dots only exist to allow future extensions and should be empty.
-## Did you misspecify an argument?
 ```
 
 ```
@@ -355,16 +395,6 @@ A *Peptide_region_file.csv* has also been created to summarise all the IDs in th
 ```r
 Identification_summary_table<-read.csv(paste0(wd,datafile," ID/Peptide_region_file.csv"))
 head(Identification_summary_table)
-```
-
-```
-## Warning: `...` is not empty.
-## 
-## We detected these problematic arguments:
-## * `needs_dots`
-## 
-## These dots only exist to allow future extensions and should be empty.
-## Did you misspecify an argument?
 ```
 
 ```
@@ -492,6 +522,17 @@ dir(wd_sum)
 
 "candidatelist.csv" and "protein_index.csv" contains the candidates used for this project. They are output after the candidate processing while *output_candidatelist* set as TRUE, and can be used repeatedly while *use_previous_candidates* set as TRUE.
 
+we have now implemented a functionality to perform additional statistical analyses around the number of tryptic enzymatically generated peptides generated derived from a given proteome (‘Database_stats’). If the user sets the variable ‘Database_stats’ to TRUE in the main workflow, then the function will be called. 
+
+Briefly, the function will list all of the m/z’s of a unique formulae from the peptide candidate pool within a given m/z range. The m/z’s will then be binned using three resolution m/z windows: 1ppm, 2ppm and 5ppm. A plot showing the number of unique formulae vs. binned m/z windows will be generated and exported to the summary folder (DB_stats_mz_bin). 
+
+The example figure as below shows the m/z bin(s) analysis result of a mouse brain proteome without modification(s) and with up to 1 missed cleavage(D). This represents a ‘worst case scenario’ since there is an assumption that all competitive candidates in each bin have equal ionisability, which in practice is not the case. The reviewer is therefore correct that a significant number of competitive candidates can be found within the m/z range of a common proteomics/peptidomics investigation. In practical terms, the number of competitive candidates is likely to be far fewer, due to the previously mentioned unequal ionisation of predicted peptides and the known bias for MALDI MSI to detect higher abundance peptides and proteins.  
+
+![Proteome database stats](Resource/DB_stats_bin_mz_ppm.png)
+
+However, one of the main applications of HIT-MAP is the annotation of proteins and their spatial distribution. Since only unique peptides are retained, and all peptides are rank-scored, and protein maps are only produced when 2+ unique peptides are matched, we feel that the likelihood of misidentifying proteins significantly decreases with increasing peptide number.
+
+
 "Peptide_Summary.csv" and "Protein_Summary.csv" contains the table of the project identification summary. You could set the *plot_cluster_image_grid* as TRUE to enable the cluster imaging function. Please be noted that you could indicate *Rotate_IMG* with a CSV file path that indicates the rotation degree of image files. 
 
 **Note**: 90$^\circ$, 180$^\circ$ and 270$^\circ$ are recommended for image rotation. You may find an example CSV file in the library/HiTMaP/data folder.
@@ -509,18 +550,21 @@ Now you could visualized the interest proteins and their associated peptides' di
 
 ```r
 library(magick)
-p_cluster1<-image_read(paste0(wd,"/Summary folder/cluster Ion images/791_cluster_imaging.png"))
-print(p_cluster1)
 ```
 
 ```
-## Warning: `...` is not empty.
-## 
-## We detected these problematic arguments:
-## * `needs_dots`
-## 
-## These dots only exist to allow future extensions and should be empty.
-## Did you misspecify an argument?
+## Warning: package 'magick' was built under R version 4.0.3
+```
+
+```
+## Linking to ImageMagick 6.9.11.34
+## Enabled features: cairo, freetype, fftw, ghostscript, lcms, pango, rsvg, webp
+## Disabled features: fontconfig, x11
+```
+
+```r
+p_cluster1<-image_read(paste0(wd,"/Summary folder/cluster Ion images/791_cluster_imaging.png"))
+print(p_cluster1)
 ```
 
 ```
@@ -538,16 +582,6 @@ print(p_cluster2)
 ```
 
 ```
-## Warning: `...` is not empty.
-## 
-## We detected these problematic arguments:
-## * `needs_dots`
-## 
-## These dots only exist to allow future extensions and should be empty.
-## Did you misspecify an argument?
-```
-
-```
 ## # A tibble: 1 x 7
 ##   format width height colorspace matte filesize density
 ##   <chr>  <int>  <int> <chr>      <lgl>    <int> <chr>  
@@ -559,16 +593,6 @@ print(p_cluster2)
 ```r
 p_cluster3<-image_read(paste0(wd,"/Summary folder/cluster Ion images/5479_cluster_imaging.png"))
 print(p_cluster3)
-```
-
-```
-## Warning: `...` is not empty.
-## 
-## We detected these problematic arguments:
-## * `needs_dots`
-## 
-## These dots only exist to allow future extensions and should be empty.
-## Did you misspecify an argument?
 ```
 
 ```
@@ -599,8 +623,8 @@ head(modification_list['&'(modification_list$code_name=="Phospho",modification_l
 ## # A tibble: 3 x 6
 ##   code_name record_id composition mono_mass position_key one_letter
 ##   <chr>     <chr>     <chr>       <chr>     <chr>        <chr>     
-## 1 Phospho   21        H O(3) P    79.966331 2            T         
-## 2 Phospho   21        H O(3) P    79.966331 2            Y         
+## 1 Phospho   21        H O(3) P    79.966331 2            Y         
+## 2 Phospho   21        H O(3) P    79.966331 2            T         
 ## 3 Phospho   21        H O(3) P    79.966331 2            S
 ```
 
@@ -612,8 +636,8 @@ head(modification_list['&'(modification_list$code_name=="Amide",modification_lis
 ## # A tibble: 2 x 6
 ##   code_name record_id composition mono_mass position_key one_letter
 ##   <chr>     <chr>     <chr>       <chr>     <chr>        <chr>     
-## 1 Amide     2         H N O(-1)   -0.984016 4            C-term    
-## 2 Amide     2         H N O(-1)   -0.984016 6            C-term
+## 1 Amide     2         H N O(-1)   -0.984016 6            C-term    
+## 2 Amide     2         H N O(-1)   -0.984016 4            C-term
 ```
 
 ```r
@@ -643,25 +667,15 @@ unimod.df[["positions"]]
 ```
 
 ```
-## Warning: `...` is not empty.
-## 
-## We detected these problematic arguments:
-## * `needs_dots`
-## 
-## These dots only exist to allow future extensions and should be empty.
-## Did you misspecify an argument?
-```
-
-```
 ## # A tibble: 6 x 2
-##   record_id position      
-##   <chr>     <chr>         
-## 1 1         -             
-## 2 2         Anywhere      
-## 3 3         Any N-term    
-## 4 4         Any C-term    
-## 5 5         Protein N-term
-## 6 6         Protein C-term
+##   position       record_id
+##   <chr>          <chr>    
+## 1 -              1        
+## 2 Anywhere       2        
+## 3 Any N-term     3        
+## 4 Any C-term     4        
+## 5 Protein N-term 5        
+## 6 Protein C-term 6
 ```
 ### Amino acid substitution
 You can set the *Substitute_AA* to make the uncommon amino acid available to the workflow:
@@ -687,28 +701,19 @@ library(gridExtra)
 grid.ftable(Cleavage_df, gp = gpar(fontsize=9,fill = rep(c("grey90", "grey95"))))
 ```
 
-![](README_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
+![](README_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
 
 
 
 
 ## Example workflow command
+
 Below is a list of commands including the parameters for the example data sets.
+
+### Peptide calibrant
 
 
 ```r
-wd=paste0(file.path(path.package(package="HiTMaP")),"/data/")
-setwd(wd)
-#Navigate to the corresponding example data folder ad select the file(s) for a MSI annotation
-#Bovin lens FTICR 
-##Identifiction
-imaging_identification(Digestion_site="trypsin",Fastadatabase="uniprot-Bovin.fasta",output_candidatelist=T,spectra_segments_per_file=4,use_previous_candidates=F,peptide_ID_filter=3,threshold = 0.005)
-
-##Cluster image plotting
-imaging_identification(Digestion_site="trypsin",Fastadatabase="uniprot-Bovin.fasta",output_candidatelist=T,spectra_segments_per_file=4,use_previous_candidates=T,peptide_ID_filter=3,threshold = 0.005,FDR_cutoff=0.05,PMF_analysis=F,plot_cluster_image_grid=T,Protein_desc_of_interest=c("crystallin","ACTIN","Vimentin","Filensin","Phakinin"))
-
-
-
 #peptide calibrant
 imaging_identification(
   Digestion_site="trypsin",
@@ -756,11 +761,12 @@ imaging_identification(
   Modifications=list(fixed=NULL,fixmod_position=NULL,variable=c("Amide"),varmod_position=c(6)),
   FDR_cutoff=100,
   Substitute_AA=list(AA=c("X"),AA_new_formula=c("C5H5NO2"),Formula_with_water=c(FALSE)),Thread = 1)
-
-
-#Ultraflex data
-imaging_identification(Digestion_site="trypsin",Fastadatabase="uniprot-bovin.fasta",output_candidatelist=T,spectra_segments_per_file=4,use_previous_candidates=F,ppm=25)
 ```
+
+
+
+
+
 
 
 ## Session information
@@ -772,28 +778,29 @@ toLatex(sessionInfo())
 
 ```
 ## \begin{itemize}\raggedright
-##   \item R version 3.6.2 (2019-12-12), \verb|x86_64-w64-mingw32|
+##   \item R version 4.0.2 (2020-06-22), \verb|x86_64-w64-mingw32|
 ##   \item Locale: \verb|LC_COLLATE=English_Australia.1252|, \verb|LC_CTYPE=English_Australia.1252|, \verb|LC_MONETARY=English_Australia.1252|, \verb|LC_NUMERIC=C|, \verb|LC_TIME=English_Australia.1252|
-##   \item Running under: \verb|Windows 10 x64 (build 18362)|
+##   \item Running under: \verb|Windows 10 x64 (build 19042)|
 ##   \item Matrix products: default
-##   \item Base packages: base, datasets, graphics, grDevices, grid,
-##     methods, stats, utils
-##   \item Other packages: data.table~1.12.8, dplyr~0.8.4, gridExtra~2.3,
-##     HiTMaP~1.6.0, lattice~0.20-40, magick~2.3, pls~2.7-2,
-##     protViz~0.6.0, XML~3.99-0.3
+##   \item Base packages: base, datasets, graphics, grDevices, methods,
+##     stats, utils
+##   \item Other packages: data.table~1.13.6, dplyr~1.0.2, gridExtra~2.3,
+##     HiTMaP~1.6.0, lattice~0.20-41, magick~2.5.2, pls~2.7-3,
+##     protViz~0.6.8, XML~3.99-0.5
 ##   \item Loaded via a namespace (and not attached): assertthat~0.2.1,
-##     Biobase~2.46.0, BiocGenerics~0.32.0, BiocManager~1.30.10,
-##     BiocParallel~1.20.1, cli~2.0.1, codetools~0.2-16, compiler~3.6.2,
-##     crayon~1.3.4, digest~0.6.25, doParallel~1.0.15, evaluate~0.14,
-##     fansi~0.4.1, foreach~1.4.8, glue~1.3.1, gtable~0.3.0,
-##     htmltools~0.4.0, iterators~1.0.12, knitr~1.28, magrittr~1.5,
-##     MASS~7.3-51.5, Matrix~1.2-18, multtest~2.42.0, pacman~0.5.1,
-##     parallel~3.6.2, pillar~1.4.3, pkgconfig~2.0.3, png~0.1-7,
-##     purrr~0.3.3, R6~2.4.1, Rcpp~1.0.3, rlang~0.4.4, rmarkdown~2.1,
-##     rstudioapi~0.11, S4Vectors~0.24.3, splines~3.6.2, stats4~3.6.2,
-##     stringi~1.4.6, stringr~1.4.0, survival~3.1-8, tcltk~3.6.2,
-##     tibble~2.1.3, tidyselect~1.0.0, tools~3.6.2, utf8~1.1.4,
-##     vctrs~0.2.3, xfun~0.12, yaml~2.2.1
+##     Biobase~2.48.0, BiocGenerics~0.34.0, BiocManager~1.30.10,
+##     BiocParallel~1.22.0, cli~2.3.0, codetools~0.2-18, compiler~4.0.2,
+##     crayon~1.4.0, digest~0.6.27, ellipsis~0.3.1, evaluate~0.14,
+##     fansi~0.4.2, fastmap~1.1.0, generics~0.1.0, glue~1.4.2, grid~4.0.2,
+##     gtable~0.3.0, htmltools~0.5.1.1, httpuv~1.5.5, knitr~1.30,
+##     later~1.1.0.1, lifecycle~0.2.0, magrittr~2.0.1, MASS~7.3-53,
+##     Matrix~1.3-2, mime~0.9, multtest~2.44.0, pacman~0.5.1,
+##     parallel~4.0.2, pillar~1.4.7, pkgconfig~2.0.3, png~0.1-7,
+##     promises~1.1.1, purrr~0.3.4, R6~2.5.0, Rcpp~1.0.6, rlang~0.4.10,
+##     rmarkdown~2.6, S4Vectors~0.26.1, shiny~1.6.0, splines~4.0.2,
+##     stats4~4.0.2, stringi~1.5.3, stringr~1.4.0, survival~3.2-7,
+##     tibble~3.0.6, tidyselect~1.1.0, tools~4.0.2, utf8~1.1.4,
+##     vctrs~0.3.6, xfun~0.20, xtable~1.8-4, yaml~2.2.1
 ## \end{itemize}
 ```
 
