@@ -96,12 +96,12 @@ imaging_identification<-function(
                Peptide_feature_summary=TRUE,
                plot_ion_image=FALSE,
                parallel=detectCores(),
-               spectra_segments_per_file=5,
+               spectra_segments_per_file=4,
                Segmentation=c("spatialKMeans","spatialShrunkenCentroids","Virtual_segmentation","none","def_file"),
                Segmentation_def="Segmentation_def.csv",
                Segmentation_ncomp="auto-detect",
                Segmentation_variance_coverage=0.8,
-               preprocess=list(force_preprocess=FALSE,use_preprocessRDS=TRUE,smoothSignal=list(method="gaussian"),
+               preprocess=list(force_preprocess=FALSE,use_preprocessRDS=TRUE,smoothSignal=list(method="disable"),
                                reduceBaseline=list(method="locmin"),
                                peakPick=list(method="adaptive"),
                                peakAlign=list(tolerance=ppm, units="ppm"),
@@ -150,8 +150,13 @@ imaging_identification<-function(
 #if (missing(datafile)) {datafile=tk_choose.files(filter = matrix(c( "imzml file", ".imzML","Text", ".txt", "All files", "*"),3, 2, byrow = TRUE),
 #                                       caption  = "Choose single or multiple file(s) for analysis")}
   if (missing(datafile)) stop("Missing data file, Choose single or multiple imzml file(s) for analysis")
+# resove missing vars
+  e <- environment() 
+  p <- parent.env(e)
   
-  tolerance_ppm=ppm
+  if(!exists("ppm", envir=p)) {
+    preprocess$peakAlign$tolerance=ppm
+    message("Alignment tolerance missing, using identification ppm")}
   
   if (is.null(projectfolder)){
     workdir<-base::dirname(datafile[1])
@@ -2279,12 +2284,7 @@ PMF_Cardinal_Datafilelist<-function(datafile,
      },rotate)
      rotate=unlist(rotatedegrees)
    }else{rotate=rep(0,length(datafile))}
-  
-
-
-  preprocess$peakAlign$tolerance=ppm
-   
-
+ 
   datafile_imzML<-datafile
   
   

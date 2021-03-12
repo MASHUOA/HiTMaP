@@ -568,7 +568,22 @@ imaging_identification(datafile=paste0(wd,datafile),Digestion_site="trypsin",
                                peakPick=list(method="adaptive"),
                                peakAlign=list(tolerance=5, units="ppm"),
                                normalize=list(method=c("rms","tic","reference")[1],mz=1)),
-                       spectra_segments_per_file=9,use_previous_candidates=F,ppm=5,FDR_cutoff = 0.05,IMS_analysis=T,
+                       spectra_segments_per_file=4,use_previous_candidates=F,ppm=5,FDR_cutoff = 0.05,IMS_analysis=T,
+                       Rotate_IMG="file_rotationbk.csv",plot_cluster_image_grid=F)
+
+datafile=c("Bovinlens_Trypsin_FT/Bovin_lens.imzML")
+wd="~/expdata/"
+library(HiTMaP)
+imaging_identification(datafile=paste0(wd,datafile),Digestion_site="trypsin",
+                       Fastadatabase="uniprot-bovin.fasta",output_candidatelist=T,use_previous_candidates=T,
+                       preprocess=list(force_preprocess=TRUE,
+                               use_preprocessRDS=TRUE,
+                               smoothSignal=list(method="gaussian"),
+                               reduceBaseline=list(method="locmin"),
+                               peakPick=list(method="adaptive"),
+                               peakAlign=list(tolerance=5, units="ppm"),
+                               normalize=list(method=c("rms","tic","reference")[1],mz=1)),
+                       spectra_segments_per_file=4,ppm=5,FDR_cutoff = 0.05,IMS_analysis=T,
                        Rotate_IMG="file_rotationbk.csv",plot_cluster_image_grid=F)
 
 # Re-analysis and cluster image rendering
