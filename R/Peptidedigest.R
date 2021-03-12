@@ -151,6 +151,7 @@ imaging_identification<-function(
 #                                       caption  = "Choose single or multiple file(s) for analysis")}
   if (missing(datafile)) stop("Missing data file, Choose single or multiple imzml file(s) for analysis")
   
+  tolerance_ppm=ppm
   
   if (is.null(projectfolder)){
     workdir<-base::dirname(datafile[1])
@@ -2214,7 +2215,7 @@ PMF_Cardinal_Datafilelist<-function(datafile,
                                     workdir=NULL,
                                     Peptide_Summary_searchlist, 
                                     segmentation_num=5,threshold=0.1,
-                                    ppm,
+                                    ppm,import_ppm=3,
                                     mzrange="auto-detect",
                                     Segmentation=c("spatialKMeans","spatialShrunkenCentroids","Virtual_segmentation","none","def_file"),
                                     Segmentation_def="segmentation_def.csv",
@@ -2244,7 +2245,7 @@ PMF_Cardinal_Datafilelist<-function(datafile,
                                     preprocess=list(force_preprocess=FALSE,use_preprocessRDS=TRUE,smoothSignal=list(method="gaussian"),
                                                     reduceBaseline=list(method="locmin"),
                                                     peakPick=list(method="adaptive"),
-                                                    peakAlign=list(tolerance=ppm, units="ppm"),
+                                                    peakAlign=list(tolerance=5, units="ppm"),
                                                     normalize=list(method=c("rms","tic","reference")[1],mz=1)),
                                     ...){
    suppressMessages(suppressWarnings(require(data.table)))
@@ -2281,7 +2282,7 @@ PMF_Cardinal_Datafilelist<-function(datafile,
   
 
 
-
+  preprocess$peakAlign$tolerance=ppm
    
 
   datafile_imzML<-datafile
@@ -2341,9 +2342,9 @@ PMF_Cardinal_Datafilelist<-function(datafile,
           #reduceBaseline(method="locmin") %>%
           if (preprocess$smoothSignal$method=="Disable") {
           }else if (!is.null(preprocess$smoothSignal$method)){
-            imdata_ed<- imdata_ed %>% smoothSignal(method=preprocess$smoothSignal$method)
+            #imdata_ed<- imdata_ed %>% smoothSignal(method=preprocess$smoothSignal$method)
           }else{
-            imdata_ed<- imdata_ed %>% smoothSignal(method="gaussian")
+            #imdata_ed<- imdata_ed %>% smoothSignal(method="gaussian")
           }
           
           if (!is.null(preprocess$reduceBaseline$method)){
@@ -2361,6 +2362,7 @@ PMF_Cardinal_Datafilelist<-function(datafile,
           
           if (preprocess$peakAlign$tolerance==0) {
           }else if ('&'(!is.null(preprocess$peakAlign$tolerance),!is.null(preprocess$peakAlign$tolerance))){
+            
             imdata_ed<- imdata_ed %>% peakAlign(tolerance=preprocess$peakAlign$tolerance, units=preprocess$peakAlign$units)
           }else {
             imdata_ed<- imdata_ed %>% peakAlign(tolerance=ppm, units="ppm")
@@ -2407,6 +2409,7 @@ PMF_Cardinal_Datafilelist<-function(datafile,
           }
           
           if ('&'(!is.null(preprocess$peakAlign$tolerance),!is.null(preprocess$peakAlign$tolerance))){
+            
             imdata_ed<- imdata_ed %>% peakAlign(tolerance=preprocess$peakAlign$tolerance, units=preprocess$peakAlign$units)
           }else{
             imdata_ed<- imdata_ed %>% peakAlign(tolerance=ppm, units="ppm")
@@ -2990,7 +2993,7 @@ PMF_Cardinal_Datafilelist<-function(datafile,
         dev.off()
         
       }
-    } else if (Segmentation[1]=="none"){
+      else {
         
         x=1:length(pixels(imdata))
         x=split(x, sort(x%%1)) 
@@ -3005,6 +3008,36 @@ PMF_Cardinal_Datafilelist<-function(datafile,
         print(imagefile)
         dev.off()
       }
+    } else if (Segmentation[1]=="none"){
+        
+        x=1:length(pixels(imdata))
+        x=split(x, sort(x%%1)) 
+        names(x)="1"
+        png(paste(getwd(),"\\","Segmentation_none","_image_plot_",segmentation_num,"_segs.png",sep=""),width = 1024,height = 720)
+        
+        par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(1, 2),
+            bty="n",pty="s",xaxt="n",
+            yaxt="n",
+            no.readonly = TRUE,ann=F)
+        imagefile<-Cardinal::image(imdata, factor(rep(1,length(pixels(imdata)))) ~ x * y, key=T, ann=FALSE,axes=FALSE)
+        print(imagefile)
+        dev.off()
+    }else {
+      
+      x=1:length(pixels(imdata))
+      x=split(x, sort(x%%1)) 
+      names(x)="1"
+      png(paste(getwd(),"\\","Segmentation_none","_image_plot_",segmentation_num,"_segs.png",sep=""),width = 1024,height = 720)
+      
+      par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(1, 2),
+          bty="n",pty="s",xaxt="n",
+          yaxt="n",
+          no.readonly = TRUE,ann=F)
+      imagefile<-Cardinal::image(imdata, factor(rep(1,length(pixels(imdata)))) ~ x * y, key=T, ann=FALSE,axes=FALSE)
+      print(imagefile)
+      dev.off()
+    }
+    
   
   
    if(PMFsearch){  

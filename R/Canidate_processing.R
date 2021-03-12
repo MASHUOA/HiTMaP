@@ -145,14 +145,14 @@ Protein_feature_list_fun<-function(workdir=getwd(),
                                    Decoy_mode=c("adducts","elements","isotope","sequence"),
                                    Decoy_adducts=c("M+He","M+Ne","M+Ar","M+Kr","M+Xe","M+Rn"),
                                    Substitute_AA=list(AA=c(NULL),AA_new_formula=c(NULL),Formula_with_water=c(NULL)),
-                                   mzrange=c(650,4000),
+                                   mzrange=c(500,4000),
                                    output_candidatelist=T,
                                    Modifications=list(fixed=NULL,fixmod_position=NULL,variable=NULL,varmod_position=NULL),
                                    use_previous_candidates=F,
                                    Protein_desc_of_exclusion=NULL,
                                    Database_stats=T
                                    ){
-  
+  if (mzrange=="auto-detect") mzrange=c(500,4000)
    suppressMessages(suppressWarnings(require(Biostrings)))
    suppressMessages(suppressWarnings(require(cleaver)))
    suppressMessages(suppressWarnings(require(protViz)))

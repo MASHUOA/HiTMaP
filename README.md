@@ -207,7 +207,7 @@ imaging_identification(
                                smoothSignal=list(method="gaussian"),
                                reduceBaseline=list(method="locmin"),
                                peakPick=list(method="adaptive"),
-                               peakAlign=list(tolerance=ppm, units="ppm"),
+                               peakAlign=list(tolerance=5, units="ppm"),
                                normalize=list(method=c("rms","tic","reference")[1],mz=1)),
 #==============Set the parameters for image segmentation
                spectra_segments_per_file=4,
@@ -550,19 +550,6 @@ Now you could visualized the interest proteins and their associated peptides' di
 
 ```r
 library(magick)
-```
-
-```
-## Warning: package 'magick' was built under R version 4.0.3
-```
-
-```
-## Linking to ImageMagick 6.9.11.34
-## Enabled features: cairo, freetype, fftw, ghostscript, lcms, pango, rsvg, webp
-## Disabled features: fontconfig, x11
-```
-
-```r
 p_cluster1<-image_read(paste0(wd,"/Summary folder/cluster Ion images/791_cluster_imaging.png"))
 print(p_cluster1)
 ```
@@ -743,6 +730,9 @@ imaging_identification(datafile=paste0(wd,datafile),
   peptide_ID_filter=1,ppm=5,missedCleavages=0:5,
   FDR_cutoff=0.1)
 
+library(HiTMaP)
+datafile=c("Peptide_calibrants_FT/trypsin_non-decell_w.calibrant_FTICR")
+wd="~/expdata/"
 # Calibrants dataset analysis with modification 
 imaging_identification(datafile=paste0(wd,datafile),
   Digestion_site="trypsin",
@@ -753,7 +743,7 @@ imaging_identification(datafile=paste0(wd,datafile),
   use_previous_candidates=T,
   peptide_ID_filter=1,ppm=5,missedCleavages=0:5,
   Modifications=list(fixed=NULL,fixmod_position=NULL,variable=c("Amide"),varmod_position=c(6)),
-  FDR_cutoff=100,
+  FDR_cutoff=0.1,
   Substitute_AA=list(AA=c("X"),AA_new_formula=c("C5H5NO2"),Formula_with_water=c(FALSE)),Thread = 1)
 ```
 
@@ -773,16 +763,15 @@ imaging_identification(datafile=paste0(wd,datafile),Digestion_site="trypsin",
                                smoothSignal=list(method="gaussian"),
                                reduceBaseline=list(method="locmin"),
                                peakPick=list(method="adaptive"),
-                               peakAlign=list(tolerance=ppm, units="ppm"),
+                               peakAlign=list(tolerance=5, units="ppm"),
                                normalize=list(method=c("rms","tic","reference")[1],mz=1)),
-                       spectra_segments_per_file=9,use_previous_candidates=F,ppm=5,FDR_cutoff = 0.5,IMS_analysis=T,
-                       Rotate_IMG="file_rotationbk.csv",
-                       mzrange = c(500,4000),plot_cluster_image_grid=F)
+                       spectra_segments_per_file=9,use_previous_candidates=F,ppm=5,FDR_cutoff = 0.05,IMS_analysis=T,
+                       Rotate_IMG="file_rotationbk.csv",plot_cluster_image_grid=F)
 
 # Re-analysis and cluster image rendering
 
 library(HiTMaP)
-datafile=c("Bovinlens_Trypsin_FT fdr01f/Bovin_lens.imzML")
+datafile=c("Bovinlens_Trypsin_FT/Bovin_lens.imzML")
 wd="~/expdata/"
 imaging_identification(datafile=paste0(wd,datafile),Digestion_site="trypsin",
                        Fastadatabase="uniprot-bovin.fasta",
@@ -814,9 +803,9 @@ imaging_identification(datafile=paste0(wd,datafile),Digestion_site="trypsin",
                                smoothSignal=list(method="gaussian"),
                                reduceBaseline=list(method="locmin"),
                                peakPick=list(method="adaptive"),
-                               peakAlign=list(tolerance=ppm, units="ppm"),
+                               peakAlign=list(tolerance=5, units="ppm"),
                                normalize=list(method=c("rms","tic","reference")[1],mz=1)),
-                       spectra_segments_per_file=9,use_previous_candidates=F,ppm=5,FDR_cutoff = 0.5,IMS_analysis=T,
+                       spectra_segments_per_file=9,use_previous_candidates=F,ppm=5,FDR_cutoff = 0.05,IMS_analysis=T,
                        Rotate_IMG="file_rotationbk.csv",
                        mzrange = c(500,4000),plot_cluster_image_grid=F)
 
@@ -825,11 +814,11 @@ imaging_identification(datafile=paste0(wd,datafile),Digestion_site="trypsin",
 imaging_identification(datafile=paste0(wd,datafile),Digestion_site="trypsin",
                        Fastadatabase="uniprot_mouse_20210107.fasta",
                        preprocess=list(force_preprocess=FALSE),
-                       spectra_segments_per_file=9,use_previous_candidates=T,ppm=5,FDR_cutoff = 0.5,IMS_analysis=F,
+                       spectra_segments_per_file=9,use_previous_candidates=T,ppm=5,FDR_cutoff = 0.05,IMS_analysis=F,
                        mzrange = c(500,4000),plot_cluster_image_grid=T,
                        img_brightness=250, plot_cluster_image_overwrite=T,
                        cluster_rds_path = "/Mouse_brain ID/preprocessed_imdata.RDS",
-                       pixel_size_um = 150,
+                       pixel_size_um = 50,
                        Plot_score_abs_cutoff=-0.1,
                        remove_score_outlier=T,
                        Protein_desc_of_interest=c("Crystallin","Phakinin","Filensin","Actin","Vimetin","Cortactin","Visinin","Arpin","Tropomyosin","Myosin Light Chain 3","Kinesin Family Member 14","Dyenin Regulatory Complex","Ankyrin Repeat Domain 45"))
