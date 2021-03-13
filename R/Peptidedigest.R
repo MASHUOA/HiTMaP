@@ -142,11 +142,14 @@ imaging_identification<-function(
                Plot_score_abs_cutoff=-0.1,
                ...
                ){
-  library("pacman")
-  suppressMessages(suppressWarnings(p_load(RColorBrewer,RCurl,bitops,magick,ggplot2,reticulate,dplyr,stringr,
-         data.table,iterators,foreach,protViz,MALDIquant,
-         XVector,IRanges,S4Vectors,stats4,EBImage,BiocParallel,
-         BiocGenerics,parallel,stats,graphics,grDevices,datasets,methods,Cardinal)))
+  suppressMessages(suppressWarnings(library("pacman")))
+  suppressMessages(suppressWarnings(p_load(stringr,BiocParallel,
+         #RColorBrewer,RCurl,bitops,magick,ggplot2,reticulate,dplyr,
+         #data.table,iterators,foreach,protViz,parallel,
+         #XVector,IRanges,S4Vectors,stats4,EBImage,
+         #BiocGenerics,stats,graphics,grDevices,datasets,methods,
+         Cardinal
+         )))
 #if (missing(datafile)) {datafile=tk_choose.files(filter = matrix(c( "imzml file", ".imzML","Text", ".txt", "All files", "*"),3, 2, byrow = TRUE),
 #                                       caption  = "Choose single or multiple file(s) for analysis")}
   if (missing(datafile)) stop("Missing data file, Choose single or multiple imzml file(s) for analysis")
