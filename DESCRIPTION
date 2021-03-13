@@ -2,19 +2,19 @@ Package: HiTMaP
 Type: Package
 Title: A collection of tools for imaging MS data processing
 Version: 1.6.0
-Date: 
+Date:
 Depends: R (>= 3.5.0), lattice, methods, pls, data.table
 Authors@R: c(person("George", "GUO", email = "George.GUO@auckland.ac.nz", role = "aut"))
 Author: George GUO [aut, cre]
 Maintainer: George GUO <George.GUO@auckland.ac.nz>
-Description: 
+Description:
 License: GPL-2
 LazyLoad: yes
 NeedsCompilation: no
 Encoding: UTF-8
-Packaged: 
+Packaged:
 BugReports:
-Imports: 
+Imports:
     pryr,colortools,pacman,purrr,
     RColorBrewer,magick,ggplot2,reticulate,
     dplyr,stringr,data.table,doParallel,
@@ -25,13 +25,13 @@ Imports:
     stats,graphics,grDevices,utils,
     datasets,methods,Rdisop,Rcpp,
     pacman,devtools,fs,processx,S4Vectors,
-    spdep,zoo,FTICRMS,KEGGREST,OrgMassSpecR,
+    spdep,zoo,KEGGREST,OrgMassSpecR,
     enviPat,rgl,multtest,XML,
     BiocManager,shinyFiles,shiny,
     rcdk,colorspace,OneR,
     gridExtra,grid,gtable,ChemmineR
 VignetteBuilder: knitr
-Suggests: 
+Suggests:
     knitr,
     rmarkdown,
     devtools,
