@@ -17,7 +17,7 @@ Protein_feature_list_fun(
   Decoy_adducts = c("M+He", "M+Ne", "M+Ar", "M+Kr", "M+Xe", "M+Rn"),
   Substitute_AA = list(AA = c(NULL), AA_new_formula = c(NULL), Formula_with_water =
     c(NULL)),
-  mzrange = c(650, 4000),
+  mzrange = c(500, 4000),
   output_candidatelist = T,
   Modifications = list(fixed = NULL, fixmod_position = NULL, variable = NULL,
     varmod_position = NULL),

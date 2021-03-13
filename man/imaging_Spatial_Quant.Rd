@@ -37,7 +37,7 @@ imaging_Spatial_Quant(
   Region_feature_analysis_bar_plot = T,
   norm_datafiles = T,
   norm_Type = "Median",
-  mzrange = NULL,
+  mzrange = "auto-detect",
   BPPARAM = bpparam(),
   Rotate_IMG = NULL,
   ...

@@ -21,7 +21,7 @@ imaging_identification(
   Decoy_adducts = c("M+ACN+H", "M+IsoProp+H", "M+DMSO+H", "M+Co", "M+Ag", "M+Cu",
     "M+He", "M+Ne", "M+Ar", "M+Kr", "M+Xe", "M+Rn"),
   Decoy_mode = "isotope",
-  mzrange = c(500, 4000),
+  mzrange = "auto-detect",
   Database_stats = F,
   adjust_score = FALSE,
   IMS_analysis = TRUE,
@@ -33,15 +33,16 @@ imaging_identification(
   Peptide_feature_summary = TRUE,
   plot_ion_image = FALSE,
   parallel = detectCores(),
-  spectra_segments_per_file = 5,
+  spectra_segments_per_file = 4,
   Segmentation = c("spatialKMeans", "spatialShrunkenCentroids", "Virtual_segmentation",
     "none", "def_file"),
   Segmentation_def = "Segmentation_def.csv",
   Segmentation_ncomp = "auto-detect",
   Segmentation_variance_coverage = 0.8,
   preprocess = list(force_preprocess = FALSE, use_preprocessRDS = TRUE, smoothSignal =
-    list(method = "gaussian"), reduceBaseline = list(method = "locmin"), peakPick =
-    list(method = "adaptive"), peakAlign = list(tolerance = ppm, units = "ppm")),
+    list(method = "disable"), reduceBaseline = list(method = "locmin"), peakPick =
+    list(method = "adaptive"), peakAlign = list(tolerance = ppm, units = "ppm"),
+    normalize = list(method = c("rms", "tic", "reference")[1], mz = 1)),
   Smooth_range = 1,
   Virtual_segmentation_rankfile = NULL,
   Rotate_IMG = NULL,
@@ -69,11 +70,13 @@ imaging_identification(
   export_footer_table = T,
   attach_summary_cluster = T,
   remove_cluster_from_grid = attach_summary_cluster,
-  pixel_size_um = 25,
+  pixel_size_um = 50,
   img_brightness = 100,
   Thread = NULL,
   cluster_rds_path = NULL,
-  remove_score_outlier = T,
+  remove_score_outlier = F,
+  Plot_score_IQR_cutoff = 0.75,
+  Plot_score_abs_cutoff = -0.1,
   ...
 )
 }
@@ -118,7 +121,7 @@ imaging_identification(
 
 \item{parallel}{the number of threads will be used in the PMF search, this option now only works for windows OS}
 
-\item{spectra_segments_per_file}{optimal number of distinctive regions in the imaging, a virtual segmentation will be applied to the image files with this value. To have a better PMF result you may set a value that in the sweet point of sensitivety and false discovery rate (FDR).}
+\item{spectra_segments_per_file}{optimal number of distinctive regions in the tissue section, a virtual segmentation will be applied to the image files with this value. To have a better PMF result you may set a value that in the sweet point of sensitivety and false discovery rate (FDR).}
 
 \item{Segmentation}{set as "spatialKMeans" to enable a \code{"spatialKMeans"} Segmentation; set as "spatialShrunkenCentroids" to enable a \code{"spatialShrunkenCentroids"} Segmentation; If a region rank file was supplied, you can set this as "Virtual_segmentation" to perform a manual segmentation; Set it as "none" to bypass the segmentation.}
 

@@ -29,7 +29,7 @@ cluster_image_grid(
   ppm = 20,
   list_of_protein_sequence,
   workdir = getwd(),
-  pixel_size_um = 200,
+  pixel_size_um = 50,
   Score_thres = NULL
 )
 }
