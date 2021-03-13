@@ -39,7 +39,7 @@ This is an tutorial for use of HiTMaP (An R package of High-resolution Informati
 HiTMaP has been encapsulated as an docker image for each release. User can download the latest version by using the code as below.
 
 ```{bash eval=FALSE, include=T}
-docker login --username mashuoa
+docker login --username mashuoa 
 0a9da0ae-8d7b-4e11-8587-be46e21ee937
 docker pull mashuoa/hitmap
 ```
