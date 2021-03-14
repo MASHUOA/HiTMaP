@@ -52,13 +52,24 @@ docker run --name hitmap -v %userprofile%\Documents\expdata:/root/expdata -a std
 #for linux user, run the image with a local user/expdata folder mapped to the docker container:
 docker run --name hitmap -v ~/expdata:/root/expdata -a stdin -a stdout -i -t mashuoa/hitmap /bin/bash 
 
-#ctrl+dto exit the shell and Restart the shell 
-docker container exec -it hitmap /bin/bash
-
 #Run R console
 R
 
 ```
+
+Revoke Docker terminal:
+```{bash eval=FALSE, include=T}
+#ctrl+dto exit the shell and Restart the shell 
+docker container exec -it hitmap /bin/bash
+```
+
+Stop/remove docker container (warning: if no local disk mapped to the "~/expdata", please backup your exisiting result files from the container before remove it):
+```{bash eval=FALSE, include=T}
+docker stop hitmap
+docker rm hitmap
+```
+
+
 
 If You are using docker GUI, pull the docker image using the codes above and follow the image as below to setup the container.
 
@@ -89,19 +100,25 @@ Run the codes as below to enable the required components in Linux console.
 ```{bash eval=FALSE, include=T}
 sudo apt-get install tcl-dev tk-dev
 sudo apt-get install r-cran-ncdf4
-apt-get install libz-dev
+sudo apt-get install libz-dev
 sudo apt install libxml2-dev
 sudo apt install libssl-dev
 sudo apt install libcurl4-openssl-dev
 sudo apt-get install libnss-winbind winbind
 sudo apt install dirmngr gnupg apt-transport-https ca-certificates software-properties-common
+
+sudo add-apt-repository ppa:webupd8team/y-ppa-manager
+sudo apt-get update
+sudo apt-get install y-ppa-manager
+sudo y-ppa-manager
+
 sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys
 sudo add-apt-repository 'deb https://cloud.r-project.org/bin/linux/ubuntu focal-cran40/'
 sudo apt-cache policy r-base
-apt-get purge r-base
+sudo apt-get purge r-base
 sudo apt-get install r-base-core="4.0.2-1.2004.0"
 sudo apt-get install libmagick++-dev
-apt-get install libfftw3-dev
+sudo apt-get install libfftw3-dev
 sudo apt-get install r-base-dev texlive-full
 sudo apt-get install libudunits2-dev
 sudo apt-get install libgdal-dev
