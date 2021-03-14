@@ -2112,7 +2112,11 @@ PCA_ncomp_selection<-function(imdata,variance_coverage=0.80,outputdir=NULL){
   }
   
   PCA_imdata<-Cardinal::PCA(imdata,ncomp=12)
-  PCA_imdata_df<-as.data.frame(summary(PCA_imdata))
+  # if (!is.null(outputdir)){
+  #   saveRDS(PCA_imdata,paste0(outputdir,"PCA_imdata.rds"))
+  #   saveRDS(as.data.frame(summary(PCA_imdata)),paste0(outputdir,"PCA_imdata_df.rds"))
+  # }
+  PCA_imdata_df<-data.frame(Component=1:length(PCA_imdata@resultData@listData[[1]][["sdev"]]) , Standard.deviation=PCA_imdata@resultData@listData[[1]][["sdev"]])
   PCA_imdata_df$Standard.deviation<-PCA_imdata_df$Standard.deviation/sum(PCA_imdata_df$Standard.deviation)
   PCA_imdata_df$Component<-as.factor(PCA_imdata_df$Component)
   PCA_imdata_df$Percentage<-percent(PCA_imdata_df$Standard.deviation,digits =1)

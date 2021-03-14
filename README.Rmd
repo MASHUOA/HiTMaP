@@ -52,7 +52,7 @@ docker run --name hitmap -v %userprofile%\Documents\expdata:/root/expdata -a std
 #for linux user, run the image with a local user/expdata folder mapped to the docker container:
 docker run --name hitmap -v ~/expdata:/root/expdata -a stdin -a stdout -i -t mashuoa/hitmap /bin/bash 
 
-#Restart the shell 
+#ctrl+dto exit the shell and Restart the shell 
 docker container exec -it hitmap /bin/bash
 
 #Run R console
@@ -135,7 +135,7 @@ https://cran.r-project.org/bin/macosx/tools/
 
 
 ## Example data
-The HitMaP comes with a series of Maildi imaging data sets acquired from either FT-ICR or TOF. By the following codes, you can download these raw data set into a local folder.  
+The HitMaP comes with a series of Maildi imaging data sets acquired from FT-ICR. By the following codes, you can download these raw data set into a local folder.  
 
 You can download the example file manually through this link: "https://github.com/MASHUOA/HiTMaP/releases/download/1.0/Data.tar.gz"
 
@@ -151,7 +151,7 @@ Sys.setenv(GITHUB_TOKEN="cf6d877f8b6ada1865987b13f9e9996c1883014a")
 wd="~/expdata/"
 dir.create(wd)
 setwd(wd)
-pb_download("Data.tar.gz", repo = "MASHUOA/HiTMaP", dest = ".")
+pb_download("Data.tar.gz", repo = "MASHUOA/HiTMaP", dest = ".",.token ="cf6d877f8b6ada1865987b13f9e9996c1883014a")
 untar('Data.tar.gz',exdir =".",  tar="tar")
 
 #unlink('Data.tar.gz')

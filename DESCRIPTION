@@ -20,7 +20,7 @@ Imports:
     dplyr,stringr,data.table,doParallel,
     iterators,foreach,protViz,cleaver,
     MALDIquant,Biostrings,XVector,IRanges,Cardinal,
-    ProtGenerics,S4Vectors,stats4,
+    ProtGenerics,S4Vectors,stats4,egg,
     EBImage,BiocParallel,BiocGenerics,parallel,
     stats,graphics,grDevices,utils,
     datasets,methods,Rdisop,Rcpp,
