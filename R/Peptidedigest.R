@@ -143,7 +143,7 @@ imaging_identification<-function(
                ...
                ){
   suppressMessages(suppressWarnings(library("pacman")))
-  suppressMessages(suppressWarnings(p_load(stringr,BiocParallel,
+  suppressMessages(suppressWarnings(p_load(stringr,BiocParallel,data.table,
          #RColorBrewer,RCurl,bitops,magick,ggplot2,reticulate,dplyr,
          #data.table,iterators,foreach,protViz,parallel,
          #XVector,IRanges,S4Vectors,stats4,EBImage,
