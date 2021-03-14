@@ -2956,6 +2956,7 @@ remove_pep_score_outlier<-function(SMPLIST,IQR_LB=0.75,outputdir=getwd(),abs_cut
   #if (!require(OneR)) install.packages("OneR")
   suppressMessages(suppressWarnings(library(OneR)))
   suppressMessages(suppressWarnings(library(dplyr)))
+  suppressMessages(suppressWarnings(library(ggplot2)))
   nbins = floor(length(SMPLIST$mz)/500)
   if(nbins>=2){
     SMPLIST$mzbin<-(bin(SMPLIST$mz, nbins = floor(length(SMPLIST$mz)/500),method = "content"))
