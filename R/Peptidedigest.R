@@ -417,11 +417,13 @@ imaging_identification<-function(
 
     if (!is.null(cluster_rds_path)){
       imdata=readRDS(paste0(workdir[1],"/",cluster_rds_path))
-    }else{if ('&'(!is.null(Rotate_IMG),typeof(Rotate_IMG)=="string")){Rotate_IMG=read.csv(Rotate_IMG,stringsAsFactors = F)}
+    }else{
+    if ('&'(!is.null(Rotate_IMG),typeof(Rotate_IMG)=="string")){Rotate_IMG=read.csv(Rotate_IMG,stringsAsFactors = F)}
     imdata=list()
     combinedimdata=NULL
     #register(SerialParam())
-    if (!exists("mzrange")){
+    if (`|`(!exists("mzrange"),mzrange=="auto-detect")){
+        
         mzrange=NULL
         testrange=c(0,0)
         for (i in 1:length(datafile)){
