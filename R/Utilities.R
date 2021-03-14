@@ -2071,13 +2071,18 @@ brewer.pal_n<-function(n,colorstyle){
   
 }
 
-Parallel.OS<-function(Thread=1,bpprogressbar_t=TRUE){
+Parallel.OS<-function(Thread=1,bpprogressbar_t=TRUE,override_type=NULL){
   library(BiocParallel)
   if(Thread!=1){
-    switch(Sys.info()[['sysname']],
+    if(!is.null(override_type)){
+      BPPARAM=override_type
+    }else{
+          switch(Sys.info()[['sysname']],
          Windows= {BPPARAM=BiocParallel::SnowParam()},
          Linux  = {BPPARAM=BiocParallel::MulticoreParam()},
          Darwin = {BPPARAM=BiocParallel::MulticoreParam()}) 
+    }
+
     BiocParallel::bpworkers(BPPARAM)=Thread
   }else{
     BPPARAM=BiocParallel::SerialParam() 
