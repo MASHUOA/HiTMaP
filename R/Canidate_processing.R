@@ -150,7 +150,7 @@ Protein_feature_list_fun<-function(workdir=getwd(),
                                    Modifications=list(fixed=NULL,fixmod_position=NULL,variable=NULL,varmod_position=NULL),
                                    use_previous_candidates=F,
                                    Protein_desc_of_exclusion=NULL,
-                                   Database_stats=T
+                                   Database_stats=F
                                    ){
   if (mzrange=="auto-detect") mzrange=c(500,4000)
    suppressMessages(suppressWarnings(require(Biostrings)))
@@ -374,9 +374,24 @@ Protein_feature_list_fun<-function(workdir=getwd(),
   message(paste("Generating peptide formula..."))
   uniquepep=(tempdf$Peptide)
   uniqueAA=unique(strsplit(paste0(uniquepep,collapse = ""), "")[[1]])
+  
   Element_tbl<-BuildElement(Substitute_AA=Substitute_AA,uniqueAA=uniqueAA)
-  peptide_symbol=bplapply(uniquepep,ConvertPeptide,BPPARAM = BPPARAM,Substitute_AA=Substitute_AA,Element_tbl=Element_tbl)
-  #peptide_symbol=bplapply(uniquepep[1:100],ConvertPeptide,BPPARAM = BPPARAM1,Substitute_AA=Substitute_AA)
+  peptide_symbol=lapply(uniquepep,ConvertPeptide,Substitute_AA=Substitute_AA,Element_tbl=Element_tbl)
+  # peptide_symbol=bplapply(uniquepep,ConvertPeptide,BPPARAM = BPPARAM,Substitute_AA=Substitute_AA,Element_tbl=Element_tbl)
+  # 
+  # Element_tbl_m<-BuildElement(Substitute_AA=Substitute_AA,uniqueAA=uniqueAA,element_matrix = T)
+  # peptide_symbol=lapply(uniquepep,ConvertPeptide.2,Substitute_AA=Substitute_AA,Element_tbl=Element_tbl_m)
+  # peptide_symbol=bplapply(uniquepep,ConvertPeptide.2,BPPARAM = BPPARAM,Substitute_AA=Substitute_AA,Element_tbl=Element_tbl_m)
+  # 
+  # 
+  # system.time({peptide_symbol1=lapply(uniquepep[1:200],ConvertPeptide,Substitute_AA=Substitute_AA,Element_tbl=Element_tbl)})
+  # system.time({peptide_symbol2=lapply(uniquepep[1:200],ConvertPeptide.2,Substitute_AA=Substitute_AA,Element_tbl=Element_tbl_m)})
+  # 
+  # system.time({peptide_symbol3=bplapply(uniquepep[1:200],ConvertPeptide,BPPARAM = SerialParam(),Substitute_AA=Substitute_AA,Element_tbl=Element_tbl)})
+  # system.time({peptide_symbol4=bplapply(uniquepep[1:200],ConvertPeptide.2,BPPARAM = SerialParam(),Substitute_AA=Substitute_AA,Element_tbl=Element_tbl_m)})
+  # system.time({peptide_symbol5=lapply(uniquepep,ConvertPeptide,Substitute_AA=Substitute_AA,Element_tbl=Element_tbl)})
+  # system.time({peptide_symbol6=lapply(uniquepep,ConvertPeptide.2,Substitute_AA=Substitute_AA,Element_tbl=Element_tbl_m)})
+  
   if (!is.null(Modifications$fixed)){
     mod.df<-Peptide_modification(retrive_ID = Modifications$fixed,mod_position=Modifications$fixmod_position)
     if(length(unique(mod.df$full_name))==length(Modifications$fixed)){
@@ -1304,7 +1319,7 @@ ConvertPeptide_depr<-function (sequence, output = "elements",Substitute_AA=NULL)
   }
 }
 
-BuildElement <- function(Substitute_AA=NULL,uniqueAA=c("A")) {
+BuildElement <- function(Substitute_AA=NULL,uniqueAA=c("A"),element_matrix=F) {
   if (is.null(Substitute_AA)){
     Element_tbl<-list(
       A=c(C = 3L, H = 5L, N = 1L, O = 1L, S = 0L),
@@ -1390,6 +1405,8 @@ BuildElement <- function(Substitute_AA=NULL,uniqueAA=c("A")) {
       message(paste(AA,"is found in database as an uncommon amino acid, use Substitute_AA to define a formula for",AA))
     }
   }
+  
+  if (element_matrix) Element_tbl<-do.call(rbind,Element_tbl)
   
   return(Element_tbl)
 }
@@ -1484,6 +1501,7 @@ ConvertPeptide<-function(sequence,Substitute_AA=NULL, Element_tbl=BuildElement(S
     }
   }
   
+  
   resultsVector["H"] <- resultsVector["H"] + 2L
   resultsVector["O"] <- resultsVector["O"] + 1L
   
@@ -1492,7 +1510,23 @@ ConvertPeptide<-function(sequence,Substitute_AA=NULL, Element_tbl=BuildElement(S
   return(resultsVector)
 }
 
-
+ConvertPeptide.2<-function(sequence,Substitute_AA=NULL, Element_tbl=BuildElement(Substitute_AA,element_matrix = T)){
+  peptideVector<- strsplit(sequence, split = "")[[1]]
+  
+  if (length(peptideVector)==1){
+    resultsVector <- (Element_tbl[peptideVector,])
+  }else{
+    resultsVector <- colSums(Element_tbl[peptideVector,])
+  }
+  
+  
+  resultsVector["H"] <- resultsVector["H"] + 2L
+  resultsVector["O"] <- resultsVector["O"] + 1L
+  
+  resultsVector<- resultsVector[which(resultsVector!=0)]
+  
+  return(resultsVector)
+}
 
 Peptide_Summary_para<- function(Proteins,peplist){
   
