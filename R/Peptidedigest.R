@@ -4358,6 +4358,7 @@ protein_scoring<-function(Protein_feature_list,
   Protein_feature_list<-as.data.frame(Protein_feature_list)
   Peptide_plot_list_rank<-as.data.frame(Peptide_plot_list_rank)
   Peptide_plot_list_rank$Modification[is.na(Peptide_plot_list_rank$Modification)]<-""
+  Protein_feature_list$Modification[is.na(Protein_feature_list$Modification)]<-""
   Peptide_plot_list_rank<-Peptide_plot_list_rank[Peptide_plot_list_rank$Intensity>0,]
   if (!is.null(use_top_rank)){
    Peptide_plot_list_rank<-Peptide_plot_list_rank[,Peptide_plot_list_rank$Rank<=use_top_rank]
@@ -4374,11 +4375,14 @@ protein_scoring<-function(Protein_feature_list,
   #message("sum_pro_pep_count")
   Protein_feature_list_rank$Peptide<-as.character(Protein_feature_list_rank$Peptide)
   sum_pro_pep_count_fun<-function(Protein_feature_list_rank){
-  Protein_feature_list_rank<-as.data.table(Protein_feature_list_rank)
+    suppressMessages(suppressWarnings(require(data.table)))
+    suppressMessages(suppressWarnings(require(dplyr)))
+    sum_pro_pep_count<- Protein_feature_list_rank %>% group_by(.dots=c("Protein","isdecoy")) %>% summarise(peptide_count=length(Peptide))
+  #Protein_feature_list_rank<-as.data.table(Protein_feature_list_rank)
   #Protein_feature_list_rank$isdecoy<-as.factor(Protein_feature_list_rank$isdecoy)
   #Protein_feature_list_rank$Protein<-as.factor(Protein_feature_list_rank$Protein)
-  sum_pro_pep_count<-Protein_feature_list_rank[,length((Peptide)),by=list(Protein,isdecoy)]
-  colnames(sum_pro_pep_count)<-c("Protein","isdecoy","peptide_count")
+  #sum_pro_pep_count<-Protein_feature_list_rank[,length(Peptide),by=list(Protein,isdecoy)]
+  #colnames(sum_pro_pep_count)<-c("Protein","isdecoy","peptide_count")
   return(sum_pro_pep_count)
   }
 
@@ -4488,7 +4492,9 @@ protein_scoring<-function(Protein_feature_list,
     Protein_feature_list_rank$peptide_count<-NULL
     Protein_feature_list_rank<-as.data.table(Protein_feature_list_rank)
     #sum_pro_pep_count<-Protein_feature_list_rank %>% group_by(.dots=c("Protein","isdecoy")) %>% summarize(peptide_count=length(unique(Peptide)))
-    sum_pro_pep_count<-Protein_feature_list_rank[,length((Peptide)),by=list(Protein,isdecoy)]
+    #sum_pro_pep_count<-Protein_feature_list_rank[,length(Peptide),by=list(Protein,isdecoy)]
+    sum_pro_pep_count<- Protein_feature_list_rank %>% group_by(.dots=c("Protein","isdecoy")) %>% summarise(peptide_count=length(Peptide))
+    
     colnames(sum_pro_pep_count)<-c("Protein","isdecoy","peptide_count")
     #Protein_feature_list_rank$Peptide_align1<-Protein_feature_list_rank$Peptide
     Protein_feature_list_rank<-as.data.frame(Protein_feature_list_rank)
