@@ -378,7 +378,7 @@ cluster_image_cardinal_allinone<-function(clusterID,
     
     
     if (plot_layout=="line"){
-      png(outputpngsum,width = 5*((length(candidateunique)+1)),height = 5, bg = "black",units = "in",res = 75)
+      png(outputpngsum,width = 5*((length(candidateunique)+1)),height = 5, bg = "black",units = "in",res = 150)
       par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(1,(length(candidateunique)+1)),
           bty="n",pty="s",xaxt="n",
           yaxt="n",
@@ -386,7 +386,7 @@ cluster_image_cardinal_allinone<-function(clusterID,
       
       
     }else{
-    png(outputpngsum,width = 5*2,height = 5*(ceiling((length(candidateunique)+1)/2)), bg = "black",units = "in",res = 75)
+    png(outputpngsum,width = 5*2,height = 5*(ceiling((length(candidateunique)+1)/2)), bg = "black",units = "in",res = 150)
     par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(ceiling((length(candidateunique)+1)/2), 2),
         bty="n",pty="s",xaxt="n",
         yaxt="n",
@@ -700,7 +700,7 @@ cluster_image_grid<-function(clusterID,
         
         
         if (plot_layout=="line"){
-          png(outputpngsum,width = 5*((length(candidateunique)+1)),height = 5, bg = "black",units = "in",res = 75)
+          png(outputpngsum,width = 5*((length(candidateunique)+1)),height = 5, bg = "black",units = "in",res = 150)
           par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(1,(length(candidateunique)+1)),
               bty="n",pty="s",xaxt="n",
               yaxt="n",
@@ -708,7 +708,7 @@ cluster_image_grid<-function(clusterID,
           
           
         }else{
-          png(outputpngsum,width = 5*2,height = 5*(ceiling((length(candidateunique)+1)/2)), bg = "black",units = "in",res = 75)
+          png(outputpngsum,width = 5*2,height = 5*(ceiling((length(candidateunique)+1)/2)), bg = "black",units = "in",res = 150)
           par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(ceiling((length(candidateunique)+1)/2), 2),
               bty="n",pty="s",xaxt="n",
               yaxt="n",
@@ -1134,10 +1134,10 @@ cluster_image_grid<-function(clusterID,
     
     header_file_png = windows_filename(paste0(clusterID,"_header.png"))
     if (remove_cluster_from_grid){
-      png(header_file_png,width = 5*length(candidateunique),height = 5,units = "in",res = 75)
+      png(header_file_png,width = 5*length(candidateunique),height = 5,units = "in",res = 150)
       
     }else{
-      png(header_file_png,width = 5*length(candidateunique+1),height = 5,units = "in",res = 75)
+      png(header_file_png,width = 5*length(candidateunique+1),height = 5,units = "in",res = 150)
       
     }
     
@@ -1268,7 +1268,7 @@ cluster_image_grid<-function(clusterID,
       footerpng<-paste(workdir,"/",windows_filename(substr(clusterID, 1, 10)),"_footer.png",sep="")
       
       if (footer_style=="Protein"){
-      png(footerpng,width = 5*length(candidateunique+1),height = 5*ceiling(ncharrow/10),units = "in",res = 300)
+      png(footerpng,width = 5*length(candidateunique+1),height = 5*ceiling(ncharrow/10),units = "in",res = 150)
       par(oma=c(0, 0, 0, 0),mar=c(1, 0, 0, 0))
       p <- ggplot(component_int_plot, aes(x, y, label = char)) + 
         geom_label(fill=component_int_plot$col,family = "mono",size=20) + 
@@ -1283,7 +1283,7 @@ cluster_image_grid<-function(clusterID,
       dev.off()
       } else if (footer_style=="Length"){
               
-      png(footerpng,width = 5*length(candidateunique+1),height = 1,units = "in",res = 300)
+      png(footerpng,width = 5*length(candidateunique+1),height = 1,units = "in",res = 150)
       par(oma=c(0, 0, 0, 0),mar=c(1, 0, 0, 0))
       component_int_plot$x=as.factor(1)
       component_int_plot$y=1
