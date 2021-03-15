@@ -11,3 +11,12 @@ docker run --rm -p 80:3838 -v %userprofile%\Documents\expdata:/root/expdata mash
 
 ssh gguo484@md-cer00340.its.auckland.ac.nz
 password:2authentoken
+
+docker run --name hitmap_base -v %userprofile%\Documents\expdata:/root/expdata -a stdin -a stdout -i -t mashuoa/hitmap:base /bin/bash 
+
+#sudo apt-get install vim
+#vim etc/ImageMagick-6/policy.xml
+#change the pixel limit of width and height
+#vi etc/ImageMagick-6/policy.xml
+#cp etc/ImageMagick-6/policy.xml /root/exp/
+#cp /root/expdata/policy.xml etc/ImageMagick-6/ 

@@ -1279,7 +1279,7 @@ imaging_Spatial_Quant<-function(
     setworkdir(paste(workdir,"/Summary folder/Region_feature_analysis/",sep=""))
     library(plotly)
     if (is.null(Spectrum_summary)){Spectrum_summary=read.csv(file = paste(workdir,"/Summary folder/Region_feature_summary.csv",sep=""))}
-    radius_rank=read.csv(file =Virtual_segmentation_rankfile)
+    radius_rank=read.csv(file =paste0(workdir[1],"/",Virtual_segmentation_rankfile))
     if (norm_datafiles){
 
       Spectrum_summary_org=Spectrum_summary
@@ -2639,7 +2639,7 @@ PMF_Cardinal_Datafilelist<-function(datafile,
 
       }
       else if (Segmentation[1]=="Virtual_segmentation"){
-        radius_rank=read.csv(file = Virtual_segmentation_rankfile)
+        radius_rank=read.csv(file = paste0(workdir[1],"/",Virtual_segmentation_rankfile))
         radius_rank=radius_rank[order(radius_rank$Rank),]
         if (is.null(radius_rank$Core)) radius_rank$Core="central"
 
@@ -2963,7 +2963,7 @@ PMF_Cardinal_Datafilelist<-function(datafile,
       }
       else if (Segmentation[1]=="def_file"){
 
-        Segmentation_def_tbl<-read.csv(paste0(workdir[z],"/", Segmentation_def))
+        Segmentation_def_tbl<-read.csv(paste0(workdir[z],"/",paste0(gsub(".imzML$","",datafile[z])  ," ID/"), Segmentation_def))
 
         if(c("datafile") %in% colnames(Segmentation_def_tbl) ){
           Segmentation_def_tbl<-Segmentation_def_tbl[Segmentation_def_tbl$datafile==datafile[z],]

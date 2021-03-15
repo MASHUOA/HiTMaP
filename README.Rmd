@@ -118,6 +118,7 @@ sudo apt-cache policy r-base
 sudo apt-get purge r-base
 sudo apt-get install r-base-core="4.0.2-1.2004.0"
 sudo apt-get install libmagick++-dev
+
 sudo apt-get install libfftw3-dev
 sudo apt-get install r-base-dev texlive-full
 sudo apt-get install libudunits2-dev
