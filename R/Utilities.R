@@ -1134,10 +1134,10 @@ cluster_image_grid<-function(clusterID,
     
     header_file_png = windows_filename(paste0(clusterID,"_header.png"))
     if (remove_cluster_from_grid){
-      png(header_file_png,width = 5*length(candidateunique),height = 5,units = "in",res = 300)
+      png(header_file_png,width = 5*length(candidateunique),height = 5,units = "in",res = 75)
       
     }else{
-      png(header_file_png,width = 5*length(candidateunique+1),height = 5,units = "in",res = 300)
+      png(header_file_png,width = 5*length(candidateunique+1),height = 5,units = "in",res = 75)
       
     }
     
