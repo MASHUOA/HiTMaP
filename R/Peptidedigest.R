@@ -1858,7 +1858,7 @@ PlotPMFsig<-function(pimresultindex,spectrumlist,peplist,pimlist,pimresultlist, 
 
   colnames(df)<-c("mz","mzend","yintercept","intensities","peptide")
   df<-df[df[,"intensities"]>0,]
-  png(paste(getwd(),"\\",windows_filename(str_split(rownamelist,"\\|")[[1]][2]),'.png',sep=""),width = 1980,height = 1080)
+  png(paste(getwd(),"/",windows_filename(str_split(rownamelist,"\\|")[[1]][2]),'.png',sep=""),width = 1980,height = 1080)
   tempsp<-sp+ggtitle(paste(rownamelist,"\nNormalized intensities:",pimresultsl[rownamelist,"Normalized Mean"])) +geom_segment(aes(x = as.numeric(mz), y = as.numeric(yintercept), xend = as.numeric(mzend), yend = as.numeric(intensities), colour =peptide),lineend = "round", data = df,size = 1)
   print(tempsp)
   dev.off()
@@ -1991,14 +1991,14 @@ Plot_Ion_image_Png<- function(WKdir, imagefile, png_filename, mz,adduct="M-H", T
   #x11()
 
 
-  #dev.copy(png,paste(dir,"\\",png_filename,'.png',sep=""))
+  #dev.copy(png,paste(dir,"/",png_filename,'.png',sep=""))
   Tolerance<-round(Tolerance,digits = 5)
-  pngfillewrite<-paste(WKdir,"\\",png_filename,'.png',sep="")
+  pngfillewrite<-paste(WKdir,"/",png_filename,'.png',sep="")
   #pngfillewrite<-nice_file_create(pngfillewrite)
-  png(paste(WKdir,"\\","temp.png",sep=""), bg = "transparent")
+  png(paste(WKdir,"/","temp.png",sep=""), bg = "transparent")
   try(plotMsiSlice(imagefile ,mz , tolerance=Tolerance, legend=FALSE,colRamp=colorRamp(c("black", "blue", "green", "yellow", "red","#FF00FF","white")),interpolate =interpolate ),silent = TRUE)
   dev.off()
-  try(pngfile<-image_read(paste(WKdir,"\\","temp.png",sep="")))
+  try(pngfile<-image_read(paste(WKdir,"/","temp.png",sep="")))
   res <- try(pngfile<-image_trim(pngfile),silent = TRUE)
   if (class(res) != "try-error"){
 
@@ -2024,7 +2024,7 @@ Plot_Ion_image_Png<- function(WKdir, imagefile, png_filename, mz,adduct="M-H", T
       image_write(pngfile,pngfillewrite)
     }
   }
-  file.remove(paste(WKdir,"\\","temp.png",sep=""))
+  file.remove(paste(WKdir,"/","temp.png",sep=""))
 }
 
 Kernel_convolution<-function(Neighbour){
@@ -2175,9 +2175,9 @@ simple_ion_image_cardinal<-function(datafile=tk_choose.files(filter =  matrix(c(
 
 Plot_Ion_image_Png_Cardinal<- function(WKdir, imagefile, png_filename, mz,adduct="M-H", Tolerance= 5, title="",smooth.image = "adaptive",Creat_new_file=TRUE,color="black",contrast.enhance = "suppression"){
   #x11()
-  #dev.copy(png,paste(dir,"\\",png_filename,'.png',sep=""))
+  #dev.copy(png,paste(dir,"/",png_filename,'.png',sep=""))
   Tolerance<-round(Tolerance,digits = 5)
-  pngfillewrite<-paste(WKdir,"\\",png_filename,'.png',sep="")
+  pngfillewrite<-paste(WKdir,"/",png_filename,'.png',sep="")
   #pngfillewrite<-nice_file_create(pngfillewrite)
   tempfilename=tempfile(pattern = "file", tmpdir = tempdir())
   png(paste(tempfilename,".png",sep=""), bg = "transparent")
@@ -2502,7 +2502,7 @@ PMF_Cardinal_Datafilelist<-function(datafile,
 
         skm <-  suppressMessages(suppressWarnings(spatialKMeans(imdata, r=Smooth_range, k=segmentation_num, method="adaptive",ncomp=Segmentation_ncomp_running,BPPARAM =BPPARAM )))
         message(paste0(Segmentation[1], " finished: ",name))
-        png(paste(getwd(),"\\",Segmentation[1],"_image_plot_",segmentation_num,"_segs.png",sep=""),width = 1024,height = 720)
+        png(paste(getwd(),"/",Segmentation[1],"_image_plot_",segmentation_num,"_segs.png",sep=""),width = 1024,height = 720)
 
         par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(1, 2),
             bty="n",pty="s",xaxt="n",
@@ -2512,10 +2512,10 @@ PMF_Cardinal_Datafilelist<-function(datafile,
         print(imagefile)
         dev.off()
         suppressMessages(suppressWarnings(require(magick)))
-        skmimg<-image_read(paste(getwd(),"\\",Segmentation[1],"_image_plot_",segmentation_num,"_segs.png",sep=""))
+        skmimg<-image_read(paste(getwd(),"/",Segmentation[1],"_image_plot_",segmentation_num,"_segs.png",sep=""))
 
 
-        png(paste(getwd(),"\\",Segmentation[1],"_image_plot_",segmentation_num,"_segs_spec.png",sep=""),width = 1024,height = 480*((segmentation_num)))
+        png(paste(getwd(),"/",Segmentation[1],"_image_plot_",segmentation_num,"_segs_spec.png",sep=""),width = 1024,height = 480*((segmentation_num)))
         centers=skm@resultData[[1]][["centers"]]
 
         centers_mz<-skm@featureData@mz
@@ -2533,9 +2533,9 @@ PMF_Cardinal_Datafilelist<-function(datafile,
         grid.arrange( grobs = sp,ncol=1, nrow = ceiling(segmentation_num) )
         dev.off()
 
-        skmimg_spec<-image_read(paste(getwd(),"\\",Segmentation[1],"_image_plot_",segmentation_num,"_segs_spec.png",sep=""))
+        skmimg_spec<-image_read(paste(getwd(),"/",Segmentation[1],"_image_plot_",segmentation_num,"_segs_spec.png",sep=""))
         skmimg<-image_append(c(skmimg,skmimg_spec),stack = T)
-        image_write(skmimg,paste(getwd(),"\\",Segmentation[1],"_image_plot_",segmentation_num,"_segs_append.png",sep=""))
+        image_write(skmimg,paste(getwd(),"/",Segmentation[1],"_image_plot_",segmentation_num,"_segs_append.png",sep=""))
         correlation=as.data.frame(skm@resultData@listData[[1]][["correlation"]])
         correlation[,"mz"]<-as.numeric(gsub("m/z = ","",rownames(correlation)))
         centers=as.data.frame(skm@resultData[[1]][["centers"]])
@@ -2574,7 +2574,7 @@ PMF_Cardinal_Datafilelist<-function(datafile,
         #message(paste0("spatialShrunkenCentroids computing for ",name))
         skm <-  suppressMessages(suppressWarnings(spatialShrunkenCentroids(imdata, r=Smooth_range, k=segmentation_num, method="adaptive",s=3,BPPARAM =BPPARAM)))
         message(paste0(Segmentation[1], " finished: ",name))
-        png(paste(getwd(),"\\",Segmentation[1],"_image_plot_",segmentation_num,"_segs.png",sep=""),width = 1024,height = 720)
+        png(paste(getwd(),"/",Segmentation[1],"_image_plot_",segmentation_num,"_segs.png",sep=""),width = 1024,height = 720)
 
         par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(1, 2),
             bty="n",pty="s",xaxt="n",
@@ -2584,10 +2584,10 @@ PMF_Cardinal_Datafilelist<-function(datafile,
         print(imagefile)
         dev.off()
         suppressMessages(suppressWarnings(require(magick)))
-        skmimg<-image_read(paste(getwd(),"\\",Segmentation[1],"_image_plot_",segmentation_num,"_segs.png",sep=""))
+        skmimg<-image_read(paste(getwd(),"/",Segmentation[1],"_image_plot_",segmentation_num,"_segs.png",sep=""))
 
 
-        png(paste(getwd(),"\\",Segmentation[1],"_image_plot_",segmentation_num,"_segs_spec.png",sep=""),width = 1024,height = 480*((segmentation_num)))
+        png(paste(getwd(),"/",Segmentation[1],"_image_plot_",segmentation_num,"_segs_spec.png",sep=""),width = 1024,height = 480*((segmentation_num)))
         centers=skm@resultData[[1]][["centers"]]
 
         centers_mz<-skm@featureData@mz
@@ -2605,9 +2605,9 @@ PMF_Cardinal_Datafilelist<-function(datafile,
         grid.arrange( grobs = sp,ncol=1, nrow = ceiling(segmentation_num) )
         dev.off()
 
-        skmimg_spec<-image_read(paste(getwd(),"\\",Segmentation[1],"_image_plot_",segmentation_num,"_segs_spec.png",sep=""))
+        skmimg_spec<-image_read(paste(getwd(),"/",Segmentation[1],"_image_plot_",segmentation_num,"_segs_spec.png",sep=""))
         skmimg<-image_append(c(skmimg,skmimg_spec),stack = T)
-        image_write(skmimg,paste(getwd(),"\\",Segmentation[1],"_image_plot_",segmentation_num,"_segs_append.png",sep=""))
+        image_write(skmimg,paste(getwd(),"/",Segmentation[1],"_image_plot_",segmentation_num,"_segs_append.png",sep=""))
         correlation=as.data.frame(skm@resultData@listData[[1]][["correlation"]])
         correlation[,"mz"]<-as.numeric(gsub("m/z = ","",rownames(correlation)))
         centers=as.data.frame(skm@resultData[[1]][["centers"]])
@@ -2920,7 +2920,7 @@ PMF_Cardinal_Datafilelist<-function(datafile,
 
         #set.seed(1)
         #skm <- spatialKMeans(imdata, r=Smooth_range, k=length(unique(coordata$rank)), method="adaptive")
-        #png(paste(getwd(),"\\","spatialKMeans_image",'.png',sep=""),width = 1024,height = 1024)
+        #png(paste(getwd(),"/","spatialKMeans_image",'.png',sep=""),width = 1024,height = 1024)
         #plot(skm, col=c("pink", "blue", "red","orange","navyblue"), type=c('p','h'), key=FALSE)
         #par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(1+ceiling(segmentation_num/2), 2),
         #par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(1, 1),
@@ -2947,7 +2947,7 @@ PMF_Cardinal_Datafilelist<-function(datafile,
         #                        range=c(1000, 5000), centers=c(2000, 3000, 4000),
         #                        resolution=100, step=3.3, as="MSImageSet")
         #msset@pixelData@data[["sample"]]=region_pattern
-        png(paste(getwd(),"\\","Virtual_segmentation",gsub("/"," ",name),'.png',sep=""),width = 1024,height = 1024)
+        png(paste(getwd(),"/","Virtual_segmentation",gsub("/"," ",name),'.png',sep=""),width = 1024,height = 1024)
         #plot(skm, col=c("pink", "blue", "red","orange","navyblue"), type=c('p','h'), key=FALSE)
         #par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(1+ceiling(segmentation_num/2), 2),
         par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(1, 1),
@@ -2988,7 +2988,7 @@ PMF_Cardinal_Datafilelist<-function(datafile,
         }
 
         message("Segmentation_def_tbl loaded, labelled regions: ", paste(names(x),collapse = ", "))
-        png(paste(getwd(),"\\","Segmentation_def_file","_image_plot_",length(levels(Segmentation_def_tbl$label)),"_segs.png",sep=""),width = 1024,height = 720)
+        png(paste(getwd(),"/","Segmentation_def_file","_image_plot_",length(levels(Segmentation_def_tbl$label)),"_segs.png",sep=""),width = 1024,height = 720)
 
         par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(1, 2),
             bty="n",pty="s",xaxt="n",
@@ -3004,7 +3004,7 @@ PMF_Cardinal_Datafilelist<-function(datafile,
         x=1:length(pixels(imdata))
         x=split(x, sort(x%%1))
         names(x)="1"
-        png(paste(getwd(),"\\","Segmentation_none","_image_plot_",segmentation_num,"_segs.png",sep=""),width = 1024,height = 720)
+        png(paste(getwd(),"/","Segmentation_none","_image_plot_",segmentation_num,"_segs.png",sep=""),width = 1024,height = 720)
 
         par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(1, 2),
             bty="n",pty="s",xaxt="n",
@@ -3019,7 +3019,7 @@ PMF_Cardinal_Datafilelist<-function(datafile,
         x=1:length(pixels(imdata))
         x=split(x, sort(x%%1))
         names(x)="1"
-        png(paste(getwd(),"\\","Segmentation_none","_image_plot_",segmentation_num,"_segs.png",sep=""),width = 1024,height = 720)
+        png(paste(getwd(),"/","Segmentation_none","_image_plot_",segmentation_num,"_segs.png",sep=""),width = 1024,height = 720)
 
         par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(1, 2),
             bty="n",pty="s",xaxt="n",
@@ -3033,7 +3033,7 @@ PMF_Cardinal_Datafilelist<-function(datafile,
       x=1:length(pixels(imdata))
       x=split(x, sort(x%%1))
       names(x)="1"
-      png(paste(getwd(),"\\","Segmentation_none","_image_plot_",segmentation_num,"_segs.png",sep=""),width = 1024,height = 720)
+      png(paste(getwd(),"/","Segmentation_none","_image_plot_",segmentation_num,"_segs.png",sep=""),width = 1024,height = 720)
 
       par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(1, 2),
           bty="n",pty="s",xaxt="n",
@@ -5056,7 +5056,7 @@ PMF_Cardinal_Datafilelist_quant<-function (datafile, Peptide_Summary_searchlist,
                            method = "adaptive")
       message(paste0("spatialKMeans finished for ",
                      name))
-      png(paste(getwd(), "\\", "spatialKMeans_image_plot",
+      png(paste(getwd(), "/", "spatialKMeans_image_plot",
                 ".png", sep = ""), width = 1024,
           height = 720)
       par(oma = c(0, 0, 0, 0), tcl = NA, mar = c(0, 0,
@@ -5108,7 +5108,7 @@ PMF_Cardinal_Datafilelist_quant<-function (datafile, Peptide_Summary_searchlist,
                            method = "adaptive",...)
       message(paste0("spatialShrunkenCentroids finished for ",
                      name))
-      png(paste(getwd(), "\\", "spatialShrunkenCentroids_image_plot",
+      png(paste(getwd(), "/", "spatialShrunkenCentroids_image_plot",
                 ".png", sep = ""), width = 1024,
           height = 720)
       par(oma = c(0, 0, 0, 0), tcl = NA, mar = c(0, 0,
@@ -5254,7 +5254,7 @@ PMF_Cardinal_Datafilelist_quant<-function (datafile, Peptide_Summary_searchlist,
       set.seed(1)
       skm <- spatialKMeans(imdata, r = Smooth_range, k = length(unique(coordata$rank)),
                            method = "adaptive")
-      png(paste(getwd(), "\\", "spatialKMeans_image",
+      png(paste(getwd(), "/", "spatialKMeans_image",
                 ".png", sep = ""), width = 1024,
           height = 1024)
       par(oma = c(0, 0, 0, 0), tcl = NA, mar = c(0, 0,
@@ -5273,7 +5273,7 @@ PMF_Cardinal_Datafilelist_quant<-function (datafile, Peptide_Summary_searchlist,
                                ", k = ", length(unique(coordata$rank)))]][["cluster"]][[rownames(coordata)[i]]] = factor(coordata[i,
                                                                                                                                   "rank"], levels = unique(coordata$rank))
       }
-      png(paste(getwd(), "\\", "Virtual_segmentation",
+      png(paste(getwd(), "/", "Virtual_segmentation",
                 gsub("/", " ", name), ".png",
                 sep = ""), width = 1024, height = 1024)
       par(oma = c(0, 0, 0, 0), tcl = NA, mar = c(0, 0,

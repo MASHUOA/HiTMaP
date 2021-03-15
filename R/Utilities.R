@@ -2571,7 +2571,7 @@ Preprocessing_segmentation<-function(datafile,
         
       }
       else if (Segmentation[1]=="Virtual_segmentation"){
-        radius_rank=read.csv(file = Virtual_segmentation_rankfile)
+        radius_rank=read.csv(file = paste0(workdir[1],"/",Virtual_segmentation_rankfile))
         radius_rank=radius_rank[order(radius_rank$Rank),]
         if (is.null(radius_rank$Core)) radius_rank$Core="central"
         
