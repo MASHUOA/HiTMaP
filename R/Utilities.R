@@ -2223,19 +2223,11 @@ Preprocessing_segmentation<-function(datafile,
       datafile_imzML[z]<-paste0(datafile[z],".imzML")
     }
     setwd(workdir[z])
-    #message("Porject dir",workdir)
-    # imdata <- Cardinal::readMSIData(datafile_imzML[z],  attach.only=T,as="MSImagingExperiment",resolution=200, units="ppm",BPPARAM=BPPARAM,mass.range =mzrange)
-    # if(!is.na(rotate[datafile_imzML[z]])){
-    #   imdata <-rotateMSI(imdata=imdata,rotation_degree=rotate[datafile_imzML[z]])
-    # }else if(!is.na(rotate[datafile[z]])){
-    #   imdata <-rotateMSI(imdata=imdata,rotation_degree=rotate[datafile[z]])
-    # }
-    # 
     if (ppm>=25) {
       instrument_ppm=50
     }else{
       instrument_ppm=8
-    }      
+    }
     
     
     if (dir.exists(paste0(gsub(".imzML$","",datafile[z]) ," ID"))==FALSE){
@@ -2261,57 +2253,58 @@ Preprocessing_segmentation<-function(datafile,
       message("Preparing image data for statistical analysis: ",paste0(gsub(".imzML$","",datafile[z]), ".imzML"))
       if (!is.null(preprocess)){
         if  ( ppm<25){
-          imdata_ed<-imdata 
-            #smoothSignal(method="gaussian") %>% 
-            #reduceBaseline(method="locmin") %>%
-            if (preprocess$smoothSignal$method=="Disable") {
-            }else if (!is.null(preprocess$smoothSignal$method)){
-              imdata_ed<- imdata_ed %>% smoothSignal(method=preprocess$smoothSignal$method)
-            }else{
-              imdata_ed<- imdata_ed %>% smoothSignal(method="gaussian")
-            }
+          imdata_ed<-imdata
+          #smoothSignal(method="gaussian") %>%
+          #reduceBaseline(method="locmin") %>%
+          if (preprocess$smoothSignal$method=="Disable") {
+          }else if (!is.null(preprocess$smoothSignal$method)){
+            #imdata_ed<- imdata_ed %>% smoothSignal(method=preprocess$smoothSignal$method)
+          }else{
+            #imdata_ed<- imdata_ed %>% smoothSignal(method="gaussian")
+          }
           
-            if (!is.null(preprocess$reduceBaseline$method)){
-              imdata_ed<- imdata_ed %>% reduceBaseline(method=preprocess$reduceBaseline$method)
-            }else{
-              
-            }
+          if (!is.null(preprocess$reduceBaseline$method)){
+            imdata_ed<- imdata_ed %>% reduceBaseline(method=preprocess$reduceBaseline$method)
+          }else{
             
-            if (preprocess$peakPick$method=="Disable") {
-            }else if (!is.null(preprocess$peakPick$method)){
-              imdata_ed<- imdata_ed %>% peakPick(method=preprocess$peakPick$method)
-            }else{
-              imdata_ed<- imdata_ed %>% peakPick(method="adaptive")
-            }
+          }
           
-            if (preprocess$peakAlign$tolerance==0) {
-            }else if ('&'(!is.null(preprocess$peakAlign$tolerance),!is.null(preprocess$peakAlign$tolerance))){
-              imdata_ed<- imdata_ed %>% peakAlign(tolerance=preprocess$peakAlign$tolerance, units=preprocess$peakAlign$units)
-            }else {
-              imdata_ed<- imdata_ed %>% peakAlign(tolerance=ppm, units="ppm")
-            }
+          if (preprocess$peakPick$method=="Disable") {
+          }else if (!is.null(preprocess$peakPick$method)){
+            imdata_ed<- imdata_ed %>% peakPick(method=preprocess$peakPick$method)
+          }else{
+            imdata_ed<- imdata_ed %>% peakPick(method="adaptive")
+          }
           
-            imdata_ed<- imdata_ed %>% process()
+          if (preprocess$peakAlign$tolerance==0) {
+          }else if ('&'(!is.null(preprocess$peakAlign$tolerance),!is.null(preprocess$peakAlign$tolerance))){
+            
+            imdata_ed<- imdata_ed %>% peakAlign(tolerance=preprocess$peakAlign$tolerance, units=preprocess$peakAlign$units)
+          }else {
+            imdata_ed<- imdata_ed %>% peakAlign(tolerance=ppm, units="ppm")
+          }
           
-            if (!is.null(preprocess$normalize)){
-            if (preprocess$normalize$method=="Disable") { 
-              } else if (preprocess$normalize$method %in% c("rms","tic")){
+          imdata_ed<- imdata_ed %>% process()
+          
+          if (!is.null(preprocess$normalize)){
+            if (preprocess$normalize$method=="Disable") {
+            } else if (preprocess$normalize$method %in% c("rms","tic")){
               imdata_ed<- imdata_ed %>% normalize(method=preprocess$normalize$method) %>% process()
             } else if ('&'(preprocess$normalize$method == "reference", !is.null(preprocess$normalize$mz))){
               norm_feature<-which(dplyr::between(imdata_ed@featureData@mz,
-                                          preprocess$normalize$mz*(1-ppm/1000000),
-                                          preprocess$normalize$mz*(1+ppm/1000000)))
+                                                 preprocess$normalize$mz*(1-ppm/1000000),
+                                                 preprocess$normalize$mz*(1+ppm/1000000)))
               if (length(norm_feature)>=1){
-              imdata_ed<- imdata_ed %>% normalize(method=preprocess$normalize$method, feature = norm_feature) %>% process(BPPARAM=SerialParam())
+                imdata_ed<- imdata_ed %>% normalize(method=preprocess$normalize$method, feature = norm_feature) %>% process(BPPARAM=SerialParam())
               }
             } else {
               imdata_ed<- imdata_ed %>% normalize(method="rms") %>% process()
             }
-            }
-            
+          }
+          
         } else if(ppm>=25){
-          imdata_ed<-imdata 
-          #smoothSignal(method="gaussian") %>% 
+          imdata_ed<-imdata
+          #smoothSignal(method="gaussian") %>%
           #reduceBaseline(method="locmin") %>%
           if (!is.null(preprocess$smoothSignal$method)){
             imdata_ed<- imdata_ed %>% smoothSignal(method=preprocess$smoothSignal$method)
@@ -2332,6 +2325,7 @@ Preprocessing_segmentation<-function(datafile,
           }
           
           if ('&'(!is.null(preprocess$peakAlign$tolerance),!is.null(preprocess$peakAlign$tolerance))){
+            
             imdata_ed<- imdata_ed %>% peakAlign(tolerance=preprocess$peakAlign$tolerance, units=preprocess$peakAlign$units)
           }else{
             imdata_ed<- imdata_ed %>% peakAlign(tolerance=ppm, units="ppm")
@@ -2355,7 +2349,7 @@ Preprocessing_segmentation<-function(datafile,
             }
           }
         }
-        saveRDS(imdata_ed,paste0(gsub(".imzML$","",datafile[z])  ," ID/preprocessed_imdata.RDS"),compress = F)  
+        saveRDS(imdata_ed,paste0(gsub(".imzML$","",datafile[z])  ," ID/preprocessed_imdata.RDS"),compress = F)
       }}else{
         imdata_ed<-readRDS(paste0(gsub(".imzML$","",datafile[z])  ," ID/preprocessed_imdata.RDS"))
       }
@@ -2392,22 +2386,21 @@ Preprocessing_segmentation<-function(datafile,
         
       }else{
         imdata_ed<-imdata
-      }  
+      }
     }
-    imdata_org<-imdata  
+    imdata_org<-imdata
     imdata<-imdata_ed
     
     coordata=as.data.frame(imdata@elementMetadata@coord)
     
-    setwd(paste0(gsub(".imzML$","",datafile[z])  ," ID")) 
-    
+    setwd(paste0(gsub(".imzML$","",datafile[z])  ," ID"))
     
     if (Bypass_Segmentation!=T){
       message("Segmentation in progress...")
       #cl=autoStopCluster(makeCluster(6))
       if (Segmentation[1]=="PCA") {
         if ('&'(Segmentation_ncomp=="auto-detect",Segmentation_variance_coverage>0)){
-
+          
           Segmentation_ncomp_running<-PCA_ncomp_selection(imdata=imdata,variance_coverage=Segmentation_variance_coverage,outputdir=paste0(getwd(),"/"))
         }else{Segmentation_ncomp_running<-Segmentation_ncomp}
       }
@@ -2419,7 +2412,7 @@ Preprocessing_segmentation<-function(datafile,
         
         skm <-  suppressMessages(suppressWarnings(spatialKMeans(imdata, r=Smooth_range, k=segmentation_num, method="adaptive",ncomp=Segmentation_ncomp_running,BPPARAM =BPPARAM )))
         message(paste0(Segmentation[1], " finished: ",name))
-        png(paste(getwd(),"\\",Segmentation[1],"_image_plot_",segmentation_num,"_segs.png",sep=""),width = 1024,height = 720)
+        png(paste(getwd(),"/",Segmentation[1],"_image_plot_",segmentation_num,"_segs.png",sep=""),width = 1024,height = 720)
         
         par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(1, 2),
             bty="n",pty="s",xaxt="n",
@@ -2429,10 +2422,10 @@ Preprocessing_segmentation<-function(datafile,
         print(imagefile)
         dev.off()
         suppressMessages(suppressWarnings(require(magick)))
-        skmimg<-image_read(paste(getwd(),"\\",Segmentation[1],"_image_plot_",segmentation_num,"_segs.png",sep=""))
+        skmimg<-image_read(paste(getwd(),"/",Segmentation[1],"_image_plot_",segmentation_num,"_segs.png",sep=""))
         
         
-        png(paste(getwd(),"\\",Segmentation[1],"_image_plot_",segmentation_num,"_segs_spec.png",sep=""),width = 1024,height = 480*((segmentation_num)))
+        png(paste(getwd(),"/",Segmentation[1],"_image_plot_",segmentation_num,"_segs_spec.png",sep=""),width = 1024,height = 480*((segmentation_num)))
         centers=skm@resultData[[1]][["centers"]]
         
         centers_mz<-skm@featureData@mz
@@ -2450,9 +2443,9 @@ Preprocessing_segmentation<-function(datafile,
         grid.arrange( grobs = sp,ncol=1, nrow = ceiling(segmentation_num) )
         dev.off()
         
-        skmimg_spec<-image_read(paste(getwd(),"\\",Segmentation[1],"_image_plot_",segmentation_num,"_segs_spec.png",sep=""))
+        skmimg_spec<-image_read(paste(getwd(),"/",Segmentation[1],"_image_plot_",segmentation_num,"_segs_spec.png",sep=""))
         skmimg<-image_append(c(skmimg,skmimg_spec),stack = T)
-        image_write(skmimg,paste(getwd(),"\\",Segmentation[1],"_image_plot_",segmentation_num,"_segs_append.png",sep=""))
+        image_write(skmimg,paste(getwd(),"/",Segmentation[1],"_image_plot_",segmentation_num,"_segs_append.png",sep=""))
         correlation=as.data.frame(skm@resultData@listData[[1]][["correlation"]])
         correlation[,"mz"]<-as.numeric(gsub("m/z = ","",rownames(correlation)))
         centers=as.data.frame(skm@resultData[[1]][["centers"]])
@@ -2460,14 +2453,7 @@ Preprocessing_segmentation<-function(datafile,
         cluster=as.data.frame(skm@resultData[[1]][["cluster"]])
         cluster$Coor=rownames(cluster)
         cluster_df<-data.frame(Coor=rownames(cluster),class=skm@resultData[[1]][["cluster"]])
-        ##write.csv(correlation,paste(Segmentation[1],"_RESULT","correlation",segmentation_num,"segs.csv"),row.names = F)
-        #write.csv(centers,paste(Segmentation[1],"_RESULT","centers",segmentation_num,"segs.csv"),row.names = F)
         write.csv(cluster_df,paste(Segmentation[1],"_RESULT","cluster",segmentation_num,"segs.csv"),row.names = F)
-        
-        
-        #cluster=skm@resultData[["r = 1, k = 5"]][["cluster"]]
-        
-        
         y=skm@resultData[[1]][["cluster"]]
         y=as.data.frame(y)
         rownames(y)=1:nrow(y)
@@ -2478,20 +2464,15 @@ Preprocessing_segmentation<-function(datafile,
           listname=as.character(regions[i])
           x[[listname]]<-y[y[, 1] == regions[i], "pixel"]
         }
-        
-        
-        
-        
       }
       else if (Segmentation[1]=="spatialShrunkenCentroids" && segmentation_num!=1) {
         set.seed(1)
         if ('&'(Segmentation_ncomp=="auto-detect",Segmentation_variance_coverage>0)){
           Segmentation_ncomp_running<-PCA_ncomp_selection(imdata=imdata,variance_coverage=Segmentation_variance_coverage,outputdir=paste0(getwd(),"/"))
         }else{Segmentation_ncomp_running<-Segmentation_ncomp}
-        #message(paste0("spatialShrunkenCentroids computing for ",name))
         skm <-  suppressMessages(suppressWarnings(spatialShrunkenCentroids(imdata, r=Smooth_range, k=segmentation_num, method="adaptive",s=3,BPPARAM =BPPARAM)))
         message(paste0(Segmentation[1], " finished: ",name))
-        png(paste(getwd(),"\\",Segmentation[1],"_image_plot_",segmentation_num,"_segs.png",sep=""),width = 1024,height = 720)
+        png(paste(getwd(),"/",Segmentation[1],"_image_plot_",segmentation_num,"_segs.png",sep=""),width = 1024,height = 720)
         
         par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(1, 2),
             bty="n",pty="s",xaxt="n",
@@ -2501,10 +2482,10 @@ Preprocessing_segmentation<-function(datafile,
         print(imagefile)
         dev.off()
         suppressMessages(suppressWarnings(require(magick)))
-        skmimg<-image_read(paste(getwd(),"\\",Segmentation[1],"_image_plot_",segmentation_num,"_segs.png",sep=""))
+        skmimg<-image_read(paste(getwd(),"/",Segmentation[1],"_image_plot_",segmentation_num,"_segs.png",sep=""))
         
         
-        png(paste(getwd(),"\\",Segmentation[1],"_image_plot_",segmentation_num,"_segs_spec.png",sep=""),width = 1024,height = 480*((segmentation_num)))
+        png(paste(getwd(),"/",Segmentation[1],"_image_plot_",segmentation_num,"_segs_spec.png",sep=""),width = 1024,height = 480*((segmentation_num)))
         centers=skm@resultData[[1]][["centers"]]
         
         centers_mz<-skm@featureData@mz
@@ -2522,9 +2503,9 @@ Preprocessing_segmentation<-function(datafile,
         grid.arrange( grobs = sp,ncol=1, nrow = ceiling(segmentation_num) )
         dev.off()
         
-        skmimg_spec<-image_read(paste(getwd(),"\\",Segmentation[1],"_image_plot_",segmentation_num,"_segs_spec.png",sep=""))
+        skmimg_spec<-image_read(paste(getwd(),"/",Segmentation[1],"_image_plot_",segmentation_num,"_segs_spec.png",sep=""))
         skmimg<-image_append(c(skmimg,skmimg_spec),stack = T)
-        image_write(skmimg,paste(getwd(),"\\",Segmentation[1],"_image_plot_",segmentation_num,"_segs_append.png",sep=""))
+        image_write(skmimg,paste(getwd(),"/",Segmentation[1],"_image_plot_",segmentation_num,"_segs_append.png",sep=""))
         correlation=as.data.frame(skm@resultData@listData[[1]][["correlation"]])
         correlation[,"mz"]<-as.numeric(gsub("m/z = ","",rownames(correlation)))
         centers=as.data.frame(skm@resultData[[1]][["centers"]])
@@ -2605,7 +2586,7 @@ Preprocessing_segmentation<-function(datafile,
               coordata['&'(coordata$x==min,coordata$y==y),"edge"]=TRUE
             }
             
-          }else { 
+          }else {
             if(center_type=="southeast"){
               uniquex=unique(coordata$x)
               uniquey=unique(coordata$y)
@@ -2686,22 +2667,7 @@ Preprocessing_segmentation<-function(datafile,
         
         coordata=findedge(coordata,center_type=unique(radius_rank$Core))
         
-        
-        
-        #paste0("v",colnames(coordistmatrix[coordistmatrix$sum==min(coordistmatrix$sum),]))
-        
-        #center_dist=t(coordistmatrix[which.min(coordistmatrix$sum),])
-        
-        
-        #plot(rownames(coordistmatrix),coordistmatrix$sum)
-        
-        #write.csv(radius_rank,file = "radius_rank.csv", row.names = F)
-        
-        
-        
         rank_pixel<-function(coordata,coordistmatrix,radius_rank){
-          #coordata[coordata$edge==TRUE,]=coordata[coordata$edge==TRUE,]
-          
           if (unique(radius_rank$Core)=="central"){
             shape_center=coordata[coordistmatrix$sum==min(coordistmatrix$sum),]
             center_dist=t(coordistmatrix[which.min(coordistmatrix$sum),1:nrow(coordata)])
@@ -2711,21 +2677,15 @@ Preprocessing_segmentation<-function(datafile,
             df=To-From
             center_edge_angle=cbind(coordata[,1:2],cart2pol(df$x, df$y, degrees = F),edge=coordata[,"edge"])
             center_edge_angle_sdge=center_edge_angle[center_edge_angle$edge==TRUE,]
-            coordata$rank=0 
-            coordata$pattern=""       
+            coordata$rank=0
+            coordata$pattern=""
             
             for (i in 1: (nrow(coordata))){
               
-              
-              #From <- coordata[i,][rep(seq_len(nrow(coordata[i,])), each=nrow(coordata[coordata$edge==TRUE,])),1:2]
-              #To <- coordata[coordata$edge==TRUE,][,1:2]
-              
-              if (coordata$edge[i]!=TRUE){      
+              if (coordata$edge[i]!=TRUE){
                 df=coordata[i,1:2]-shape_center[,1:2]
                 point_center_angle=cbind(coordata[i,1:2],cart2pol(df$x, df$y, degrees = F))
                 pointedge=center_edge_angle_sdge[which(abs(center_edge_angle_sdge$theta-point_center_angle$theta)==min(abs(center_edge_angle_sdge$theta-point_center_angle$theta))),]
-                #message(pointedge)
-                
                 pointedge=pointedge[which.min(pointedge$r),]
                 to_edge=coordistmatrix[[i]]['&'(coordata$x==pointedge$x,coordata$y==pointedge$y)]
               }else{to_edge=0}
@@ -2745,29 +2705,24 @@ Preprocessing_segmentation<-function(datafile,
             }
             coordata$rank<-factor(coordata$rank)
             coordata
-          }else { 
+          }else {
             if(unique(radius_rank$Core)=="southeast"){
-              #shape_center=coordata['&'(coordata$x>=max(coordata$x)-1,coordata$y>=max(coordata$y)-1),]
               shape_center=coordata[1,]
               shape_center$x=max(coordata$x)
               shape_center$y=max(coordata$y)
               coordata_new<-rbind(coordata,shape_center)
               center_dist=bplapply(nrow(coordata_new),coordist_para,coordata_new,BPPARAM = BPPARAM)[[1]]
-              #center_dist=t(coordistmatrix[which.min(coordistmatrix$sum),1:nrow(coordata)])
             } else if(unique(radius_rank$Core)=="northeast"){
-              #shape_center=coordata['&'(coordata$x>=max(coordata$x)-1,coordata$y>=max(coordata$y)-1),]
               shape_center=coordata[1,]
               shape_center$x=max(coordata$x)
               shape_center$y=min(coordata$y)
               
             }else if(unique(radius_rank$Core)=="northwest"){
-              #shape_center=coordata['&'(coordata$x>=max(coordata$x)-1,coordata$y>=max(coordata$y)-1),]
               shape_center=coordata[1,]
               shape_center$x=min(coordata$x)
               shape_center$y=min(coordata$y)
               
             }else if(unique(radius_rank$Core)=="southwest"){
-              #shape_center=coordata['&'(coordata$x>=max(coordata$x)-1,coordata$y>=max(coordata$y)-1),]
               shape_center=coordata[1,]
               shape_center$x=min(coordata$x)
               shape_center$y=max(coordata$y)
@@ -2775,30 +2730,22 @@ Preprocessing_segmentation<-function(datafile,
             }
             
             library(useful)
-            coordata$rank=0 
-            coordata$pattern=""       
+            coordata$rank=0
+            coordata$pattern=""
             From <- shape_center[rep(seq_len(nrow(shape_center)), each=nrow(coordata)),1:2]
             To <- coordata[,1:2]
             df=To-From
             center_edge_angle=cbind(coordata[,1:2],cart2pol(df$x, df$y, degrees = F),edge=coordata[,"edge"])
             center_edge_angle_sdge=center_edge_angle[center_edge_angle$edge==TRUE,]
-            coordata$rank=0 
-            coordata$pattern=""      
+            coordata$rank=0
+            coordata$pattern=""
             for (i in 1: (nrow(coordata))){
-              
-              
-              #From <- coordata[i,][rep(seq_len(nrow(coordata[i,])), each=nrow(coordata[coordata$edge==TRUE,])),1:2]
-              #To <- coordata[coordata$edge==TRUE,][,1:2]
               
               df=coordata[i,1:2]-shape_center[,1:2]
               point_center_angle=cbind(coordata[i,1:2],cart2pol(df$x, df$y, degrees = F))
               pointedge=center_edge_angle_sdge[which(abs(center_edge_angle_sdge$theta-point_center_angle$theta)==min(abs(center_edge_angle_sdge$theta-point_center_angle$theta))),]
-              #message(pointedge)
-              
               pointedge=pointedge[which.min(pointedge$r),]
               to_edge=coordistmatrix[[i]]['&'(coordata$x==pointedge$x,coordata$y==pointedge$y)]
-              
-              
               to_center=center_dist[i]
               total=to_edge+to_center
               
@@ -2813,16 +2760,9 @@ Preprocessing_segmentation<-function(datafile,
             }
             coordata$rank<-factor(coordata$rank)
             coordata
-            
           }
-          
-          
-          
         }
-        
         coordata=rank_pixel(coordata,coordistmatrix,radius_rank)
-        
-        
         x=NULL
         
         for (rank in coordata$rank){
@@ -2833,40 +2773,9 @@ Preprocessing_segmentation<-function(datafile,
         write.csv(coordata,"coordata.csv",row.names = F)
         
         region_pattern <- factor(coordata$pattern,levels=unique(coordata$pattern), labels=unique(coordata$pattern))
-        #image(imdata, region_pattern ~ x * y, key=T)
         
-        #set.seed(1)
-        #skm <- spatialKMeans(imdata, r=Smooth_range, k=length(unique(coordata$rank)), method="adaptive")
-        #png(paste(getwd(),"\\","spatialKMeans_image",'.png',sep=""),width = 1024,height = 1024)
-        #plot(skm, col=c("pink", "blue", "red","orange","navyblue"), type=c('p','h'), key=FALSE)
-        #par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(1+ceiling(segmentation_num/2), 2),
-        #par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(1, 1),
-        #    bty="n",pty="s",xaxt="n",
-        #    yaxt="n",
-        #    no.readonly = TRUE,ann=FALSE)
-        #print(Cardinal::image(imdata, col=brewer.pal_n(segmentation_num,colorstyle)[1:segmentation_num], key=FALSE, ann=FALSE,axes=FALSE))
+        png(paste(getwd(),"/","Virtual_segmentation",gsub("/"," ",name),'.png',sep=""),width = 1024,height = 1024)
         
-        #legend("topright", legend=1:segmentation_num, fill=brewer.pal_n(segmentation_num,colorstyle), col=brewer.pal_n(segmentation_num,"Paired"), bg="transparent",xpd=TRUE,cex = 1)
-        
-        #Cardinal::plot(skm, col=brewer.pal_n(segmentation_num,colorstyle)[1:segmentation_num], type=c('p','h'), key=FALSE)
-        #Cardinal::plot(skm, col=brewer.pal_n(segmentation_num,colorstyle)[1:segmentation_num], type=c('p','h'), key=FALSE,mode="centers")
-        #Cardinal::plot(skm, col=brewer.pal_n(segmentation_num,colorstyle)[1:segmentation_num], type=c('p','h'), key=FALSE,mode="betweenss")
-        #dev.off()
-        
-        #for (i in 1:nrow(coordata)){
-        #skm@resultData[[paste0("r = ",Smooth_range, ", k = ",length(unique(coordata$rank)))]][["cluster"]][[rownames(coordata)[i]]]=factor(coordata[i,"rank"],levels=unique(coordata$rank))
-        
-        #}
-        
-        #Cardinal::image(imdata, col=brewer.pal_n(segmentation_num,colorstyle)[1:segmentation_num], key=FALSE, ann=FALSE,axes=FALSE,groups =pattern)
-        
-        #msset <- generateImage(region_pattern, coord=coordata[,1:2],
-        #                        range=c(1000, 5000), centers=c(2000, 3000, 4000),
-        #                        resolution=import_ppm00, step=3.3, as="MSImageSet")
-        #msset@pixelData@data[["sample"]]=region_pattern
-        png(paste(getwd(),"\\","Virtual_segmentation",gsub("/"," ",name),'.png',sep=""),width = 1024,height = 1024)
-        #plot(skm, col=c("pink", "blue", "red","orange","navyblue"), type=c('p','h'), key=FALSE)
-        #par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(1+ceiling(segmentation_num/2), 2),
         par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(1, 1),
             bty="n",pty="s",xaxt="n",
             yaxt="n",
@@ -2878,23 +2787,24 @@ Preprocessing_segmentation<-function(datafile,
         
         
       }
-      else if (Segmentation=="def_file"){
+      
+      else if (Segmentation[1]=="def_file"){
         
-        Segmentation_def_tbl<-read.csv(paste0(workdir[z],"/", Segmentation_def))
+        Segmentation_def_tbl<-read.csv(paste0(workdir[z],"/",paste0(gsub(".imzML$","",datafile[z])  ," ID/"), Segmentation_def))
         
         if(c("datafile") %in% colnames(Segmentation_def_tbl) ){
-         Segmentation_def_tbl<-Segmentation_def_tbl[Segmentation_def_tbl$datafile==datafile[z],] 
+          Segmentation_def_tbl<-Segmentation_def_tbl[Segmentation_def_tbl$datafile==datafile[z],]
         }
         
         if(c("pixel") %in% colnames(Segmentation_def_tbl) ){
-        Segmentation_def_tbl<-Segmentation_def_tbl[order(Segmentation_def_tbl$pixel),]
+          Segmentation_def_tbl<-Segmentation_def_tbl[order(Segmentation_def_tbl$pixel),]
         }else if (c("Coor") %in% colnames(Segmentation_def_tbl)){
-        Segmentation_def_tbl<-Segmentation_def_tbl[order(Segmentation_def_tbl$Coor),]
+          Segmentation_def_tbl<-Segmentation_def_tbl[order(Segmentation_def_tbl$Coor),]
         }
         if(c("label") %in% colnames(Segmentation_def_tbl) ){
-        Segmentation_def_tbl$label<-as.factor(Segmentation_def_tbl$label)
+          Segmentation_def_tbl$label<-as.factor(Segmentation_def_tbl$label)
         }else if (c("class") %in% colnames(Segmentation_def_tbl)){
-        Segmentation_def_tbl$label<-as.factor(Segmentation_def_tbl$class)
+          Segmentation_def_tbl$label<-as.factor(Segmentation_def_tbl$class)
         }
         x=NULL
         
@@ -2905,7 +2815,7 @@ Preprocessing_segmentation<-function(datafile,
         }
         
         message("Segmentation_def_tbl loaded, labelled regions: ", paste(names(x),collapse = ", "))
-        png(paste(getwd(),"\\","Segmentation_def_file","_image_plot_",length(levels(Segmentation_def_tbl$label)),"_segs.png",sep=""),width = 1024,height = 720)
+        png(paste(getwd(),"/","Segmentation_def_file","_image_plot_",length(levels(Segmentation_def_tbl$label)),"_segs.png",sep=""),width = 1024,height = 720)
         
         par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(1, 2),
             bty="n",pty="s",xaxt="n",
@@ -2919,9 +2829,9 @@ Preprocessing_segmentation<-function(datafile,
       else {
         
         x=1:length(pixels(imdata))
-        x=split(x, sort(x%%1)) 
+        x=split(x, sort(x%%1))
         names(x)="1"
-        png(paste(getwd(),"\\","Segmentation_none","_image_plot_",segmentation_num,"_segs.png",sep=""),width = 1024,height = 720)
+        png(paste(getwd(),"/","Segmentation_none","_image_plot_",segmentation_num,"_segs.png",sep=""),width = 1024,height = 720)
         
         par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(1, 2),
             bty="n",pty="s",xaxt="n",
@@ -2930,10 +2840,39 @@ Preprocessing_segmentation<-function(datafile,
         imagefile<-Cardinal::image(imdata, factor(rep(1,length(pixels(imdata)))) ~ x * y, key=T, ann=FALSE,axes=FALSE)
         print(imagefile)
         dev.off()
-      } 
+      }
+    } else if (Segmentation[1]=="none"){
+      
+      x=1:length(pixels(imdata))
+      x=split(x, sort(x%%1))
+      names(x)="1"
+      png(paste(getwd(),"/","Segmentation_none","_image_plot_",segmentation_num,"_segs.png",sep=""),width = 1024,height = 720)
+      
+      par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(1, 2),
+          bty="n",pty="s",xaxt="n",
+          yaxt="n",
+          no.readonly = TRUE,ann=F)
+      imagefile<-Cardinal::image(imdata, factor(rep(1,length(pixels(imdata)))) ~ x * y, key=T, ann=FALSE,axes=FALSE)
+      print(imagefile)
+      dev.off()
+    }else {
+      
+      x=1:length(pixels(imdata))
+      x=split(x, sort(x%%1))
+      names(x)="1"
+      png(paste(getwd(),"/","Segmentation_none","_image_plot_",segmentation_num,"_segs.png",sep=""),width = 1024,height = 720)
+      
+      par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(1, 2),
+          bty="n",pty="s",xaxt="n",
+          yaxt="n",
+          no.readonly = TRUE,ann=F)
+      imagefile<-Cardinal::image(imdata, factor(rep(1,length(pixels(imdata)))) ~ x * y, key=T, ann=FALSE,axes=FALSE)
+      print(imagefile)
+      dev.off()
     }
   }
-  return("workflow successfully completed")
+  message("workflow successfully completed")
+  return(x)
 }
 
 
