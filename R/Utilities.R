@@ -3164,9 +3164,7 @@ if (`|`(deconv_peaklist=="New",!file.exists(paste0(workdir[1],"/","ClusterIMS_de
   deconv_peaklist_bind<-deconv_peaklist_bind[order(deconv_peaklist_bind$m.z),]
   
   rownames(deconv_peaklist_bind)<-1:nrow(deconv_peaklist_bind)
-  
-  #deconv_peaklist_bind_nonredun<-deconv_peaklist_bind %>% group_by(m.z) %>% summarise(intensities=intensities)
-  
+
   deconv_peaklist_decov<-HiTMaP:::isopattern_ppm_filter_peaklist(deconv_peaklist_bind,ppm=ppm,threshold=threshold)
   
   write.csv(deconv_peaklist_decov,paste0(workdir[z],"/","ClusterIMS_deconv_Spectrum.csv"),row.names = F)
@@ -3179,7 +3177,7 @@ if (`|`(deconv_peaklist=="New",!file.exists(paste0(workdir[1],"/","ClusterIMS_de
 deconv_peaklist_decov_log<-deconv_peaklist_decov
 deconv_peaklist_decov_log$intensities<-log(deconv_peaklist_decov_log$intensities)
 #plot(deconv_peaklist_decov_log)
-deconv_peaklist_decov_log<-deconv_peaklist_decov_log[deconv_peaklist_decov_log$intensities>0,]
+#deconv_peaklist_decov_log<-deconv_peaklist_decov_log[deconv_peaklist_decov_log$intensities>0,]
 deconv_peaklist_decov_plot<-deconv_peaklist_decov[deconv_peaklist_decov$m.z %in% deconv_peaklist_decov_log$m.z,]
 
 for (z in 1:length(datafile)){
@@ -3224,7 +3222,7 @@ for (z in 1:length(datafile)){
 }
 combinedimdata@elementMetadata@coord@listData[["z"]]=NULL
 saveRDS(combinedimdata,paste0(workdir[1],"/combinedimdata.rds"),compress = F)
-return(paste0(workdir[1],"/combinedimdata.rds"))
+return(paste0("combinedimdata.rds"))
 }
 
 sort_run_msi<-function(combinedimdata,datafiles,norm_coord=T){
