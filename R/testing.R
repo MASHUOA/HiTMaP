@@ -173,3 +173,44 @@ run_spatial_quant_workflow<-function(){
   )
 }
 
+Cardinal<- function(){
+  workdir <- WorkingDir()
+  datafile <- list.files(path=workdir,full.names = TRUE,pattern = "\\.imzML$")
+  
+  listfile <- list.files(path=workdir,full.names = TRUE,pattern = "\\.csv$")
+  datafile<-gsub(".imzML", "", datafile)
+  name <-gsub(paste(workdir,"\\/",sep=""),"",datafile[3])
+  
+  #imdata <- readImzML(name, folder, as="MSImagingExperiment")
+  imdata <- readImzML(name, folder, attach.only=TRUE, as="MSImagingExperiment")
+  summarize(data, sum, .by="pixel")
+  tmp <- imdata %>%
+    smoothSignal() %>%
+    reduceBaseline() %>%
+    peakPick() %>%
+    peakFilter() %>%
+    select(x == 1, y == 1)
+  process(plot=TRUE,
+          par=list(layout=c(1,3)),
+          BPPARAM=SerialParam())
+  
+  plot(data, pixel=1)
+  plot(data, coord=list(x=2, y=2))
+  
+  
+  pattern <- factor(c(0, 0, 2, 2, 0, 0, 0, 0, 0, 0, 2, 2, 0,
+                      0, 0, 0, 0, 0, 0, 1, 2, 2, 0, 0, 0, 0, 0, 2, 1, 1, 2,
+                      2, 0, 0, 0, 0, 0, 1, 2, 2, 2, 2, 0, 0, 0, 0, 1, 2, 2,
+                      2, 2, 2, 0, 0, 0, 0, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 2,
+                      2, 0, 0, 0, 0, 0, 0, 2, 2, 0, 0, 0, 0, 0),
+                    levels=c(0,1,2), labels=c("blue", "black", "red"))
+  tmp <- imdata %>%
+    smoothSignal() %>%
+    reduceBaseline() %>%
+    peakPick() %>%
+    peakFilter() %>%
+    select(x == 1, y == 1) %>%
+    process(plot=TRUE,
+            par=list(layout=c(1,3)),
+            BPPARAM=SerialParam())
+}

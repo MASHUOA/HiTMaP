@@ -1616,3 +1616,436 @@ Peptide_modification<-function(retrive_ID=NULL,mod_position=NULL,update_unimod=F
   }
 
 }
+
+Peptide_feature_summary_all_files<-function(listfile,workdir,threshold=0.1){
+  Peptide_feature_summary<-NULL
+  for (i in 1:length(listfile)){
+    datafilename<-gsub(paste(workdir,"/",sep=""),"",gsub(".csv", "", listfile[i]))
+    currentdir<-paste(workdir,"/ID/",datafilename,"/",sep = "")
+    setwd(paste(currentdir,sep=""))
+    
+    Peptide_feature_list<-fread("Peptide_feature_list.csv",
+                                select=c("Peptide","mz","Intensity","adduct","moleculeNames","freq"))
+    Peptide_feature_list$sourcefile<-datafilename
+    if (i==1){
+      Peptide_feature_summary<-Peptide_feature_list
+    }else{
+      Peptide_feature_summary<-merge(Peptide_feature_summary,Peptide_feature_list,all = TRUE)
+    }
+    Peptide_feature_summary<-Peptide_feature_summary[,c("freq"):=NULL]
+    setwd(paste(workdir,"/Summary folder/",sep = ""))
+    write.csv(Peptide_feature_summary,"Peptide_feature_summary.csv")
+    Peptide_feature_summary_sl<-Peptide_feature_summary[Peptide_feature_summary$Intensity>=max(Peptide_feature_summary$Intensity)*threshold,]
+    write.csv(Peptide_feature_summary_sl,"Peptide_feature_summary_sl.csv")
+    setwd(workdir)
+  }
+  
+}
+
+
+
+Peptide_feature_summary_all_files_new<-function(datafile,workdir,threshold=0.1){
+  
+  for (i in 1:length(datafile)){
+    datafilename<-gsub(paste(base::dirname(datafile[i]),"/",sep=""),"",gsub(".imzML", "", datafile[i]))
+    currentdir<-paste(datafile[i]," ID/",sep = "")
+    setwd(paste(currentdir,sep=""))
+    
+    Peptide_feature_list<-fread("Peptide_feature_list.csv",
+                                select=c("Peptide","mz","Intensity","adduct","moleculeNames"))
+    Peptide_feature_list$sourcefile<-datafilename
+    if (i==1){
+      Peptide_feature_summary<-Peptide_feature_list
+    }else{
+      Peptide_feature_summary<-rbind.data.frame(Peptide_feature_summary,Peptide_feature_list)
+    }}
+  setwd(paste(base::dirname(datafile[i]),"/Summary folder/",sep = ""))
+  write.csv(Peptide_feature_summary,"Peptide_feature_summary.csv",row.names = F)
+  Peptide_feature_summary_sl<-Peptide_feature_summary[Peptide_feature_summary$Intensity>=max(Peptide_feature_summary$Intensity)*threshold,]
+  write.csv(Peptide_feature_summary_sl,"Peptide_feature_summary_sl.csv",row.names = F)
+  setwd(base::dirname(datafile[i]))
+  
+  
+}
+
+Protein_feature_summary_all_files_new<-function(datafile,workdir,threshold=0.1){
+  
+  for (i in 1:length(datafile)){
+    datafilename<-gsub(paste(base::dirname(datafile[i]),"/",sep=""),"",gsub(".imzML", "", datafile[i]))
+    currentdir<-paste(datafile[i]," ID/",sep = "")
+    setwd(paste(currentdir,sep=""))
+    
+    Peptide_feature_list<-fread("Cluster.csv")
+    Peptide_feature_list$sourcefile<-datafilename
+    if (i==1){
+      Peptide_feature_summary<-Peptide_feature_list
+    }else{
+      Peptide_feature_summary<-rbind.data.frame(Peptide_feature_summary,Peptide_feature_list)
+    }}
+  setwd(paste(base::dirname(datafile[i]),"/Summary folder/",sep = ""))
+  write.csv(Peptide_feature_summary,"Protein_feature_summary.csv",row.names = F)
+  Peptide_feature_summary_sl<-Peptide_feature_summary[Peptide_feature_summary$Intensity>=max(Peptide_feature_summary$Intensity)*threshold,]
+  write.csv(Peptide_feature_summary_sl,"Protein_feature_summary_sl.csv",row.names = F)
+  setwd(base::dirname(datafile[i]))
+  
+  
+}
+
+Feature_summary_all_files<-function(datafile,workdir,threshold=0.1){
+  
+  for (i in 1:length(datafile)){
+    datafilename<-gsub(paste(base::dirname(datafile[i]),"/",sep=""),"",gsub(".imzML", "", datafile[i]))
+    currentdir<-paste(datafile[i]," ID/",sep = "")
+    setwd(paste(currentdir,sep=""))
+    
+    Peptide_feature_list<-fread("Peptide_region_file.csv")
+    Peptide_feature_list$sourcefile<-datafilename
+    if (i==1){
+      Peptide_feature_summary<-Peptide_feature_list
+    }else{
+      Peptide_feature_summary<-rbind.data.frame(Peptide_feature_summary,Peptide_feature_list)
+    }}
+  setwd(paste(base::dirname(datafile[i]),"/Summary folder/",sep = ""))
+  write.csv(Peptide_feature_summary,"Peptide_feature_summary.csv",row.names = F)
+  Peptide_feature_summary_sl<-Peptide_feature_summary[Peptide_feature_summary$Intensity>=max(Peptide_feature_summary$Intensity)*threshold,]
+  write.csv(Peptide_feature_summary_sl,"Peptide_feature_summary_sl.csv",row.names = F)
+  setwd(base::dirname(datafile[i]))
+  
+  
+}
+
+Peptide_Feature_Summary<- function(peplist,pimlist,pimresultlist,Peptide_feature_list, mode="append"){
+  tempdf<- NULL
+  
+  for (Proteins in names(peplist)){
+    for (Peptides in  peplist[[Proteins]]){
+      tempdf<- rbind(tempdf,data.frame("Protein"= Proteins,"Peptide"=Peptides,"mz" = pimlist[[Proteins]][peplist[[Proteins]]==Peptides], "Intensity" = pimresultlist[[Proteins]][peplist[[Proteins]]==Peptides]))
+    }
+  }
+  
+  if (mode=="append") {
+    
+    Peptide_feature_list<- rbind(Peptide_feature_list,tempdf)
+    
+  }else{
+    
+    Peptide_feature_list<- tempdf
+  }
+  return(Peptide_feature_list)
+}
+
+Peptide_Feature_Summary_fast<- function(peplist,pimlist,pimresultlist,Peptide_feature_list, mode="append"){
+  print("Peptide Feature Summary")
+  tempdf<- NULL
+  
+  for (Proteins in 1: length(names(peplist))){
+    for (Peptides in  1: length(peplist[[Proteins]])){
+      tempdf<- rbind(tempdf,data.frame("Protein"= names(peplist)[Proteins],"Peptide"=peplist[[Proteins]][Peptides],"mz" = pimlist[[Proteins]][Peptides], "Intensity" = pimresultlist[[Proteins]][Peptides]))
+    }
+    #print(Proteins)
+  }
+  
+  if (mode=="append") {
+    
+    Peptide_feature_list<- rbind(Peptide_feature_list,tempdf)
+    
+  }else{
+    
+    Peptide_feature_list<- tempdf
+  }
+  return(Peptide_feature_list)
+}
+
+Peptide_Feature_Summary_data_table<- function(peplist,pimlist,pimresultlist,Peptide_feature_list, mode="append"){
+  print("Protein Peptide Feature Summary")
+  tempdf<- NULL
+  
+  for (Proteins in 1: length(names(peplist))){
+    ptm <- proc.time()
+    tempdf1<- NULL
+    for (Peptides in  1: length(peplist[[Proteins]])){
+      tempdf1<- rbind(tempdf1,c(names(peplist)[Proteins],peplist[[Proteins]][Peptides], pimlist[[Proteins]][Peptides], pimresultlist[[Proteins]][Peptides]))
+    }
+    tempdf<- rbind(tempdf,tempdf1)
+    #print(paste(Proteins, "in", proc.time() - ptm))
+  }
+  
+  if (mode=="append") {
+    
+    Peptide_feature_list<- rbind(Peptide_feature_list,tempdf)
+    
+  }else{
+    
+    Peptide_feature_list<- tempdf
+  }
+  Peptide_feature_list<-as.data.frame(Peptide_feature_list)
+  colnames(Peptide_feature_list)<-c("Protein","Peptide",	"mz",	"Intensity")
+  Peptide_feature_list$Intensity<- as.numeric(Peptide_feature_list$Intensity)
+  Peptide_feature_list$mz<- as.numeric(Peptide_feature_list$mz)
+  print("Protein Peptide Feature Summary finished")
+  return(Peptide_feature_list)
+  
+}
+
+Peptide_Feature_Summary_data_table_para<- function(Proteins,peplist,pimlist,pimresultlist){
+  
+  tempdf1<- NULL
+  for (Peptides in  1: length(peplist[[Proteins]])){
+    tempdf1<- rbind(tempdf1,c(names(peplist)[Proteins],peplist[[Proteins]][Peptides], pimlist[[Proteins]][Peptides], pimresultlist[[Proteins]][Peptides]))
+  }
+  
+  tempdf1
+}
+
+
+
+Peptide_Feature_Summary_data_table_fast<- function(peplist,pimlist,pimresultlist,Peptide_feature_list, mode="append"){
+  print("Peptide Feature Summary")
+  tempdf<- NULL
+  
+  for (Proteins in 1: length(names(peplist))){
+    ptm <- proc.time()
+    tempdf1<- NULL
+    for (Peptides in  1: length(peplist[[Proteins]])){
+      tempdf1<- rbind(tempdf1,c(names(peplist)[Proteins],peplist[[Proteins]][Peptides], pimlist[[Proteins]][Peptides], pimresultlist[[Proteins]][Peptides]))
+    }
+    
+    tempdf<- rbind(tempdf,tempdf1)
+    #print(paste(Proteins, "in", proc.time() - ptm))
+  }
+  
+  if (mode=="append") {
+    
+    Peptide_feature_list<- rbind(Peptide_feature_list,tempdf)
+    
+  }else{
+    
+    Peptide_feature_list<- tempdf
+  }
+  colnames(Peptide_feature_list)<-c("Protein","Peptide",	"mz",	"Intensity")
+  return(Peptide_feature_list)
+}
+
+Peptide_Feature_Summary_array<- function(peplist,pimlist,pimresultlist,Peptide_feature_list=NULL, mode="append"){
+  temparray<- NULL
+  
+  for (Proteins in 1: length(names(peplist))){
+    for (Peptides in  1: length(peplist[[Proteins]])){
+      temparray<- rbind(temparray,c(names(peplist)[Proteins],peplist[[Proteins]][Peptides],pimlist[[Proteins]][Peptides],  pimresultlist[[Proteins]][Peptides]))}
+    #print(Proteins)
+  }
+  
+  if (mode=="append") {
+    
+    Peptide_feature_list<- rbind(Peptide_feature_list,temparray)
+    
+  }else{
+    
+    Peptide_feature_list<- temparray
+  }
+  colnames(Peptide_feature_list)<-c("Protein","Peptide","mz","Intensity")
+  return(Peptide_feature_list)
+}
+
+Peptide_Feature_UNIQUE<- function(Peptide_feature_list=NULL){
+  temparray<- NULL
+  
+  for (Proteins in 1: length(names(peplist))){
+    for (Peptides in  1: length(peplist[[Proteins]])){
+      temparray<- rbind(temparray,c(names(peplist)[Proteins],peplist[[Proteins]][Peptides],pimlist[[Proteins]][Peptides],  pimresultlist[[Proteins]][Peptides]))}
+    print(Proteins)}
+  
+  if (mode=="append") {
+    
+    Peptide_feature_list<- rbind(Peptide_feature_list,temparray)
+    
+  }else{
+    
+    Peptide_feature_list<- temparray
+  }
+  colnames(Peptide_feature_list)<-c("Protein","Peptide","mz","Intensity")
+  return(Peptide_feature_list)
+}
+
+
+
+
+getMonomass <- function(formular){
+  Rdisop::getMolecule(formular)[["exactmass"]][1]}
+
+getMonomass_para <- function(i,formularlist){
+  return(Rdisop::getMolecule(formularlist[i])$exactmass)}
+
+#I have wrapped cleave function without name each string vector with its AAsequence
+Cleave_noname<-function(x, enzym = "trypsin", missedCleavages = 0,custom = NULL, unique = TRUE){
+  returnlist_noname<-NULL
+  returnlist<-cleave(x, enzym , missedCleavages,custom, unique )
+  for (i in 1:length(x)){
+    returnlist_noname[[i]]<- returnlist[[x[i]]]
+  }
+  return(returnlist_noname)
+}
+#I have wrapped parentIonMass to process the list of peptides. we could simply use the default setting which will produce +1 (H+) precursor ion
+parentIonMasslist<-function(peplist,Index_of_protein_sequence){
+  AA<-rep(0,26)
+  PIM<-NULL
+  for (i in 1:length(peplist)){
+    
+    PIM[[Index_of_protein_sequence$desc[i]]] <- parentIonMass(peplist[[Index_of_protein_sequence$desc[i]]],fixmod=AA)}
+  return(PIM)
+}
+
+
+Build_adduct_list<-function(){
+  
+  Name=as.character(c("M+H","M+NH4","M+Na","M+K","M+","M-H","M-2H","M-3H","M+FA-H","M+Hac-H",
+                      "M-","M+3H","M+2H+Na","M+H+2Na","M+3Na","M+2H","M+H+NH4","M+H+Na","M+H+K",
+                      "M+ACN+2H","M+2Na","M+2ACN+2H","M+3ACN+2H","M+CH3OH+H","M+ACN+H","M+2Na-H",
+                      "M+IsoProp+H","M+ACN+Na","M+2K-H","M+DMSO+H","M+2ACN+H","M+IsoProp+Na+H","2M+H",
+                      "2M+NH4","2M+Na","2M+3H2O+2H","2M+K","2M+ACN+H","2M+ACN+Na","M-H2O-H","M+Na-2H",
+                      "M+Cl","M+K-2H","M+Br","M+TFA-H","2M-H","2M+FA-H","2M+Hac-H","3M-H","M+He",
+                      "M+Ne","M+Ar","M+Kr","M+Xe","M+Rn","M+Cu","M+Co","M+Ag"
+  ))
+  calc=c("M+1.007276","M+18.033823","M+22.989218","M+38.963158","M-0.00054858","M-1.007276","M/2-1.007276",
+         "M/3-1.007276","M+44.998201","M+59.013851","M+0.00054858","M/3+1.007276","M/3+8.334590","M/3+15.7661904",
+         "M/3+22.989218","M/2+1.007276","M/2+9.520550","M/2+11.998247","M/2+19.985217","M/2+21.520550","M/2+22.989218",
+         "M/2+42.033823","M/2+62.547097","M+33.033489","M+42.033823","M+44.971160","M+61.06534","M+64.015765",
+         "M+76.919040","M+79.02122","M+83.060370","M+84.05511","2M+1.007276","2M+18.033823","2M+22.989218",
+         "M+28.02312","2M+38.963158","2M+42.033823","2M+64.015765","M-19.01839","M+20.974666","M+34.969402",
+         "M+36.948606","M+78.918885","M+112.985586","2M-1.007276","2M+44.998201","2M+59.013851","3M-1.007276",
+         "M+4.002606","M+19.992439","M+39.962383","M+83.911507","M+131.90416","M+222.017563","M+62.9285022",
+         "M+58.9321032","M+106.9034432"
+  )
+  Charge=c(" 1"," 1"," 1"," 1"," 1","-1","-2","-3","-1","-1","-1"," 3"," 3"," 3"," 3"," 2"," 2"," 2",
+           " 2"," 2"," 2"," 2"," 2"," 1"," 1"," 1"," 1"," 1"," 1"," 1"," 1"," 1"," 1"," 1"," 1"," 1"," 1",
+           " 1"," 1","-1","-1","-1","-1","-1","-1","-1","-1","-1","-1","0","0","0","0","0","0","2","2","2"
+  )
+  Mult=c("1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1",
+         "1","1","1","1","1","1","1","1","2","2","2","2","2","2","2","1","1","1","1","1","1","2","2","2","3",
+         "1","1","1","1","1","1","1","1","1")
+  Mass=as.numeric(as.character(c("  1.00727600"," 18.03382300"," 22.98921800"," 38.96315800"," -0.00054858",
+                                 " -1.00727600"," -1.00727600"," -1.00727600"," 44.99820100"," 59.01385100",
+                                 "  0.00054858","  1.00727600","  8.33459000"," 15.76619000"," 22.98921800",
+                                 "  1.00727600","  9.52055000"," 11.99824700"," 19.98521700"," 21.52055000",
+                                 " 22.98921800"," 42.03382300"," 62.54709700"," 33.03348900"," 42.03382300",
+                                 " 44.97116000"," 61.06534000"," 64.01576500"," 76.91904000"," 79.02122000",
+                                 " 83.06037000"," 84.05511000","  1.00727600"," 18.03382300"," 22.98921800",
+                                 " 28.02312000"," 38.96315800"," 42.03382300"," 64.01576500","-19.01839000",
+                                 " 20.97466600"," 34.96940200"," 36.94860600"," 78.91888500","112.98558600",
+                                 " -1.00727600"," 44.99820100"," 59.01385100","  1.00727600","4.002606","19.992439",
+                                 "39.962383", "83.911507","131.90416","222.017563","62.9285022","58.9321032",
+                                 "106.9034432"
+  )))
+  Ion_mode=c("positive","positive","positive","positive","positive","negative","negative","negative"
+             ,"negative","negative","negative","positive","positive","positive","positive","positive"
+             ,"positive","positive","positive","positive","positive","positive","positive","positive"
+             ,"positive","positive","positive","positive","positive","positive","positive","positive"
+             ,"positive","positive","positive","positive","positive","positive","positive","negative"
+             ,"negative","negative","negative","negative","negative","negative","negative","negative"
+             ,"negative","positive","positive","positive","positive","positive","positive","positive"
+             ,"positive","positive")
+  formula_add=c("H1","N1H4","Na1","K1","FALSE","FALSE","FALSE","FALSE","C1O2H2","C2O2H4","FALSE","H3",
+                "H2Na1","H1Na2","Na3","H2","H1N1H4","H1Na1","H1K1","C2H5N1","Na2","C4H8N2","C6H11N3",
+                "C1H5O1","C2H4N1","Na2","C3H9O1","C2H3N1Na1","K2","C2H7S1O1","C4H7N2","C3H9O1Na1","H1",
+                "N1H4","Na1","H8O6","K1","C2H4N1","C2H3N1Na1","FALSE","Na1","Cl1","K1","Br1","C2F3O2H1",
+                "FALSE","C1O2H2","C2O2H4","FALSE","He","Ne","Ar","Kr","Xe","Rn","Cu","Co","Ag"
+  )
+  formula_ded=c("FALSE","FALSE","FALSE","FALSE","FALSE","H1","H2","H3","H1","H1","FALSE","FALSE","FALSE",
+                "FALSE","FALSE","FALSE","FALSE","FALSE","FALSE","FALSE","FALSE","FALSE","FALSE","FALSE",
+                "FALSE","H1","FALSE","FALSE","H1","FALSE","FALSE","FALSE","FALSE","FALSE","FALSE","FALSE",
+                "FALSE","FALSE","FALSE","H3O1","H2","FALSE","H2","FALSE","H1","H1","H1","H1","H1","FALSE",
+                "FALSE","FALSE","FALSE","FALSE","FALSE","FALSE","FALSE","FALSE")
+  Multi=c("1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1"
+          ,"1","1","1","1","1","1","1","1","2","2","2","2","2","2","2","1","1","1","1","1","1","2","2","2",
+          "3","1","1","1","1","1","1","1","1","1")
+  adductslist<-cbind.data.frame(Name,calc,Charge,Mult,Mass,Ion_mode,formula_add,formula_ded,Multi)
+  adductslist
+}
+
+
+cleave_para<-function(protein_sequence){
+  peplistpara<-cleave(as.character(protein_sequence),custom=Digestion_site, missedCleavages=missedCleavages)
+}
+
+ID_summary_analysis<-function(){
+  library(dplyr)
+  Protein_Summary<-list()
+  for (testn in 1:8){
+    Protein_Summary[[testn]] <- read_csv(paste0("D:/GITHUB LFS/HiTMaP-Data/inst/segmentation test/Bovinlens_Trypsin_FT_",testn,"seg/Summary folder/Protein_Summary.csv"))
+    Protein_Summary[[testn]]$testn=testn
+  }
+  
+  Protein_Summary_bind<-do.call(rbind,Protein_Summary)
+  Protein_Summary_bind_protein<-Protein_Summary_bind %>% group_by(testn) %>% summarise(Protein_num=length(unique(Protein)))
+  Protein_Summary_bind_peptide<-Protein_Summary_bind %>% group_by(testn) %>% summarise(Peptide_num=length(unique(Peptide)))
+  Protein_Summary_bind_Score<-Protein_Summary_bind %>% group_by(testn) %>% summarise(Peptide_Score=(mean(Score)))
+  plot(Protein_Summary_bind_protein)
+  plot(Protein_Summary_bind_peptide)
+  plot(Protein_Summary_bind_Score)
+  
+}
+
+peptide_map_to_protein<-function(peptides, protein_seq ,map_type="grep",Protein_feature_list_rank=NULL){
+  
+  suppressMessages(suppressWarnings(require(IRanges)))
+  if (map_type=="alignment"){
+    suppressMessages(suppressWarnings(require(Biostrings)))
+    
+    s1=AAStringSet(peptides)
+    
+    s2=protein_seq
+    palign1 <- pairwiseAlignment(s1, s2,type="overlap")
+    coverage_ranges<-palign1@subject@range
+    cov <- coverage(coverage_ranges)
+    
+    #plotRanges(cov)
+    cov <- as.vector(cov)
+    cov_len<-length(which(cov==1))
+    
+    coverage_percentage=cov_len/width(as.character(protein_seq))
+  }else if (map_type=="grep" && is.null(Protein_feature_list_rank)){
+    s1=as.character(peptides)
+    s2=as.character(protein_seq)
+    palign2 <- sapply(s1,regexpr , s2)
+    coverage_ranges<-IRanges(start = palign2,end = palign2+width(s1)-1,width = width(s1))
+    coverage_ranges<-coverage_ranges[coverage_ranges@start>0,]
+    cov <- coverage(coverage_ranges)
+    
+    #plotRanges(cov)
+    cov <- as.vector(cov)
+    cov_len<-length(which(cov!=0))
+    
+    coverage_percentage=cov_len/width(protein_seq)
+    
+  }else if(map_type=="grep" && !is.null(Protein_feature_list_rank)){
+  }
+  
+  return(coverage_percentage)
+  
+}
+
+THERO_IONS_peptides<-function(peptides){
+  pim<-parentIonMass(peptides)
+  fi<-fragmentIon(peptides)
+  par(mfrow=c(3,1))
+  for (i in 1:length(peptides)){
+    plot(0,0,
+         xlab='m/Z',
+         ylab='',
+         xlim=range(c(fi[i][[1]]$b,fi[i][[1]]$y)),
+         ylim=c(0,1),
+         type='n',
+         axes=FALSE,
+         sub=paste( pim[i], "Da"));
+    box()
+    axis(1,fi[i][[1]]$b,round(fi[i][[1]]$b,2))
+    pepSeq<-strsplit(peptides[i],"")
+    axis(3,fi[i][[1]]$b,pepSeq[[1]])
+    
+    abline(v=fi[i][[1]]$b, col='red',lwd=2)
+    abline(v=fi[i][[1]]$c, col='orange')
+    abline(v=fi[i][[1]]$y, col='blue',lwd=2)
+    abline(v=fi[i][[1]]$z, col='cyan')
+  }
+  
+}
