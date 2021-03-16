@@ -1387,7 +1387,7 @@ Sys.setenv("PATH" = paste(paste(unique(str_split(Sys.getenv("PATH"),.Platform$pa
   
 }
 
-affine <- function(x, translate=c(0,0), rotate=0,
+affine_grid <- function(x, translate=c(0,0), rotate=0,
                    angle=c("degrees", "radians"), grid=TRUE)
 {
   x=x[,c("x","y")]
@@ -1424,7 +1424,7 @@ rotate_image<-function(imzdata,degree=0){
   
   rotatetmp<-imdata@pixelData@data
   
-  rotatenew<-affine(rotatetmp[,c("x","y")])
+  rotatenew<-affine_grid(rotatetmp[,c("x","y")])
   rownames(rotatenew)<-paste0("x = ",rotatenew$x,", ","y = ",rotatenew$y,", ","z = ",rotatenew$z)
   rotatenew$z=rotatetmp$z
   rotatenew$sample=rotatetmp$sample
@@ -2097,9 +2097,13 @@ rotateMSI<-function(imdata,rotation_degree=0){
   
   rotatetmp<-as.data.frame(imdata@elementMetadata@coord@listData)
   
-  rotatenew<-affine(rotatetmp[,c("x","y")],rotate=rotation_degree,grid = T)
+  rotatenew<-affine_grid(rotatetmp[,c("x","y")],rotate=rotation_degree,grid = T)
   
   #sum(duplicated(rotatenew))
+  
+  rotatenew$x<-rotatenew$x-min(rotatenew$x)+1
+  
+  rotatenew$y<-rotatenew$y-min(rotatenew$y)+1
   
   rownames(rotatenew)<-paste0("x = ",rotatenew$x,", ","y = ",rotatenew$y,", ","z = ",rotatenew$z)
   rotatenew$z=rotatetmp$z
@@ -2204,26 +2208,7 @@ Preprocessing_segmentation<-function(datafile,
   datafile <- paste0(workdir,"/",datafile)
   workdir <- dirname(datafile)
   datafile <- basename(datafile)
-  if (!is.null(rotate)){
-    message("Found rotation info")
-    if (typeof(rotate)=="character"){rotate=read.csv(paste0(workdir[1],"/",rotate),stringsAsFactors = F)}
-    
-    #rotatedegrees=rotate[rotate$filenames==datafile,"rotation"]
-    rotatedegrees=sapply(datafile,function(x,df){
-      library(stringr)
-      if (!str_detect(x,".imzML$")){
-        x<-paste0(x,".imzML")
-      }
-      degree=df[df$filenames==(x),"rotation"]
-      if (length(degree)==0) {
-        message("Missing rotation data please check the rotation configuration file: ",x)
-        degree=0
-      }
-      degree
-    },rotate)
-    rotate=unlist(rotatedegrees)
-  }else{rotate=rep(0,length(datafile))}
-
+  rotate = Parse_rotation(datafile,rotate)
   
 
   datafile_imzML<-datafile
@@ -3013,4 +2998,293 @@ remove_pep_score_outlier<-function(SMPLIST,IQR_LB=0.75,outputdir=getwd(),abs_cut
     
   }
   return(SMPLIST[SMPLIST$mz %in% SMPLIST_bin_quantile$mz,])
+}
+
+
+
+Parse_rotation<-function(datafile,rotate,wd=getwd()){
+  
+  if (!is.null(rotate)){
+    
+    message("Found rotation info")
+    
+    if (typeof(rotate)=="character"){
+      if (file.exists(rotate)){
+        rotate=read.csv(paste0(rotate),stringsAsFactors = F)  
+      }else{
+        rotate=read.csv(paste0(wd,"/",rotate),stringsAsFactors = F)
+      }
+    }
+    
+    #rotatedegrees=rotate[rotate$filenames==datafile,"rotation"]
+    rotatedegrees=sapply(datafile,function(x,df){
+      library(stringr)
+      # if (!str_detect(x,".imzML$"),){
+      #   x<-paste0(x,".imzML")
+      # }
+      
+      df$filenames<-str_remove(df$filenames,"\\.imzML$")
+      
+      degree=df[df$filenames==(x),"rotation"]
+      if (length(degree)==0) {
+        message("Missing rotation data please check the rotation configuration file: ",x)
+        degree=0
+      }
+      degree
+    },rotate)
+    rotate=unlist(rotatedegrees)
+  }else{rotate=rep(0,length(datafile))}
+  return(rotate)
+}
+
+
+
+Load_IMS_combine<-function(datafile,rotate=NULL,ppm=5,...){
+  if ('&'(!is.null(Rotate_IMG),typeof(Rotate_IMG)=="character")){
+    Rotate_IMG=read.csv(Rotate_IMG,stringsAsFactors = F)
+  }
+  imdata=list()
+  combinedimdata=NULL
+  #register(SerialParam())
+  Rotate_IMG$filenames<-gsub(".imzML$","",Rotate_IMG$filenames)
+  if (!exists("mzrange")){
+    mzrange=NULL
+    testrange=c(0,0)
+    for (i in 1:length(datafile)){
+      rotate=Rotate_IMG[Rotate_IMG$filenames==basename(datafile[i]),"rotation"]
+      rotate=as.numeric(rotate)
+      if (length(rotate)==0){rotate=0}
+      imdata[[i]]=Load_Cardinal_imaging(datafile[i],preprocessing = F,resolution = ppm,rotate = rotate,attach.only=F,as=as,mzrange=mzrange)
+      if (i==1) {
+        testrange=c(min(imdata[[i]]@featureData@mz),max(imdata[[i]]@featureData@mz))
+      }else{
+        if (min(imdata[[i]]@featureData@mz)>testrange[1]) testrange[1]<-min(imdata[[i]]@featureData@mz)
+        if (max(imdata[[i]]@featureData@mz)>testrange[2]) testrange[2]<-max(imdata[[i]]@featureData@mz)
+      }
+      imdata[[i]]=NULL
+    }
+    mzrange=testrange
+  }
+  
+  for (i in 1:length(datafile)){
+    rotate=Rotate_IMG[Rotate_IMG$filenames==basename(datafile[i]),"rotation"]
+    rotate=as.numeric(rotate)
+    if (length(rotate)==0){rotate=0}
+    #if (length(datafile)==1){
+    #imdata[[i]]=Load_Cardinal_imaging(datafile[i],preprocessing = F,resolution = ppm*2,rotate = rotate,attach.only=F,as="MSImageSet",mzrange=mzrange)
+    #}else{
+    imdata[[i]]=Load_Cardinal_imaging(datafile[i],preprocessing = F,resolution = ppm*2,rotate = rotate,attach.only=F,as=as,mzrange=mzrange)
+    #}
+    #imdata[[i]]@elementMetadata@coord=imdata[[i]]@elementMetadata@coord[,c("x","y")]
+    #max(imdata[[i]]@featureData@mz)
+    #min(imdata[[i]]@featureData@mz)
+    if (i==1) {
+      combinedimdata=imdata[[i]]
+    }else{
+      combinedimdata=cbind(combinedimdata,imdata[[i]])
+    }
+    imdata[[i]]=NULL
+  }
+  
+  combinedimdata@elementMetadata@coord@listData[["z"]]=NULL
+  
+  imdata=combinedimdata
+  
+  return(imdata)
+}
+
+
+Load_IMS_decov_combine<-function(datafile,workdir,import_ppm=5,SPECTRUM_batch="overall",
+                                 ppm=5,threshold=0,rotate=NULL,mzrange="auto-detect",
+                                 deconv_peaklist=c("Load_exist","New"),preprocessRDS_rotated=T,...){
+library(Cardinal)
+library(stringr)
+library(HiTMaP)
+  
+datafile <- str_remove(datafile_base,"\\.imzML$")
+if(length(workdir)!=length(datafile)){
+ workdir=rep(workdir[1],length(datafile)) 
+}
+
+datafile_imzML=datafile
+rotate=Parse_rotation(datafile,rotate)
+if (`|`(deconv_peaklist=="New",!file.exists(paste0(workdir[1],"/","ClusterIMS_deconv_Spectrum.csv")))){
+  for (z in 1:length(datafile)){
+    name <-basename(datafile[z])
+    name <-gsub(".imzML$","",name)
+    name <-gsub("/$","",name)
+    setwd(workdir[z])
+    folder<-base::dirname(datafile[z])
+    #imdata <- Cardinal::readImzML(datafile[z],preprocessing = F,attach.only = T,resolution = 200,rotate = rotate[z],as="MSImageSet",BPPARAM = BPPARAM)
+    if (!str_detect(datafile[z],".imzML$")){
+      datafile_imzML[z]<-paste0(datafile[z],".imzML")
+    }
+    
+    if (dir.exists(paste0(gsub(".imzML$","",datafile[z]) ," ID"))==FALSE){
+      dir.create(paste0(gsub(".imzML$","",datafile[z])  ," ID"))
+    }
+    
+    if (file.exists(paste0(workdir[z],"/",gsub(".imzML$","",datafile[z])  ," ID/preprocessed_imdata.RDS"))){
+      imdata<-readRDS(paste0(workdir[z],"/",datafile[z]," ID/","preprocessed_imdata.RDS"))
+    }else {
+      message("Preparing image data for statistical analysis: ",paste0(gsub(".imzML$","",datafile[z]), ".imzML"))
+      if(mzrange=="auto-detect"){
+        imdata <- Cardinal::readMSIData(datafile_imzML[z],  attach.only=T,as="MSImagingExperiment",resolution=import_ppm, units="ppm",BPPARAM=SerialParam())
+      }else {
+        imdata <- Cardinal::readMSIData(datafile_imzML[z],  attach.only=T,as="MSImagingExperiment",resolution=import_ppm, units="ppm",BPPARAM=SerialParam(),mass.range =mzrange)
+      }
+      if(!is.na(rotate[datafile_imzML[z]])){
+        imdata <-rotateMSI(imdata=imdata,rotation_degree=rotate[datafile_imzML[z]])
+      }else if(!is.na(rotate[datafile[z]])){
+        imdata <-rotateMSI(imdata=imdata,rotation_degree=rotate[datafile[z]])
+      }
+    }
+    
+    spectrum_file_table<- summarizeFeatures(imdata, FUN = "mean")
+    spectrum_file_table<-data.frame(mz=spectrum_file_table@featureData@mz,mean=spectrum_file_table@featureData@listData[["mean"]])
+    peaklist<-spectrum_file_table
+    colnames(peaklist)<-c("m.z","intensities")
+    savename=paste(name,SPECTRUM_batch)
+    message(paste("Mean spectrum generated",name,"region",SPECTRUM_batch))
+    write.csv(peaklist,paste0(workdir[z],"/",datafile[z] ," ID/",SPECTRUM_batch,"_Spectrum.csv"),row.names = F)
+    peaklist<-peaklist[peaklist$intensities>0,]
+    deconv_peaklist<-HiTMaP:::isopattern_ppm_filter_peaklist(peaklist,ppm=ppm,threshold=threshold)
+    write.csv(deconv_peaklist,paste0(workdir[z],"/",datafile[z] ," ID/",SPECTRUM_batch,"_deconv_Spectrum.csv"),row.names = F)
+  }
+  
+  deconv_peaklist_list<-NULL
+  for (z in 1:length(datafile)){
+    
+    deconv_peaklist_list[[datafile[z]]] <- read.csv(paste0(workdir[z],"/",datafile[z] ," ID/",SPECTRUM_batch,"_deconv_Spectrum.csv"))
+    
+  }
+  
+  deconv_peaklist_bind<-do.call(rbind,deconv_peaklist_list)
+  
+  deconv_peaklist_bind<-deconv_peaklist_bind[order(deconv_peaklist_bind$m.z),]
+  
+  rownames(deconv_peaklist_bind)<-1:nrow(deconv_peaklist_bind)
+  
+  #deconv_peaklist_bind_nonredun<-deconv_peaklist_bind %>% group_by(m.z) %>% summarise(intensities=intensities)
+  
+  deconv_peaklist_decov<-HiTMaP:::isopattern_ppm_filter_peaklist(deconv_peaklist_bind,ppm=ppm,threshold=threshold)
+  
+  write.csv(deconv_peaklist_decov,paste0(workdir[z],"/","ClusterIMS_deconv_Spectrum.csv"),row.names = F)
+}else if (`&`(deconv_peaklist=="Load_exist",file.exists(paste0(workdir[1],"/","ClusterIMS_deconv_Spectrum.csv")))){
+  deconv_peaklist_decov<-read.csv(paste0(workdir[1],"/","ClusterIMS_deconv_Spectrum.csv"))
+}
+
+
+
+deconv_peaklist_decov_log<-deconv_peaklist_decov
+deconv_peaklist_decov_log$intensities<-log(deconv_peaklist_decov_log$intensities)
+#plot(deconv_peaklist_decov_log)
+deconv_peaklist_decov_log<-deconv_peaklist_decov_log[deconv_peaklist_decov_log$intensities>0,]
+deconv_peaklist_decov_plot<-deconv_peaklist_decov[deconv_peaklist_decov$m.z %in% deconv_peaklist_decov_log$m.z,]
+
+for (z in 1:length(datafile)){
+  
+  setwd(workdir[z])
+  if (file.exists(paste0(workdir[z],"/",gsub(".imzML$","",datafile[z])  ," ID/preprocessed_imdata.RDS"))){
+    imdata<-readRDS(paste0(workdir[z],"/",datafile[z]," ID/","preprocessed_imdata.RDS"))
+    if (!preprocessRDS_rotated){
+    if(!is.na(rotate[datafile_imzML[z]])){
+      imdata <-rotateMSI(imdata=imdata,rotation_degree=rotate[datafile_imzML[z]])
+    }else if(!is.na(rotate[datafile[z]])){
+      imdata <-rotateMSI(imdata=imdata,rotation_degree=rotate[datafile[z]])
+    }
+    }
+  }else {
+    message("Preparing image data for statistical analysis: ",paste0(gsub(".imzML$","",datafile[z]), ".imzML"))
+    if(mzrange=="auto-detect"){
+      imdata <- Cardinal::readMSIData(datafile_imzML[z],  attach.only=T,as="MSImagingExperiment",resolution=import_ppm, units="ppm",BPPARAM=SerialParam())
+    }else {
+      imdata <- Cardinal::readMSIData(datafile_imzML[z],  attach.only=T,as="MSImagingExperiment",resolution=import_ppm, units="ppm",BPPARAM=SerialParam(),mass.range =mzrange)
+    }
+    if(!is.na(rotate[datafile_imzML[z]])){
+      imdata <-rotateMSI(imdata=imdata,rotation_degree=rotate[datafile_imzML[z]])
+    }else if(!is.na(rotate[datafile[z]])){
+      imdata <-rotateMSI(imdata=imdata,rotation_degree=rotate[datafile[z]])
+    }
+  }
+  message("mzbin for ",datafile[z])
+  setCardinalBPPARAM(SerialParam())
+  imdata <- imdata %>%
+    mzBin(deconv_peaklist_decov_plot$m.z, resolution=ppm, units="ppm")%>%
+    process()
+  
+  if (z==1) {
+    combinedimdata=imdata
+  }else{
+    combinedimdata=cbind(combinedimdata,imdata)
+  }
+  
+  
+  
+}
+combinedimdata@elementMetadata@coord@listData[["z"]]=NULL
+saveRDS(combinedimdata,paste0(workdir[1],"/combinedimdata.rds"),compress = F)
+return(paste0(workdir[1],"/combinedimdata.rds"))
+}
+
+sort_run_msi<-function(combinedimdata,datafiles,norm_coord=T){
+  library(Cardinal)
+  combinedimdata_sort<-NULL
+  imdata<-NULL
+  for (z in 1:length(datafile)){
+    
+    imdata <- combinedimdata[,combinedimdata@elementMetadata@run==tolower(datafile[z])]
+    if(norm_coord){
+      imdata <- rotateMSI(imdata,rotation_degree = 0)
+    }
+    
+    if (z==1) {
+      combinedimdata_sort=imdata
+    }else{
+      combinedimdata_sort=cbind(combinedimdata_sort,imdata)
+    }
+    
+  }
+  return(combinedimdata_sort)
+}
+
+load_pixel_label<-function(combinedimdata,datafile,workdir,coordata_file="coordata.csv",pixel_idx_col=base::row.names,label_col="pattern",...){
+  library(Cardinal)
+  library(stringr)
+  library(HiTMaP)
+  
+  datafile <- str_remove(datafile_base,"\\.imzML$")
+  if(length(workdir)!=length(datafile)){
+    workdir=rep(workdir[1],length(datafile)) 
+  }
+  
+  datafile_imzML=datafile
+  coordata_file_tb<-NULL
+  for (z in 1:length(datafile)){
+    name <-basename(datafile[z])
+    name <-gsub(".imzML$","",name)
+    name <-gsub("/$","",name)
+    setwd(workdir[z])
+    folder<-base::dirname(datafile[z])
+    #imdata <- Cardinal::readImzML(datafile[z],preprocessing = F,attach.only = T,resolution = 200,rotate = rotate[z],as="MSImageSet",BPPARAM = BPPARAM)
+    if (!str_detect(datafile[z],".imzML$")){
+      datafile_imzML[z]<-paste0(datafile[z],".imzML")
+    }
+    
+    coordata_file_tb[[datafile[z]]]<-read.csv(paste0(workdir[z],"/",datafile[z]," ID/",coordata_file))
+    coordata_file_tb[[datafile[z]]]$run<-datafile[z]
+    coordata_file_tb[[datafile[z]]]$pixel_idx<-pixel_idx_col(coordata_file_tb[[datafile[z]]])
+  }
+  
+  coordata_file_bind<-do.call(rbind,coordata_file_tb)
+  coordata_file_bind$run<-as.factor(tolower(coordata_file_bind$run))
+  coordata_file_bind$pixel_idx<-as.numeric(coordata_file_bind$pixel_idx)
+  Pixel_run <-run(combinedimdata)
+  Pixel_run <- data.frame(run=Pixel_run)
+  Pixel_run <- Pixel_run %>% group_by(run) %>% summarise(pixel_idx=1:length(run))
+  
+  label_run <- merge(Pixel_run,coordata_file_bind,by=c("run","pixel_idx"),all.x = T,sort=F)
+  
+  Pixel_label<-label_run[[label_col]]
+  return(Pixel_label)
 }
