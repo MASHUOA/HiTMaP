@@ -1314,13 +1314,7 @@ protein_scoring<-function(Protein_feature_list,
     Protein_feature_list_rank<-Protein_feature_list_rank[Protein_feature_list_rank$Protein %in% Protein_feature_list_rank_ID,]
   }
   
-  # mask the mz featuers while decoy ID get higher scores, not recommended while no On-tissue MS/MS fragmentation is aquired.
-  if(compete_decoy==T){
-    protein_decoy_select<-Protein_feature_result %>% group_by(.dots=c("Protein")) %>% summarize(Proscore=max(Proscore))
-    Protein_feature_result_decoy_compete<-merge(protein_decoy_select,Protein_feature_result,by=c("Protein","Proscore"))
-    Protein_feature_result<-Protein_feature_result_decoy_compete
-  }
-  
+
   # calculate protein score from final grouping info
   if (scoretype=="sum"){
     
@@ -1348,6 +1342,12 @@ protein_scoring<-function(Protein_feature_list,
   Protein_feature_list_rank$Protein=as.numeric(Protein_feature_list_rank$Protein)
   Protein_feature_result=merge(Protein_feature_result,Index_of_protein_sequence[,c("recno","desc")],by.x="Protein",by.y="recno",all.x=T)
   Protein_feature_list_rank=merge(Protein_feature_list_rank,Index_of_protein_sequence[,c("recno","desc")],by.x="Protein",by.y="recno",all.x=T)
+    # mask the mz featuers while decoy ID get higher scores, not recommended while no On-tissue MS/MS fragmentation is aquired.
+  if(compete_decoy==T){
+    protein_decoy_select<-Protein_feature_result %>% group_by(.dots=c("Protein")) %>% summarize(Proscore=max(Proscore))
+    Protein_feature_result_decoy_compete<-merge(protein_decoy_select,Protein_feature_result,by=c("Protein","Proscore"))
+    Protein_feature_result<-Protein_feature_result_decoy_compete
+  }
   
   return(list(Protein_feature_result,Protein_feature_list_rank))
 }
