@@ -13,7 +13,7 @@
 #'
 #' @import shiny
 #'
-#' @export HiTMaP_GUI
+
 #'
 HiTMaP_GUI <- function(wd="", port = 3838) {
   library(shiny)

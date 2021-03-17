@@ -2,9 +2,10 @@
 #'
 #' This is a peptide mass fingerprint search function for maldi imaging data analysis
 #' @param datafile the data files' path for the analysis, leave it as blank to enable a graphical user interface to select the data
+#' @param projectfolder optional, if NULL script will extract the path from datafile(s), and use the first workdir as project folder
+#' @param parallel the number of threads will be used in the PMF search, this option now only works for windows OS
 #' @param threshold specify the intensities threshold (0 to 1 in percentage)to report a identified molecule
 #' @param ppm the mz tolerance (in ppm) for peak integration
-#' @param mode the way of generating candidate list and run  the workflow. "Proteomics" requires a proteome fasta file and the parameter list for proteomics annotation.
 #' @param Digestion_site Set the enzyme digestion specificity by one or more regex expressions or the name of a enzyme
 #' @param missedCleavages miss cleavage number allowed in this PMF search
 #' @param Fastadatabase the fasta database used in this pmf search, the file should be placed in the same folder with data files
@@ -16,7 +17,7 @@
 #' @param Decoy_adducts define the adduct list for decoy search. the decoy adducts could be "M+ACN+H","M+IsoProp+H","M+DMSO+H","M+Co","M+Ag","M+Cu","M+He","M+Ne","M+Ar","M+Kr","M+Xe" or"M+Rn".
 #' @param mzrange define the mz range for the experiment, default is 700 to 4000 m/z.
 #' @param use_previous_candidates set as TRUE to reload the previously generated candidate list.
-#' @param IMS_analysis Set \code{"true"} if you want to have a PMF search, set \code{"false"} if you want to bypass it
+#' @param IMS_analysis Set \code{"true"} if you want to perform data pre-processing and proteomics search, set \code{"false"} if you want to bypass it
 #' @param FDR_cutoff set the protein FDR cutoff threshold, default is 5 percent
 #' @param score_method specify the peptide spectrum scoring method, "SQRTP" is recommended.
 #' @param peptide_ID_filter set the minimal count of peptides needed to identify a protein
@@ -24,8 +25,8 @@
 #' @param Protein_feature_summary \code{"IMS_analysis"} follow-up process that will collect all the identified peptide information and associate them with possible proteins
 #' @param Peptide_feature_summary \code{"IMS_analysis"} follow-up process that will summarize all datafiles identified peptides and generats a \code{"peptide shortlist"} in the result summary folder
 #' @param Region_feature_summary \code{"IMS_analysis"} follow-up process that will summarize mz feature of all regions of all data files into the summary folder
-#' @param plot_ion_image \code{"Peptide_feature_summarya"} follow-up process that will plot every connponents in the \code{"peptide shortlist"}
-#' @param parallel the number of threads will be used in the PMF search, this option now only works for windows OS
+#' @param plot_ion_image \code{"Peptide_feature_summarya"} follow-up process that will plot every connponents in the \code{"peptide shortlist"}. please use the cluster image grid to output the images.
+#' @param preprocess a list of params that define the IMS data pre-processing procedure
 #' @param spectra_segments_per_file optimal number of distinctive regions in the tissue section, a virtual segmentation will be applied to the image files with this value. To have a better PMF result you may set a value that in the sweet point of sensitivety and false discovery rate (FDR).
 #' @param Segmentation set as "spatialKMeans" to enable a \code{"spatialKMeans"} Segmentation; set as "spatialShrunkenCentroids" to enable a \code{"spatialShrunkenCentroids"} Segmentation; If a region rank file was supplied, you can set this as "Virtual_segmentation" to perform a manual segmentation; Set it as "none" to bypass the segmentation.
 #' @param Smooth_range \code{"Segmentation"} pixel smooth range
@@ -44,7 +45,9 @@
 #' @param export_footer_table Set as \code{"TRUE"} to plot the footer in the cluster image plotting. Footer shows the protein coverage in the Proteomics mode.
 #' @param attach_summary_cluster Set as \code{"TRUE"} to attach an enlarged cluster image to the bottom of the cluster image.
 #' @param remove_cluster_from_grid Set as \code{"TRUE"} to remove the cluster image from the cluster image grid. it is recommended to set this same as the attach_summary_cluster.
-#' @param preprocess a list of params that define the IMS data pre-processing procedure
+#' @param plot_cluster_image_overwrite Set as true to generate the cluster images regardless the existance of previously file(s)
+#' @param cluster_rds_path set as NULL if there is not preprocessed.rds available for a single file, script will load the raw data file which may reduce the signal intensities. For multiple samples, scripts will try to load the RDS file from each "ID" folder and merge the mz features via instrument resolution setting and output a combined RDS file to the project folder. For multiple files cluster images rendering user should set the attach_summary_cluster as False, and set remove_cluster_from_grid as true.
+#' 
 #' 
 #' @return None
 #'
@@ -501,7 +504,7 @@ imaging_identification<-function(
   message("Workflow done.")
 }
 
-
+}
 
 IMS_data_process<-function(datafile,
                                     workdir=NULL,

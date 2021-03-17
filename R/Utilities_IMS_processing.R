@@ -1947,15 +1947,13 @@ Parse_rotation<-function(datafile,rotate,wd=getwd()){
       }else{
         rotate=read.csv(paste0(wd,"/",rotate),stringsAsFactors = F)
       }
+      
+    }else if ('|'(typeof(rotate)=="double",typeof(rotate)=="integer")){
+    return(rotate)  
     }
-    
-    #rotatedegrees=rotate[rotate$filenames==datafile,"rotation"]
+    if (typeof(rotate)=="list"){
     rotatedegrees=sapply(datafile,function(x,df){
       library(stringr)
-      # if (!str_detect(x,".imzML$"),){
-      #   x<-paste0(x,".imzML")
-      # }
-      
       df$filenames<-str_remove(df$filenames,"\\.imzML$")
       
       degree=df[df$filenames==(x),"rotation"]
@@ -1966,7 +1964,9 @@ Parse_rotation<-function(datafile,rotate,wd=getwd()){
       degree
     },rotate)
     rotate=unlist(rotatedegrees)
-  }else{rotate=rep(0,length(datafile))}
+    }
+    
+  }else {rotate=rep(0,length(datafile))}
   return(rotate)
 }
 
@@ -2864,3 +2864,53 @@ IMS_data_process_quant<-function (datafile, Peptide_Summary_searchlist, segmenta
   }
 }
 
+radius_segmentation<-function(i,z_dist,radius_rank){
+  radius_rank['&'(z_dist[i] >= radius_rank$Radius_L, z_dist[i] < radius_rank$Radius_U),"Name"]
+}
+
+radius_segmentation_dist<-function(i,z_dist,radius_rank){
+  radius_rank['&'(z_dist[i] >= radius_rank$Radius_L, z_dist[i] < radius_rank$Radius_U),"Name"]
+}
+
+Center_of_gravity_and_contour<-function(imdata,BPPARAM=NULL){
+  library(BiocParallel)
+  library(plotly)
+  library(SDMTools)
+  if(missing(BPPARAM)){
+    BPPARAM=bpparam()
+  }
+  #radius_rank=data.frame(matrix(c(1:4),c("Core","Inner","Barrier","Outer"),c(0,4.5,6,8),ncol=3,nrow=4))
+  COG=SDMTools::COGravity(coord(imdata)$x,coord(imdata)$y,coord(imdata)$z,wt=coord(imdata)$z)
+  
+  z=sqrt((coord(imdata)$y-COG[3])^2*COG[2] +(coord(imdata)$x-COG[1])^2*COG[4])
+  z_dist=0.15*sqrt(((coord(imdata)$y-COG[3]))^2 *COG[2]/COG[4]+((coord(imdata)$x-COG[1]))^2)
+  radius_rank=data.frame("Rank"=1:4,"Name"=c("Core","Inner","Barrier","Outer"),"Radius_L"=c(0,2.25,3,4),"Radius_U"=c(2.25,3,4,max(z_dist)))
+  
+  #z_radius_segmentation=as.data.frame(unlist(parallel::parLapply(cl=autoStopCluster(makeCluster(detectCores())),1:length(z_dist),fun = radius_segmentation,z_dist,radius_rank)))
+  z_radius_segmentation=as.data.frame(unlist(bplapply(1:length(z_dist),fun = radius_segmentation,z_dist,radius_rank,BPPARAM = BPPARAM)))
+  
+  #z_radius_segmentation[i]=radius_rank['&'(z_dist[i] >= radius_rank$Radius_L, z_dist[i] < radius_rank$Radius_U),"Name"]
+  
+  p <- plot_ly(
+    x = coord(imdata)$x, 
+    y = coord(imdata)$y, 
+    z = z, 
+    type = "contour" 
+  )
+  
+  p <- plot_ly(
+    x=coord(imdata)$x,
+    y=coord(imdata)$y,
+    type = 'contour',
+    z = z,
+    colorscale = 'Jet',
+    autocontour = F,
+    contours = list(
+      start = 0,
+      end = max(z),
+      size = 2
+    )
+  )
+  p
+  
+}

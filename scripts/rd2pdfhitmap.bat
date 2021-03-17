@@ -1,0 +1,1 @@
+"C:\Program Files\R\R-3.6.2\bin\x64\R.exe" R CMD Rd2pdf "C:\Users\admgguo484\Documents\GitHub\HiTMaP" --output="C:\Users\admgguo484\Documents\HiTMaP.pdf" --force 

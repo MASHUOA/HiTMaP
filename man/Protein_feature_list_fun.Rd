@@ -23,7 +23,7 @@ Protein_feature_list_fun(
     varmod_position = NULL),
   use_previous_candidates = F,
   Protein_desc_of_exclusion = NULL,
-  Database_stats = T
+  Database_stats = F
 )
 }
 \arguments{

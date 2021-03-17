@@ -1,7 +1,7 @@
 Package: HiTMaP
 Type: Package
 Title: A collection of tools for imaging MS data processing
-Version: 1.6.0
+Version: 1.0.0
 Date:
 Depends: R (>= 3.5.0)
 Authors@R: c(person("George", "GUO", email = "George.GUO@auckland.ac.nz", role = "aut"))
