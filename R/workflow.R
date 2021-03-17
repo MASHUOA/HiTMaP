@@ -44,6 +44,8 @@
 #' @param export_footer_table Set as \code{"TRUE"} to plot the footer in the cluster image plotting. Footer shows the protein coverage in the Proteomics mode.
 #' @param attach_summary_cluster Set as \code{"TRUE"} to attach an enlarged cluster image to the bottom of the cluster image.
 #' @param remove_cluster_from_grid Set as \code{"TRUE"} to remove the cluster image from the cluster image grid. it is recommended to set this same as the attach_summary_cluster.
+#' @param preprocess a list of params that define the IMS data pre-processing procedure
+#' 
 #' @return None
 #'
 #' @examples
