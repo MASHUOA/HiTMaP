@@ -1284,7 +1284,9 @@ Preprocessing_segmentation<-function(datafile,
       instrument_ppm=8
     }
     
-    
+    imdata_org<-NULL
+    imdata<-NULL
+    imdata_ed<-NULL
     if (dir.exists(paste0(gsub(".imzML$","",datafile[z]) ," ID"))==FALSE){
       dir.create(paste0(gsub(".imzML$","",datafile[z])  ," ID"))
     }
@@ -1927,7 +1929,7 @@ Preprocessing_segmentation<-function(datafile,
     }
   }
   message("workflow successfully completed")
-  return(x)
+  return(list(segmentation_label=x,imdata_org=imdata_org,imdata=imdata,imdata_ed=imdata_ed))
 }
 
 

@@ -571,7 +571,7 @@ IMS_data_process<-function(datafile,
     
     #perform the IMS pre-processing and image segmentation
          setwd(workdir[z])
-         segmentation_label <- Preprocessing_segmentation(datafile=datafile[z],
+         regmentation_res <- Preprocessing_segmentation(datafile=datafile[z],
                                          workdir=workdir,
                                          segmentation_num=segmentation_num,
                                          ppm=ppm,import_ppm=import_ppm,Bypass_Segmentation=Bypass_Segmentation,
@@ -587,7 +587,11 @@ IMS_data_process<-function(datafile,
                                          BPPARAM=BPPARAM,
                                          preprocess=preprocess)
 
-
+         segmentation_label=regmentation_res$segmentation_label
+         imdata_org=regmentation_res$imdata_org
+         imdata=regmentation_res$imdata
+         imdata_ed=regmentation_res$imdata_ed
+         
    if(PMFsearch){
      if (missing(Protein_feature_list)){
        Protein_feature_list=get("Protein_feature_list", envir = .GlobalEnv)

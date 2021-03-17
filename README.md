@@ -38,7 +38,7 @@ HiTMaP has been encapsulated as an docker image for each release. User can downl
 
 
 ```bash
-docker login --username mashuoa
+docker login --username mashuoa 
 0a9da0ae-8d7b-4e11-8587-be46e21ee937
 docker pull mashuoa/hitmap
 ```
@@ -52,13 +52,26 @@ docker run --name hitmap -v %userprofile%\Documents\expdata:/root/expdata -a std
 #for linux user, run the image with a local user/expdata folder mapped to the docker container:
 docker run --name hitmap -v ~/expdata:/root/expdata -a stdin -a stdout -i -t mashuoa/hitmap /bin/bash 
 
-#Restart the shell 
-docker container exec -it hitmap /bin/bash
-
 #Run R console
 R
 
 ```
+
+Revoke Docker terminal:
+
+```bash
+#ctrl+dto exit the shell and Restart the shell 
+docker container exec -it hitmap /bin/bash
+```
+
+Stop/remove docker container (warning: if no local disk mapped to the "~/expdata", please backup your exisiting result files from the container before remove it):
+
+```bash
+docker stop hitmap
+docker rm hitmap
+```
+
+
 
 If You are using docker GUI, pull the docker image using the codes above and follow the image as below to setup the container.
 
@@ -91,19 +104,26 @@ Run the codes as below to enable the required components in Linux console.
 ```bash
 sudo apt-get install tcl-dev tk-dev
 sudo apt-get install r-cran-ncdf4
-apt-get install libz-dev
+sudo apt-get install libz-dev
 sudo apt install libxml2-dev
 sudo apt install libssl-dev
 sudo apt install libcurl4-openssl-dev
 sudo apt-get install libnss-winbind winbind
 sudo apt install dirmngr gnupg apt-transport-https ca-certificates software-properties-common
+
+sudo add-apt-repository ppa:webupd8team/y-ppa-manager
+sudo apt-get update
+sudo apt-get install y-ppa-manager
+sudo y-ppa-manager
+
 sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys
 sudo add-apt-repository 'deb https://cloud.r-project.org/bin/linux/ubuntu focal-cran40/'
 sudo apt-cache policy r-base
-apt-get purge r-base
+sudo apt-get purge r-base
 sudo apt-get install r-base-core="4.0.2-1.2004.0"
 sudo apt-get install libmagick++-dev
-apt-get install libfftw3-dev
+
+sudo apt-get install libfftw3-dev
 sudo apt-get install r-base-dev texlive-full
 sudo apt-get install libudunits2-dev
 sudo apt-get install libgdal-dev
@@ -137,8 +157,8 @@ https://cran.r-project.org/bin/macosx/tools/
 
 
 
-## Example data
-The HitMaP comes with a series of Maildi imaging data sets acquired from either FT-ICR or TOF. By the following codes, you can download these raw data set into a local folder.  
+## Example data and source code
+The HitMaP comes with a series of Maildi imaging data sets acquired from FT-ICR. By the following codes, you can download these raw data set into a local folder.  
 
 You can download the example file manually through this link: "https://github.com/MASHUOA/HiTMaP/releases/download/1.0/Data.tar.gz"
 
@@ -155,7 +175,11 @@ Sys.setenv(GITHUB_TOKEN="cf6d877f8b6ada1865987b13f9e9996c1883014a")
 wd="~/expdata/"
 dir.create(wd)
 setwd(wd)
-pb_download("Data.tar.gz", repo = "MASHUOA/HiTMaP", dest = ".")
+
+pb_download("HiTMaP-master.zip", repo = "MASHUOA/HiTMaP", dest = ".",.token ="cf6d877f8b6ada1865987b13f9e9996c1883014a")
+
+pb_download("Data.tar.gz", repo = "MASHUOA/HiTMaP", dest = ".",.token ="cf6d877f8b6ada1865987b13f9e9996c1883014a")
+
 untar('Data.tar.gz',exdir =".",  tar="tar")
 
 #unlink('Data.tar.gz')
@@ -326,7 +350,7 @@ print(p_pmf)
 ## 1 PNG     1980   1080 sRGB       FALSE    17664 72x72
 ```
 
-<img src="README_files/figure-html/unnamed-chunk-6-1.png" width="1980" />
+<img src="README_files/figure-html/unnamed-chunk-8-1.png" width="1980" />
 
 list of Peptides and proteins of each region has also been created so that you may check each individual region's result.
 
@@ -338,14 +362,14 @@ head(peptide_pmf_result)
 
 ```
 ## # A tibble: 6 x 23
-##   Protein    mz Protein_coverage isdecoy Peptide Modification pepmz formula
-##     <int> <dbl>            <dbl>   <int> <chr>   <lgl>        <dbl> <chr>  
-## 1      48 1301.           0.0688       0 HLEQFA~ NA           1300. C57H90~
-## 2      48 1301.           0.0688       0 QYFLDL~ NA           1300. C60H94~
-## 3      48 1325.           0.0688       0 GSKCIL~ NA           1324. C62H94~
-## 4      53 1329.           0.0554       0 FKNINP~ NA           1328. C64H98~
-## 5      53 1450.           0.0554       0 AVQNFT~ NA           1449. C65H97~
-## 6      53 1606.           0.0554       0 AVQNFT~ NA           1605. C71H10~
+##   Protein    mz Protein_coverage isdecoy Peptide    Modification pepmz formula  
+##     <int> <dbl>            <dbl>   <int> <chr>      <lgl>        <dbl> <chr>    
+## 1      48 1301.           0.0688       0 HLEQFATEG~ NA           1300. C57H90N1~
+## 2      48 1301.           0.0688       0 QYFLDLALS~ NA           1300. C60H94N1~
+## 3      48 1325.           0.0688       0 GSKCILYCF~ NA           1324. C62H94N1~
+## 4      53 1329.           0.0554       0 FKNINPFPV~ NA           1328. C64H98N1~
+## 5      53 1450.           0.0554       0 AVQNFTEYN~ NA           1449. C65H97N1~
+## 6      53 1606.           0.0554       0 AVQNFTEYN~ NA           1605. C71H109N~
 ## # ... with 15 more variables: adduct <chr>, charge <int>, start <int>,
 ## #   end <int>, pro_end <int>, mz_align <dbl>, Score <dbl>, Rank <int>,
 ## #   moleculeNames <chr>, Region <int>, Delta_ppm <dbl>, Intensity <dbl>,
@@ -399,14 +423,14 @@ head(Identification_summary_table)
 
 ```
 ## # A tibble: 6 x 23
-##   Protein    mz Protein_coverage isdecoy Peptide Modification pepmz formula
-##     <int> <dbl>            <dbl>   <int> <chr>   <lgl>        <dbl> <chr>  
-## 1      24 1144.           0.0612       0 GFPGQD~ NA           1143. C51H79~
-## 2      24 1685.           0.0612       0 DGANGI~ NA           1684. C72H11~
-## 3      24  742.           0.0612       0 GDSGPP~ NA            741. C29H48~
-## 4      24 1694.           0.0612       0 LLSTEG~ NA           1693. C72H11~
-## 5      24 1882.           0.0612       0 GQPGVM~ NA           1881. C82H12~
-## 6      48 1217.           0.0348       0 ASTSVQ~ NA           1216. C51H94~
+##   Protein    mz Protein_coverage isdecoy Peptide     Modification pepmz formula 
+##     <int> <dbl>            <dbl>   <int> <chr>       <lgl>        <dbl> <chr>   
+## 1      24 1144.           0.0612       0 GFPGQDGLAG~ NA           1143. C51H79N~
+## 2      24 1685.           0.0612       0 DGANGIPGPI~ NA           1684. C72H118~
+## 3      24  742.           0.0612       0 GDSGPPGR    NA            741. C29H48N~
+## 4      24 1694.           0.0612       0 LLSTEGSQNI~ NA           1693. C72H117~
+## 5      24 1882.           0.0612       0 GQPGVMGFPG~ NA           1881. C82H129~
+## 6      48 1217.           0.0348       0 ASTSVQNRLLK NA           1216. C51H94N~
 ## # ... with 15 more variables: adduct <chr>, charge <int>, start <int>,
 ## #   end <int>, pro_end <int>, mz_align <dbl>, Score <dbl>, Rank <int>,
 ## #   moleculeNames <chr>, Region <int>, Delta_ppm <dbl>, Intensity <dbl>,
@@ -688,7 +712,7 @@ library(gridExtra)
 grid.ftable(Cleavage_df, gp = gpar(fontsize=9,fill = rep(c("grey90", "grey95"))))
 ```
 
-![](README_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
+![](README_files/figure-html/unnamed-chunk-15-1.png)<!-- -->
 
 
 
@@ -765,7 +789,22 @@ imaging_identification(datafile=paste0(wd,datafile),Digestion_site="trypsin",
                                peakPick=list(method="adaptive"),
                                peakAlign=list(tolerance=5, units="ppm"),
                                normalize=list(method=c("rms","tic","reference")[1],mz=1)),
-                       spectra_segments_per_file=9,use_previous_candidates=F,ppm=5,FDR_cutoff = 0.05,IMS_analysis=T,
+                       spectra_segments_per_file=4,use_previous_candidates=F,ppm=5,FDR_cutoff = 0.05,IMS_analysis=T,
+                       Rotate_IMG="file_rotationbk.csv",plot_cluster_image_grid=F)
+
+datafile=c("Bovinlens_Trypsin_FT/Bovin_lens.imzML")
+wd="~/expdata/"
+library(HiTMaP)
+imaging_identification(datafile=paste0(wd,datafile),Digestion_site="trypsin",
+                       Fastadatabase="uniprot-bovin.fasta",output_candidatelist=T,use_previous_candidates=T,
+                       preprocess=list(force_preprocess=TRUE,
+                               use_preprocessRDS=TRUE,
+                               smoothSignal=list(method="gaussian"),
+                               reduceBaseline=list(method="locmin"),
+                               peakPick=list(method="adaptive"),
+                               peakAlign=list(tolerance=5, units="ppm"),
+                               normalize=list(method=c("rms","tic","reference")[1],mz=1)),
+                       spectra_segments_per_file=4,ppm=5,FDR_cutoff = 0.05,IMS_analysis=T,
                        Rotate_IMG="file_rotationbk.csv",plot_cluster_image_grid=F)
 
 # Re-analysis and cluster image rendering
@@ -840,29 +879,28 @@ toLatex(sessionInfo())
 
 ```
 ## \begin{itemize}\raggedright
-##   \item R version 4.0.2 (2020-06-22), \verb|x86_64-w64-mingw32|
+##   \item R version 4.0.4 (2021-02-15), \verb|x86_64-w64-mingw32|
 ##   \item Locale: \verb|LC_COLLATE=English_Australia.1252|, \verb|LC_CTYPE=English_Australia.1252|, \verb|LC_MONETARY=English_Australia.1252|, \verb|LC_NUMERIC=C|, \verb|LC_TIME=English_Australia.1252|
 ##   \item Running under: \verb|Windows 10 x64 (build 19042)|
 ##   \item Matrix products: default
-##   \item Base packages: base, datasets, graphics, grDevices, methods,
-##     stats, utils
-##   \item Other packages: data.table~1.13.6, dplyr~1.0.2, gridExtra~2.3,
-##     HiTMaP~1.6.0, lattice~0.20-41, magick~2.5.2, pls~2.7-3,
+##   \item Base packages: base, datasets, graphics, grDevices, grid,
+##     methods, stats, utils
+##   \item Other packages: data.table~1.14.0, dplyr~1.0.5, gridExtra~2.3,
+##     HiTMaP~1.0.0, lattice~0.20-41, magick~2.7.0, pls~2.7-3,
 ##     protViz~0.6.8, XML~3.99-0.5
 ##   \item Loaded via a namespace (and not attached): assertthat~0.2.1,
-##     Biobase~2.48.0, BiocGenerics~0.34.0, BiocManager~1.30.10,
-##     BiocParallel~1.22.0, cli~2.3.0, codetools~0.2-18, compiler~4.0.2,
-##     crayon~1.4.0, digest~0.6.27, ellipsis~0.3.1, evaluate~0.14,
-##     fansi~0.4.2, fastmap~1.1.0, generics~0.1.0, glue~1.4.2, grid~4.0.2,
-##     gtable~0.3.0, htmltools~0.5.1.1, httpuv~1.5.5, knitr~1.30,
-##     later~1.1.0.1, lifecycle~0.2.0, magrittr~2.0.1, MASS~7.3-53,
-##     Matrix~1.3-2, mime~0.9, multtest~2.44.0, pacman~0.5.1,
-##     parallel~4.0.2, pillar~1.4.7, pkgconfig~2.0.3, png~0.1-7,
-##     promises~1.1.1, purrr~0.3.4, R6~2.5.0, Rcpp~1.0.6, rlang~0.4.10,
-##     rmarkdown~2.6, S4Vectors~0.26.1, shiny~1.6.0, splines~4.0.2,
-##     stats4~4.0.2, stringi~1.5.3, stringr~1.4.0, survival~3.2-7,
-##     tibble~3.0.6, tidyselect~1.1.0, tools~4.0.2, utf8~1.1.4,
-##     vctrs~0.3.6, xfun~0.20, xtable~1.8-4, yaml~2.2.1
+##     bslib~0.2.4, cli~2.3.1, codetools~0.2-18, compiler~4.0.2,
+##     crayon~1.4.1, DBI~1.1.1, debugme~1.1.0, digest~0.6.27,
+##     ellipsis~0.3.1, evaluate~0.14, fansi~0.4.2, fastmap~1.1.0,
+##     generics~0.1.0, glue~1.4.2, gtable~0.3.0, highr~0.8,
+##     htmltools~0.5.1.1, httpuv~1.5.5, jquerylib~0.1.3, jsonlite~1.7.2,
+##     knitr~1.31, later~1.1.0.1, lifecycle~1.0.0, magrittr~2.0.1,
+##     mime~0.10, pillar~1.5.1, pkgconfig~2.0.3, png~0.1-7,
+##     promises~1.2.0.1, purrr~0.3.4, R6~2.5.0, Rcpp~1.0.6, rlang~0.4.10,
+##     rmarkdown~2.7, rstudioapi~0.13, sass~0.3.1, shiny~1.6.0,
+##     stringi~1.5.3, stringr~1.4.0, tibble~3.1.0, tidyselect~1.1.0,
+##     tools~4.0.2, utf8~1.2.1, vctrs~0.3.6, xfun~0.22, xtable~1.8-4,
+##     yaml~2.2.1
 ## \end{itemize}
 ```
 
