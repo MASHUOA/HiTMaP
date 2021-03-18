@@ -247,6 +247,7 @@ imaging_identification<-function(
   #Summarize the protein result across the datafiles and store these summarized files into the summary folder
   
   if(Protein_feature_summary){
+    message("Protein feature summary...")
     Peptide_Summary_file<-NULL
     Protein_peptide_Summary_file<-NULL
     protein_feature_all<-NULL
@@ -254,15 +255,16 @@ imaging_identification<-function(
   datafilename<-gsub(paste(workdir,"/",sep=""),"",gsub(".imzML", "", datafile[i]))
   currentdir<-paste0(workdir,"/",datafile[i]," ID")
   setwd(paste(currentdir,sep=""))
-
+  protein_feature<-NULL
   for (protein_feature_file in dir()[stringr::str_detect(dir(),"Protein_segment_PMF_RESULT_")]){
     protein_feature<-fread(protein_feature_file)
+
+    if(nrow(protein_feature)!=0){
     protein_feature$Source<-datafilename
     region_code<-str_replace(protein_feature_file,"Protein_segment_PMF_RESULT_","")
     region_code<-str_replace(region_code,".csv","")
     protein_feature$Region<-region_code
-    if(nrow(protein_feature)!=0){
-      protein_feature_all<-rbind(protein_feature_all,protein_feature)
+    protein_feature_all<-rbind(protein_feature_all,protein_feature)
     }
 
   }
@@ -282,6 +284,7 @@ imaging_identification<-function(
   #Summarize the protein and peptide result across the datafiles and store these summarized files into the summary folder
   
   if(Peptide_feature_summary){
+    message("Peptide feature summary...")
     Peptide_Summary_file<-NULL
     Peptide_Summary_file_a<-NULL
     for (i in 1:length(datafile)){
@@ -306,6 +309,7 @@ imaging_identification<-function(
   #Summarize the mz feature list 
   
   if(Region_feature_summary){
+    message("Region feature summary...")
     Spectrum_summary<-NULL
     for (i in 1:length(datafile)){
       datafilename<-gsub(paste(workdir,"/",sep=""),"",gsub(".imzML", "", datafile[i]))
@@ -338,6 +342,8 @@ imaging_identification<-function(
   #Protein cluster image rendering
   
   if(plot_cluster_image_grid){
+    
+    message("cluster image rendering...")
     
     setwd(workdir[1])
     
