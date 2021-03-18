@@ -89,7 +89,7 @@ Meta_feature_list_fun<-function(database,
     candidates<-candidates[candidates$formula!="",]
     candidates<-candidates[!grepl(")n",candidates$formula),]
     meta_symbol<-lapply(unique(candidates$formula),get_atoms)
-    symbol_adducts=bplapply(adducts,convert_peptide_adduct_list,meta_symbol,BPPARAM = BPPARAM,adductslist=adductslist,ConvertPeptide=ConvertPeptide)
+    symbol_adducts=bplapply(adducts,convert_peptide_adduct_list,meta_symbol,BPPARAM = BPPARAM,adductslist=adductslist)
 
     
     symbol_adducts_df=lapply(symbol_adducts,

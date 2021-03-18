@@ -501,9 +501,9 @@ imaging_identification<-function(
       }
       }
 
-  message("Workflow done.")
+  
 }
-
+message("Workflow done.")
 }
 
 IMS_data_process<-function(datafile,

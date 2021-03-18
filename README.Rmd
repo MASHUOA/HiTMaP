@@ -60,6 +60,7 @@ R
 Revoke Docker terminal:
 ```{bash eval=FALSE, include=T}
 #ctrl+dto exit the shell and Restart the shell 
+docker restart hitmap
 docker container exec -it hitmap /bin/bash
 ```
 

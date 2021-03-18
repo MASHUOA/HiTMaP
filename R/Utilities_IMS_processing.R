@@ -2182,7 +2182,7 @@ load_pixel_label<-function(combinedimdata,datafile,workdir,coordata_file="coorda
   library(Cardinal)
   library(stringr)
   library(HiTMaP)
-  
+  datafile_base<-basename(datafile)
   datafile <- str_remove(datafile_base,"\\.imzML$")
   if(length(workdir)!=length(datafile)){
     workdir=rep(workdir[1],length(datafile)) 
