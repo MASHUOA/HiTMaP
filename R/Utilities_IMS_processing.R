@@ -1207,12 +1207,12 @@ PCA_ncomp_selection<-function(imdata,variance_coverage=0.80,outputdir=NULL){
   PCA_imdata_df$Include<-factor(PCA_imdata_df$Include,levels = c("Yes","No"))
   actual_coverage<-percent(PCA_imdata_df$cumulate[ncomp])  
   if (!is.null(outputdir)){
-    png(paste(outputdir,"\\","PCA_image.png",sep=""),width = 1024,height = 720)
+    png(paste(outputdir,"/","PCA_image.png",sep=""),width = 1024,height = 720)
     
     print(image(PCA_imdata, values="scores", superpose=FALSE, layout=c(3,4),normalize.image = c("linear"),contrast.enhance = c("histogram")))
     
     dev.off()
-    png(paste(outputdir,"\\","PCA_plot.png",sep=""),width = 1024,height = 720 ,res=150) 
+    png(paste(outputdir,"/","PCA_plot.png",sep=""),width = 1024,height = 720 ,res=150) 
     print(ggplot(PCA_imdata_df, aes(x = Component,y = Percent,label=Percentage,fill=Include)) +
             geom_histogram(aes(y = Standard.deviation),stat="identity",color="black",show.legend=T)+
             labs(title ="",x = "Component",y = "Variation coverage")+

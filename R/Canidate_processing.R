@@ -152,7 +152,11 @@ Protein_feature_list_fun<-function(workdir=getwd(),
                                    Protein_desc_of_exclusion=NULL,
                                    Database_stats=F
                                    ){
-  if (mzrange=="auto-detect") mzrange=c(500,4000)
+  if (mzrange=="auto-detect") {
+    mzrange_proteomics_candidates_prefiltering<-c(500,4000)
+    mzrange=mzrange_proteomics_candidates_prefiltering
+    }
+  
    suppressMessages(suppressWarnings(require(Biostrings)))
    suppressMessages(suppressWarnings(require(cleaver)))
    suppressMessages(suppressWarnings(require(protViz)))

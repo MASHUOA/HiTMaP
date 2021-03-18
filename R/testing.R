@@ -332,7 +332,7 @@ metwork_maldiquant<- function(workdir= tk_choose.dir(caption = "Select working d
     if (dir.exists(datafile[i])==FALSE){dir.create(datafile[i])}
     HMDBDATA <- Generate_HMDBIDS(HMDBids)
     SMPLIST <- META_pathway_search(HMDBDATA, SMPDB, datafile[i], PWtype="Metabolic")
-    SMPRESULT <-read.csv(file=paste(datafile[i],sep="","\\","SMPRESULT.csv"),as.is = TRUE)
+    SMPRESULT <-read.csv(file=paste(datafile[i],sep="","/","SMPRESULT.csv"),as.is = TRUE)
     options(warn=-1)
     MALDI_IMAGE <- quiet(importImzMl(paste(file.path( datafile[i]),".imzml",sep="")))
     
@@ -356,7 +356,7 @@ metwork_cardinal<- function(workdir= tk_choose.dir(caption = "Select working dir
     if (dir.exists(datafile[i])==FALSE){dir.create(datafile[i])}
     HMDBDATA <- Generate_HMDBIDS(HMDBids)
     SMPLIST <- META_pathway_search(HMDBDATA, SMPDB, datafile[i], PWtype="Metabolic")
-    SMPRESULT <-read.csv(file=paste(datafile[i],sep="","\\","SMPRESULT.csv"),as.is = TRUE)
+    SMPRESULT <-read.csv(file=paste(datafile[i],sep="","/","SMPRESULT.csv"),as.is = TRUE)
     options(warn=-1)
     imdata <- quiet(Load_Cardinal_imaging(paste(file.path( datafile[i]),sep=""),resolution = 20))
     
@@ -384,7 +384,7 @@ intensity.colors_customize_mono <- function(n = 100, alpha = 1,colorstart="trans
 
 cluster_image_cardinal<-function(clusterID,imdata,SMPLIST,clustername,ppm=20){
   library(RColorBrewer)
-  outputpng=paste(getwd(),"\\",clustername,"_cluster_plot",'.png',sep="")  
+  outputpng=paste(getwd(),"/",clustername,"_cluster_plot",'.png',sep="")  
   
   candidate=SMPLIST[SMPLIST$SMPDB.ID==clusterID,]
   candidateunique=unique(candidate[,"mz"])
@@ -407,7 +407,7 @@ cluster_image_cardinal<-function(clusterID,imdata,SMPLIST,clustername,ppm=20){
   
   
   for (i in 1:length(candidateunique)){
-    outputpngsum=paste(getwd(),"\\",clustername,"_cluster_plot_",candidateunique[i],'.png',sep="")
+    outputpngsum=paste(getwd(),"/",clustername,"_cluster_plot_",candidateunique[i],'.png',sep="")
     png(outputpngsum,width = 720,height = 720, bg = "transparent")
     par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(1, 1),
         bty="n",pty="s",xaxt="n",
@@ -508,13 +508,13 @@ META_pathway_search <- function(HMDBDATA, SMPDB, WKdir, PWtype="Metabolic", ...)
     SMPLIST$Metabolite.ID<-c(SMPLIST$Metabolite.ID, rep(SMPDB[SMPDB[,"HMDB.ID"]==HMDBDATA[,"HMDB.ID"][i],"Metabolite.ID"][1],length(SMPquery)))
     SMPLIST$adduct<-c(SMPLIST$adduct, rep(as.character(HMDBDATA[HMDBDATA[,"HMDB.ID"]==HMDBDATA[,"HMDB.ID"][i],"adduct"][1]),length(SMPquery)))
   }
-  if (dir.exists(paste(WKdir,sep="","\\"))==FALSE){dir.create(paste(WKdir,sep="","\\"))}
+  if (dir.exists(paste(WKdir,sep="","/"))==FALSE){dir.create(paste(WKdir,sep="","/"))}
   
   SMPLIST<-as.data.frame(SMPLIST)
-  write.csv(SMPLIST,paste(WKdir,sep="","\\","SMPqueryRESULT.csv"),row.names=FALSE)
+  write.csv(SMPLIST,paste(WKdir,sep="","/","SMPqueryRESULT.csv"),row.names=FALSE)
   SMPRESULT<-as.data.frame(table(SMPLIST$SMPDB.ID))
-  write.csv(SMPRESULT,paste(WKdir,sep="","\\","SMPRESULT.csv"),row.names=FALSE)
-  SMPRESULT<-read.csv(file=paste(WKdir,sep="","\\","SMPRESULT.csv"),col.names= c("SMPDB.ID","Freq"))
+  write.csv(SMPRESULT,paste(WKdir,sep="","/","SMPRESULT.csv"),row.names=FALSE)
+  SMPRESULT<-read.csv(file=paste(WKdir,sep="","/","SMPRESULT.csv"),col.names= c("SMPDB.ID","Freq"))
   SMPRESULTfreq<-NULL
   
   for (i in 1: length(SMPRESULT$SMPDB.ID)){
@@ -523,7 +523,7 @@ META_pathway_search <- function(HMDBDATA, SMPDB, WKdir, PWtype="Metabolic", ...)
   }
   SMPRESULT$DBfreq<-SMPRESULTfreq
   SMPRESULT$pScore<-SMPRESULT$Freq/SMPRESULT$DBfreq
-  write.csv(SMPRESULT,paste(WKdir,sep="","\\","SMPRESULT.csv"),row.names=FALSE)
+  write.csv(SMPRESULT,paste(WKdir,sep="","/","SMPRESULT.csv"),row.names=FALSE)
   return(SMPLIST)
 }
 
@@ -533,7 +533,7 @@ META_pathway_ion_image<- function(SMPLIST, SMPRESULT, datafile,MALDI_IMAGE, Imag
   if (dir.exists(datafile)==FALSE){dir.create(datafile)}
   for (j in 1:length(SMPRESULT$SMPDB.ID)){
     if (SMPRESULT$pScore[j]>=PWpScore){
-      WKdir<-paste(datafile,"\\",SMPRESULT$SMPDB.ID[j],sep="")
+      WKdir<-paste(datafile,"/",SMPRESULT$SMPDB.ID[j],sep="")
       PWSUBLIST<-SMPLIST[SMPLIST$SMPDB.ID==SMPRESULT$SMPDB.ID[j],]
       if (dir.exists(WKdir)==FALSE){dir.create(WKdir)}
       for (i in 1:length(PWSUBLIST$mz)){
@@ -545,7 +545,7 @@ META_pathway_ion_image_cardinal<- function(SMPLIST, SMPRESULT, datafile,MALDI_IM
   if (dir.exists(datafile)==FALSE){dir.create(datafile)}
   for (j in 1:length(SMPRESULT$SMPDB.ID)){
     if (SMPRESULT$pScore[j]>=PWpScore){
-      WKdir<-paste(datafile,"\\",SMPRESULT$SMPDB.ID[j],sep="")
+      WKdir<-paste(datafile,"/",SMPRESULT$SMPDB.ID[j],sep="")
       PWSUBLIST<-SMPLIST[SMPLIST$SMPDB.ID==SMPRESULT$SMPDB.ID[j],]
       if (dir.exists(WKdir)==FALSE){dir.create(WKdir)}
       for (i in 1:length(PWSUBLIST$mz)){
@@ -558,7 +558,7 @@ META_pathway_Whole_Picture<- function(SMPLIST, SMPRESULT, datafile, PWpScore=0.2
   if (dir.exists(datafile)==FALSE){dir.create(datafile)}
   for (j in 1:length(SMPRESULT$SMPDB.ID)){
     if (SMPRESULT$pScore[j]>=PWpScore){
-      WKdir<-paste(datafile,"\\",SMPRESULT$SMPDB.ID[j],sep="")
+      WKdir<-paste(datafile,"/",SMPRESULT$SMPDB.ID[j],sep="")
       if (exists("Map_SMP_MP")==FALSE){Map_SMP_MP <- read.csv("DB/smpdb_pathways.csv")}
       MPID <- sprintf("PW%06d", match(SMPRESULT$SMPDB.ID[j],Map_SMP_MP[,1]))
       #PWsvg <- htmlParse(paste("DB/smpdb_svg/",MPID ,".svg",sep=""))
@@ -566,16 +566,16 @@ META_pathway_Whole_Picture<- function(SMPLIST, SMPRESULT, datafile, PWpScore=0.2
       PW_svg_line<- readLines(paste("DB/smpdb_svg/",MPID ,".svg",sep=""))
       for (i in 1:length(PWSUBLIST$mz)){
         pngfile<- NULL
-        res <- try(pngfile<-image_read(paste(WKdir,"\\",PWSUBLIST$moleculeNames[i],'.png',sep="")),silent = TRUE)
+        res <- try(pngfile<-image_read(paste(WKdir,"/",PWSUBLIST$moleculeNames[i],'.png',sep="")),silent = TRUE)
         if (class(res) != "try-error"){
-          Ion_image_svg_base64 <- base64Encode(readBin(paste(WKdir,"\\",PWSUBLIST$moleculeNames[i],'.png',sep=""), "raw", file.info(paste(WKdir,"\\",PWSUBLIST$moleculeNames[i],'.png',sep=""))[1, "size"]), "txt")
+          Ion_image_svg_base64 <- base64Encode(readBin(paste(WKdir,"/",PWSUBLIST$moleculeNames[i],'.png',sep=""), "raw", file.info(paste(WKdir,"/",PWSUBLIST$moleculeNames[i],'.png',sep=""))[1, "size"]), "txt")
           res<-try(Start_moldb_cache<-grep(paste('id=','"',PWSUBLIST$Metabolite.ID[i],'_moldb_cache',sep=""),as.character(PW_svg_line),value=FALSE),silent = TRUE)
           res2<-try(End_moldb_cache<-grep("pointer-events=",as.character(PW_svg_line[Start_moldb_cache:length(PW_svg_line)]),value=FALSE)[1],silent = TRUE)
           if ("&"(class(res) != "try-error",class(res2) != "try-error")){
             
             PW_svg_line<-c(PW_svg_line[1:Start_moldb_cache], paste("<image xlink:href=\"data:image/png;base64,",Ion_image_svg_base64,aep=""),PW_svg_line[(Start_moldb_cache+End_moldb_cache-1):length(PW_svg_line)])
-            if (pathway_mode=="D-mode"){write(PW_svg_line,file=paste(datafile,"\\",SMPRESULT$SMPDB.ID[j]," D-mode.svg",sep=""))}else
-            {write(PW_svg_line,file=paste(datafile,"\\",SMPRESULT$SMPDB.ID[j],".svg",sep=""))}}
+            if (pathway_mode=="D-mode"){write(PW_svg_line,file=paste(datafile,"/",SMPRESULT$SMPDB.ID[j]," D-mode.svg",sep=""))}else
+            {write(PW_svg_line,file=paste(datafile,"/",SMPRESULT$SMPDB.ID[j],".svg",sep=""))}}
         } 
         
         
@@ -650,7 +650,7 @@ Whole_Picture_Cluster_mode<- function(workdir=WorkingDir(),
 #for (j in 1:length(SMPRESULT$SMPDB.ID)){
 
 #if (SMPRESULT$pScore[j]>=PWpScore){
-#dir<-paste(datafile,"\\",SMPRESULT$SMPDB.ID[j],sep="")
+#dir<-paste(datafile,"/",SMPRESULT$SMPDB.ID[j],sep="")
 #discovery_moldb_list<-NULL
 #if (exists("Map_SMP_MP")==FALSE){Map_SMP_MP <- read.csv("DB/smpdb_pathways.csv")}
 
@@ -705,14 +705,14 @@ Plot_Ion_image_Png<- function(WKdir, imagefile, png_filename, mz,adduct="M-H", T
   #x11()
   
   
-  #dev.copy(png,paste(dir,"\\",png_filename,'.png',sep=""))
+  #dev.copy(png,paste(dir,"/",png_filename,'.png',sep=""))
   Tolerance<-round(Tolerance,digits = 5)
-  pngfillewrite<-paste(WKdir,"\\",png_filename,'.png',sep="")
+  pngfillewrite<-paste(WKdir,"/",png_filename,'.png',sep="")
   #pngfillewrite<-nice_file_create(pngfillewrite)
-  png(paste(WKdir,"\\","temp.png",sep=""), bg = "transparent")
+  png(paste(WKdir,"/","temp.png",sep=""), bg = "transparent")
   try(plotMsiSlice(imagefile ,mz , tolerance=Tolerance, legend=FALSE,colRamp=colorRamp(c("black", "blue", "green", "yellow", "red","#FF00FF","white")),interpolate =interpolate ),silent = TRUE)
   dev.off()
-  try(pngfile<-image_read(paste(WKdir,"\\","temp.png",sep="")))
+  try(pngfile<-image_read(paste(WKdir,"/","temp.png",sep="")))
   res <- try(pngfile<-image_trim(pngfile),silent = TRUE)
   if (class(res) != "try-error"){
     
@@ -739,20 +739,20 @@ Plot_Ion_image_Png<- function(WKdir, imagefile, png_filename, mz,adduct="M-H", T
       image_write(pngfile,pngfillewrite)
     }
   }
-  file.remove(paste(WKdir,"\\","temp.png",sep=""))
+  file.remove(paste(WKdir,"/","temp.png",sep=""))
 }
 
 Plot_Ion_image_Png3<- function(WKdir, imagefile, png_filename, mz,adduct="M-H", Tolerance= 0.25, title="",Neighbour = 0,Creat_new_file=TRUE,color="black",interpolate =FALSE){
   #x11()
   
-  #dev.copy(png,paste(dir,"\\",png_filename,'.png',sep=""))
+  #dev.copy(png,paste(dir,"/",png_filename,'.png',sep=""))
   Tolerance<-round(Tolerance,digits = 5)
-  pngfillewrite<-paste(WKdir,"\\",png_filename,'.png',sep="")
+  pngfillewrite<-paste(WKdir,"/",png_filename,'.png',sep="")
   #pngfillewrite<-nice_file_create(pngfillewrite)
-  png(paste(WKdir,"\\","temp.png",sep=""), bg = "transparent")
+  png(paste(WKdir,"/","temp.png",sep=""), bg = "transparent")
   try(plotMsiSlice(imagefile ,mz , tolerance=Tolerance, legend=FALSE,colRamp=colorRamp(c("black", "blue", "green", "yellow", "red","#FF00FF","white")),interpolate =interpolate ),silent = TRUE)
   dev.off()
-  try(pngfile<-image_read(paste(WKdir,"\\","temp.png",sep="")))
+  try(pngfile<-image_read(paste(WKdir,"/","temp.png",sep="")))
   res <- try(pngfile<-image_trim(pngfile),silent = TRUE)
   if (class(res) != "try-error"){
     a<-image_attributes(pngfile)
@@ -783,18 +783,18 @@ Plot_Ion_image_Png3<- function(WKdir, imagefile, png_filename, mz,adduct="M-H", 
       image_write(pngfile,pngfillewrite)
     }
   }
-  file.remove(paste(WKdir,"\\","temp.png",sep=""))
+  file.remove(paste(WKdir,"/","temp.png",sep=""))
 }
 
 Plot_Ion_image_Png2<- function(WKdir, imagefile, png_filename, mz,adduct="M-H", Tolerance= 0.25, title="",Creat_new_file=TRUE){
   #x11()
-  pngfillewrite<-paste(WKdir,"\\",png_filename,'.png',sep="")
+  pngfillewrite<-paste(WKdir,"/",png_filename,'.png',sep="")
   #pngfillewrite<-nice_file_create(pngfillewrite)
-  #dev.copy(png,paste(dir,"\\",png_filename,'.png',sep=""))
-  png(paste(WKdir,"\\","temp.png",sep=""))
+  #dev.copy(png,paste(dir,"/",png_filename,'.png',sep=""))
+  png(paste(WKdir,"/","temp.png",sep=""))
   try(plotMsiSlice(imagefile ,mz , tolerance=Tolerance,colRamp=colorRamp(c("black", "blue", "green", "yellow", "red")), legend=FALSE),silent = TRUE)
   dev.off()
-  try(pngfile<-image_read(paste(WKdir,"\\","temp.png",sep="")))
+  try(pngfile<-image_read(paste(WKdir,"/","temp.png",sep="")))
   res <- try(pngfile<-image_trim(pngfile),silent = TRUE)
   if (class(res) != "try-error"){
     if (title=="D-mode"){
@@ -812,7 +812,7 @@ Plot_Ion_image_Png2<- function(WKdir, imagefile, png_filename, mz,adduct="M-H", 
       image_write(pngfile,pngfillewrite)
     }
   }
-  file.remove(paste(WKdir,"\\","temp.png",sep=""))
+  file.remove(paste(WKdir,"/","temp.png",sep=""))
 }
 
 #wrap the getMolecule function
