@@ -1372,6 +1372,13 @@ Preprocessing_segmentation<-function(datafile,
             }
           }
           
+          peaklist<-summarizeFeatures(imdata_ed,"sum", as="DataFrame")
+          peaklist_deco<-data.frame(mz=peaklist@mz,intensities=peaklist$sum)
+          peaklist_deco<-peaklist_deco[peaklist_deco$intensities>0,]
+          
+          peaklist_deco<-HiTMaP:::isopattern_ppm_filter_peaklist(peaklist_deco,ppm=ppm,threshold=0)
+          imdata_ed<-imdata_ed %>% peakBin(peaklist_deco$mz, resolution=instrument_ppm, units="ppm") %>% process()
+          
         } else if(ppm>=25){
           imdata_ed<-imdata
           #smoothSignal(method="gaussian") %>%
