@@ -664,7 +664,7 @@ imaging_identification(datafile=paste0(wd,datafile),Digestion_site="trypsin",
                        pixel_size_um = 50,
                        Plot_score_abs_cutoff=-0.1,
                        remove_score_outlier=T,
-                       Protein_desc_of_interest=c("Crystallin","Phakinin","Filensin","Actin","Vimetin","Cortactin","Visinin","Arpin","Tropomyosin","Myosin Light Chain 3","Kinesin Family Member 14","Dyenin Regulatory Complex","Ankyrin Repeat Domain 45"))
+                       Protein_desc_of_interest=c("Secernin","GN=MBP","Cytochrome"))
 
 ```
 

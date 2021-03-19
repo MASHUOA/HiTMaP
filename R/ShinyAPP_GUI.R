@@ -15,7 +15,7 @@
 #'
 
 #'
-HiTMaP_GUI <- function(wd="", port = 3838) {
+HiTMaP_GUI <- function(wd="~/", port = 3838) {
   library(shiny)
   appDir <- system.file("HiTMaP_GUI", package = "HiTMaP")
   if (appDir == "") {

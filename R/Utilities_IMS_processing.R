@@ -1236,7 +1236,7 @@ PCA_ncomp_selection<-function(imdata,variance_coverage=0.80,outputdir=NULL){
 Preprocessing_segmentation<-function(datafile,
                                      workdir=NULL,
                                      segmentation_num=5,
-                                     ppm=3,import_ppm=3,Bypass_Segmentation=F,
+                                     ppm=5,import_ppm=2,Bypass_Segmentation=F,
                                      mzrange="auto-detect",
                                      Segmentation=c("spatialKMeans","spatialShrunkenCentroids","Virtual_segmentation","none","def_file"),
                                      Segmentation_def="segmentation_def.csv",
@@ -1293,9 +1293,9 @@ Preprocessing_segmentation<-function(datafile,
     
     message("Preparing image data for statistical analysis: ",paste0(gsub(".imzML$","",datafile[z]), ".imzML"))
     if(mzrange=="auto-detect"){
-      imdata <- Cardinal::readMSIData(datafile_imzML[z],  attach.only=T,as="MSImagingExperiment",resolution=import_ppm, units="ppm",BPPARAM=SerialParam())
+      imdata <- Cardinal::readMSIData(datafile_imzML[z],  attach.only=F,as="MSImagingExperiment",resolution=import_ppm, units="ppm",BPPARAM=SerialParam())
     }else {
-      imdata <- Cardinal::readMSIData(datafile_imzML[z],  attach.only=T,as="MSImagingExperiment",resolution=import_ppm, units="ppm",BPPARAM=SerialParam(),mass.range =mzrange)
+      imdata <- Cardinal::readMSIData(datafile_imzML[z],  attach.only=F,as="MSImagingExperiment",resolution=import_ppm, units="ppm",BPPARAM=SerialParam(),mass.range =mzrange)
     }
     if(!is.na(rotate[datafile_imzML[z]])){
       imdata <-rotateMSI(imdata=imdata,rotation_degree=rotate[datafile_imzML[z]])
@@ -1308,9 +1308,19 @@ Preprocessing_segmentation<-function(datafile,
     if ('|'(!file.exists(paste0(gsub(".imzML$","",datafile[z])  ," ID/preprocessed_imdata.RDS")),
             preprocess$force_preprocess)){
       message("Preparing image data for statistical analysis: ",paste0(gsub(".imzML$","",datafile[z]), ".imzML"))
+   
+      
       if (!is.null(preprocess)){
+        
+
         if  ( ppm<25){
-          imdata_ed<-imdata
+          
+        peaklist<-summarizeFeatures(imdata,"sum", as="DataFrame")
+        peaklist_deco<-data.frame(mz=peaklist@mz,intensities=peaklist$sum)
+        peaklist_deco<-peaklist_deco[peaklist_deco$intensities>0,]
+        
+        peaklist_deco<-HiTMaP:::isopattern_ppm_filter_peaklist(peaklist_deco,ppm=ppm,threshold=0)
+        imdata_ed<-imdata %>% peakBin(peaklist_deco$mz, resolution=instrument_ppm, units="ppm") %>% process()
           #smoothSignal(method="gaussian") %>%
           #reduceBaseline(method="locmin") %>%
           if (preprocess$smoothSignal$method=="Disable") {

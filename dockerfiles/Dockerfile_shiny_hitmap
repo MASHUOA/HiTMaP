@@ -1,4 +1,4 @@
-FROM mashuoa/hitmap
+FROM mashuoa/hitmap:base
 
 LABEL org.label-schema.license="GPL-3.0" \
       org.label-schema.vcs-url="https://github.com/MASHUOA/HiTMaP" \
@@ -13,5 +13,7 @@ ENV HITMAP_VERSION=latest
 EXPOSE 3838
 
 EXPOSE 8787
+
+RUN unset R_HOME
 
 CMD ["/init"]
