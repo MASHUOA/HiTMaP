@@ -1314,7 +1314,7 @@ Preprocessing_segmentation<-function(datafile,
         
 
         if  ( ppm<25){
-        setCardinalBPPARAM(SerialParam())
+        #setCardinalBPPARAM(SerialParam())
         
         peaklist<-summarizeFeatures(imdata,"sum", as="DataFrame")
         peaklist_deco<-data.frame(mz=peaklist@mz,intensities=peaklist$sum)
