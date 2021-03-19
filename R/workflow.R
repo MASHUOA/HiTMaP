@@ -129,7 +129,7 @@ imaging_identification<-function(
                remove_cluster_from_grid=attach_summary_cluster,
                pixel_size_um=50,
                img_brightness=100,
-               Thread=NULL,
+               Thread=3,
                cluster_rds_path=NULL,
                remove_score_outlier=F,
                Plot_score_IQR_cutoff=0.75,
