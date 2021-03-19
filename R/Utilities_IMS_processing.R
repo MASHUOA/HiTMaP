@@ -1236,7 +1236,7 @@ PCA_ncomp_selection<-function(imdata,variance_coverage=0.80,outputdir=NULL){
 Preprocessing_segmentation<-function(datafile,
                                      workdir=NULL,
                                      segmentation_num=5,
-                                     ppm=5,import_ppm=2,Bypass_Segmentation=F,
+                                     ppm=5,import_ppm=5,Bypass_Segmentation=F,
                                      mzrange="auto-detect",
                                      Segmentation=c("spatialKMeans","spatialShrunkenCentroids","Virtual_segmentation","none","def_file"),
                                      Segmentation_def="segmentation_def.csv",
