@@ -1293,9 +1293,9 @@ Preprocessing_segmentation<-function(datafile,
     
     message("Preparing image data for statistical analysis: ",paste0(gsub(".imzML$","",datafile[z]), ".imzML"))
     if(mzrange=="auto-detect"){
-      imdata <- Cardinal::readMSIData(datafile_imzML[z],  attach.only=F,as="MSImagingExperiment",resolution=import_ppm, units="ppm",BPPARAM=SerialParam())
+      imdata <- Cardinal::readMSIData(datafile_imzML[z],  attach.only=T,as="MSImagingExperiment",resolution=import_ppm, units="ppm",BPPARAM=SerialParam())
     }else {
-      imdata <- Cardinal::readMSIData(datafile_imzML[z],  attach.only=F,as="MSImagingExperiment",resolution=import_ppm, units="ppm",BPPARAM=SerialParam(),mass.range =mzrange)
+      imdata <- Cardinal::readMSIData(datafile_imzML[z],  attach.only=T,as="MSImagingExperiment",resolution=import_ppm, units="ppm",BPPARAM=SerialParam(),mass.range =mzrange)
     }
     if(!is.na(rotate[datafile_imzML[z]])){
       imdata <-rotateMSI(imdata=imdata,rotation_degree=rotate[datafile_imzML[z]])
