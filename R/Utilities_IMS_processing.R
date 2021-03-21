@@ -896,6 +896,23 @@ IMS_analysis_fun<-function(Peptide_Summary_searchlist,peaklist,ppm,BPPARAM =bppa
   Peptide_Summary_searchlist
 }
 
+IMS_analysis_fun_2<-function(Peptide_Summary_searchlist,peaklist,ppm,BPPARAM =bpparam(),mzrange){
+  if (missing(mzrange)){mzrange=c(min(peaklist$m.z),max(peaklist$m.z))}
+  Peptide_Summary_searchlist$Intensity<-rep(0,nrow(Peptide_Summary_searchlist))
+  message("PMF 1st search...")
+  match_ress<-lapply(1:nrow(peaklist), function(x,peaklist,ppm,Peptide_Summary_searchlist){
+    lowmz<-peaklist$m.z[x]-peaklist$m.z[x]*ppm/1000000
+    highmz<-peaklist$m.z[x]+peaklist$m.z[x]*ppm/1000000
+    #Peptide_Summary_searchlist$Intensity[which(data.table::between(Peptide_Summary_searchlist$mz, lowmz, highmz))]<<-peaklist$intensities[x]
+    return(list(mz_which=which(data.table::between(Peptide_Summary_searchlist$mz, lowmz, highmz)),
+                mz_Intensity=peaklist$intensities[x]))
+    },peaklist,ppm,Peptide_Summary_searchlist)
+  
+  for (match_res in match_ress){
+    Peptide_Summary_searchlist$Intensity[match_res$mz_which]<-rep(match_res$mz_Intensity,length(match_res$mz_which))
+  }
+  return(Peptide_Summary_searchlist)
+}
 
 virtual_segmentation<-function(imdata,Virtual_segmentation_rankfile="~/GitHub/HiTMaP/inst/data/radius_rank_bovin.csv"){
   library(reshape2)
@@ -1372,12 +1389,12 @@ Preprocessing_segmentation<-function(datafile,
             }
           }
           
-          peaklist<-summarizeFeatures(imdata_ed,"sum", as="DataFrame")
-          peaklist_deco<-data.frame(mz=peaklist@mz,intensities=peaklist$sum)
-          peaklist_deco<-peaklist_deco[peaklist_deco$intensities>0,]
+          #peaklist<-summarizeFeatures(imdata_ed,"sum", as="DataFrame")
+          #peaklist_deco<-data.frame(mz=peaklist@mz,intensities=peaklist$sum)
+          #peaklist_deco<-peaklist_deco[peaklist_deco$intensities>0,]
           
-          peaklist_deco<-HiTMaP:::isopattern_ppm_filter_peaklist(peaklist_deco,ppm=ppm,threshold=0)
-          imdata_ed<-imdata_ed %>% peakBin(peaklist_deco$mz, resolution=instrument_ppm, units="ppm") %>% process()
+          #peaklist_deco<-HiTMaP:::isopattern_ppm_filter_peaklist(peaklist_deco,ppm=instrument_ppm,threshold=0)
+          #imdata_ed<-imdata_ed %>% peakBin(peaklist_deco$mz, resolution=instrument_ppm, units="ppm") %>% process()
           
         } else if(ppm>=25){
           imdata_ed<-imdata

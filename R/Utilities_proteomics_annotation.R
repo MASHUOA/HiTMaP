@@ -488,7 +488,7 @@ Do_PMF_search<-function(peaklist,Peptide_Summary_searchlist,BPPARAM=bpparam(),pp
   Peptide_Summary_searchlist_mz$mz=uniquemz[`&`(uniquemz>mzrange[1],uniquemz<mzrange[2])]
   Peptide_Summary_searchlist_mz$Intensity=rep(0,length(Peptide_Summary_searchlist_mz$mz))
   Peptide_Summary_searchlist_mz=as.data.frame(Peptide_Summary_searchlist_mz)
-  Peptide_Summary_searchlist_mz<-IMS_analysis_fun(Peptide_Summary_searchlist=Peptide_Summary_searchlist_mz,peaklist=peaklist,ppm=ppm,BPPARAM=BPPARAM,mzrange=mzrange)
+  Peptide_Summary_searchlist_mz<-IMS_analysis_fun_2(Peptide_Summary_searchlist=Peptide_Summary_searchlist_mz,peaklist=peaklist,ppm=ppm,BPPARAM=BPPARAM,mzrange=mzrange)
   Peptide_Summary_searchlist_mz=as.data.frame(Peptide_Summary_searchlist_mz,stringsAsFactors = F)
   mz_feature_list<-Peptide_Summary_searchlist_mz[Peptide_Summary_searchlist_mz$Intensity>0,]
   

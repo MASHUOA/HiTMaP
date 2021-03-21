@@ -658,11 +658,12 @@ IMS_data_process<-function(datafile,
     message(paste("IMS_analysis",name,"region",SPECTRUM_batch))
     write.csv(peaklist,paste0(workdir[z],"/",datafile[z] ," ID/",SPECTRUM_batch,"/Spectrum.csv"),row.names = F)
     peaklist<-peaklist[peaklist$intensities>0,]
-    peaklist_pmf<-peaklist[peaklist$intensities>(max(peaklist$intensities)*threshold),]
+    
     
    #generate filtered processed peaklist to next step
-    deconv_peaklist<-peaklist
-    message(paste(nrow(deconv_peaklist),"mz features found in the spectrum") )
+    deconv_peaklist<-HiTMaP:::isopattern_ppm_filter_peaklist(peaklist,ppm=instrument_ppm,threshold=0)
+    peaklist_pmf<-deconv_peaklist[deconv_peaklist$intensities>(max(deconv_peaklist$intensities)*threshold),]
+    message(paste(nrow(peaklist_pmf),"mz features found in the spectrum") )
     
    #Do first round of peptide search to get putative result
     mz_feature_list<-Do_PMF_search(peaklist_pmf,Peptide_Summary_searchlist,BPPARAM=BPPARAM,ppm = ppm)
