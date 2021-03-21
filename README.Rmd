@@ -653,7 +653,9 @@ imaging_identification(datafile=paste0(wd,datafile),Digestion_site="trypsin",
                        mzrange = c(500,4000),plot_cluster_image_grid=F)
 
 # Re-analysis and cluster image rendering
-
+library(HiTMaP)
+datafile=c("MouseBrain_Trypsin_FT/Mouse_brain.imzML")
+wd="~/expdata/"
 imaging_identification(datafile=paste0(wd,datafile),Digestion_site="trypsin",
                        Fastadatabase="uniprot_mouse_20210107.fasta",
                        preprocess=list(force_preprocess=FALSE),
