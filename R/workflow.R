@@ -656,12 +656,12 @@ IMS_data_process<-function(datafile,
     colnames(peaklist)<-c("m.z","intensities")
     savename=paste(name,SPECTRUM_batch)
     message(paste("IMS_analysis",name,"region",SPECTRUM_batch))
-    write.csv(peaklist,paste0(workdir[z],"/",datafile[z] ," ID/",SPECTRUM_batch,"/Spectrum.csv"),row.names = F)
-    peaklist<-peaklist[peaklist$intensities>0,]
     
+    peaklist<-peaklist[peaklist$intensities>0,]
+    write.csv(peaklist,paste0(workdir[z],"/",datafile[z] ," ID/",SPECTRUM_batch,"/Spectrum.csv"),row.names = F)
     
    #generate filtered processed peaklist to next step
-    deconv_peaklist<-HiTMaP:::isopattern_ppm_filter_peaklist(peaklist,ppm=instrument_ppm,threshold=0)
+    deconv_peaklist<-HiTMaP:::isopattern_ppm_filter_peaklist(peaklist,ppm=ppm,threshold=0)
     peaklist_pmf<-deconv_peaklist[deconv_peaklist$intensities>(max(deconv_peaklist$intensities)*threshold),]
     message(paste(nrow(peaklist_pmf),"mz features found in the spectrum") )
     
@@ -766,6 +766,8 @@ IMS_data_process<-function(datafile,
       Index_of_protein_sequence<-get("Index_of_protein_sequence", envir = .GlobalEnv)
       Protein_feature_result<-protein_scoring(Protein_feature_list,Peptide_plot_list_rank,BPPARAM = BPPARAM,scoretype="mean",peptide_ID_filter=peptide_ID_filter,use_top_rank=use_top_rank)
       Protein_feature_list_rank<-Protein_feature_result[[2]]
+      Protein_feature_list_rank_filtered<-Protein_feature_result[[3]]
+      Protein_feature_list_rank_filtered_grouped<-Protein_feature_result[[4]]
       Protein_feature_result<-Protein_feature_result[[1]]
 
 
@@ -785,6 +787,8 @@ IMS_data_process<-function(datafile,
       Protein_feature_list_rank_cutoff<-Protein_feature_list_rank
       Protein_feature_list_rank_cutoff<-Protein_feature_list_rank_cutoff[Protein_feature_list_rank_cutoff$isdecoy==0,]
       write.csv(Protein_feature_result,paste0(workdir[z],"/",datafile[z] ," ID/",SPECTRUM_batch,"/Protein_ID_score_rank_",score_method,".csv"),row.names = F)
+      write.csv(Protein_feature_list_rank_filtered,paste0(workdir[z],"/",datafile[z] ," ID/",SPECTRUM_batch,"/Protein_ID_score_rank_filtered_",score_method,".csv"),row.names = F)
+      write.csv(Protein_feature_list_rank_filtered_grouped,paste0(workdir[z],"/",datafile[z] ," ID/",SPECTRUM_batch,"/Protein_ID_score_rank_filtered_grouped_",score_method,".csv"),row.names = F)
       write.csv(Protein_feature_list_rank_cutoff,paste0(workdir[z],"/",datafile[z] ," ID/","Peptide_segment_PMF_RESULT_",SPECTRUM_batch,".csv"),row.names = F)
 
       #Plot Protein matching spectrum and score 
