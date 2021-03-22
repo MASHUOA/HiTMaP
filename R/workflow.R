@@ -78,7 +78,7 @@ imaging_identification<-function(
                Decoy_search=TRUE,
                Decoy_adducts=c("M+ACN+H","M+IsoProp+H","M+DMSO+H","M+Co","M+Ag","M+Cu","M+He","M+Ne","M+Ar","M+Kr","M+Xe","M+Rn"),
                Decoy_mode = "isotope",
-               mzrange="auto-detect",
+               mzrange=c(700,4000),
                Database_stats=F,
                adjust_score = FALSE,
                IMS_analysis=TRUE,
