@@ -1253,7 +1253,7 @@ PCA_ncomp_selection<-function(imdata,variance_coverage=0.80,outputdir=NULL){
 Preprocessing_segmentation<-function(datafile,
                                      workdir=NULL,
                                      segmentation_num=5,
-                                     ppm=5,import_ppm=5,Bypass_Segmentation=F,
+                                     ppm=5,import_ppm=1,Bypass_Segmentation=F,
                                      mzrange="auto-detect",
                                      Segmentation=c("spatialKMeans","spatialShrunkenCentroids","Virtual_segmentation","none","def_file"),
                                      Segmentation_def="segmentation_def.csv",
@@ -1298,9 +1298,12 @@ Preprocessing_segmentation<-function(datafile,
     if (ppm>=25) {
       instrument_ppm=50
     }else{
-      instrument_ppm=8
+      instrument_ppm=7
     }
-
+    
+    #setup import ppm which ensure pickpicking has more than 7 data points per peak to work with
+    if (import_ppm > ppm/7) import_ppm = instrument_ppm/7
+    
     imdata_org<-NULL
     imdata<-NULL
     imdata_ed<-NULL
@@ -1358,9 +1361,9 @@ Preprocessing_segmentation<-function(datafile,
 
           if (preprocess$peakPick$method=="Disable") {
           }else if (!is.null(preprocess$peakPick$method)){
-            imdata_ed<- imdata_ed %>% peakPick(method=preprocess$peakPick$method)
+            imdata_ed<- imdata_ed %>% peakPick(method=preprocess$peakPick$method, window=3)
           }else{
-            imdata_ed<- imdata_ed %>% peakPick(method="adaptive")
+            imdata_ed<- imdata_ed %>% peakPick(method="adaptive", window=3)
           }
 
           if (preprocess$peakAlign$tolerance==0) {
@@ -1413,9 +1416,9 @@ Preprocessing_segmentation<-function(datafile,
           }
 
           if (!is.null(preprocess$peakPick$method)){
-            imdata_ed<- imdata_ed %>% peakPick(method=preprocess$peakPick$method)
+            imdata_ed<- imdata_ed %>% peakPick(method=preprocess$peakPick$method, window=3)
           }else{
-            imdata_ed<- imdata_ed %>% peakPick(method="adaptive")
+            imdata_ed<- imdata_ed %>% peakPick(method="adaptive", window=3)
           }
 
           if ('&'(!is.null(preprocess$peakAlign$tolerance),!is.null(preprocess$peakAlign$tolerance))){

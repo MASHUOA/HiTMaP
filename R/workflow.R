@@ -577,7 +577,7 @@ IMS_data_process<-function(datafile,
     
     #perform the IMS pre-processing and image segmentation
          setwd(workdir[z])
-         regmentation_res <- Preprocessing_segmentation(datafile=datafile[z],
+         segmentation_res <- Preprocessing_segmentation(datafile=datafile[z],
                                          workdir=workdir,
                                          segmentation_num=segmentation_num,
                                          ppm=ppm,import_ppm=import_ppm,Bypass_Segmentation=Bypass_Segmentation,
@@ -593,10 +593,12 @@ IMS_data_process<-function(datafile,
                                          BPPARAM=BPPARAM,
                                          preprocess=preprocess)
 
-         segmentation_label=regmentation_res$segmentation_label
-         imdata_org=regmentation_res$imdata_org
-         imdata=regmentation_res$imdata
-         imdata_ed=regmentation_res$imdata_ed
+         segmentation_label=segmentation_res$segmentation_label
+         
+         imdata=segmentation_res$imdata
+         #imdata_ed=segmentation_res$imdata_ed
+         #imdata_org=segmentation_res$imdata_org
+         rm(segmentation_res)
          
    if(PMFsearch){
      if (missing(Protein_feature_list)){
@@ -636,19 +638,17 @@ IMS_data_process<-function(datafile,
     message(paste( "region",names(segmentation_label),"Found.",sep=" ",collapse = "\n"))
     for (SPECTRUM_batch in names(segmentation_label)){
       if (dir.exists(paste0(workdir[z],"/",datafile[z] ," ID/",SPECTRUM_batch,"/"))==FALSE){dir.create(paste0(workdir[z],"/",datafile[z] ," ID/",SPECTRUM_batch,"/"))}
-    if (!is.null(preprocess)){
-      if ('|'(imdata@metadata[["ibd binary type"]]!="processed",preprocess$force_preprocess)){
-      message(paste("Using preprocessed .rda data:",datafile[z]))
-      imdata<-imdata_ed
-      imdata_sb<-imdata[,unlist(segmentation_label[[SPECTRUM_batch]])]
-      } else if (imdata@metadata[["ibd binary type"]]=="processed"){
-      message(paste("Using preprocessed .imzml data:",datafile[z]))
-      imdata<-imdata_org
-      imdata_sb<-imdata[,unlist(segmentation_label[[SPECTRUM_batch]])]
-
-      }
-      }
-
+    # if (!is.null(preprocess)){
+    #   if ('|'(imdata@metadata[["ibd binary type"]]!="processed",preprocess$force_preprocess)){
+    #   message(paste("Using preprocessed .rda data:",datafile[z]))
+    #   imdata<-imdata_ed
+    #   } else if (imdata@metadata[["ibd binary type"]]=="processed"){
+    #   message(paste("Using preprocessed .imzml data:",datafile[z]))
+    #   imdata<-imdata_org
+    #   }
+    # }
+      
+    imdata_sb<-imdata[,unlist(segmentation_label[[SPECTRUM_batch]])]
    #generate spectrum for each found region
     spectrum_file_table<- summarizeFeatures(imdata_sb, FUN = "mean")
     spectrum_file_table<-data.frame(mz=spectrum_file_table@featureData@mz,mean=spectrum_file_table@featureData@listData[["mean"]])
