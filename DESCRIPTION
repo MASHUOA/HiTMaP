@@ -27,7 +27,7 @@ Imports:
     pacman,devtools,fs,processx,S4Vectors,
     spdep,zoo,KEGGREST,OrgMassSpecR,
     enviPat,rgl,multtest,XML,
-    BiocManager,shinyFiles,shiny,
+    BiocManager,
     rcdk,colorspace,OneR,
     gridExtra,grid,gtable,ChemmineR
 VignetteBuilder: knitr
