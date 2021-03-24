@@ -1361,17 +1361,19 @@ Preprocessing_segmentation<-function(datafile,
 
           if (preprocess$peakPick$method=="Disable") {
           }else if (!is.null(preprocess$peakPick$method)){
-            imdata_ed<- imdata_ed %>% peakPick(method=preprocess$peakPick$method, window=3) %>% process()
+            imdata_ed<- imdata_ed %>% peakPick(method=preprocess$peakPick$method, window=2) %>% process()
           }else{
-            imdata_ed<- imdata_ed %>% peakPick(method="adaptive", window=3) %>% process()
+            imdata_ed<- imdata_ed %>% peakPick(method="adaptive", window=2) %>% process()
           }
 
           if (preprocess$peakAlign$tolerance==0) {
+            message("preprocess$peakAlign$tolerance set as zero, step bypassed")
           }else if ('&'(!is.null(preprocess$peakAlign$tolerance),!is.null(preprocess$peakAlign$tolerance))){
-
+            message("preprocess$peakAlign$tolerance set as ", preprocess$peakAlign$tolerance)
             imdata_ed<- imdata_ed %>% peakAlign(tolerance=preprocess$peakAlign$tolerance, units=preprocess$peakAlign$units)
           }else {
-            imdata_ed<- imdata_ed %>% peakAlign(tolerance=ppm, units="ppm")
+            message("preprocess$peakAlign$tolerance missing, use default tolerance in ppm ", ppm/2)
+            imdata_ed<- imdata_ed %>% peakAlign(tolerance=ppm/2, units="ppm")
           }
 
           imdata_ed<- imdata_ed %>% process()
@@ -1425,7 +1427,7 @@ Preprocessing_segmentation<-function(datafile,
 
             imdata_ed<- imdata_ed %>% peakAlign(tolerance=preprocess$peakAlign$tolerance, units=preprocess$peakAlign$units)
           }else{
-            imdata_ed<- imdata_ed %>% peakAlign(tolerance=ppm, units="ppm")
+            imdata_ed<- imdata_ed %>% peakAlign(tolerance=ppm/2, units="ppm")
           }
 
           imdata_ed<- imdata_ed %>% process()

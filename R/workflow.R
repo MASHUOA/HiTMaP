@@ -414,8 +414,9 @@ imaging_identification<-function(
     write.csv(Protein_feature_list_trimmed,paste(workdir,"/Summary folder/Protein_feature_list_trimmed.csv",sep=""),row.names = F)
     }
     
-    imdata <- imdata %>% peakBin(sort(unique(Protein_feature_list_trimmed$mz_align)), tolerance=ppm, units="ppm") %>% process(BPPARAM=SerialParam())
-    
+    #list_of_protein_sequence[!(1:length(list_of_protein_sequence) %in% as.numeric(Protein_feature_list_trimmed$Protein))]<-""
+    #unname(as.character(list_of_protein_sequence))->str_vec
+    imdata <- imdata %>% peakBin(ref=sort(unique((Protein_feature_list_trimmed$mz_align+Protein_feature_list_trimmed$mz)/2)), tolerance=ppm, units="ppm") %>% process(BPPARAM=SerialParam())
     save(list=c("Protein_feature_list_trimmed",
                 "imdata",
                 "ClusterID_colname",
