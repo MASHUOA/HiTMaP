@@ -1267,7 +1267,7 @@ Preprocessing_segmentation<-function(datafile,
                                      preprocess=list(force_preprocess=FALSE,use_preprocessRDS=TRUE,smoothSignal=list(method="gaussian"),
                                                      reduceBaseline=list(method="locmin"),
                                                      peakPick=list(method="adaptive"),
-                                                     peakAlign=list(tolerance=ppm, units="ppm"),
+                                                     peakAlign=list(tolerance=ppm/2, units="ppm"),
                                                      normalize=list(method=c("rms","tic","reference")[1],mz=1)),
                                      ...){
 
@@ -1302,7 +1302,7 @@ Preprocessing_segmentation<-function(datafile,
     }
     
     #setup import ppm which ensure pickpicking has correct number of data points (halfwindow>=2) per peak to work with
-    if (import_ppm > ppm/5) import_ppm = instrument_ppm/5
+    if (import_ppm > ppm/5) import_ppm = instrument_ppm / 5
     
     imdata_org<-NULL
     imdata<-NULL
@@ -1361,9 +1361,9 @@ Preprocessing_segmentation<-function(datafile,
 
           if (preprocess$peakPick$method=="Disable") {
           }else if (!is.null(preprocess$peakPick$method)){
-            imdata_ed<- imdata_ed %>% peakPick(method=preprocess$peakPick$method, window=3)
+            imdata_ed<- imdata_ed %>% peakPick(method=preprocess$peakPick$method, window=3) %>% process()
           }else{
-            imdata_ed<- imdata_ed %>% peakPick(method="adaptive", window=3)
+            imdata_ed<- imdata_ed %>% peakPick(method="adaptive", window=3) %>% process()
           }
 
           if (preprocess$peakAlign$tolerance==0) {
@@ -1404,9 +1404,9 @@ Preprocessing_segmentation<-function(datafile,
           #smoothSignal(method="gaussian") %>%
           #reduceBaseline(method="locmin") %>%
           if (!is.null(preprocess$smoothSignal$method)){
-            imdata_ed<- imdata_ed %>% smoothSignal(method=preprocess$smoothSignal$method)
+            imdata_ed<- imdata_ed %>% smoothSignal(method=preprocess$smoothSignal$method) %>% process()
           }else{
-            imdata_ed<- imdata_ed %>% smoothSignal(method="gaussian")
+            imdata_ed<- imdata_ed %>% smoothSignal(method="gaussian") %>% process()
           }
 
           if (!is.null(preprocess$reduceBaseline$method)){
@@ -1416,9 +1416,9 @@ Preprocessing_segmentation<-function(datafile,
           }
 
           if (!is.null(preprocess$peakPick$method)){
-            imdata_ed<- imdata_ed %>% peakPick(method=preprocess$peakPick$method, window=3)
+            imdata_ed<- imdata_ed %>% peakPick(method=preprocess$peakPick$method, window=3) %>% process()
           }else{
-            imdata_ed<- imdata_ed %>% peakPick(method="adaptive", window=3)
+            imdata_ed<- imdata_ed %>% peakPick(method="adaptive", window=3) %>% process()
           }
 
           if ('&'(!is.null(preprocess$peakAlign$tolerance),!is.null(preprocess$peakAlign$tolerance))){

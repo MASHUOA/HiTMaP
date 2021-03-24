@@ -98,7 +98,7 @@ imaging_identification<-function(
                preprocess=list(force_preprocess=FALSE,use_preprocessRDS=TRUE,smoothSignal=list(method="disable"),
                                reduceBaseline=list(method="locmin"),
                                peakPick=list(method="adaptive"),
-                               peakAlign=list(tolerance=ppm, units="ppm"),
+                               peakAlign=list(tolerance=ppm/2, units="ppm"),
                                normalize=list(method=c("rms","tic","reference")[1],mz=1)),
                Smooth_range=1,
                Virtual_segmentation_rankfile=NULL,
@@ -147,8 +147,8 @@ imaging_identification<-function(
 
   if(!exists("ppm", envir=p)) {
     pf <- parent.frame()
-    pf$ppm <- ppm
-    message("Alignment tolerance missing, using identification ppm")}
+    pf$ppm <- ppm / 2
+    message("Alignment tolerance missing, using half of identification ppm (half FWHM) to fit peak aligment algorithm")}
   
   
 # retrieve/parse the working dir info, and convert the filenames
@@ -413,10 +413,11 @@ imaging_identification<-function(
     Protein_feature_list_trimmed<-Protein_feature_list[Protein_feature_list$mz %in% Protein_feature_list_unique_mz, ]
     write.csv(Protein_feature_list_trimmed,paste(workdir,"/Summary folder/Protein_feature_list_trimmed.csv",sep=""),row.names = F)
     }
-
+    
+    imdata <- imdata %>% peakBin(sort(unique(Protein_feature_list_trimmed$mz_align)), tolerance=ppm, units="ppm") %>% process(BPPARAM=SerialParam())
+    
     save(list=c("Protein_feature_list_trimmed",
                 "imdata",
-                "Protein_feature_list",
                 "ClusterID_colname",
                 "componentID_colname",
                 "plot_layout",
@@ -453,7 +454,7 @@ imaging_identification<-function(
                    paste0("suppressMessages(suppressWarnings(load(file =\"", workdir,"/cluster_img_grid.RData\")))"),
                    "suppressMessages(suppressWarnings(cluster_image_grid(clusterID = clusterID,
                                       imdata=imdata,
-                                      SMPLIST=Protein_feature_list,
+                                      SMPLIST=Protein_feature_list_trimmed,
                                       ppm=ppm,
                                       ClusterID_colname=ClusterID_colname,
                                       componentID_colname=componentID_colname,
@@ -683,7 +684,7 @@ IMS_data_process<-function(datafile,
     if(is.null(Peptide_plot_list$moleculeNames)){Peptide_plot_list$moleculeNames=Peptide_plot_list$Peptide}
     Peptide_plot_list$Region=SPECTRUM_batch
     Peptide_plot_list=Peptide_plot_list[(!is.na(Peptide_plot_list$Intensity)),]
-    message(paste("1st run returns",nrow(Peptide_plot_list)))
+    message(paste("1st run returns",nrow(Peptide_plot_list), "peptide candidates"))
     write.csv(Peptide_plot_list,paste0(workdir[z],"/",datafile[z] ," ID/",SPECTRUM_batch,"/Peptide_1st_ID.csv"),row.names = F)
     
     
@@ -699,7 +700,9 @@ IMS_data_process<-function(datafile,
       data(isotopes)
 
       unique_formula<-unique(Peptide_plot_list$formula)
-      Peptide_plot_list_Score=(bplapply(unique_formula,SCORE_PMF,peaklist=peaklist,isotopes=isotopes,score_method=score_method,charge = 1,ppm=ppm,BPPARAM = BPPARAM))
+      #Peptide_plot_list_Score=(bplapply(unique_formula,SCORE_PMF,peaklist=peaklist,isotopes=isotopes,score_method=score_method,charge = 1,ppm=ppm,BPPARAM = BPPARAM))
+      Peptide_plot_list_Score=(lapply(unique_formula,SCORE_PMF,peaklist=peaklist,isotopes=isotopes,score_method=score_method,charge = 1,ppm=ppm))
+      
       Peptide_plot_list_Score_m=as.data.frame(do.call(rbind, Peptide_plot_list_Score))
       names(Peptide_plot_list_Score_m)<-c("Score", "delta_ppm","Intensity")
       formula_score<-data.frame(formula=unique_formula,Score=Peptide_plot_list_Score_m$Score,Delta_ppm=Peptide_plot_list_Score_m$delta_ppm,Intensity=Peptide_plot_list_Score_m$Intensity)
@@ -724,7 +727,8 @@ IMS_data_process<-function(datafile,
       Peptide_plot_list_decoy<-Peptide_plot_list[Peptide_plot_list$isdecoy==0,]
       Peptide_plot_list_decoy$isdecoy=1
       unique_formula<-unique(Peptide_plot_list_decoy$formula)
-      Peptide_plot_list_Score=(bplapply(unique_formula,SCORE_PMF,peaklist=peaklist,isotopes=decoy_isotopes,score_method=score_method,charge = 1,ppm=ppm,BPPARAM = BPPARAM))
+      #Peptide_plot_list_Score=(bplapply(unique_formula,SCORE_PMF,peaklist=peaklist,isotopes=decoy_isotopes,score_method=score_method,charge = 1,ppm=ppm,BPPARAM = BPPARAM))
+      Peptide_plot_list_Score=(lapply(unique_formula,SCORE_PMF,peaklist=peaklist,isotopes=decoy_isotopes,score_method=score_method,charge = 1,ppm=ppm))
       Peptide_plot_list_Score_m=as.data.frame(do.call(rbind, Peptide_plot_list_Score))
       names(Peptide_plot_list_Score_m)<-c("Score", "delta_ppm","Intensity")
       formula_score<-data.frame(formula=unique_formula,Score=Peptide_plot_list_Score_m$Score,Delta_ppm=Peptide_plot_list_Score_m$delta_ppm,Intensity=Peptide_plot_list_Score_m$Intensity)
