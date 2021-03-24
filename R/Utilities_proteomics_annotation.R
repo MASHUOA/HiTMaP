@@ -1221,6 +1221,7 @@ protein_scoring<-function(Protein_feature_list,
   Protein_feature_result<-merge(sum_pro_int,sum_pro_score,by=c("Protein","isdecoy"))
   Protein_feature_result<-merge(Protein_feature_result,sum_pro_pep_count,by=c("Protein","isdecoy"))
   Protein_feature_result$Intensity_norm<-log(Protein_feature_result$Intensity)/mean(log(Protein_feature_result$Intensity))
+  Protein_feature_result$Intensity_norm<-(Protein_feature_result$Intensity_norm-min(Protein_feature_result$Intensity_norm))/max(Protein_feature_result$Intensity_norm)
   Protein_feature_result$Proscore=( Protein_feature_result$Score) * Protein_feature_result$Protein_coverage * Protein_feature_result$Intensity_norm
   Protein_feature_result$Protein=as.numeric(Protein_feature_result$Protein)
   Protein_feature_list_rank$Protein=as.numeric(Protein_feature_list_rank$Protein)
