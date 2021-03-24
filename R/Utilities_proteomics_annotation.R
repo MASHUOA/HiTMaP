@@ -1,7 +1,7 @@
 PlotPMFsig<-function(pimresultindex,spectrumlist,peplist,pimlist,pimresultlist, threshold=0.05){
   suppressMessages(suppressWarnings(require(ggplot2)))
   #library(ggplot)
-  print("Ploting Sig PMF")
+  print("Plotting Sig PMF")
   pimresultsl<-pimresultindex[pimresultindex[,"Normalized Mean"]>threshold,]
 
   plotpeaklist<-spectrumlist
@@ -23,7 +23,7 @@ PlotPMFsig<-function(pimresultindex,spectrumlist,peplist,pimlist,pimresultlist, 
 }
 
 Plot_PMF_all<-function(Protein_feature_list,peaklist,threshold=threshold,savename=""){
-  message("Ploting PMF all in one spectrum")
+  message("Plotting PMF all in one spectrum")
   suppressMessages(suppressWarnings(require(ggplot2)))
   plotpeaklist<-as.data.frame(peaklist)
   plotpeaklist[,1]<-as.numeric(plotpeaklist[,1])
@@ -999,7 +999,7 @@ protein_scoring<-function(Protein_feature_list,
   suppressMessages(suppressWarnings(require(dplyr)))
   suppressMessages(suppressWarnings(require(data.table)))
   suppressMessages(suppressWarnings(require(IRanges)))
-  
+
   protein_coverage<-function(query_protein_list,Protein_feature_list_rank){
     suppressMessages(suppressWarnings(require(IRanges)))
     peptides_entry<-Protein_feature_list_rank[`&`(Protein_feature_list_rank$Protein==query_protein_list$Protein,Protein_feature_list_rank$isdecoy==query_protein_list$isdecoy),c("start","end","pro_end")]
@@ -1010,49 +1010,49 @@ protein_scoring<-function(Protein_feature_list,
     cov_len<-length(which(cov!=0))
     coverage_percentage=cov_len/peptides_entry$pro_end[1]
   }
-  
+
   sum_pro_pep_count_fun<-function(Protein_feature_list_rank){
     suppressMessages(suppressWarnings(require(data.table)))
     suppressMessages(suppressWarnings(require(dplyr)))
     sum_pro_pep_count<- Protein_feature_list_rank %>% group_by(.dots=c("Protein","isdecoy")) %>% summarise(peptide_count=length(unique(Peptide)))
     return(sum_pro_pep_count)
   }
-  
+
   Sum_protein_info<-function(Protein_feature_list_rank,scoretype="mean"){
     suppressMessages(suppressWarnings(require(data.table)))
     suppressMessages(suppressWarnings(require(dplyr)))
     e <- environment()
     p <- parent.env(e)
-    
-    sum_pro_pep_count<- Protein_feature_list_rank %>% group_by(.dots=c("Protein","isdecoy")) %>% summarise(peptide_count=length(unique(Peptide)))
-    
 
-    
+    sum_pro_pep_count<- Protein_feature_list_rank %>% group_by(.dots=c("Protein","isdecoy")) %>% summarise(peptide_count=length(unique(Peptide)))
+
+
+
     if (scoretype=="sum_wi_int_norm"){
-      
+
       sum_pro_int<-Protein_feature_list_rank %>% group_by(.dots=c("Protein","isdecoy")) %>% summarize(Intensity=mean(Intensity))
-      
+
       sum_pro_score<-Protein_feature_list_rank %>% group_by(.dots=c("Protein","isdecoy")) %>% summarize(Score=sum(Score*(Intensity))/sum((Intensity)))
-      
+
     }else if(scoretype=="mean_wi_int_norm"){
-      
+
       sum_pro_int<-Protein_feature_list_rank %>% group_by(.dots=c("Protein","isdecoy")) %>% summarize(Intensity=mean(Intensity))
-      
+
       sum_pro_score<-Protein_feature_list_rank %>% group_by(.dots=c("Protein","isdecoy")) %>% summarize(Score=mean(Score*(Intensity),na.rm=T)/mean((Intensity),na.rm=T))
-      
+
     }else if(scoretype=="mean"){
-      
+
       sum_pro_int<-Protein_feature_list_rank %>% group_by(.dots=c("Protein","isdecoy")) %>% summarize(Intensity=mean(Intensity))
-      
+
       sum_pro_score<-Protein_feature_list_rank %>% group_by(.dots=c("Protein","isdecoy")) %>% summarize(Score=mean(Score*rank(Intensity),na.rm=T)/mean(rank(Intensity)))
-      
+
     }
     assign((("sum_pro_int")), sum_pro_int, env = p)
     assign((("sum_pro_score")), sum_pro_score, env = p)
     assign((("sum_pro_pep_count")), sum_pro_pep_count, env = p)
   }
-  
-  
+
+
   # formating the input dataframe
   Protein_feature_list<-as.data.frame(Protein_feature_list)
   Peptide_plot_list_rank<-as.data.frame(Peptide_plot_list_rank)
@@ -1093,9 +1093,9 @@ protein_scoring<-function(Protein_feature_list,
 
   # prioritize protein ID with higher coverage if same annotated peptide set found in multiple proteins
   if(prioritize_protein){
-    
+
     Sum_protein_info(Protein_feature_list_rank,scoretype=scoretype)
-    
+
     query_protein = sum_pro_int[,c("Protein","isdecoy")]
 
     query_protein_list = split(query_protein, seq(nrow(query_protein)))
@@ -1121,7 +1121,7 @@ protein_scoring<-function(Protein_feature_list,
   Protein_feature_list_rank<-merge(Protein_feature_list_rank,unique(sum_pro_pep_count[,c("Protein","peptide_count","isdecoy")]),by=c("Protein","isdecoy"))
   Protein_feature_list_rank<-Protein_feature_list_rank[Protein_feature_list_rank$Protein %in% sum_pro_pep_count$Protein[sum_pro_pep_count$peptide_count>=peptide_ID_filter],]
   Protein_feature_list_rank_filtered_grouped<-Protein_feature_list_rank
-  
+
   #message(length(unique(Protein_feature_list_rank$Protein)))
   # Get the non-redundant protein grouping info
   if (protein_nr_grouping){
@@ -1207,9 +1207,9 @@ protein_scoring<-function(Protein_feature_list,
 
   # calculate protein score from final grouping info
   Sum_protein_info(Protein_feature_list_rank,scoretype=scoretype)
-  
+
   #message(length(unique(Protein_feature_list_rank$Protein)))
-  
+
   Protein_feature_list_rank<-Protein_feature_list_rank[Protein_feature_list_rank$Protein %in% sum_pro_pep_count$Protein[sum_pro_pep_count$peptide_count>=peptide_ID_filter],]
   Protein_feature_list_rank_filtered_grouped_final<-Protein_feature_list_rank
 
@@ -1233,7 +1233,7 @@ protein_scoring<-function(Protein_feature_list,
     Protein_feature_result_decoy_compete<-merge(protein_decoy_select,Protein_feature_result,by=c("Protein","Proscore"))
     Protein_feature_result<-Protein_feature_result_decoy_compete
   }
-  
+
   Protein_feature_result<-Protein_feature_result[!is.na(Protein_feature_result$Proscore),]
   #message(length(unique(Protein_feature_list_rank$Protein)))
   return(list(Protein_feature_result,
