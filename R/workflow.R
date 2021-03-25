@@ -615,11 +615,6 @@ IMS_data_process<-function(datafile,
      Peptide_Summary_file<-Peptide_Summary_searchlist
      Peptide_Summary_file$Intensity<-rep(0,nrow(Peptide_Summary_file))
 
-   if (ppm>=25) {
-    instrument_ppm=50
-   }else{
-    instrument_ppm=8
-   }
    setwd(workdir[z])
    
    #remove previously genrated IMS annotation result
