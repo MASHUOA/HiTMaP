@@ -641,14 +641,14 @@ wd="~/expdata/"
 library(HiTMaP)
 imaging_identification(datafile=paste0(wd,datafile),Digestion_site="trypsin",
                        Fastadatabase="uniprot_mouse_20210107.fasta",output_candidatelist=T,
-                       preprocess=list(force_preprocess=TRUE,
+                       preprocess=list(force_preprocess=T,
                                use_preprocessRDS=TRUE,
                                smoothSignal=list(method="gaussian"),
                                reduceBaseline=list(method="locmin"),
                                peakPick=list(method="adaptive"),
                                peakAlign=list(tolerance=5, units="ppm"),
                                normalize=list(method=c("rms","tic","reference")[1],mz=1)),
-                       spectra_segments_per_file=9,use_previous_candidates=F,ppm=5,FDR_cutoff = 0.05,IMS_analysis=T,
+                       spectra_segments_per_file=9,use_previous_candidates=F,ppm=10,FDR_cutoff = 0.05,IMS_analysis=T,
                        Rotate_IMG="file_rotationbk.csv",
                        mzrange = c(500,4000),plot_cluster_image_grid=F)
 
@@ -659,7 +659,7 @@ wd="~/expdata/"
 imaging_identification(datafile=paste0(wd,datafile),Digestion_site="trypsin",
                        Fastadatabase="uniprot_mouse_20210107.fasta",
                        preprocess=list(force_preprocess=FALSE),
-                       spectra_segments_per_file=9,use_previous_candidates=T,ppm=5,FDR_cutoff = 0.05,IMS_analysis=F,
+                       spectra_segments_per_file=9,use_previous_candidates=T,ppm=10,FDR_cutoff = 0.05,IMS_analysis=F,
                        mzrange = c(500,4000),plot_cluster_image_grid=T,
                        img_brightness=250, plot_cluster_image_overwrite=T,
                        cluster_rds_path = "/Mouse_brain ID/preprocessed_imdata.RDS",

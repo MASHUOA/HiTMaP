@@ -66,7 +66,7 @@ imaging_identification<-function(
 #==============Choose the imzml raw data file(s) to process  make sure the fasta file in the same folder
                datafile,
                projectfolder=NULL,
-               threshold=0.005,
+               threshold=0.001,
                ppm=5,
                mode=c("Proteomics","Metabolomics"),
                Digestion_site="trypsin",
@@ -416,7 +416,7 @@ imaging_identification<-function(
     
     #list_of_protein_sequence[!(1:length(list_of_protein_sequence) %in% as.numeric(Protein_feature_list_trimmed$Protein))]<-""
     #unname(as.character(list_of_protein_sequence))->str_vec
-    imdata <- imdata %>% peakBin(ref=sort(unique((Protein_feature_list_trimmed$mz_align+Protein_feature_list_trimmed$mz)/2)), tolerance=ppm, units="ppm") %>% process(BPPARAM=SerialParam())
+    #imdata <- imdata %>% peakBin(ref=sort(unique((Protein_feature_list_trimmed$mz_align+Protein_feature_list_trimmed$mz)/2)), tolerance=ppm, units="ppm") %>% process(BPPARAM=SerialParam())
     save(list=c("Protein_feature_list_trimmed",
                 "imdata",
                 "ClusterID_colname",
@@ -436,8 +436,7 @@ imaging_identification<-function(
                 "img_brightness",
                 "pixel_size_um"
                 ),
-         file=paste0(workdir,"/cluster_img_grid.RData"), ascii = T,compress  = FALSE
-         )
+         file=paste0(workdir,"/cluster_img_grid.RData"))
 
     for (clusterID in unique(Protein_feature_list_trimmed$Protein)){
       cluster_desc<-unique(Protein_feature_list_trimmed$desc[Protein_feature_list_trimmed[[ClusterID_colname]]==clusterID])
@@ -517,7 +516,7 @@ message("Workflow done.")
 IMS_data_process<-function(datafile,
                                     workdir=NULL,
                                     Peptide_Summary_searchlist,
-                                    segmentation_num=5,threshold=0.1,
+                                    segmentation_num=5,threshold=0.001,TopNFeatures=1250,
                                     ppm,import_ppm=5,
                                     mzrange="auto-detect",
                                     Segmentation=c("spatialKMeans","spatialShrunkenCentroids","Virtual_segmentation","none","def_file"),
@@ -634,7 +633,8 @@ IMS_data_process<-function(datafile,
     message(paste("PMFsearch",name))
     message(paste( "region",names(segmentation_label),"Found.",sep=" ",collapse = "\n"))
     for (SPECTRUM_batch in names(segmentation_label)){
-      if (dir.exists(paste0(workdir[z],"/",datafile[z] ," ID/",SPECTRUM_batch,"/"))==FALSE){dir.create(paste0(workdir[z],"/",datafile[z] ," ID/",SPECTRUM_batch,"/"))}
+      message(paste("IMS_analysis",name,"region",SPECTRUM_batch))
+        if (dir.exists(paste0(workdir[z],"/",datafile[z] ," ID/",SPECTRUM_batch,"/"))==FALSE){dir.create(paste0(workdir[z],"/",datafile[z] ," ID/",SPECTRUM_batch,"/"))}
     # if (!is.null(preprocess)){
     #   if ('|'(imdata@metadata[["ibd binary type"]]!="processed",preprocess$force_preprocess)){
     #   message(paste("Using preprocessed .rda data:",datafile[z]))
@@ -645,22 +645,42 @@ IMS_data_process<-function(datafile,
     #   }
     # }
       
-    imdata_sb<-imdata[,unlist(segmentation_label[[SPECTRUM_batch]])]
+    imdata_sb <- imdata[,unlist(segmentation_label[[SPECTRUM_batch]])]
+    
+    if(is.null(preprocess$peakAlign$level)) preprocess$peakAlign$level<-"local"
+    if (preprocess$peakAlign$level=="local"){
+      imdata_ed <- imdata_sb
+      if (preprocess$peakAlign$tolerance==0 ) {
+        message("preprocess$peakAlign$tolerance set as zero, step bypassed")
+      }else if ('&'(!is.null(preprocess$peakAlign$tolerance),!is.null(preprocess$peakAlign$tolerance))){
+        message("preprocess$peakAlign$tolerance set as ", preprocess$peakAlign$tolerance)
+        imdata_ed<- imdata_ed %>% peakAlign(tolerance=preprocess$peakAlign$tolerance, units=preprocess$peakAlign$units)
+      }else {
+        message("preprocess$peakAlign$tolerance missing, use default tolerance in ppm ", ppm/2)
+        imdata_ed<- imdata_ed %>% peakAlign(tolerance=ppm/2, units="ppm")
+      }
+    }
+    imdata_ed <- imdata_ed %>% process()
+    imdata_sb <- imdata_ed 
+    
    #generate spectrum for each found region
     spectrum_file_table<- summarizeFeatures(imdata_sb, FUN = "mean")
     spectrum_file_table<-data.frame(mz=spectrum_file_table@featureData@mz,mean=spectrum_file_table@featureData@listData[["mean"]])
     peaklist<-spectrum_file_table
     colnames(peaklist)<-c("m.z","intensities")
     savename=paste(name,SPECTRUM_batch)
-    message(paste("IMS_analysis",name,"region",SPECTRUM_batch))
+   
     
     peaklist<-peaklist[peaklist$intensities>0,]
     write.csv(peaklist,paste0(workdir[z],"/",datafile[z] ," ID/",SPECTRUM_batch,"/Spectrum.csv"),row.names = F)
     
-   #generate filtered processed peaklist to next step
+   #generate filtered processed peaklist to next PMF step
     deconv_peaklist<-HiTMaP:::isopattern_ppm_filter_peaklist(peaklist,ppm=ppm,threshold=0)
-    peaklist_pmf<-deconv_peaklist[deconv_peaklist$intensities>(max(deconv_peaklist$intensities)*threshold),]
-    message(paste(nrow(peaklist_pmf),"mz features found in the spectrum") )
+    deconv_peaklist_thres_id<-deconv_peaklist$intensities>=max(deconv_peaklist$intensities)*threshold
+    deconv_peaklist_topN_id<-rank(deconv_peaklist$intensities,)>(max(rank(deconv_peaklist$intensities,))-TopNFeatures)
+    deconv_peaklist_PMF_id<-`|`(deconv_peaklist_thres_id,deconv_peaklist_topN_id)
+    peaklist_pmf<-deconv_peaklist[deconv_peaklist_PMF_id,]
+    message(paste(nrow(peaklist_pmf),"mz features subjected to 1st PMF search") )
     
    #Do first round of peptide search to get putative result
     mz_feature_list<-Do_PMF_search(peaklist_pmf,Peptide_Summary_searchlist,BPPARAM=BPPARAM,ppm = ppm)
