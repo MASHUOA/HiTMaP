@@ -29,12 +29,12 @@ vignette: >
 -- An R package of High-resolution Informatics Toolbox for Maldi-imaging Proteomics
 
 
-## Package installation
-This is an tutorial for use of HiTMaP (An R package of High-resolution Informatics Toolbox for Maldi-imaging Proteomics). To access the software use the installation codes as below: 
+# Package installation
+This is a tutorial for the use of HiTMaP (An R package of High-resolution Informatics Toolbox for Maldi-imaging Proteomics). User's may run HiTMaP using Docker, or through R, however Docker is recommended to avoid issues with package dependency.
 
-### Installation from Docker image
+## Installation of docker image
 
-HiTMaP has been encapsulated as an docker image for each release. User can download the latest version by using the code as below.
+HiTMaP has been encapsulated into a docker image. Using a bash terminal, user's can download the latest version by using the code as below.
 
 
 ```bash
@@ -43,16 +43,16 @@ docker login --username mashuoa
 docker pull mashuoa/hitmap
 ```
 
-Setup and run the container:
+Seting up and running the docker container:
 
 ```bash
-#for windows user, run the image with a local user\Documents\expdata folder mapped to the docker container:
+# For windows user's, run the image with a local user\Documents\expdata folder mapped to the docker container:
 docker run --name hitmap -v %userprofile%\Documents\expdata:/root/expdata -a stdin -a stdout -i -t mashuoa/hitmap /bin/bash 
 
-#for linux user, run the image with a local user/expdata folder mapped to the docker container:
+# For linux or mac user's, run the image with a local user/expdata folder mapped to the docker container:
 docker run --name hitmap -v ~/expdata:/root/expdata -a stdin -a stdout -i -t mashuoa/hitmap /bin/bash 
 
-#Run R console
+#Run the R console
 R
 
 ```
@@ -61,10 +61,11 @@ Revoke Docker terminal:
 
 ```bash
 #ctrl+dto exit the shell and Restart the shell 
+docker restart hitmap
 docker container exec -it hitmap /bin/bash
 ```
 
-Stop/remove docker container (warning: if no local disk mapped to the "~/expdata", please backup your exisiting result files from the container before remove it):
+Stop/remove docker container (warning: if no local disk is mapped to "~/expdata", please backup your exisiting result files from the container before you remove it):
 
 ```bash
 docker stop hitmap
@@ -73,11 +74,11 @@ docker rm hitmap
 
 
 
-If You are using docker GUI, pull the docker image using the codes above and follow the image as below to setup the container.
+If you are using docker GUI, pull the docker image using the codes above and follow the image as below to setup the container.
 
 ![Docker GUI setting](Resource/docker_gui_setting.png)
 
-### Installation code for R console installation
+## Installation code for R console installation
 
 ```r
 #install the git package
@@ -97,7 +98,7 @@ library(HiTMaP)
 
 For windows users, Rtools (*https://cran.r-project.org/bin/windows/Rtools/*) is required.
 
-### Codes for Linux OS building enviornment
+## Codes for Linux OS building enviornment
 Run the codes as below to enable the required components in Linux console.
 
 
@@ -129,7 +130,7 @@ sudo apt-get install libudunits2-dev
 sudo apt-get install libgdal-dev
 ```
 
-### Codes for Mac OS building enviornment
+## Codes for Mac OS building enviornment
 
 You may need to update the Xcode. Go to your Mac OS terminal and input:
 
@@ -157,10 +158,10 @@ https://cran.r-project.org/bin/macosx/tools/
 
 
 
-## Example data and source code
-The HitMaP comes with a series of Maildi imaging data sets acquired from FT-ICR. By the following codes, you can download these raw data set into a local folder.  
+# Example data and source code
+The HitMaP comes with a series of maldi-imaging datasets acquired by FT-ICR mass spectromety. With the following code, you can download these raw data set into a local folder.  
 
-You can download the example file manually through this link: "https://github.com/MASHUOA/HiTMaP/releases/download/1.0/Data.tar.gz"
+You can download the example data manually through this link: "https://github.com/MASHUOA/HiTMaP/releases/download/1.0/Data.tar.gz"
 
 
 Or download the files in a R console:
@@ -185,19 +186,18 @@ untar('Data.tar.gz',exdir =".",  tar="tar")
 #unlink('Data.tar.gz')
 list.dirs()
 ```
-The example file contains three folder for three IMS dataset, configuration files, and the fasta database, respectively:
+The example data contains three folders for three individual IMS datasets, which each contain a configuration file, and the fasta database, respectively:
 *"./Bovinlens_Trypsin_FT" 
 "./MouseBrain_Trypsin_FT"
 "./Peptide_calibrants_FT"*
 
-## Proteomics identification on Maldi imaging data file 
+# Proteomics identification on maldi-imaging dataset 
 
-
-Now the HiTMaP is upon running. You could build the candidate list of your target proteome and perform image identification by using the function as below:
+To perform false-discovery rate controlled  peptide and protein annotation, run the following script below in your R session:
 
 
 ```r
-#creat candidate list
+#create candidate list
 library(HiTMaP)
 #set project folder that contains imzML, .ibd and fasta files
 #wd=paste0(file.path(path.package(package="HiTMaP")),"/data/")
@@ -256,9 +256,9 @@ imaging_identification(
 ```
 
 
-## Project folder and result structure 
+# Project folder and result structure 
 
-In the above function, You have performed proteomics analysis of the sample data file. It is a tryptic Bovin lens MALDI-imaging file which is acquired on an FT-ICR MS.
+In the above function, you have performed proteomics analysis on the sample data file. It is a tryptic Bovin lens MALDI-imaging file which is acquired on an FT-ICR MS.
 The function will take the selected data files' root directory as the project folder.
 In this example, the project folder will be:
 
@@ -276,7 +276,7 @@ wd
 ```
 
 
-After the whole identification process, we will get two types of sub-folders in the project folder:
+After the whole identification process, you will get two sub-folders within the project folder:
 
 
 ```r
@@ -300,11 +300,11 @@ list.dirs(wd, recursive=FALSE)
    + the Cluster imaging files of the protein of interest
    
    
-## Identification result visulasation and interpretation
+# Identification result visulasation and interpretation
 
-Now we could visualize the result by the following functions:
+To plot the MALDI-image peptide and protein images, use the following functions:
 
-To check the segmentation result over the sample, you need got to each data file ID folder and find the "spatialKMeans_image_plot.png" (if you are using the spatial K-means method for segmentation.)
+To check the segmentation result over the sample, you need to d to each data file ID folder and find the "spatialKMeans_image_plot.png" (if you are using the spatial K-means method for segmentation.)
 
 
 ```r
@@ -352,7 +352,7 @@ print(p_pmf)
 
 <img src="README_files/figure-html/unnamed-chunk-8-1.png" width="1980" />
 
-list of Peptides and proteins of each region has also been created so that you may check each individual region's result.
+A list of the peptides and proteins annotated within each region has also been created for manual exploration of the results.
 
 
 ```r
@@ -395,12 +395,12 @@ head(protein_pmf_result)
 ## # ... with 2 more variables: Intensity_norm <dbl>, desc <chr>
 ```
 
-## Scoring system for protein and peptide
-**Score** in peptide result table shows the isotopic pattern matching score of the peptide (Pepscore). In Protein result table, it shows the protein score (Proscore). The Pepscore consist of two parts: Intensity_Score and Mass_error_Score:
+# Scoring system for protein and peptide
+**Score** in peptide result table shows the isotopic pattern matching score of the peptide (Pepscore). In Protein result table, it shows the protein score (Proscore). The 'Pepscore' consist of two parts: Intensity_Score and Mass_error_Score:
 
-   + Intensity_Score indicates how well a putative isotopic pattern can be matched to the observed spectrum.The default scoring method is SQRTP. It combines the Square root mean differences between observed and theoretical peaks and observed proportion of the isotopic peaks above a certain relative intensity threshold.
+   + Intensity_Score indicates how well a putative isotopic pattern can be matched to the observed spectrum.The default scoring method is SQRTP. It combines the 'square root mean' differences between observed and theoretical peaks and observed proportion of the isotopic peaks above a certain relative intensity threshold.
    
-   + Mass_error_Score indicates the summary of mass error (in *ppm*) for every detected isotopic peak. in order to integrate the Mass_error_Score in to scoring system. the mean ppm error has been normalized by ppm tolerance, and supplied to the probability normal distributions (*pnorm* function for R). The resulting value (Quantiles of the given Probability Density) is deducted by 0.5 and converted into absolute value.
+   + Mass_error_Score indicates the summary of mass error (in *ppm*) for every detected isotopic peak. In order to integrate the Mass_error_Score in to scoring system, the mean ppm error has been normalized by ppm tolerance, and supplied to the probability normal distributions (*pnorm* function for R). The resulting value (quantiles of the given probability density) is deducted by 0.5 and converted into an absolute value.
 
 $Intensity\_Score=\log(PeakCount_{Observed}/PeakCount_{Theoritical})-\log(\sqrt{\frac{\sum_{x = 1}^{n} (Theoritical\_intensity_x-Observed\_intensity_x)^2}{\sum_{x = 1}^{n} (Theoritical\_intensity_x)^2(Observed\_intensity_x)^2}}$
 
@@ -474,7 +474,7 @@ dir(paste0(wd,datafile," ID/1/"), recursive=FALSE)
 ## [14] "unique_peptide_ranking_vs_mz_feature.png"
 ```
 
-In this folder, you will find the FDR plots for protein and peptide. The software will take the proscore and its FDR model to trim the final identification result. The *unique_peptide_ranking_vs_mz_feature.png* is a plot that could tell you the number of peptide candidates have been matched to the mz features in the first round run.You can also access the peptide spectrum match (first MS dimension) data via the "/ppm" subfolder.
+In this folder, you will find the FDR plots for protein and peptide annotation. The software will take the proscore and its FDR model to trim the final identification results. The *unique_peptide_ranking_vs_mz_feature.png* is a plot that could tell you the number of peptide candidates that have been matched to the mz features in the first round run. You can also access the peptide spectrum match (first MS dimension) data via the "/ppm" subfolder.
 
 
 ```r
@@ -510,7 +510,7 @@ print(p_combined)
 
 <img src="README_files/figure-html/FDR plot-2.png" width="1920" />
 
-you will also find a *Matching_Score_vs_mz* plots for further investigation on peptide matching quality. 
+You will also find a *Matching_Score_vs_mz* plot for further investigation on peptide matching quality. 
 
 
 ```r
@@ -529,7 +529,7 @@ print(p_Matching_Score_vs_mz)
 
 <img src="README_files/figure-html/p_Matching_Score_vs_mz plot-1.png" width="480" />
 
-## Identification summary and cluster imaging
+# Identification summary and cluster imaging
 
 In the project summary folder, you will find four files and a sub-folder:
 
@@ -544,17 +544,12 @@ dir(wd_sum)
 ## [5] "protein_index.csv"                "Protein_Summary.csv"
 ```
 
-"candidatelist.csv" and "protein_index.csv" contains the candidates used for this project. They are output after the candidate processing while *output_candidatelist* set as TRUE, and can be used repeatedly while *use_previous_candidates* set as TRUE.
+"candidatelist.csv" and "protein_index.csv" contains the candidates used for this analysis. They are output after the candidate processing while *output_candidatelist* set as TRUE, and can be used repeatedly while *use_previous_candidates* set as TRUE.
 
-we have now implemented a functionality to perform additional statistical analyses around the number of tryptic enzymatically generated peptides generated derived from a given proteome (‘Database_stats’). If the user sets the variable ‘Database_stats’ to TRUE in the main workflow, then the function will be called. 
+We have  implemented a functionality to perform additional statistical analyses around the number of enzymatically generated peptides generated derived from a given proteome (‘Database_stats’). If the user sets the variable ‘Database_stats’ to TRUE in the main workflow, then the function will be called. Briefly, the function will list all of the m/z’s of a unique formulae from the peptide candidate pool within a given m/z range. The m/z’s will then be binned using three resolution m/z windows: 1ppm, 2ppm and 5ppm. A plot showing the number of unique formulae vs. binned m/z windows will be generated and exported to the summary folder (DB_stats_mz_bin).
 
-Briefly, the function will list all of the m/z’s of a unique formulae from the peptide candidate pool within a given m/z range. The m/z’s will then be binned using three resolution m/z windows: 1ppm, 2ppm and 5ppm. A plot showing the number of unique formulae vs. binned m/z windows will be generated and exported to the summary folder (DB_stats_mz_bin). 
-
-The example figure as below shows the m/z bin(s) analysis result of a mouse brain proteome without modification(s) and with up to 1 missed cleavage(D). This represents a ‘worst case scenario’ since there is an assumption that all competitive candidates in each bin have equal ionisability, which in practice is not the case. The reviewer is therefore correct that a significant number of competitive candidates can be found within the m/z range of a common proteomics/peptidomics investigation. In practical terms, the number of competitive candidates is likely to be far fewer, due to the previously mentioned unequal ionisation of predicted peptides and the known bias for MALDI MSI to detect higher abundance peptides and proteins.  
 
 ![Proteome database stats](Resource/DB_stats_bin_mz_ppm.png)
-
-However, one of the main applications of HIT-MAP is the annotation of proteins and their spatial distribution. Since only unique peptides are retained, and all peptides are rank-scored, and protein maps are only produced when 2+ unique peptides are matched, we feel that the likelihood of misidentifying proteins significantly decreases with increasing peptide number.
 
 
 "Peptide_Summary.csv" and "Protein_Summary.csv" contains the table of the project identification summary. You could set the *plot_cluster_image_grid* as TRUE to enable the cluster imaging function. Please be noted that you could indicate *Rotate_IMG* with a CSV file path that indicates the rotation degree of image files. 
@@ -569,12 +564,21 @@ Protein_Summary_tb<-read.csv(paste(wd,"/Summary folder","/Protein_Summary.csv", 
 ```
 
 
-Now you could visualized the interest proteins and their associated peptides' distribution via cluster imaging function.
+Finally, you are able visualize the annotated proteins and their associated peptide distributions via the cluster imaging function.
 
 
 ```r
 library(magick)
-p_cluster1<-image_read(paste0(wd,"/Summary folder/cluster Ion images/791_cluster_imaging.png"))
+```
+
+```
+## Linking to ImageMagick 6.9.11.57
+## Enabled features: cairo, freetype, fftw, ghostscript, heic, lcms, pango, raw, rsvg, webp
+## Disabled features: fontconfig, x11
+```
+
+```r
+p_cluster1<-image_read(paste0("~/expdata/Bovinlens_Trypsin_FT/Summary folder/cluster Ion images/unique/791_cluster_imaging.png"))
 print(p_cluster1)
 ```
 
@@ -582,13 +586,13 @@ print(p_cluster1)
 ## # A tibble: 1 x 7
 ##   format width height colorspace matte filesize density
 ##   <chr>  <int>  <int> <chr>      <lgl>    <int> <chr>  
-## 1 PNG     1980   1308 sRGB       TRUE    302087 118x118
+## 1 PNG     1980   1315 sRGB       TRUE    315279 59x59
 ```
 
 <img src="README_files/figure-html/CLuster imaging-1.png" width="1980" />
 
 ```r
-p_cluster2<-image_read(paste0(wd,"/Summary folder/cluster Ion images/5027_cluster_imaging.png"))
+p_cluster2<-image_read(paste0("~/expdata/Bovinlens_Trypsin_FT/Summary folder/cluster Ion images/unique/5027_cluster_imaging.png"))
 print(p_cluster2)
 ```
 
@@ -596,13 +600,13 @@ print(p_cluster2)
 ## # A tibble: 1 x 7
 ##   format width height colorspace matte filesize density
 ##   <chr>  <int>  <int> <chr>      <lgl>    <int> <chr>  
-## 1 PNG     1980   1309 sRGB       TRUE    348111 118x118
+## 1 PNG     1980   1121 sRGB       TRUE    264538 59x59
 ```
 
 <img src="README_files/figure-html/CLuster imaging-2.png" width="1980" />
 
 ```r
-p_cluster3<-image_read(paste0(wd,"/Summary folder/cluster Ion images/5479_cluster_imaging.png"))
+p_cluster3<-image_read(paste0("~/expdata/Bovinlens_Trypsin_FT/Summary folder/cluster Ion images/unique/5479_cluster_imaging.png"))
 print(p_cluster3)
 ```
 
@@ -610,16 +614,16 @@ print(p_cluster3)
 ## # A tibble: 1 x 7
 ##   format width height colorspace matte filesize density
 ##   <chr>  <int>  <int> <chr>      <lgl>    <int> <chr>  
-## 1 PNG     1980   1069 sRGB       TRUE    237191 118x118
+## 1 PNG     1980   1075 sRGB       TRUE    220698 59x59
 ```
 
 <img src="README_files/figure-html/CLuster imaging-3.png" width="1980" />
 
-## Details of parameter setting
+# Details of parameter setting
 
 
-### Modification
-you can choose one or a list of modifications from the unimod modification list. *Peptide_modification* function is used to load/rebuild the modification database into the global enviornment of R. It will be called automatically in the identification work flow. you can use the *code_name* or *record_id* to refer the modification (see example data "peptide calibrants" to find more details). The pipeline will select the *non-hidden* modifications.
+## Modification
+You can choose one or a list of modifications from the unimod modification list. *Peptide_modification* function is used to load/rebuild the modification database into the global enviornment of R. It will be called automatically in the identification work flow. you can use the *code_name* or *record_id* to refer the modification (see example data "peptide calibrants" to find more details). The pipeline will select the *non-hidden* modifications.
 
 
 
@@ -666,7 +670,7 @@ head(modification_list['&'(stringr::str_detect(modification_list$code_name,"Ca")
 ## 5 Carboxymethyl   6         H(2) C(2) O(2) 58.005479 2            C
 ```
 
-If a modification occurs on different types of site , you will also need to specify the position of a modifications.
+If a modification occurs on a particular site, you will also need to specify the position of a modifications.
 
 * *Anywhere*, side chain of possible amino acids
 * *Any N-term*, any N-term of enzymatic peptide 
@@ -688,7 +692,7 @@ unimod.df[["positions"]]
 ## 5 Protein N-term 5        
 ## 6 Protein C-term 6
 ```
-### Amino acid substitution
+## Amino acid substitution
 You can set the *Substitute_AA* to make the uncommon amino acid available to the workflow:
 *Substitute_AA=list(AA=c("X"),AA_new_formula=c("C5H5NO2"),Formula_with_water=c(FALSE))*
 
@@ -697,7 +701,7 @@ You can set the *Substitute_AA* to make the uncommon amino acid available to the
 * Formula_with_water: Set *TRUE* to indicate the formula represents the intact amino acid, *FALSE* to indicate that the formula already lost one H2O molecule and can be considered as AA backbone.
 
 
-### Digestion site and enzyme
+## Digestion site and enzyme
 
 The *Digestion_site* allows you to specify a list of pre-defined enzyme and customized digestion rules in regular expression format. You can either use the enzyme name, customized cleavage rule or combination of them to get the enzymatics peptides list. 
 
@@ -717,11 +721,11 @@ grid.ftable(Cleavage_df, gp = gpar(fontsize=9,fill = rep(c("grey90", "grey95")))
 
 
 
-## Example workflow command
+# Example workflow command
 
 Below is a list of commands including the parameters for the example data sets.
 
-### Peptide calibrant
+## Peptide calibrant
 
 
 ```r
@@ -771,7 +775,7 @@ imaging_identification(datafile=paste0(wd,datafile),
   Substitute_AA=list(AA=c("X"),AA_new_formula=c("C5H5NO2"),Formula_with_water=c(FALSE)),Thread = 1)
 ```
 
-### Bovin lens
+## Bovine lens
 
 ```r
 library(HiTMaP)
@@ -826,7 +830,7 @@ imaging_identification(datafile=paste0(wd,datafile),Digestion_site="trypsin",
 ```
 
 
-### Mouse brain
+## Mouse brain
 
 ```r
 library(HiTMaP)
@@ -837,30 +841,32 @@ wd="~/expdata/"
 library(HiTMaP)
 imaging_identification(datafile=paste0(wd,datafile),Digestion_site="trypsin",
                        Fastadatabase="uniprot_mouse_20210107.fasta",output_candidatelist=T,
-                       preprocess=list(force_preprocess=TRUE,
+                       preprocess=list(force_preprocess=T,
                                use_preprocessRDS=TRUE,
                                smoothSignal=list(method="gaussian"),
                                reduceBaseline=list(method="locmin"),
                                peakPick=list(method="adaptive"),
                                peakAlign=list(tolerance=5, units="ppm"),
                                normalize=list(method=c("rms","tic","reference")[1],mz=1)),
-                       spectra_segments_per_file=9,use_previous_candidates=F,ppm=5,FDR_cutoff = 0.05,IMS_analysis=T,
+                       spectra_segments_per_file=9,use_previous_candidates=F,ppm=10,FDR_cutoff = 0.05,IMS_analysis=T,
                        Rotate_IMG="file_rotationbk.csv",
                        mzrange = c(500,4000),plot_cluster_image_grid=F)
 
 # Re-analysis and cluster image rendering
-
+library(HiTMaP)
+datafile=c("MouseBrain_Trypsin_FT/Mouse_brain.imzML")
+wd="~/expdata/"
 imaging_identification(datafile=paste0(wd,datafile),Digestion_site="trypsin",
                        Fastadatabase="uniprot_mouse_20210107.fasta",
                        preprocess=list(force_preprocess=FALSE),
-                       spectra_segments_per_file=9,use_previous_candidates=T,ppm=5,FDR_cutoff = 0.05,IMS_analysis=F,
+                       spectra_segments_per_file=9,use_previous_candidates=T,ppm=10,FDR_cutoff = 0.05,IMS_analysis=F,
                        mzrange = c(500,4000),plot_cluster_image_grid=T,
                        img_brightness=250, plot_cluster_image_overwrite=T,
                        cluster_rds_path = "/Mouse_brain ID/preprocessed_imdata.RDS",
                        pixel_size_um = 50,
                        Plot_score_abs_cutoff=-0.1,
                        remove_score_outlier=T,
-                       Protein_desc_of_interest=c("Crystallin","Phakinin","Filensin","Actin","Vimetin","Cortactin","Visinin","Arpin","Tropomyosin","Myosin Light Chain 3","Kinesin Family Member 14","Dyenin Regulatory Complex","Ankyrin Repeat Domain 45"))
+                       Protein_desc_of_interest=c("Secernin","GN=MBP","Cytochrome"))
 ```
 
 
@@ -870,7 +876,7 @@ imaging_identification(datafile=paste0(wd,datafile),Digestion_site="trypsin",
 
 
 
-## Session information
+# Session information
 
 
 ```r
@@ -909,7 +915,7 @@ toLatex(sessionInfo())
 End of the tutorial, Enjoy~
 
 
-## References
+# References
 R Packages used in this project:
 
    + viridisLite[@viridisLite]

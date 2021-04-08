@@ -13,7 +13,8 @@ ssh gguo484@md-cer00340.its.auckland.ac.nz
 password:2authentoken
 
 docker run --name hitmap -v %userprofile%\Documents\expdata:/root/expdata -a stdin -a stdout -i -t mashuoa/hitmap:base_nodata /bin/bash 
-
+docker commit cf8d5717bbbf mashuoa/hitmap:latest
+docker image push mashuoa/hitmap:latest
 #sudo apt-get install vim
 #vim etc/ImageMagick-6/policy.xml
 #change the pixel limit of width and height
