@@ -38,8 +38,6 @@ HiTMaP has been encapsulated into a docker image. Using a bash terminal, user's 
 
 
 ```bash
-docker login --username mashuoa 
-0a9da0ae-8d7b-4e11-8587-be46e21ee937
 docker pull mashuoa/hitmap
 ```
 
@@ -60,12 +58,14 @@ R
 Revoke Docker terminal:
 
 ```bash
-#ctrl+dto exit the shell and Restart the shell 
+#use ctrl+d to exit the docker container shell 
+
+#Restart the container and connect to the shell 
 docker restart hitmap
 docker container exec -it hitmap /bin/bash
 ```
 
-Stop/remove docker container (warning: if no local disk is mapped to "~/expdata", please backup your exisiting result files from the container before you remove it):
+Stop/remove docker container (warning: if no local disk is mapped to "~/expdata", please backup your existing result files from the container before you remove it):
 
 ```bash
 docker stop hitmap
@@ -79,6 +79,16 @@ If you are using docker GUI, pull the docker image using the codes above and fol
 ![Docker GUI setting](Resource/docker_gui_setting.png)
 
 ## Installation code for R console installation
+
+The code below is used for an experienced R user to build a local R/HiTMaP running environment. 
+Major dependencies to note:
+
+* R base
+* java running library (for linux, additional configuration is needed: *R CMD javareconf*)
+* orca for plotly (https://github.com/plotly/orca/releases/tag/v1.3.1)
+* magick++ (for Linux, additional configuration is needed to expand the pixel limitation)
+
+
 
 ```r
 #install the git package
@@ -130,9 +140,9 @@ sudo apt-get install libudunits2-dev
 sudo apt-get install libgdal-dev
 ```
 
-## Codes for Mac OS building enviornment
+## Codes for Mac OS building enviornment (optional)
 
-You may need to update the Xcode. Go to your Mac OS terminal and input:
+The following code is for a local GUI purpose. Hitmap now has been built on the shiny server system. You can skip this step in the later version. You may need to update the Xcode. Go to your Mac OS terminal and input:
 
 
 ```bash
@@ -150,12 +160,6 @@ https://www.xquartz.org/
 
 + Use the following link to download and install the correct tcltk package for your OS version.
 https://cran.r-project.org/bin/macosx/tools/
-
-
-
-
-
-
 
 
 # Example data and source code
@@ -266,13 +270,7 @@ In this example, the project folder will be:
 ```r
 library(HiTMaP)
 wd=paste0("D:\\GITHUB LFS\\HiTMaP-Data\\inst","/data/Bovinlens_Trypsin_FT/")
-#set a series of imzML files to be processed
 datafile=c("Bovin_lens")
-wd
-```
-
-```
-## [1] "D:\\GITHUB LFS\\HiTMaP-Data\\inst/data/Bovinlens_Trypsin_FT/"
 ```
 
 
@@ -298,6 +296,7 @@ list.dirs(wd, recursive=FALSE)
    + the identification summary of protein and peptides across all the data
    + the candidate list of all possible proteins and peptides (if *use_previous_candidates* is set as **TRUE**)
    + the Cluster imaging files of the protein of interest
+   + the database stats result for resolution-based candidates binning (optional)
    
    
 # Identification result visulasation and interpretation
@@ -331,7 +330,7 @@ print(p)
 
 <img src="README_files/figure-html/VisulazeKmean-1.png" width="1024" />
 
-The pixels in image data now has been categorized into five regions according to the initial setting of segmentation (*spectra_segments_per_file=5*). The rainbow shaped bovine lens segmentation image (on the left panel) shows a unique statistical classification based on the mz features of each region (on the right panel).
+The pixels in image data now has been categorized into four regions according to the initial setting of segmentation (*spectra_segments_per_file=5*). The rainbow shaped bovine lens segmentation image (on the left panel) shows a unique statistical classification based on the mz features of each region (on the right panel).
 
 The identification will take place on the **mean spectra** of each region. To check the peptide mass fingerprint (PMF) matching quality, 
 you could locate the PMF spectrum matching plot of each individual region.
@@ -479,20 +478,6 @@ In this folder, you will find the FDR plots for protein and peptide annotation. 
 
 ```r
 library(magick)
-p_peptide_vs_mz_feature<-image_read(paste0(wd,datafile," ID/3/unique_peptide_ranking_vs_mz_feature.png"))
-print(p_peptide_vs_mz_feature)
-```
-
-```
-## # A tibble: 1 x 7
-##   format width height colorspace matte filesize density
-##   <chr>  <int>  <int> <chr>      <lgl>    <int> <chr>  
-## 1 PNG      960    480 sRGB       FALSE    11196 72x72
-```
-
-<img src="README_files/figure-html/FDR plot-1.png" width="960" />
-
-```r
 p_FDR_peptide<-image_read(paste0(wd,datafile," ID/3/FDR.png"))
 p_FDR_protein<-image_read(paste0(wd,datafile," ID/3/protein_FDR.png"))
 p_FDR_peptide_his<-image_read(paste0(wd,datafile," ID/3/Peptide_Score_histogram_target-decoy.png"))
@@ -508,7 +493,7 @@ print(p_combined)
 ## 1 PNG     1920    480 sRGB       FALSE        0 72x72
 ```
 
-<img src="README_files/figure-html/FDR plot-2.png" width="1920" />
+<img src="README_files/figure-html/FDR plot-1.png" width="1920" />
 
 You will also find a *Matching_Score_vs_mz* plot for further investigation on peptide matching quality. 
 
@@ -578,6 +563,34 @@ library(magick)
 ```
 
 ```r
+p_cluster2<-image_read(paste0("~/expdata/Bovinlens_Trypsin_FT/Summary folder/cluster Ion images/unique/25917_cluster_imaging.png"))
+print(p_cluster2)
+```
+
+```
+## # A tibble: 1 x 7
+##   format width height colorspace matte filesize density
+##   <chr>  <int>  <int> <chr>      <lgl>    <int> <chr>  
+## 1 PNG     1980   1585 sRGB       TRUE    309996 59x59
+```
+
+<img src="README_files/figure-html/CLuster imaging-1.png" width="1980" />
+
+```r
+p_cluster4<-image_read(paste0("~/expdata/Bovinlens_Trypsin_FT/Summary folder/cluster Ion images/unique/452_cluster_imaging.png"))
+print(p_cluster4)
+```
+
+```
+## # A tibble: 1 x 7
+##   format width height colorspace matte filesize density
+##   <chr>  <int>  <int> <chr>      <lgl>    <int> <chr>  
+## 1 PNG     1980    980 sRGB       TRUE    185280 59x59
+```
+
+<img src="README_files/figure-html/CLuster imaging-2.png" width="1980" />
+
+```r
 p_cluster1<-image_read(paste0("~/expdata/Bovinlens_Trypsin_FT/Summary folder/cluster Ion images/unique/791_cluster_imaging.png"))
 print(p_cluster1)
 ```
@@ -589,21 +602,7 @@ print(p_cluster1)
 ## 1 PNG     1980   1315 sRGB       TRUE    315279 59x59
 ```
 
-<img src="README_files/figure-html/CLuster imaging-1.png" width="1980" />
-
-```r
-p_cluster2<-image_read(paste0("~/expdata/Bovinlens_Trypsin_FT/Summary folder/cluster Ion images/unique/5027_cluster_imaging.png"))
-print(p_cluster2)
-```
-
-```
-## # A tibble: 1 x 7
-##   format width height colorspace matte filesize density
-##   <chr>  <int>  <int> <chr>      <lgl>    <int> <chr>  
-## 1 PNG     1980   1121 sRGB       TRUE    264538 59x59
-```
-
-<img src="README_files/figure-html/CLuster imaging-2.png" width="1980" />
+<img src="README_files/figure-html/CLuster imaging-3.png" width="1980" />
 
 ```r
 p_cluster3<-image_read(paste0("~/expdata/Bovinlens_Trypsin_FT/Summary folder/cluster Ion images/unique/5479_cluster_imaging.png"))
@@ -617,7 +616,7 @@ print(p_cluster3)
 ## 1 PNG     1980   1075 sRGB       TRUE    220698 59x59
 ```
 
-<img src="README_files/figure-html/CLuster imaging-3.png" width="1980" />
+<img src="README_files/figure-html/CLuster imaging-4.png" width="1980" />
 
 # Details of parameter setting
 
