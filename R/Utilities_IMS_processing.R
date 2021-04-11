@@ -1300,14 +1300,14 @@ Preprocessing_segmentation<-function(datafile,
     }else{
       instrument_ppm=10
     }
-    
+
     #setup import ppm which ensure pickpicking has correct number of data points (halfwindow>=2) per peak to work with
     if (import_ppm > ppm ) import_ppm = ppm
-    
+
     imdata_org<-NULL
     imdata<-NULL
     imdata_ed<-NULL
-    
+
     if (dir.exists(paste0(gsub(".imzML$","",datafile[z]) ," ID"))==FALSE){
       dir.create(paste0(gsub(".imzML$","",datafile[z])  ," ID"))
     }
@@ -1348,7 +1348,7 @@ Preprocessing_segmentation<-function(datafile,
         saveRDS(imdata_ed,paste0(gsub(".imzML$","",datafile[z])  ," ID/preprocessed_peakpicked_imdata.RDS"))
 
 
-        
+
         setCardinalBPPARAM(BPPARAM)
           #smoothSignal(method="gaussian") %>%
           #reduceBaseline(method="locmin") %>%
@@ -1371,7 +1371,7 @@ Preprocessing_segmentation<-function(datafile,
           }else{
             imdata_ed<- imdata_ed %>% peakPick(method="adaptive", window=4) %>% process()
           }
-          
+
         if(is.null(preprocess$peakAlign$level)) preprocess$peakAlign$level<-"local"
           if (preprocess$peakAlign$level=="global"){
           if (preprocess$peakAlign$tolerance==0 ) {
@@ -1413,7 +1413,7 @@ Preprocessing_segmentation<-function(datafile,
           imdata_ed<-imdata
           #smoothSignal(method="gaussian") %>%
           #reduceBaseline(method="locmin") %>%
-          
+
           if (!is.null(preprocess$normalize)){
             if (preprocess$normalize$method %in% c("rms","tic")){
               imdata_ed<- imdata_ed %>% normalize(method=preprocess$normalize$method) %>% process()
@@ -1423,13 +1423,13 @@ Preprocessing_segmentation<-function(datafile,
                                                  preprocess$normalize$mz*(1+ppm/1000000)))
               if (length(norm_feature)>=1){
                 imdata_ed<- imdata_ed %>% normalize(method=preprocess$normalize$method, feature = norm_feature) %>% process(BPPARAM=SerialParam())
-                
+
               }
             } else {
               imdata_ed<- imdata_ed %>% normalize(method="rms") %>% process()
             }
           }
-          
+
           if (!is.null(preprocess$smoothSignal$method)){
             imdata_ed<- imdata_ed %>% smoothSignal(method=preprocess$smoothSignal$method) %>% process()
           }else{
@@ -1456,7 +1456,7 @@ Preprocessing_segmentation<-function(datafile,
           }
 
           imdata_ed<- imdata_ed %>% process()
-          
+
           if (!is.null(preprocess$normalize)){
             if (preprocess$normalize$method=="Disable") {
             } else if (preprocess$normalize$method %in% c("rms","tic")){
@@ -1472,9 +1472,9 @@ Preprocessing_segmentation<-function(datafile,
               imdata_ed<- imdata_ed %>% normalize(method="rms") %>% process()
             }
           }
-          
+
         }
-        
+
         saveRDS(imdata_ed,paste0(gsub(".imzML$","",datafile[z])  ," ID/preprocessed_imdata.RDS"))
       }else{
         imdata_ed<-imdata
@@ -2104,7 +2104,7 @@ Load_IMS_decov_combine<-function(datafile,workdir,import_ppm=5,SPECTRUM_batch="o
   library(Cardinal)
   library(stringr)
   library(HiTMaP)
-
+  datafile_base<-basename(datafile)
   datafile <- str_remove(datafile_base,"\\.imzML$")
   if(length(workdir)!=length(datafile)){
     workdir=rep(workdir[1],length(datafile))
