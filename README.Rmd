@@ -59,7 +59,9 @@ R
 
 Revoke Docker terminal:
 ```{bash eval=FALSE, include=T}
-#ctrl+dto exit the shell and Restart the shell 
+#use ctrl+d to exit the docker container shell 
+
+#Restart the container and connect to the shell 
 docker restart hitmap
 docker container exec -it hitmap /bin/bash
 ```
@@ -283,6 +285,7 @@ list.dirs(wd, recursive=FALSE)
    + the identification summary of protein and peptides across all the data
    + the candidate list of all possible proteins and peptides (if *use_previous_candidates* is set as **TRUE**)
    + the Cluster imaging files of the protein of interest
+   + the database stats result for resolution-based candidates binning (optional)
    
    
 # Identification result visulasation and interpretation
@@ -297,7 +300,7 @@ p<-image_read(paste0(wd,datafile," ID/spatialKMeans_image_plot.png"))
 print(p)
 ```
 
-The pixels in image data now has been categorized into five regions according to the initial setting of segmentation (*spectra_segments_per_file=5*). The rainbow shaped bovine lens segmentation image (on the left panel) shows a unique statistical classification based on the mz features of each region (on the right panel).
+The pixels in image data now has been categorized into four regions according to the initial setting of segmentation (*spectra_segments_per_file=5*). The rainbow shaped bovine lens segmentation image (on the left panel) shows a unique statistical classification based on the mz features of each region (on the right panel).
 
 The identification will take place on the **mean spectra** of each region. To check the peptide mass fingerprint (PMF) matching quality, 
 you could locate the PMF spectrum matching plot of each individual region.
