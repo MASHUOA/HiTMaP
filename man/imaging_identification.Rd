@@ -7,7 +7,7 @@
 imaging_identification(
   datafile,
   projectfolder = NULL,
-  threshold = 0.005,
+  threshold = 0.001,
   ppm = 5,
   mode = c("Proteomics", "Metabolomics"),
   Digestion_site = "trypsin",
@@ -21,7 +21,7 @@ imaging_identification(
   Decoy_adducts = c("M+ACN+H", "M+IsoProp+H", "M+DMSO+H", "M+Co", "M+Ag", "M+Cu",
     "M+He", "M+Ne", "M+Ar", "M+Kr", "M+Xe", "M+Rn"),
   Decoy_mode = "isotope",
-  mzrange = "auto-detect",
+  mzrange = c(700, 4000),
   Database_stats = F,
   adjust_score = FALSE,
   IMS_analysis = TRUE,
@@ -41,7 +41,7 @@ imaging_identification(
   Segmentation_variance_coverage = 0.8,
   preprocess = list(force_preprocess = FALSE, use_preprocessRDS = TRUE, smoothSignal =
     list(method = "disable"), reduceBaseline = list(method = "locmin"), peakPick =
-    list(method = "adaptive"), peakAlign = list(tolerance = ppm, units = "ppm"),
+    list(method = "adaptive"), peakAlign = list(tolerance = ppm/2, units = "ppm"),
     normalize = list(method = c("rms", "tic", "reference")[1], mz = 1)),
   Smooth_range = 1,
   Virtual_segmentation_rankfile = NULL,
@@ -72,7 +72,7 @@ imaging_identification(
   remove_cluster_from_grid = attach_summary_cluster,
   pixel_size_um = 50,
   img_brightness = 100,
-  Thread = NULL,
+  Thread = 4,
   cluster_rds_path = NULL,
   remove_score_outlier = F,
   Plot_score_IQR_cutoff = 0.75,

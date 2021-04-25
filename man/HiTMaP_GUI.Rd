@@ -5,7 +5,7 @@
 \alias{HiTMaP_GUI}
 \title{HiTMaP shiny-based graphical user interface (GUI)}
 \usage{
-HiTMaP_GUI(wd = "", port = 3838)
+HiTMaP_GUI(wd = "~/", port = 3838)
 }
 \description{
 HiTMaP shiny-based graphical user interface (GUI)

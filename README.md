@@ -28,6 +28,7 @@ vignette: >
 
 -- An R package of High-resolution Informatics Toolbox for Maldi-imaging Proteomics
 
+![](https://zenodo.org/badge/187550066.svg)
 
 # Package installation
 This is a tutorial for the use of HiTMaP (An R package of High-resolution Informatics Toolbox for Maldi-imaging Proteomics). User's may run HiTMaP using Docker, or through R, however Docker is recommended to avoid issues with package dependency.
@@ -571,10 +572,10 @@ print(p_cluster2)
 ## # A tibble: 1 x 7
 ##   format width height colorspace matte filesize density
 ##   <chr>  <int>  <int> <chr>      <lgl>    <int> <chr>  
-## 1 PNG     1980   1585 sRGB       TRUE    309996 59x59
+## 1 PNG     5670   1951 sRGB       FALSE   678267 59x59
 ```
 
-<img src="README_files/figure-html/CLuster imaging-1.png" width="1980" />
+<img src="README_files/figure-html/CLuster imaging-1.png" width="5670" />
 
 ```r
 p_cluster4<-image_read(paste0("~/expdata/Bovinlens_Trypsin_FT/Summary folder/cluster Ion images/unique/452_cluster_imaging.png"))
@@ -585,10 +586,10 @@ print(p_cluster4)
 ## # A tibble: 1 x 7
 ##   format width height colorspace matte filesize density
 ##   <chr>  <int>  <int> <chr>      <lgl>    <int> <chr>  
-## 1 PNG     1980    980 sRGB       TRUE    185280 59x59
+## 1 PNG    25110   2063 sRGB       FALSE  3010819 59x59
 ```
 
-<img src="README_files/figure-html/CLuster imaging-2.png" width="1980" />
+<img src="README_files/figure-html/CLuster imaging-2.png" width="25110" />
 
 ```r
 p_cluster1<-image_read(paste0("~/expdata/Bovinlens_Trypsin_FT/Summary folder/cluster Ion images/unique/791_cluster_imaging.png"))
@@ -599,10 +600,10 @@ print(p_cluster1)
 ## # A tibble: 1 x 7
 ##   format width height colorspace matte filesize density
 ##   <chr>  <int>  <int> <chr>      <lgl>    <int> <chr>  
-## 1 PNG     1980   1315 sRGB       TRUE    315279 59x59
+## 1 PNG     8910   2020 sRGB       FALSE  1121766 59x59
 ```
 
-<img src="README_files/figure-html/CLuster imaging-3.png" width="1980" />
+<img src="README_files/figure-html/CLuster imaging-3.png" width="8910" />
 
 ```r
 p_cluster3<-image_read(paste0("~/expdata/Bovinlens_Trypsin_FT/Summary folder/cluster Ion images/unique/5479_cluster_imaging.png"))
@@ -613,10 +614,10 @@ print(p_cluster3)
 ## # A tibble: 1 x 7
 ##   format width height colorspace matte filesize density
 ##   <chr>  <int>  <int> <chr>      <lgl>    <int> <chr>  
-## 1 PNG     1980   1075 sRGB       TRUE    220698 59x59
+## 1 PNG    13770   1751 sRGB       FALSE  1118974 59x59
 ```
 
-<img src="README_files/figure-html/CLuster imaging-4.png" width="1980" />
+<img src="README_files/figure-html/CLuster imaging-4.png" width="13770" />
 
 # Details of parameter setting
 
