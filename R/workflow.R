@@ -141,16 +141,6 @@ imaging_identification<-function(
 
   if (missing(datafile)) stop("Missing data file, Choose single or multiple imzml file(s) for analysis")
   
-# resove missing vars this is an patch during package evaluation and will be removed in next revision
-  e <- environment()
-  p <- parent.env(e)
-
-  if(!exists("ppm", envir=p)) {
-    pf <- parent.frame()
-    pf$ppm <- ppm / 2
-    message("Alignment tolerance missing, using half of identification ppm (half FWHM) to fit peak aligment algorithm")}
-  
-  
 # retrieve/parse the working dir info, and convert the filenames
   if (is.null(projectfolder)){
     workdir<-base::dirname(datafile[1])
