@@ -2224,9 +2224,11 @@ Load_IMS_decov_combine<-function(datafile,workdir,import_ppm=5,SPECTRUM_batch="o
 
 
   }
-  combinedimdata@elementMetadata@coord@listData[["z"]]=NULL
+  combinedimdata@elementMetadata@coord@listData[["z"]]<-NULL
+  combinedimdata@elementMetadata@resolution[["z"]]<-NULL
+  combinedimdata@elementMetadata@resolution=c(x=1,y=1)
   saveRDS(combinedimdata,paste0(workdir[1],"/combinedimdata.rds"),compress = T)
-  return(paste0("combinedimdata.rds"))
+  return(paste0(workdir[1],"/combinedimdata.rds"))
 }
 
 sort_run_msi<-function(combinedimdata,datafiles,norm_coord=T){
