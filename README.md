@@ -5,7 +5,7 @@ output:
     keep_md: yes
     toc: yes
     toc_float: yes
-    collapsed: false
+    collapsed: no
     theme: spacelab
     df_print: tibble
     highlight: zenburn
@@ -17,6 +17,10 @@ output:
   md_document:
     variant: markdown_github
 bibliography: references.bib
+vignette: >
+  %\VignetteIndexEntry{1. HiTMaP}
+  %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
 ---
 
 
