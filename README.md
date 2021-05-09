@@ -4,7 +4,7 @@ output:
   html_document: 
     keep_md: yes
     toc: yes
-    toc_float: yes
+    toc_float: no
     collapsed: no
     theme: spacelab
     df_print: tibble
