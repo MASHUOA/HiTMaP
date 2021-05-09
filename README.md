@@ -5,22 +5,18 @@ output:
     keep_md: yes
     toc: yes
     toc_float: yes
-    collapsed: no
+    collapsed: false
     theme: spacelab
-    number_sections: yes
-    df_print: kable
+    df_print: tibble
     highlight: zenburn
     fig_width: 10
     fig_height: 10
+    number_sections: yes
   word_document: default
   pdf_document: default
   md_document:
     variant: markdown_github
 bibliography: references.bib
-vignette: >
-  %\VignetteIndexEntry{1. HiTMaP}
-  %\VignetteEncoding{UTF-8}
-  %\VignetteEngine{knitr::rmarkdown}
 ---
 
 
@@ -569,8 +565,10 @@ print(p_cluster2)
 ```
 
 ```
+## # A tibble: 1 x 7
 ##   format width height colorspace matte filesize density
-## 1    PNG  5670   1951       sRGB FALSE   678267   59x59
+##   <chr>  <int>  <int> <chr>      <lgl>    <int> <chr>  
+## 1 PNG     5670   1951 sRGB       FALSE   678267 59x59
 ```
 
 <img src="README_files/figure-html/CLuster imaging-1.png" width="5670" />
@@ -581,8 +579,10 @@ print(p_cluster4)
 ```
 
 ```
+## # A tibble: 1 x 7
 ##   format width height colorspace matte filesize density
-## 1    PNG 25110   2063       sRGB FALSE  3010819   59x59
+##   <chr>  <int>  <int> <chr>      <lgl>    <int> <chr>  
+## 1 PNG    25110   2063 sRGB       FALSE  3010819 59x59
 ```
 
 <img src="README_files/figure-html/CLuster imaging-2.png" width="25110" />
@@ -593,8 +593,10 @@ print(p_cluster1)
 ```
 
 ```
+## # A tibble: 1 x 7
 ##   format width height colorspace matte filesize density
-## 1    PNG  8910   2020       sRGB FALSE  1121766   59x59
+##   <chr>  <int>  <int> <chr>      <lgl>    <int> <chr>  
+## 1 PNG     8910   2020 sRGB       FALSE  1121766 59x59
 ```
 
 <img src="README_files/figure-html/CLuster imaging-3.png" width="8910" />
@@ -605,8 +607,10 @@ print(p_cluster3)
 ```
 
 ```
+## # A tibble: 1 x 7
 ##   format width height colorspace matte filesize density
-## 1    PNG 13770   1751       sRGB FALSE  1118974   59x59
+##   <chr>  <int>  <int> <chr>      <lgl>    <int> <chr>  
+## 1 PNG    13770   1751 sRGB       FALSE  1118974 59x59
 ```
 
 <img src="README_files/figure-html/CLuster imaging-4.png" width="13770" />
