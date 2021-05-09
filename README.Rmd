@@ -4,11 +4,11 @@ output:
   html_document: 
     keep_md: yes
     toc: yes
-    toc_float: true
-    collapsed: false
+    toc_float: yes
+    collapsed: no
     theme: spacelab
     number_sections: yes
-    df_print: tibble
+    df_print: kable
     highlight: zenburn
     fig_width: 10
     fig_height: 10

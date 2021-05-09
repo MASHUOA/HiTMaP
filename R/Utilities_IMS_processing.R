@@ -790,9 +790,9 @@ imaging_Spatial_Quant<-function(
       imdata[[i]]=Load_Cardinal_imaging(datafile[i],preprocessing = F,resolution = ppm*2,rotate = rotate,attach.only=F,as="MSImagingExperiment",mzrange=mzrange)
       #imdata[[i]]@elementMetadata@coord=imdata[[i]]@elementMetadata@coord[,c("x","y")]
       if (i==1) {
-        combinedimdata=imdata[[i]]
+        combinedimdata<-imdata[[i]]
       }else{
-        combinedimdata=cbind(combinedimdata,imdata[[i]])
+        combinedimdata<-cbind(combinedimdata,imdata[[i]])
       }
       imdata[[i]]=NULL
 
@@ -990,7 +990,7 @@ virtual_segmentation<-function(imdata,Virtual_segmentation_rankfile="~/GitHub/Hi
       From <- shape_center[rep(seq_len(nrow(shape_center)), each=nrow(coordata)),1:2]
       To <- coordata[,1:2]
       df=To-From
-      center_edge_angle=cbind(coordata[,1:2],cart2pol(df$x, df$y, degrees = F),edge=coordata[,"edge"])
+      center_edge_angle<-cbind(coordata[,1:2],cart2pol(df$x, df$y, degrees = F),edge=coordata[,"edge"])
       center_edge_angle_sdge=center_edge_angle[center_edge_angle$edge==TRUE,]
       coordata$rank=0
       coordata$pattern=""
@@ -999,7 +999,7 @@ virtual_segmentation<-function(imdata,Virtual_segmentation_rankfile="~/GitHub/Hi
 
         if (coordata$edge[i]!=TRUE){
           df=coordata[i,1:2]-shape_center[,1:2]
-          point_center_angle=cbind(coordata[i,1:2],cart2pol(df$x, df$y, degrees = F))
+          point_center_angle<-cbind(coordata[i,1:2],cart2pol(df$x, df$y, degrees = F))
           pointedge=center_edge_angle_sdge[which(abs(center_edge_angle_sdge$theta-point_center_angle$theta)==min(abs(center_edge_angle_sdge$theta-point_center_angle$theta))),]
 
           pointedge=pointedge[which.min(pointedge$r),]
@@ -1804,7 +1804,7 @@ Preprocessing_segmentation<-function(datafile,
             From <- shape_center[rep(seq_len(nrow(shape_center)), each=nrow(coordata)),1:2]
             To <- coordata[,1:2]
             df=To-From
-            center_edge_angle=cbind(coordata[,1:2],cart2pol(df$x, df$y, degrees = F),edge=coordata[,"edge"])
+            center_edge_angle<-cbind(coordata[,1:2],cart2pol(df$x, df$y, degrees = F),edge=coordata[,"edge"])
             center_edge_angle_sdge=center_edge_angle[center_edge_angle$edge==TRUE,]
             coordata$rank=0
             coordata$pattern=""
@@ -1813,7 +1813,7 @@ Preprocessing_segmentation<-function(datafile,
 
               if (coordata$edge[i]!=TRUE){
                 df=coordata[i,1:2]-shape_center[,1:2]
-                point_center_angle=cbind(coordata[i,1:2],cart2pol(df$x, df$y, degrees = F))
+                point_center_angle<-cbind(coordata[i,1:2],cart2pol(df$x, df$y, degrees = F))
                 pointedge=center_edge_angle_sdge[which(abs(center_edge_angle_sdge$theta-point_center_angle$theta)==min(abs(center_edge_angle_sdge$theta-point_center_angle$theta))),]
                 pointedge=pointedge[which.min(pointedge$r),]
                 to_edge=coordistmatrix[[i]]['&'(coordata$x==pointedge$x,coordata$y==pointedge$y)]
@@ -1864,14 +1864,14 @@ Preprocessing_segmentation<-function(datafile,
             From <- shape_center[rep(seq_len(nrow(shape_center)), each=nrow(coordata)),1:2]
             To <- coordata[,1:2]
             df=To-From
-            center_edge_angle=cbind(coordata[,1:2],cart2pol(df$x, df$y, degrees = F),edge=coordata[,"edge"])
+            center_edge_angle<-cbind(coordata[,1:2],cart2pol(df$x, df$y, degrees = F),edge=coordata[,"edge"])
             center_edge_angle_sdge=center_edge_angle[center_edge_angle$edge==TRUE,]
             coordata$rank=0
             coordata$pattern=""
             for (i in 1: (nrow(coordata))){
 
               df=coordata[i,1:2]-shape_center[,1:2]
-              point_center_angle=cbind(coordata[i,1:2],cart2pol(df$x, df$y, degrees = F))
+              point_center_angle<-cbind(coordata[i,1:2],cart2pol(df$x, df$y, degrees = F))
               pointedge=center_edge_angle_sdge[which(abs(center_edge_angle_sdge$theta-point_center_angle$theta)==min(abs(center_edge_angle_sdge$theta-point_center_angle$theta))),]
               pointedge=pointedge[which.min(pointedge$r),]
               to_edge=coordistmatrix[[i]]['&'(coordata$x==pointedge$x,coordata$y==pointedge$y)]
@@ -2086,7 +2086,7 @@ Load_IMS_combine<-function(datafile,rotate=NULL,ppm=5,...){
     if (i==1) {
       combinedimdata=imdata[[i]]
     }else{
-      combinedimdata=cbind(combinedimdata,imdata[[i]])
+      combinedimdata<-cbind(combinedimdata,imdata[[i]])
     }
     imdata[[i]]=NULL
   }
@@ -2101,9 +2101,10 @@ Load_IMS_combine<-function(datafile,rotate=NULL,ppm=5,...){
 Load_IMS_decov_combine<-function(datafile,workdir,import_ppm=5,SPECTRUM_batch="overall",
                                  ppm=5,threshold=0,rotate=NULL,mzrange="auto-detect",
                                  deconv_peaklist=c("Load_exist","New"),preprocessRDS_rotated=T,...){
-  library(Cardinal)
+  
   library(stringr)
   library(HiTMaP)
+  library(Cardinal)
   datafile_base<-basename(datafile)
   datafile <- str_remove(datafile_base,"\\.imzML$")
   if(length(workdir)!=length(datafile)){
@@ -2111,7 +2112,7 @@ Load_IMS_decov_combine<-function(datafile,workdir,import_ppm=5,SPECTRUM_batch="o
   }
 
   datafile_imzML=datafile
-  rotate=Parse_rotation(datafile,rotate)
+  rotate=HiTMaP:::Parse_rotation(datafile,rotate)
   if (`|`(deconv_peaklist=="New",!file.exists(paste0(workdir[1],"/","ClusterIMS_deconv_Spectrum.csv")))){
     for (z in 1:length(datafile)){
       name <-basename(datafile[z])
@@ -2174,16 +2175,14 @@ Load_IMS_decov_combine<-function(datafile,workdir,import_ppm=5,SPECTRUM_batch="o
     write.csv(deconv_peaklist_decov,paste0(workdir[z],"/","ClusterIMS_deconv_Spectrum.csv"),row.names = F)
   }else if (`&`(deconv_peaklist=="Load_exist",file.exists(paste0(workdir[1],"/","ClusterIMS_deconv_Spectrum.csv")))){
     deconv_peaklist_decov<-read.csv(paste0(workdir[1],"/","ClusterIMS_deconv_Spectrum.csv"))
+    deconv_peaklist_decov<-HiTMaP:::isopattern_ppm_filter_peaklist(deconv_peaklist_decov,ppm=ppm,threshold=threshold)
   }
 
 
 
-  deconv_peaklist_decov_log<-deconv_peaklist_decov
-  deconv_peaklist_decov_log$intensities<-log(deconv_peaklist_decov_log$intensities)
-  #plot(deconv_peaklist_decov_log)
-  #deconv_peaklist_decov_log<-deconv_peaklist_decov_log[deconv_peaklist_decov_log$intensities>0,]
-  deconv_peaklist_decov_plot<-deconv_peaklist_decov[deconv_peaklist_decov$m.z %in% deconv_peaklist_decov_log$m.z,]
-
+  deconv_peaklist_decov_plot<-deconv_peaklist_decov
+  imdata_list<-list()
+  imdata<<-NULL
   for (z in 1:length(datafile)){
 
     setwd(workdir[z])
@@ -2214,20 +2213,35 @@ Load_IMS_decov_combine<-function(datafile,workdir,import_ppm=5,SPECTRUM_batch="o
     imdata <- imdata %>%
       mzBin(deconv_peaklist_decov_plot$m.z, resolution=ppm, units="ppm")%>%
       process()
-
+    imdata@elementMetadata@coord@listData[["z"]]<-NULL
+    imdata@elementMetadata@resolution=c(x=1,y=1)
+    message(class(imdata))
+    message(typeof(imdata))
+    
+    imdata[[z]]<<-imdata
+    imdata_list[[z]]<-imdata
     if (z==1) {
-      combinedimdata=imdata
+      
+      combinedimdata<-imdata
+      combinedimdata<<-combinedimdata
     }else{
-      combinedimdata=cbind(combinedimdata,imdata)
+      combinedimdata<-cbind(combinedimdata,imdata[[1]])
+      
+      combinedimdata<<-combinedimdata
     }
 
-
+    message(class(combinedimdata))
+    message(typeof(combinedimdata))
 
   }
-  combinedimdata@elementMetadata@coord@listData[["z"]]<-NULL
-  combinedimdata@elementMetadata@resolution[["z"]]<-NULL
-  combinedimdata@elementMetadata@resolution=c(x=1,y=1)
+  combinedimdata_list<-do.call(cbind,imdata_list)
+  
+  saveRDS(combinedimdata_list,paste0(workdir[1],"/combinedimdata_list.rds"),compress = T)
+  
+  
   saveRDS(combinedimdata,paste0(workdir[1],"/combinedimdata.rds"),compress = T)
+  combinedimdata_rbind<-do.call(cbind,combinedimdata)
+  saveRDS(combinedimdata_rbind,paste0(workdir[1],"/combinedimdata_rbind.rds"),compress = T)
   return(paste0(workdir[1],"/combinedimdata.rds"))
 }
 
@@ -2243,9 +2257,9 @@ sort_run_msi<-function(combinedimdata,datafiles,norm_coord=T){
     }
 
     if (z==1) {
-      combinedimdata_sort=imdata
+      combinedimdata_sort<-imdata
     }else{
-      combinedimdata_sort=cbind(combinedimdata_sort,imdata)
+      combinedimdata_sort<-cbind(combinedimdata_sort,imdata)
     }
 
   }
