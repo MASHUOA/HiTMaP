@@ -7,11 +7,11 @@ output:
     toc_float: yes
     collapsed: no
     theme: spacelab
-    number_sections: yes
-    df_print: kable
+    df_print: tibble
     highlight: zenburn
     fig_width: 10
     fig_height: 10
+    number_sections: yes
   word_document: default
   pdf_document: default
   md_document:
