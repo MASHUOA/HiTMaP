@@ -1354,13 +1354,13 @@ Preprocessing_segmentation<-function(datafile,
           #reduceBaseline(method="locmin") %>%
           if (preprocess$smoothSignal$method=="Disable") {
           }else if (!is.null(preprocess$smoothSignal$method)){
-            #imdata_ed<- imdata_ed %>% smoothSignal(method=preprocess$smoothSignal$method)
+            imdata_ed<- imdata_ed %>% smoothSignal(method=preprocess$smoothSignal$method)
           }else{
-            #imdata_ed<- imdata_ed %>% smoothSignal(method="gaussian")
+            imdata_ed<- imdata_ed %>% smoothSignal(method="gaussian")
           }
 
           if (!is.null(preprocess$reduceBaseline$method)){
-            #imdata_ed<- imdata_ed %>% reduceBaseline(method=preprocess$reduceBaseline$method)
+            imdata_ed<- imdata_ed %>% reduceBaseline(method=preprocess$reduceBaseline$method)
           }else{
 
           }

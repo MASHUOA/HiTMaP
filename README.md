@@ -98,7 +98,7 @@ install.packages("devtools")
 #library(devtools)
 library(remotes)
 Sys.setenv("R_REMOTES_NO_ERRORS_FROM_WARNINGS" = "true")
-remotes::install_github("MASHUOA/HiTMaP",auth_token ="cf6d877f8b6ada1865987b13f9e9996c1883014a",force=T)
+remotes::install_github("MASHUOA/HiTMaP",force=T)
 3
 no
 #Update all dependencies
@@ -175,16 +175,14 @@ Or download the files in a R console:
 if(!require(piggyback)) install.packages("piggyback")
 library(piggyback)
 
-Sys.setenv(GITHUB_TOKEN="cf6d877f8b6ada1865987b13f9e9996c1883014a")
-
 #made sure that this folder has enough space
 wd="~/expdata/"
 dir.create(wd)
 setwd(wd)
 
-pb_download("HiTMaP-master.zip", repo = "MASHUOA/HiTMaP", dest = ".",.token ="cf6d877f8b6ada1865987b13f9e9996c1883014a")
+pb_download("HiTMaP-master.zip", repo = "MASHUOA/HiTMaP", dest = ".")
 
-pb_download("Data.tar.gz", repo = "MASHUOA/HiTMaP", dest = ".",.token ="cf6d877f8b6ada1865987b13f9e9996c1883014a")
+pb_download("Data.tar.gz", repo = "MASHUOA/HiTMaP", dest = ".")
 
 untar('Data.tar.gz',exdir =".",  tar="tar")
 
@@ -233,8 +231,8 @@ imaging_identification(
 #==============The pre-processing param
                preprocess=list(force_preprocess=TRUE,
                                use_preprocessRDS=TRUE,
-                               smoothSignal=list(method="gaussian"),
-                               reduceBaseline=list(method="locmin"),
+                               smoothSignal=list(method="Disable"),
+                               reduceBaseline=list(method="Disable"),
                                peakPick=list(method="adaptive"),
                                peakAlign=list(tolerance=5, units="ppm"),
                                normalize=list(method=c("rms","tic","reference")[1],mz=1)),
@@ -555,15 +553,6 @@ Finally, you are able visualize the annotated proteins and their associated pept
 
 ```r
 library(magick)
-```
-
-```
-## Linking to ImageMagick 6.9.11.57
-## Enabled features: cairo, freetype, fftw, ghostscript, heic, lcms, pango, raw, rsvg, webp
-## Disabled features: fontconfig, x11
-```
-
-```r
 p_cluster2<-image_read(paste0("~/expdata/Bovinlens_Trypsin_FT/Summary folder/cluster Ion images/unique/25917_cluster_imaging.png"))
 print(p_cluster2)
 ```
@@ -788,8 +777,8 @@ imaging_identification(datafile=paste0(wd,datafile),Digestion_site="trypsin",
                        Fastadatabase="uniprot-bovin.fasta",output_candidatelist=T,
                        preprocess=list(force_preprocess=TRUE,
                                use_preprocessRDS=TRUE,
-                               smoothSignal=list(method="gaussian"),
-                               reduceBaseline=list(method="locmin"),
+                               smoothSignal=list(method="Disable"),
+                               reduceBaseline=list(method="Disable"),
                                peakPick=list(method="adaptive"),
                                peakAlign=list(tolerance=5, units="ppm"),
                                normalize=list(method=c("rms","tic","reference")[1],mz=1)),
@@ -803,8 +792,8 @@ imaging_identification(datafile=paste0(wd,datafile),Digestion_site="trypsin",
                        Fastadatabase="uniprot-bovin.fasta",output_candidatelist=T,use_previous_candidates=T,
                        preprocess=list(force_preprocess=TRUE,
                                use_preprocessRDS=TRUE,
-                               smoothSignal=list(method="gaussian"),
-                               reduceBaseline=list(method="locmin"),
+                               smoothSignal=list(method="Disable"),
+                               reduceBaseline=list(method="Disable"),
                                peakPick=list(method="adaptive"),
                                peakAlign=list(tolerance=5, units="ppm"),
                                normalize=list(method=c("rms","tic","reference")[1],mz=1)),
@@ -843,8 +832,8 @@ imaging_identification(datafile=paste0(wd,datafile),Digestion_site="trypsin",
                        Fastadatabase="uniprot_mouse_20210107.fasta",output_candidatelist=T,
                        preprocess=list(force_preprocess=T,
                                use_preprocessRDS=TRUE,
-                               smoothSignal=list(method="gaussian"),
-                               reduceBaseline=list(method="locmin"),
+                               smoothSignal=list(method="Disable"),
+                               reduceBaseline=list(method="Disable"),
                                peakPick=list(method="adaptive"),
                                peakAlign=list(tolerance=5, units="ppm"),
                                normalize=list(method=c("rms","tic","reference")[1],mz=1)),
