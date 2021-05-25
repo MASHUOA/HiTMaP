@@ -1297,12 +1297,14 @@ Preprocessing_segmentation<-function(datafile,
     setwd(workdir[z])
     if (ppm>=25) {
       instrument_ppm=50
+      import_ppm = instrument_ppm*2/9
     }else{
       instrument_ppm=10
+      import_ppm = instrument_ppm*2/9
     }
 
     #setup import ppm which ensure pickpicking has correct number of data points (halfwindow>=2) per peak to work with
-    if (import_ppm > ppm ) import_ppm = ppm
+    if (import_ppm > ppm ) import_ppm = ppm/
 
     imdata_org<-NULL
     imdata<-NULL
@@ -1330,6 +1332,7 @@ Preprocessing_segmentation<-function(datafile,
         if(!is.null(preprocess[["force_preprocess"]])){
           preprocess$force_preprocess
         }else{T})) {
+      
       message("Preparing image data for statistical analysis: ",paste0(gsub(".imzML$","",datafile[z]), ".imzML"))
       if (!is.null(preprocess)){
         imdata_ed<-imdata
@@ -1359,12 +1362,13 @@ Preprocessing_segmentation<-function(datafile,
             imdata_ed<- imdata_ed %>% smoothSignal(method="gaussian")
           }
 
-          if (!is.null(preprocess$reduceBaseline$method)){
+          if (preprocess$reduceBaseline$method=="Disable") {
+          }else if (!is.null(preprocess$reduceBaseline$method)){
             imdata_ed<- imdata_ed %>% reduceBaseline(method=preprocess$reduceBaseline$method)
           }else{
-
+            imdata_ed<- imdata_ed %>% reduceBaseline(method="locmin")
           }
-
+        
           if (preprocess$peakPick$method=="Disable") {
           }else if (!is.null(preprocess$peakPick$method)){
             imdata_ed<- imdata_ed %>% peakPick(method=preprocess$peakPick$method, window=4) %>% process()
@@ -1384,6 +1388,7 @@ Preprocessing_segmentation<-function(datafile,
             imdata_ed<- imdata_ed %>% peakAlign(tolerance=ppm/2, units="ppm")
           }
           }
+        
           imdata_ed<- imdata_ed %>% process()
 
           if (!is.null(preprocess$normalize)){
@@ -1414,45 +1419,38 @@ Preprocessing_segmentation<-function(datafile,
           #smoothSignal(method="gaussian") %>%
           #reduceBaseline(method="locmin") %>%
 
-          if (!is.null(preprocess$normalize)){
-            if (preprocess$normalize$method %in% c("rms","tic")){
-              imdata_ed<- imdata_ed %>% normalize(method=preprocess$normalize$method) %>% process()
-            } else if ('&'(preprocess$normalize$method == "reference", !is.null(preprocess$normalize$mz))){
-              norm_feature<-which(dplyr::between(imdata_ed@featureData@mz,
-                                                 preprocess$normalize$mz*(1-ppm/1000000),
-                                                 preprocess$normalize$mz*(1+ppm/1000000)))
-              if (length(norm_feature)>=1){
-                imdata_ed<- imdata_ed %>% normalize(method=preprocess$normalize$method, feature = norm_feature) %>% process(BPPARAM=SerialParam())
-
-              }
-            } else {
-              imdata_ed<- imdata_ed %>% normalize(method="rms") %>% process()
-            }
-          }
-
-          if (!is.null(preprocess$smoothSignal$method)){
-            imdata_ed<- imdata_ed %>% smoothSignal(method=preprocess$smoothSignal$method) %>% process()
+          if (preprocess$smoothSignal$method=="Disable") {
+          }else if (!is.null(preprocess$smoothSignal$method)){
+            imdata_ed<- imdata_ed %>% smoothSignal(method=preprocess$smoothSignal$method)
           }else{
-            imdata_ed<- imdata_ed %>% smoothSignal(method="gaussian") %>% process()
+            imdata_ed<- imdata_ed %>% smoothSignal(method="gaussian")
           }
-
-          if (!is.null(preprocess$reduceBaseline$method)){
+          
+          if (preprocess$reduceBaseline$method=="Disable") {
+          }else if (!is.null(preprocess$reduceBaseline$method)){
             imdata_ed<- imdata_ed %>% reduceBaseline(method=preprocess$reduceBaseline$method)
           }else{
             imdata_ed<- imdata_ed %>% reduceBaseline(method="locmin")
           }
-
-          if (!is.null(preprocess$peakPick$method)){
-            imdata_ed<- imdata_ed %>% peakPick(method=preprocess$peakPick$method, window=3) %>% process()
+          
+          if (preprocess$peakPick$method=="Disable") {
+          }else if (!is.null(preprocess$peakPick$method)){
+            imdata_ed<- imdata_ed %>% peakPick(method=preprocess$peakPick$method, window=4) %>% process()
           }else{
-            imdata_ed<- imdata_ed %>% peakPick(method="adaptive", window=3) %>% process()
+            imdata_ed<- imdata_ed %>% peakPick(method="adaptive", window=4) %>% process()
           }
-
-          if ('&'(!is.null(preprocess$peakAlign$tolerance),!is.null(preprocess$peakAlign$tolerance))){
-
-            imdata_ed<- imdata_ed %>% peakAlign(tolerance=preprocess$peakAlign$tolerance, units=preprocess$peakAlign$units)
-          }else{
-            imdata_ed<- imdata_ed %>% peakAlign(tolerance=ppm/2, units="ppm")
+          
+          if(is.null(preprocess$peakAlign$level)) preprocess$peakAlign$level<-"local"
+          if (preprocess$peakAlign$level=="global"){
+            if (preprocess$peakAlign$tolerance==0 ) {
+              message("preprocess$peakAlign$tolerance set as zero, step bypassed")
+            }else if ('&'(!is.null(preprocess$peakAlign$tolerance),!is.null(preprocess$peakAlign$tolerance))){
+              message("preprocess$peakAlign$tolerance set as ", preprocess$peakAlign$tolerance)
+              imdata_ed<- imdata_ed %>% peakAlign(tolerance=preprocess$peakAlign$tolerance, units=preprocess$peakAlign$units)
+            }else {
+              message("preprocess$peakAlign$tolerance missing, use default tolerance in ppm ", ppm/2)
+              imdata_ed<- imdata_ed %>% peakAlign(tolerance=ppm/2, units="ppm")
+            }
           }
 
           imdata_ed<- imdata_ed %>% process()
@@ -2110,7 +2108,7 @@ Load_IMS_decov_combine<-function(datafile,workdir,import_ppm=5,SPECTRUM_batch="o
   if(length(workdir)!=length(datafile)){
     workdir=rep(workdir[1],length(datafile))
   }
-
+  
   datafile_imzML=datafile
   rotate=HiTMaP:::Parse_rotation(datafile,rotate)
   if (`|`(deconv_peaklist=="New",!file.exists(paste0(workdir[1],"/","ClusterIMS_deconv_Spectrum.csv")))){
@@ -2124,11 +2122,11 @@ Load_IMS_decov_combine<-function(datafile,workdir,import_ppm=5,SPECTRUM_batch="o
       if (!str_detect(datafile[z],".imzML$")){
         datafile_imzML[z]<-paste0(datafile[z],".imzML")
       }
-
+      
       if (dir.exists(paste0(gsub(".imzML$","",datafile[z]) ," ID"))==FALSE){
         dir.create(paste0(gsub(".imzML$","",datafile[z])  ," ID"))
       }
-
+      
       if (file.exists(paste0(workdir[z],"/",gsub(".imzML$","",datafile[z])  ," ID/preprocessed_imdata.RDS"))){
         imdata<-readRDS(paste0(workdir[z],"/",datafile[z]," ID/","preprocessed_imdata.RDS"))
       }else {
@@ -2144,7 +2142,7 @@ Load_IMS_decov_combine<-function(datafile,workdir,import_ppm=5,SPECTRUM_batch="o
           imdata <-rotateMSI(imdata=imdata,rotation_degree=rotate[datafile[z]])
         }
       }
-
+      
       spectrum_file_table<- summarizeFeatures(imdata, FUN = "mean")
       spectrum_file_table<-data.frame(mz=spectrum_file_table@featureData@mz,mean=spectrum_file_table@featureData@listData[["mean"]])
       peaklist<-spectrum_file_table
@@ -2156,43 +2154,43 @@ Load_IMS_decov_combine<-function(datafile,workdir,import_ppm=5,SPECTRUM_batch="o
       deconv_peaklist<-HiTMaP:::isopattern_ppm_filter_peaklist(peaklist,ppm=ppm,threshold=threshold)
       write.csv(deconv_peaklist,paste0(workdir[z],"/",datafile[z] ," ID/",SPECTRUM_batch,"_deconv_Spectrum.csv"),row.names = F)
     }
-
+    
     deconv_peaklist_list<-NULL
     for (z in 1:length(datafile)){
-
+      
       deconv_peaklist_list[[datafile[z]]] <- read.csv(paste0(workdir[z],"/",datafile[z] ," ID/",SPECTRUM_batch,"_deconv_Spectrum.csv"))
-
+      
     }
-
+    
     deconv_peaklist_bind<-do.call(rbind,deconv_peaklist_list)
-
+    
     deconv_peaklist_bind<-deconv_peaklist_bind[order(deconv_peaklist_bind$m.z),]
-
+    
     rownames(deconv_peaklist_bind)<-1:nrow(deconv_peaklist_bind)
-
+    
     deconv_peaklist_decov<-HiTMaP:::isopattern_ppm_filter_peaklist(deconv_peaklist_bind,ppm=ppm,threshold=threshold)
-
+    
     write.csv(deconv_peaklist_decov,paste0(workdir[z],"/","ClusterIMS_deconv_Spectrum.csv"),row.names = F)
   }else if (`&`(deconv_peaklist=="Load_exist",file.exists(paste0(workdir[1],"/","ClusterIMS_deconv_Spectrum.csv")))){
     deconv_peaklist_decov<-read.csv(paste0(workdir[1],"/","ClusterIMS_deconv_Spectrum.csv"))
     deconv_peaklist_decov<-HiTMaP:::isopattern_ppm_filter_peaklist(deconv_peaklist_decov,ppm=ppm,threshold=threshold)
   }
-
-
-
+  
+  
+  
   deconv_peaklist_decov_plot<-deconv_peaklist_decov
-  imdata_list<-list()
+  #imdata_list<-list()
   imdata<<-NULL
   for (z in 1:length(datafile)){
-
+    
     setwd(workdir[z])
     if (file.exists(paste0(workdir[z],"/",gsub(".imzML$","",datafile[z])  ," ID/preprocessed_imdata.RDS"))){
       imdata<-readRDS(paste0(workdir[z],"/",datafile[z]," ID/","preprocessed_imdata.RDS"))
       if (!preprocessRDS_rotated){
         if(!is.na(rotate[datafile_imzML[z]])){
-          imdata <-rotateMSI(imdata=imdata,rotation_degree=rotate[datafile_imzML[z]])
+          imdata <-HiTMaP:::rotateMSI(imdata=imdata,rotation_degree=rotate[datafile_imzML[z]])
         }else if(!is.na(rotate[datafile[z]])){
-          imdata <-rotateMSI(imdata=imdata,rotation_degree=rotate[datafile[z]])
+          imdata <-HiTMaP:::rotateMSI(imdata=imdata,rotation_degree=rotate[datafile[z]])
         }
       }
     }else {
@@ -2203,9 +2201,9 @@ Load_IMS_decov_combine<-function(datafile,workdir,import_ppm=5,SPECTRUM_batch="o
         imdata <- Cardinal::readMSIData(datafile_imzML[z],  attach.only=T,as="MSImagingExperiment",resolution=import_ppm, units="ppm",BPPARAM=SerialParam(),mass.range =mzrange)
       }
       if(!is.na(rotate[datafile_imzML[z]])){
-        imdata <-rotateMSI(imdata=imdata,rotation_degree=rotate[datafile_imzML[z]])
+        imdata <-HiTMaP:::rotateMSI(imdata=imdata,rotation_degree=rotate[datafile_imzML[z]])
       }else if(!is.na(rotate[datafile[z]])){
-        imdata <-rotateMSI(imdata=imdata,rotation_degree=rotate[datafile[z]])
+        imdata <-HiTMaP:::rotateMSI(imdata=imdata,rotation_degree=rotate[datafile[z]])
       }
     }
     message("mzbin for ",datafile[z])
@@ -2215,33 +2213,33 @@ Load_IMS_decov_combine<-function(datafile,workdir,import_ppm=5,SPECTRUM_batch="o
       process()
     imdata@elementMetadata@coord@listData[["z"]]<-NULL
     imdata@elementMetadata@resolution=c(x=1,y=1)
-    message(class(imdata))
-    message(typeof(imdata))
+    #message(class(imdata))
+    #message(typeof(imdata))
     
-    imdata[[z]]<<-imdata
-    imdata_list[[z]]<-imdata
+    #imdata[[z]]<<-imdata
+    #imdata_list[[z]]<-imdata
     if (z==1) {
       
       combinedimdata<-imdata
-      combinedimdata<<-combinedimdata
-    }else{
-      combinedimdata<-cbind(combinedimdata,imdata[[1]])
       
-      combinedimdata<<-combinedimdata
+    }else{
+      
+      combinedimdata<-cbind(combinedimdata,imdata)
+      
     }
-
-    message(class(combinedimdata))
-    message(typeof(combinedimdata))
-
+    
+    #message(class(combinedimdata))
+    #message(typeof(combinedimdata))
+    
   }
-  combinedimdata_list<-do.call(cbind,imdata_list)
+  #combinedimdata_list<-do.call(cbind,imdata_list)
   
-  saveRDS(combinedimdata_list,paste0(workdir[1],"/combinedimdata_list.rds"),compress = T)
+  #saveRDS(combinedimdata_list,paste0(workdir[1],"/combinedimdata_list.rds"),compress = T)
   
   
   saveRDS(combinedimdata,paste0(workdir[1],"/combinedimdata.rds"),compress = T)
-  combinedimdata_rbind<-do.call(cbind,combinedimdata)
-  saveRDS(combinedimdata_rbind,paste0(workdir[1],"/combinedimdata_rbind.rds"),compress = T)
+  #combinedimdata_rbind<-do.call(cbind,combinedimdata)
+  #saveRDS(combinedimdata_rbind,paste0(workdir[1],"/combinedimdata_rbind.rds"),compress = T)
   return(paste0(workdir[1],"/combinedimdata.rds"))
 }
 
@@ -2517,7 +2515,7 @@ isopattern_ppm_filter_peaklist<-function(pattern,ppm,threshold=0.001,verbose=F){
   #dim(filtered_pattern)
   for (i in 1:(length(pattern_ppm)-1)){
 
-    pattern_ppm_delta[i]=(pattern_ppm[i+1]-pattern_ppm[i])/pattern_ppm[i]
+    pattern_ppm_delta[i]=(pattern_ppm[i+1]-filtered_pattern[nrow(filtered_pattern),1])/filtered_pattern[nrow(filtered_pattern),1]
 
     if (pattern_ppm_delta[i]>(ppm/1000000)){
       #filtered_pattern<-rbind(filtered_pattern,pattern[i+1,])

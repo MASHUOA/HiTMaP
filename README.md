@@ -553,6 +553,15 @@ Finally, you are able visualize the annotated proteins and their associated pept
 
 ```r
 library(magick)
+```
+
+```
+## Linking to ImageMagick 6.9.11.57
+## Enabled features: cairo, freetype, fftw, ghostscript, heic, lcms, pango, raw, rsvg, webp
+## Disabled features: fontconfig, x11
+```
+
+```r
 p_cluster2<-image_read(paste0("~/expdata/Bovinlens_Trypsin_FT/Summary folder/cluster Ion images/unique/25917_cluster_imaging.png"))
 print(p_cluster2)
 ```
@@ -864,6 +873,15 @@ imaging_identification(datafile=paste0(wd,datafile),Digestion_site="trypsin",
 
 
 
+
+
+
+
+# Cite us
+
+This study has been accepted by Nature Communications: 
+DOI:10.1038/s41467-021-23461-w
+“Automated annotation and visualisation of high-resolution spatial proteomic mass spectrometry imaging data using HIT-MAP” online on the 28th May 2021.
 
 # Session information
 

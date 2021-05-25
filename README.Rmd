@@ -1103,6 +1103,113 @@ imaging_identification(datafile=paste0(wd,datafile),Digestion_site="trypsin",Fas
 ```
 
 
+```{r Mouse_brain_michael, eval=FALSE, include=F}
+library(HiTMaP)
+datafile=c("01-root mean square.imzML")
+wd="D:/dropbox/Dropbox (Uni of Auckland)/Mouse_Brain_Micheal/"
+
+# Data pre-processing and proteomics annotation
+library(HiTMaP)
+imaging_identification(datafile=paste0(wd,datafile),Digestion_site="trypsin",
+                       Fastadatabase="uniprot_mouse_20210107.fasta",output_candidatelist=T,
+                       preprocess=list(force_preprocess=T,
+                               use_preprocessRDS=TRUE,
+                               smoothSignal=list(method="Disable"),
+                               reduceBaseline=list(method="Disable"),
+                               peakPick=list(method="adaptive"),
+                               peakAlign=list(tolerance=5, units="ppm"),
+                               normalize=list(method=c("rms","tic","reference")[1],mz=1)),
+                       spectra_segments_per_file=9,use_previous_candidates=F,ppm=25,FDR_cutoff = 0.05,IMS_analysis=T,
+                       Rotate_IMG="file_rotationbk.csv",
+                       mzrange = c(500,4000),plot_cluster_image_grid=F)
+
+# Re-analysis and cluster image rendering
+library(HiTMaP)
+datafile=c("01-root mean square.imzML")
+wd="D:/dropbox/Dropbox (Uni of Auckland)/Mouse_Brain_Micheal/"
+imaging_identification(datafile=paste0(wd,datafile),Digestion_site="trypsin",
+                       Fastadatabase="uniprot_mouse_20210107.fasta",
+                       preprocess=list(force_preprocess=FALSE),
+                       spectra_segments_per_file=9,use_previous_candidates=T,ppm=10,FDR_cutoff = 0.05,IMS_analysis=F,
+                       mzrange = c(500,4000),plot_cluster_image_grid=T,
+                       img_brightness=250, plot_cluster_image_overwrite=T,
+                       cluster_rds_path = "/01-root mean square ID/preprocessed_imdata.RDS",
+                       pixel_size_um = 50,
+                       Plot_score_abs_cutoff=-0.1,
+                       remove_score_outlier=F)
+
+library(HiTMaP)
+datafile=c("Mouse_Brain_Test_2.imzML")
+wd="G:/mousebrain2_michael/"
+imaging_identification(datafile=paste0(wd,datafile),Digestion_site="trypsin",
+                       Fastadatabase="uniprot_mouse_20210107.fasta",
+                       preprocess=list(force_preprocess=T,
+                               use_preprocessRDS=TRUE,
+                               smoothSignal=list(method="Disable"),
+                               reduceBaseline=list(method="Disable"),
+                               peakPick=list(method="adaptive"),
+                               peakAlign=list(tolerance=5, units="ppm"),
+                               normalize=list(method=c("rms","tic","reference")[1],mz=1)),
+                       spectra_segments_per_file=9,use_previous_candidates=T,ppm=25,FDR_cutoff = 0.05,IMS_analysis=T,
+                       mzrange = c(1000,3000),plot_cluster_image_grid=T,
+                       img_brightness=250, plot_cluster_image_overwrite=T,
+                       cluster_rds_path = "/Mouse_Brain_Test_2 ID/preprocessed_imdata.RDS",
+                       pixel_size_um = 50,
+                       Plot_score_abs_cutoff=-0.1,
+                       remove_score_outlier=F)
+
+
+
+
+library(HiTMaP)
+datafile=c("Mouse_Brain_Test_2.imzML")
+wd="G:/mousebrain2_michael/"
+imaging_identification(datafile=paste0(wd,datafile),Digestion_site="trypsin",
+                       Fastadatabase="uniprot_mouse_20210107.fasta",
+                       preprocess=list(force_preprocess=T,
+                               use_preprocessRDS=TRUE,
+                               smoothSignal=list(method="Disable"),
+                               reduceBaseline=list(method="Disable"),
+                               peakPick=list(method="adaptive"),
+                               peakAlign=list(tolerance=5, units="ppm"),
+                               normalize=list(method=c("rms","tic","reference")[1],mz=1)),
+                       spectra_segments_per_file=9,use_previous_candidates=T,ppm=25,FDR_cutoff = 0.05,IMS_analysis=F,
+                       mzrange = c(1000,3000),plot_cluster_image_grid=T,
+                       img_brightness=250, plot_cluster_image_overwrite=T,
+                       cluster_rds_path = "/Mouse_Brain_Test_2 ID/preprocessed_imdata.RDS",
+                       pixel_size_um = 50,
+                       Plot_score_abs_cutoff=-0.1,
+                       remove_score_outlier=F)
+
+library(HiTMaP)
+datafile=c("Mouse_Brain_Test_2.imzML")
+wd="G:/mousebrain2_michael/"
+imaging_identification(datafile=paste0(wd,datafile),Digestion_site="trypsin",
+                       Fastadatabase="uniprot_mouse_20210107.fasta",
+                       preprocess=list(force_preprocess=F,
+                               use_preprocessRDS=TRUE,
+                               smoothSignal=list(method="Disable"),
+                               reduceBaseline=list(method="Disable"),
+                               peakPick=list(method="adaptive"),
+                               peakAlign=list(tolerance=5, units="ppm"),
+                               normalize=list(method=c("rms","tic","reference")[1],mz=1)),
+                       spectra_segments_per_file=9,use_previous_candidates=T,ppm=5,FDR_cutoff = 0.05,IMS_analysis=T,
+                       mzrange = c(1000,3000),plot_cluster_image_grid=T,
+                       img_brightness=250, plot_cluster_image_overwrite=T,
+                       cluster_rds_path = "/Mouse_Brain_Test_2 ID/preprocessed_imdata.RDS",
+                       pixel_size_um = 50,
+                       Plot_score_abs_cutoff=-0.1,
+                       remove_score_outlier=F)
+
+```
+
+
+# Cite us
+
+This study has been accepted by Nature Communications: 
+DOI:10.1038/s41467-021-23461-w
+“Automated annotation and visualisation of high-resolution spatial proteomic mass spectrometry imaging data using HIT-MAP” online on the 28th May 2021.
+
 # Session information
 
 ```{r}

@@ -805,7 +805,7 @@ IMS_data_process<-function(datafile,
       png(paste0(workdir[z],"/",datafile[z] ," ID/",SPECTRUM_batch,"/unique_peptide_ranking_vs_mz_feature",".png"),width = 960,height = 480)
       sp<-ggplot2::ggplot(Peptide_plot_list_rank, aes(x=mz,fill=as.factor(Rank))) +  geom_bar(stat = "bin",bins = 100) +
         labs(title="Matched peptide ranking vs. mz feature",x="mz", y = "Matched peptide ranking")+
-        theme_classic() + theme(legend.title  = element_blank()) + scale_fill_brewer()
+        theme_classic() + theme(legend.title  = element_blank()) + scale_fill_manual(values =grDevices::colorRampPalette(brewer.pal(8, "RdYlBu"))(max(Peptide_plot_list_rank$Rank)))
       try(print(sp))
       dev.off()
       message(paste("Plotting peptide matching number vs mz feature"))
