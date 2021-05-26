@@ -466,15 +466,18 @@ Intensity\_Score and Mass\_error\_Score:
     converted into an absolute value.
 
 $Intensity\\\_Score=\\log(PeakCount\_{Observed}/PeakCount\_{Theoritical})-\\log(\\sqrt{\\frac{\\sum\_{x = 1}^{n} (Theoritical\\\_intensity\_x-Observed\\\_intensity\_x)^2}{\\sum\_{x = 1}^{n} (Theoritical\\\_intensity\_x)^2(Observed\\\_intensity\_x)^2}}$
+<img src="https://render.githubusercontent.com/render/math?math=%24Intensity%5C_Score%3D%5Clog(PeakCount_%7BObserved%7D%2FPeakCount_%7BTheoritical%7D)-%5Clog(%5Csqrt%7B%5Cfrac%7B%5Csum_%7Bx%20%3D%201%7D%5E%7Bn%7D%20(Theoritical%5C_intensity_x-Observed%5C_intensity_x)%5E2%7D%7B%5Csum_%7Bx%20%3D%201%7D%5E%7Bn%7D%20(Theoritical%5C_intensity_x)%5E2(Observed%5C_intensity_x)%5E2%7D%7D%24">
 
 $Mass\\\_error\\\_Score=\|(p\\\_norm\\\_dist(\\frac{mean\\\_ppm\\\_error}{ppm\\\_tolerance})-0.5)\|$
+<img src="https://render.githubusercontent.com/render/math?math=%24Mass%5C_error%5C_Score%3D%7C(p%5C_norm%5C_dist(%5Cfrac%7Bmean%5C_ppm%5C_error%7D%7Bppm%5C_tolerance%7D)-0.5)%7C%24">
 
 *P**e**p**s**c**o**r**e* = *I**n**t**e**n**s**i**t**y*\_*S**c**o**r**e* − *M**a**s**s*\_*e**r**r**o**r*\_*S**c**o**r**e*
-
+<img src="https://render.githubusercontent.com/render/math?math=%24Pepscore%3DIntensity%5C_Score-Mass%5C_error%5C_Score%24">
 **Proscore** in the protein result table shows the overall estimation of
 the protein identification Accuracy
 
 $Proscore=\\frac{\\sum\_{x = 1}^{n}(Pepscore\_x\*log(Intensity\_x))}{mean(log(Intensity))}\*Protein\\\_coverage\*Normalized\\\_intensity\\\_factor$
+<img src="https://render.githubusercontent.com/render/math?math=%24Proscore%3D%5Cfrac%7B%5Csum_%7Bx%20%3D%201%7D%5E%7Bn%7D(Pepscore_x*log(Intensity_x))%7D%7Bmean(log(Intensity))%7D*Protein%5C_coverage*Normalized%5C_intensity%5C_factor%24">
 
 A *Peptide\_region\_file.csv* has also been created to summarise all the
 IDs in this data file:
