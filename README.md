@@ -37,6 +37,7 @@ Proteomics
 
 Find our published research article on *Nature Communications*:
 <DOI:10.1038/s41467-021-23461-w>
+![<DOI:10.1038/s41467-021-23461-w>](https://img.shields.io/badge/DOI-10.1038%2Fs41467--021--23461--w-orange.svg)
 
 ![zenodo](https://zenodo.org/badge/187550066.svg)
 
