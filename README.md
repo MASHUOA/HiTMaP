@@ -35,9 +35,10 @@ HiT-MaP
 – An R package of High-resolution Informatics Toolbox for Maldi-imaging
 Proteomics
 
-![zenodo](https://zenodo.org/badge/187550066.svg) \\ Find our published
-research article on *Nature Communications*:
+Find our published research article on *Nature Communications*:
 <DOI:10.1038/s41467-021-23461-w>
+
+![zenodo](https://zenodo.org/badge/187550066.svg)
 
 # Package installation
 

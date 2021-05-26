@@ -33,11 +33,10 @@ knitr::opts_chunk$set(cache = T)
 
 -- An R package of High-resolution Informatics Toolbox for Maldi-imaging Proteomics
 
-![zenodo](https://zenodo.org/badge/187550066.svg)
-\\
 Find our published research article on *Nature Communications*: 
 DOI:10.1038/s41467-021-23461-w
 
+![zenodo](https://zenodo.org/badge/187550066.svg)
 
 # Package installation
 This is a tutorial for the use of HiTMaP (An R package of High-resolution Informatics Toolbox for Maldi-imaging Proteomics). User's may run HiTMaP using Docker, or through R, however Docker is recommended to avoid issues with package dependency.
