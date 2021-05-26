@@ -28,14 +28,15 @@ HiT-MaP
     -   [Peptide calibrant](#peptide-calibrant)
     -   [Bovine lens](#bovine-lens)
     -   [Mouse brain](#mouse-brain)
--   [Cite us](#cite-us)
+-   [Cite this project](#cite-this-project)
 -   [Session information](#session-information)
 -   [References](#references)
 
 – An R package of High-resolution Informatics Toolbox for Maldi-imaging
 Proteomics
 
-![](https://zenodo.org/badge/187550066.svg)
+![](https://zenodo.org/badge/187550066.svg) This study has been accepted
+by Nature Communications: <DOI:10.1038/s41467-021-23461-w>
 
 # Package installation
 
@@ -210,8 +211,8 @@ list.dirs()
 
 The example data contains three folders for three individual IMS
 datasets, which each contain a configuration file, and the fasta
-database, respectively: *“./Bovinlens\_Trypsin\_FT”
-“./MouseBrain\_Trypsin\_FT” “./Peptide\_calibrants\_FT”*
+database, respectively: *“./Bovinlens\_Trypsin\_FT”*
+*“./MouseBrain\_Trypsin\_FT”* *“./Peptide\_calibrants\_FT”*
 
 # Proteomics identification on maldi-imaging dataset
 
@@ -470,7 +471,7 @@ $Mass\\\_error\\\_Score=\|(p\\\_norm\\\_dist(\\frac{mean\\\_ppm\\\_error}{ppm\\\
 **Proscore** in the protein result table shows the overall estimation of
 the protein identification Accuracy
 
-$Proscore=\\frac{\\sum\_{x = 1}^{n}(Pepscore\_x\*log(Intensity\_x))}{mean(log(Intensity))}\*Protein\\\_coverage\*Normalized\\\_intensity$
+$Proscore=\\frac{\\sum\_{x = 1}^{n}(Pepscore\_x\*log(Intensity\_x))}{mean(log(Intensity))}\*Protein\\\_coverage\*Normalized\\\_intensity\\\_factor$
 
 A *Peptide\_region\_file.csv* has also been created to summarise all the
 IDs in this data file:
@@ -923,7 +924,7 @@ imaging_identification(datafile=paste0(wd,datafile),Digestion_site="trypsin",
                        Protein_desc_of_interest=c("Secernin","GN=MBP","Cytochrome"))
 ```
 
-# Cite us
+# Cite this project
 
 This study has been accepted by Nature Communications:
 <DOI:10.1038/s41467-021-23461-w> “Automated annotation and visualisation
