@@ -1,3 +1,37 @@
+HiT-MaP
+================
+
+-   [Package installation](#package-installation)
+    -   [Installation of docker image](#installation-of-docker-image)
+    -   [Installation code for R console
+        installation](#installation-code-for-r-console-installation)
+    -   [Codes for Linux OS building
+        enviornment](#codes-for-linux-os-building-enviornment)
+    -   [Codes for Mac OS building enviornment
+        (optional)](#codes-for-mac-os-building-enviornment-optional)
+-   [Example data and source code](#example-data-and-source-code)
+-   [Proteomics identification on maldi-imaging
+    dataset](#proteomics-identification-on-maldi-imaging-dataset)
+-   [Project folder and result
+    structure](#project-folder-and-result-structure)
+-   [Identification result visulasation and
+    interpretation](#identification-result-visulasation-and-interpretation)
+-   [Scoring system for protein and
+    peptide](#scoring-system-for-protein-and-peptide)
+-   [Identification summary and cluster
+    imaging](#identification-summary-and-cluster-imaging)
+-   [Details of parameter setting](#details-of-parameter-setting)
+    -   [Modification](#modification)
+    -   [Amino acid substitution](#amino-acid-substitution)
+    -   [Digestion site and enzyme](#digestion-site-and-enzyme)
+-   [Example workflow command](#example-workflow-command)
+    -   [Peptide calibrant](#peptide-calibrant)
+    -   [Bovine lens](#bovine-lens)
+    -   [Mouse brain](#mouse-brain)
+-   [Cite us](#cite-us)
+-   [Session information](#session-information)
+-   [References](#references)
+
 – An R package of High-resolution Informatics Toolbox for Maldi-imaging
 Proteomics
 
@@ -607,14 +641,19 @@ associated peptide distributions via the cluster imaging function.
 
 ``` r
 library(magick)
+```
+
+    ## Linking to ImageMagick 6.9.11.57
+    ## Enabled features: cairo, freetype, fftw, ghostscript, heic, lcms, pango, raw, rsvg, webp
+    ## Disabled features: fontconfig, x11
+
+``` r
 p_cluster2<-image_read(paste0("~/expdata/Bovinlens_Trypsin_FT/Summary folder/cluster Ion images/unique/25917_cluster_imaging.png"))
 print(p_cluster2)
 ```
 
-    ## # A tibble: 1 x 7
     ##   format width height colorspace matte filesize density
-    ##   <chr>  <int>  <int> <chr>      <lgl>    <int> <chr>  
-    ## 1 PNG     5670   1951 sRGB       FALSE   678267 59x59
+    ## 1    PNG  5670   1951       sRGB FALSE   678267   59x59
 
 <img src="README_files/figure-gfm/CLuster imaging-1.png" width="5670" />
 
@@ -623,10 +662,8 @@ p_cluster4<-image_read(paste0("~/expdata/Bovinlens_Trypsin_FT/Summary folder/clu
 print(p_cluster4)
 ```
 
-    ## # A tibble: 1 x 7
     ##   format width height colorspace matte filesize density
-    ##   <chr>  <int>  <int> <chr>      <lgl>    <int> <chr>  
-    ## 1 PNG    25110   2063 sRGB       FALSE  3010819 59x59
+    ## 1    PNG 25110   2063       sRGB FALSE  3010819   59x59
 
 <img src="README_files/figure-gfm/CLuster imaging-2.png" width="25110" />
 
@@ -635,10 +672,8 @@ p_cluster1<-image_read(paste0("~/expdata/Bovinlens_Trypsin_FT/Summary folder/clu
 print(p_cluster1)
 ```
 
-    ## # A tibble: 1 x 7
     ##   format width height colorspace matte filesize density
-    ##   <chr>  <int>  <int> <chr>      <lgl>    <int> <chr>  
-    ## 1 PNG     8910   2020 sRGB       FALSE  1121766 59x59
+    ## 1    PNG  8910   2020       sRGB FALSE  1121766   59x59
 
 <img src="README_files/figure-gfm/CLuster imaging-3.png" width="8910" />
 
@@ -647,10 +682,8 @@ p_cluster3<-image_read(paste0("~/expdata/Bovinlens_Trypsin_FT/Summary folder/clu
 print(p_cluster3)
 ```
 
-    ## # A tibble: 1 x 7
     ##   format width height colorspace matte filesize density
-    ##   <chr>  <int>  <int> <chr>      <lgl>    <int> <chr>  
-    ## 1 PNG    13770   1751 sRGB       FALSE  1118974 59x59
+    ## 1    PNG 13770   1751       sRGB FALSE  1118974   59x59
 
 <img src="README_files/figure-gfm/CLuster imaging-4.png" width="13770" />
 
