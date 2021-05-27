@@ -34,9 +34,11 @@ knitr::opts_chunk$set(cache = T)
 -- An R package of High-resolution Informatics Toolbox for Maldi-imaging Proteomics
 
 Find our published research article on *Nature Communications*: 
+ 
 DOI:10.1038/s41467-021-23461-w
+ 
 ![DOI:10.1038/s41467-021-23461-w](https://img.shields.io/badge/DOI-10.1038%2Fs41467--021--23461--w-orange.svg)
-
+ 
 ![zenodo](https://zenodo.org/badge/187550066.svg)
 
 # Package installation
@@ -330,6 +332,7 @@ head(protein_pmf_result)
 ```
 
 # Scoring system for protein and peptide
+
 **Score** in peptide result table shows the isotopic pattern matching score of the peptide (Pepscore). In Protein result table, it shows the protein score (Proscore). The 'Pepscore' consist of two parts: Intensity_Score and Mass_error_Score:
 
    + Intensity_Score indicates how well a putative isotopic pattern can be matched to the observed spectrum.The default scoring method is SQRTP. It combines the 'square root mean' differences between observed and theoretical peaks and observed proportion of the isotopic peaks above a certain relative intensity threshold.
@@ -363,6 +366,7 @@ The details of protein/peptide identification process has been save to the folde
 ```{r The sub-folder in the result folder}
 list.dirs(paste0(wd,datafile," ID/"), recursive=FALSE)
 ```
+
 In the identification details folder, you will find a series of FDR file and plots to demonstrate the FDR model and score cutoff threshold:
 
 ```{r The file in the details sub-folder}
@@ -402,7 +406,7 @@ dir(wd_sum)
 
 "candidatelist.csv" and "protein_index.csv" contains the candidates used for this analysis. They are output after the candidate processing while *output_candidatelist* set as TRUE, and can be used repeatedly while *use_previous_candidates* set as TRUE.
 
-We have  implemented a functionality to perform additional statistical analyses around the number of enzymatically generated peptides generated derived from a given proteome (‘Database_stats’). If the user sets the variable ‘Database_stats’ to TRUE in the main workflow, then the function will be called. Briefly, the function will list all of the m/z’s of a unique formulae from the peptide candidate pool within a given m/z range. The m/z’s will then be binned using three resolution m/z windows: 1ppm, 2ppm and 5ppm. A plot showing the number of unique formulae vs. binned m/z windows will be generated and exported to the summary folder (DB_stats_mz_bin).
+We have implemented a functionality to perform additional statistical analysis around the number of enzymatically generated peptides derived from a given proteome database. If the user sets the argument ‘Database_stats’ to TRUE in the main workflow, the function will be called. Briefly, the function will list all of the m/z’s of a unique formulae from the peptide candidate pool within a given m/z range. The m/z’s will then be binned using three tolerance window: 1 ppm, 2 ppm and 5 ppm. A plot showing the number of unique formulae vs. m/z bins will be generated and exported to the summary folder (DB_stats_mz_bin).
 
 
 ![Proteome database stats](Resource/DB_stats_bin_mz_ppm.png)
@@ -420,20 +424,45 @@ Protein_Summary_tb<-read.csv(paste(wd,"/Summary folder","/Protein_Summary.csv", 
 ```
 
 
-Finally, you are able visualize the annotated proteins and their associated peptide distributions via the cluster imaging function.
+Finally, you are able visualize the annotated proteins and their associated peptide distributions via the cluster image rendering function.
 
-```{r CLuster imaging,cache=FALSE}
+vimentin:
+
+```{r C, echo=FALSE, cache=FALSE, paged.print=TRUE}
 library(magick)
-p_cluster2<-image_read(paste0("~/expdata/Bovinlens_Trypsin_FT/Summary folder/cluster Ion images/unique/25917_cluster_imaging.png"))
-print(p_cluster2)
-
 p_cluster4<-image_read(paste0("~/expdata/Bovinlens_Trypsin_FT/Summary folder/cluster Ion images/unique/452_cluster_imaging.png"))
 print(p_cluster4)
+```
+β-crystallin:
 
+```{r , echo=FALSE, cache=FALSE, paged.print=TRUE}
 p_cluster1<-image_read(paste0("~/expdata/Bovinlens_Trypsin_FT/Summary folder/cluster Ion images/unique/791_cluster_imaging.png"))
 print(p_cluster1)
+```
+α-crystallin:
 
+```{r , echo=FALSE, cache=FALSE, paged.print=TRUE}
 p_cluster3<-image_read(paste0("~/expdata/Bovinlens_Trypsin_FT/Summary folder/cluster Ion images/unique/5479_cluster_imaging.png"))
+print(p_cluster3)
+```
+
+Secernin 1
+
+```{r , echo=FALSE, cache=FALSE, paged.print=TRUE}
+p_cluster3<-image_read(paste0("~/expdata/MouseBrain_Trypsin_FT/Summary folder/cluster Ion images/unique/2823_cluster_imaging.png"))
+print(p_cluster3)
+```
+CX6A1 cytochrome coxidase subunit 6A1
+
+```{r , echo=FALSE, cache=FALSE, paged.print=TRUE}
+p_cluster3<-image_read(paste0("~/expdata/MouseBrain_Trypsin_FT/Summary folder/cluster Ion images/unique/16305_cluster_imaging.png"))
+print(p_cluster3)
+```
+
+Myelin basic protein
+
+```{r , echo=FALSE, cache=FALSE, paged.print=TRUE}
+p_cluster3<-image_read(paste0("~/expdata/MouseBrain_Trypsin_FT org rds/Summary folder/cluster Ion images/unique/9585_cluster_imaging.png"))
 print(p_cluster3)
 ```
 
@@ -478,7 +507,7 @@ You can set the *Substitute_AA* to make the uncommon amino acid available to the
 The *Digestion_site* allows you to specify a list of pre-defined enzyme and customized digestion rules in regular expression format. You can either use the enzyme name, customized cleavage rule or combination of them to get the enzymatics peptides list. 
 
 ```{r message=FALSE, warning=FALSE, include=FALSE}
-  grid.ftable <- function(d, padding = unit(3, "mm"), ...) {
+  grid.ftable <- function(d, padding = unit(2, "mm"), ...) {
   library(gridExtra)
   library(grid)
   nc <- ncol(d)
@@ -519,7 +548,7 @@ The *Digestion_site* allows you to specify a list of pre-defined enzyme and cust
 ```
 
 
-```{r echo=TRUE, message=F, warning=FALSE, paged.print=T}
+```{r echo=TRUE, message=F, warning=FALSE, paged.print=T, fig.height=8,fig.width=8.35,dpi=300}
 Cleavage_rules<-Cleavage_rules_fun()
 Cleavage_df<-data.frame(Enzyme=names(Cleavage_rules),Cleavage_rules=unname(Cleavage_rules),stringsAsFactors = F)
 library(gridExtra)

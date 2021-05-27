@@ -36,7 +36,9 @@ HiT-MaP
 Proteomics
 
 Find our published research article on *Nature Communications*:
+
 <DOI:10.1038/s41467-021-23461-w>
+
 ![<DOI:10.1038/s41467-021-23461-w>](https://img.shields.io/badge/DOI-10.1038%2Fs41467--021--23461--w-orange.svg)
 
 ![zenodo](https://zenodo.org/badge/187550066.svg)
@@ -612,15 +614,14 @@ while *output\_candidatelist* set as TRUE, and can be used repeatedly
 while *use\_previous\_candidates* set as TRUE.
 
 We have implemented a functionality to perform additional statistical
-analyses around the number of enzymatically generated peptides generated
-derived from a given proteome (‘Database\_stats’). If the user sets the
-variable ‘Database\_stats’ to TRUE in the main workflow, then the
-function will be called. Briefly, the function will list all of the
-m/z’s of a unique formulae from the peptide candidate pool within a
-given m/z range. The m/z’s will then be binned using three resolution
-m/z windows: 1ppm, 2ppm and 5ppm. A plot showing the number of unique
-formulae vs. binned m/z windows will be generated and exported to the
-summary folder (DB\_stats\_mz\_bin).
+analysis around the number of enzymatically generated peptides derived
+from a given proteome database. If the user sets the argument
+‘Database\_stats’ to TRUE in the main workflow, the function will be
+called. Briefly, the function will list all of the m/z’s of a unique
+formulae from the peptide candidate pool within a given m/z range. The
+m/z’s will then be binned using three tolerance window: 1 ppm, 2 ppm and
+5 ppm. A plot showing the number of unique formulae vs. m/z bins will be
+generated and exported to the summary folder (DB\_stats\_mz\_bin).
 
 ![Proteome database stats](Resource/DB_stats_bin_mz_ppm.png)
 
@@ -641,55 +642,51 @@ Protein_Summary_tb<-read.csv(paste(wd,"/Summary folder","/Protein_Summary.csv", 
 ```
 
 Finally, you are able visualize the annotated proteins and their
-associated peptide distributions via the cluster imaging function.
+associated peptide distributions via the cluster image rendering
+function.
 
-``` r
-library(magick)
-```
+vimentin:
 
     ## Linking to ImageMagick 6.9.11.57
     ## Enabled features: cairo, freetype, fftw, ghostscript, heic, lcms, pango, raw, rsvg, webp
     ## Disabled features: fontconfig, x11
 
-``` r
-p_cluster2<-image_read(paste0("~/expdata/Bovinlens_Trypsin_FT/Summary folder/cluster Ion images/unique/25917_cluster_imaging.png"))
-print(p_cluster2)
-```
+    ##   format width height colorspace matte filesize density
+    ## 1    PNG 24300   2611       sRGB  TRUE  2746807 118x118
+
+<img src="README_files/figure-gfm/C-1.png" width="24300" />
+β-crystallin:
 
     ##   format width height colorspace matte filesize density
-    ## 1    PNG  5670   1951       sRGB FALSE   678267   59x59
+    ## 1    PNG  8100   2601       sRGB  TRUE  1033944 118x118
 
-<img src="README_files/figure-gfm/CLuster imaging-1.png" width="5670" />
-
-``` r
-p_cluster4<-image_read(paste0("~/expdata/Bovinlens_Trypsin_FT/Summary folder/cluster Ion images/unique/452_cluster_imaging.png"))
-print(p_cluster4)
-```
+<img src="README_files/figure-gfm/unnamed-chunk-12-1.png" width="8100" />
+α-crystallin:
 
     ##   format width height colorspace matte filesize density
-    ## 1    PNG 25110   2063       sRGB FALSE  3010819   59x59
+    ## 1    PNG 12960   2340       sRGB  TRUE  1158269 118x118
 
-<img src="README_files/figure-gfm/CLuster imaging-2.png" width="25110" />
+<img src="README_files/figure-gfm/unnamed-chunk-13-1.png" width="12960" />
 
-``` r
-p_cluster1<-image_read(paste0("~/expdata/Bovinlens_Trypsin_FT/Summary folder/cluster Ion images/unique/791_cluster_imaging.png"))
-print(p_cluster1)
-```
+Secernin 1
 
     ##   format width height colorspace matte filesize density
-    ## 1    PNG  8910   2020       sRGB FALSE  1121766   59x59
+    ## 1    PNG  1620   2799       sRGB  TRUE   598484   59x59
 
-<img src="README_files/figure-gfm/CLuster imaging-3.png" width="8910" />
-
-``` r
-p_cluster3<-image_read(paste0("~/expdata/Bovinlens_Trypsin_FT/Summary folder/cluster Ion images/unique/5479_cluster_imaging.png"))
-print(p_cluster3)
-```
+<img src="README_files/figure-gfm/unnamed-chunk-14-1.png" width="1620" />
+CX6A1 cytochrome coxidase subunit 6A1
 
     ##   format width height colorspace matte filesize density
-    ## 1    PNG 13770   1751       sRGB FALSE  1118974   59x59
+    ## 1    PNG  1620   2905       sRGB  TRUE   336812   59x59
 
-<img src="README_files/figure-gfm/CLuster imaging-4.png" width="13770" />
+<img src="README_files/figure-gfm/unnamed-chunk-15-1.png" width="1620" />
+
+Myelin basic protein
+
+    ##   format width height colorspace matte filesize density
+    ## 1    PNG  1980   1125       sRGB  TRUE   235823   59x59
+
+<img src="README_files/figure-gfm/unnamed-chunk-16-1.png" width="1980" />
 
 # Details of parameter setting
 
@@ -778,7 +775,7 @@ library(gridExtra)
 grid.ftable(Cleavage_df, gp = gpar(fontsize=9,fill = rep(c("grey90", "grey95"))))
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-20-1.png)<!-- -->
 
 # Example workflow command
 
@@ -950,17 +947,16 @@ toLatex(sessionInfo())
     ##   \item Other packages: dplyr~1.0.5, gridExtra~2.3, HiTMaP~1.0.0,
     ##     magick~2.7.0, protViz~0.6.8, XML~3.99-0.5
     ##   \item Loaded via a namespace (and not attached): assertthat~0.2.1,
-    ##     cli~2.3.1, codetools~0.2-18, compiler~4.0.2, crayon~1.4.1,
-    ##     DBI~1.1.1, debugme~1.1.0, digest~0.6.27, ellipsis~0.3.1,
-    ##     evaluate~0.14, fansi~0.4.2, fastmap~1.1.0, generics~0.1.0,
-    ##     glue~1.4.2, gtable~0.3.0, highr~0.8, htmltools~0.5.1.1,
-    ##     httpuv~1.5.5, knitr~1.31, later~1.1.0.1, lifecycle~1.0.0,
-    ##     magrittr~2.0.1, mime~0.10, pillar~1.5.1, pkgconfig~2.0.3,
-    ##     png~0.1-7, promises~1.2.0.1, purrr~0.3.4, R6~2.5.0, Rcpp~1.0.6,
-    ##     rlang~0.4.10, rmarkdown~2.8, rstudioapi~0.13, shiny~1.6.0,
-    ##     stringi~1.5.3, stringr~1.4.0, tibble~3.1.0, tidyselect~1.1.0,
-    ##     tools~4.0.2, utf8~1.2.1, vctrs~0.3.6, xfun~0.22, xtable~1.8-4,
-    ##     yaml~2.2.1
+    ##     codetools~0.2-18, compiler~4.0.2, crayon~1.4.1, DBI~1.1.1,
+    ##     debugme~1.1.0, digest~0.6.27, ellipsis~0.3.1, evaluate~0.14,
+    ##     fansi~0.4.2, fastmap~1.1.0, generics~0.1.0, glue~1.4.2,
+    ##     gtable~0.3.0, highr~0.8, htmltools~0.5.1.1, httpuv~1.5.5,
+    ##     knitr~1.31, later~1.1.0.1, lifecycle~1.0.0, magrittr~2.0.1,
+    ##     mime~0.10, pillar~1.5.1, pkgconfig~2.0.3, png~0.1-7,
+    ##     promises~1.2.0.1, purrr~0.3.4, R6~2.5.0, Rcpp~1.0.6, rlang~0.4.10,
+    ##     rmarkdown~2.8, shiny~1.6.0, stringi~1.5.3, stringr~1.4.0,
+    ##     tibble~3.1.0, tidyselect~1.1.0, tools~4.0.2, utf8~1.2.1,
+    ##     vctrs~0.3.6, xfun~0.22, xtable~1.8-4, yaml~2.2.1
     ## \end{itemize}
 
 End of the tutorial, Enjoy\~
