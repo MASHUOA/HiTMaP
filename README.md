@@ -39,7 +39,7 @@ Find our published research article on *Nature Communications*:
 
 <DOI:10.1038/s41467-021-23461-w>
 
-![<DOI:10.1038/s41467-021-23461-w>](https://img.shields.io/badge/DOI-10.1038%2Fs41467--021--23461--w-orange.svg)
+![<DOI:10.1038/s41467-021-23461-w>](https://img.shields.io/badge/DOI-10.1038%252Fs41467--021--23461--w-orange.svg)
 
 ![zenodo](https://zenodo.org/badge/187550066.svg)
 
@@ -126,7 +126,8 @@ library(HiTMaP)
 ```
 
 For windows users, Rtools
-(*<https://cran.r-project.org/bin/windows/Rtools/>*) is required.
+([*https://cran.r-project.org/bin/windows/Rtools/*](https://cran.r-project.org/bin/windows/Rtools/))
+is required.
 
 ## Codes for Linux OS building enviornment
 
@@ -309,6 +310,7 @@ list.dirs(wd, recursive=FALSE)
 
 1.  The one which has an identical name to an input data file contains
     the identification result of that input:
+
     -   the protein and peptides list of each segmentation region
     -   the PMF matching plot of each segmentation
     -   the image that indicates segmentations’ boundary (applies to
@@ -316,7 +318,9 @@ list.dirs(wd, recursive=FALSE)
         defined segmentation)
     -   folders of each region contains the detailed identification
         process, FDR plots and isotopic pattern matching plots
+
 2.  “Summary folder” contains:
+
     -   the identification summary of protein and peptides across all
         the data
     -   the candidate list of all possible proteins and peptides (if
@@ -330,9 +334,10 @@ list.dirs(wd, recursive=FALSE)
 To plot the MALDI-image peptide and protein images, use the following
 functions:
 
-To check the segmentation result over the sample, you need to d to each
-data file ID folder and find the “spatialKMeans\_image\_plot.png” (if
-you are using the spatial K-means method for segmentation.)
+To check the segmentation result over the sample, you need to navigate
+to each data file ID folder and find the
+“spatialKMeans\_image\_plot.png” (if you are using the spatial K-means
+method for segmentation.)
 
 ``` r
 library(magick)
@@ -358,6 +363,19 @@ according to the initial setting of segmentation
 segmentation image (on the left panel) shows a unique statistical
 classification based on the mz features of each region (on the right
 panel).
+
+The mouse brain example segmentation result (spatialKmeans n=9) shown as
+below:
+
+![](Resource/spatialKMeans_image_plot_9_segs_mb.png)
+
+For further investigation of the segmentation process, you may find a
+PCA images set in the **“Datafile ID”** folder. THe PCA images are good
+summary of features and potential region of interests within a data
+file. The combination of these PCs of interest will guide you to the
+insightful tissue structure profile.
+
+![](Resource/PCA_image_MB.png)
 
 The identification will take place on the **mean spectra** of each
 region. To check the peptide mass fingerprint (PMF) matching quality,
@@ -467,16 +485,15 @@ Intensity\_Score and Mass\_error\_Score:
     (quantiles of the given probability density) is deducted by 0.5 and
     converted into an absolute value.
 
-<img src="https://render.githubusercontent.com/render/math?math=%24Intensity%5C_Score%3D%5Clog(PeakCount_%7BObserved%7D%2FPeakCount_%7BTheoritical%7D)-%5Clog(%5Csqrt%7B%5Cfrac%7B%5Csum_%7Bx%20%3D%201%7D%5E%7Bn%7D%20(Theoritical%5C_intensity_x-Observed%5C_intensity_x)%5E2%7D%7B%5Csum_%7Bx%20%3D%201%7D%5E%7Bn%7D%20(Theoritical%5C_intensity_x)%5E2(Observed%5C_intensity_x)%5E2%7D%7D%24">  
+<img src="https://render.githubusercontent.com/render/math?math=%24Intensity%5C_Score%3D%5Clog(PeakCount_%7BObserved%7D%2FPeakCount_%7BTheoritical%7D)-%5Clog(%5Csqrt%7B%5Cfrac%7B%5Csum_%7Bx%20%3D%201%7D%5E%7Bn%7D%20(Theoritical%5C_intensity_x-Observed%5C_intensity_x)%5E2%7D%7B%5Csum_%7Bx%20%3D%201%7D%5E%7Bn%7D%20(Theoritical%5C_intensity_x)%5E2(Observed%5C_intensity_x)%5E2%7D%7D%24"/>
 
-<img src="https://render.githubusercontent.com/render/math?math=%24Mass%5C_error%5C_Score%3D%7C(p%5C_norm%5C_dist(%5Cfrac%7Bmean%5C_ppm%5C_error%7D%7Bppm%5C_tolerance%7D)-0.5)%7C%24">  
+<img src="https://render.githubusercontent.com/render/math?math=%24Mass%5C_error%5C_Score%3D%7C(p%5C_norm%5C_dist(%5Cfrac%7Bmean%5C_ppm%5C_error%7D%7Bppm%5C_tolerance%7D)-0.5)%7C%24"/>
 
-<img src="https://render.githubusercontent.com/render/math?math=%24Pepscore%3DIntensity%5C_Score-Mass%5C_error%5C_Score%24">  
+<img src="https://render.githubusercontent.com/render/math?math=%24Pepscore%3DIntensity%5C_Score-Mass%5C_error%5C_Score%24"/>
 
 **Proscore** in the protein result table shows the overall estimation of
-the protein identification Accuracy.  
-
-<img src="https://render.githubusercontent.com/render/math?math=%24Proscore%3D%5Cfrac%7B%5Csum_%7Bx%20%3D%201%7D%5E%7Bn%7D(Pepscore_x*log(Intensity_x))%7D%7Bmean(log(Intensity))%7D*Protein%5C_coverage*Normalized%5C_intensity%5C_factor%24">  
+the protein identification Accuracy.
+<img src="https://render.githubusercontent.com/render/math?math=%24Proscore%3D%5Cfrac%7B%5Csum_%7Bx%20%3D%201%7D%5E%7Bn%7D(Pepscore_x*log(Intensity_x))%7D%7Bmean(log(Intensity))%7D*Protein%5C_coverage*Normalized%5C_intensity%5C_factor%24"/>
 
 A *Peptide\_region\_file.csv* has also been created to summarise all the
 IDs in this data file:
@@ -631,9 +648,8 @@ the project identification summary. You could set the
 function. Please be noted that you could indicate *Rotate\_IMG* with a
 CSV file path that indicates the rotation degree of image files.
 
-**Note**: 90<sup>∘</sup>, 180<sup>∘</sup> and 270<sup>∘</sup> are
-recommended for image rotation. You may find an example CSV file in the
-library/HiTMaP/data folder.
+**Note**: 90°, 180° and 270° are recommended for image rotation. You may
+find an example CSV file in the library/HiTMaP/data folder.
 
 ``` r
 library(dplyr)
@@ -645,48 +661,21 @@ Finally, you are able visualize the annotated proteins and their
 associated peptide distributions via the cluster image rendering
 function.
 
+<img src="Resource/Bovin_lens.png" title="Bovin_lens" alt="Bovin lens cluster image rendering" width="100%"/>
+
 vimentin:
 
-    ## Linking to ImageMagick 6.9.11.57
-    ## Enabled features: cairo, freetype, fftw, ghostscript, heic, lcms, pango, raw, rsvg, webp
-    ## Disabled features: fontconfig, x11
-
-    ##   format width height colorspace matte filesize density
-    ## 1    PNG 24300   2611       sRGB  TRUE  2746807 118x118
-
-<img src="README_files/figure-gfm/C-1.png" width="24300" />
 β-crystallin:
 
-    ##   format width height colorspace matte filesize density
-    ## 1    PNG  8100   2601       sRGB  TRUE  1033944 118x118
-
-<img src="README_files/figure-gfm/unnamed-chunk-12-1.png" width="8100" />
 α-crystallin:
 
-    ##   format width height colorspace matte filesize density
-    ## 1    PNG 12960   2340       sRGB  TRUE  1158269 118x118
-
-<img src="README_files/figure-gfm/unnamed-chunk-13-1.png" width="12960" />
+![](Resource/Mouse_brain.png)
 
 Secernin 1
 
-    ##   format width height colorspace matte filesize density
-    ## 1    PNG  1620   2799       sRGB  TRUE   598484   59x59
-
-<img src="README_files/figure-gfm/unnamed-chunk-14-1.png" width="1620" />
 CX6A1 cytochrome coxidase subunit 6A1
 
-    ##   format width height colorspace matte filesize density
-    ## 1    PNG  1620   2905       sRGB  TRUE   336812   59x59
-
-<img src="README_files/figure-gfm/unnamed-chunk-15-1.png" width="1620" />
-
 Myelin basic protein
-
-    ##   format width height colorspace matte filesize density
-    ## 1    PNG  1980   1125       sRGB  TRUE   235823   59x59
-
-<img src="README_files/figure-gfm/unnamed-chunk-16-1.png" width="1980" />
 
 # Details of parameter setting
 
@@ -934,30 +923,39 @@ using HIT-MAP” online on the 28th May 2021.
 # Session information
 
 ``` r
-toLatex(sessionInfo())
+sessionInfo()
 ```
 
-    ## \begin{itemize}\raggedright
-    ##   \item R version 4.0.4 (2021-02-15), \verb|x86_64-w64-mingw32|
-    ##   \item Locale: \verb|LC_COLLATE=English_Australia.1252|, \verb|LC_CTYPE=English_Australia.1252|, \verb|LC_MONETARY=English_Australia.1252|, \verb|LC_NUMERIC=C|, \verb|LC_TIME=English_Australia.1252|
-    ##   \item Running under: \verb|Windows 10 x64 (build 19042)|
-    ##   \item Matrix products: default
-    ##   \item Base packages: base, datasets, graphics, grDevices, grid,
-    ##     methods, stats, utils
-    ##   \item Other packages: dplyr~1.0.5, gridExtra~2.3, HiTMaP~1.0.0,
-    ##     magick~2.7.0, protViz~0.6.8, XML~3.99-0.5
-    ##   \item Loaded via a namespace (and not attached): assertthat~0.2.1,
-    ##     codetools~0.2-18, compiler~4.0.2, crayon~1.4.1, DBI~1.1.1,
-    ##     debugme~1.1.0, digest~0.6.27, ellipsis~0.3.1, evaluate~0.14,
-    ##     fansi~0.4.2, fastmap~1.1.0, generics~0.1.0, glue~1.4.2,
-    ##     gtable~0.3.0, highr~0.8, htmltools~0.5.1.1, httpuv~1.5.5,
-    ##     knitr~1.31, later~1.1.0.1, lifecycle~1.0.0, magrittr~2.0.1,
-    ##     mime~0.10, pillar~1.5.1, pkgconfig~2.0.3, png~0.1-7,
-    ##     promises~1.2.0.1, purrr~0.3.4, R6~2.5.0, Rcpp~1.0.6, rlang~0.4.10,
-    ##     rmarkdown~2.8, shiny~1.6.0, stringi~1.5.3, stringr~1.4.0,
-    ##     tibble~3.1.0, tidyselect~1.1.0, tools~4.0.2, utf8~1.2.1,
-    ##     vctrs~0.3.6, xfun~0.22, xtable~1.8-4, yaml~2.2.1
-    ## \end{itemize}
+    ## R version 4.0.4 (2021-02-15)
+    ## Platform: x86_64-w64-mingw32/x64 (64-bit)
+    ## Running under: Windows 10 x64 (build 19042)
+    ## 
+    ## Matrix products: default
+    ## 
+    ## locale:
+    ## [1] LC_COLLATE=English_Australia.1252  LC_CTYPE=English_Australia.1252   
+    ## [3] LC_MONETARY=English_Australia.1252 LC_NUMERIC=C                      
+    ## [5] LC_TIME=English_Australia.1252    
+    ## 
+    ## attached base packages:
+    ## [1] stats     graphics  grDevices utils     datasets  methods   base     
+    ## 
+    ## other attached packages:
+    ## [1] gridExtra_2.3 XML_3.99-0.5  protViz_0.6.8 dplyr_1.0.5   magick_2.7.0 
+    ## [6] HiTMaP_1.0.0 
+    ## 
+    ## loaded via a namespace (and not attached):
+    ##  [1] Rcpp_1.0.6        compiler_4.0.2    pillar_1.5.1      later_1.1.0.1    
+    ##  [5] tools_4.0.2       digest_0.6.27     gtable_0.3.0      evaluate_0.14    
+    ##  [9] lifecycle_1.0.0   tibble_3.1.0      debugme_1.1.0     pkgconfig_2.0.3  
+    ## [13] rlang_0.4.10      shiny_1.6.0       DBI_1.1.1         yaml_2.2.1       
+    ## [17] xfun_0.22         fastmap_1.1.0     stringr_1.4.0     knitr_1.31       
+    ## [21] generics_0.1.0    vctrs_0.3.6       grid_4.0.2        tidyselect_1.1.0 
+    ## [25] glue_1.4.2        R6_2.5.0          fansi_0.4.2       rmarkdown_2.8    
+    ## [29] purrr_0.3.4       magrittr_2.0.1    codetools_0.2-18  promises_1.2.0.1 
+    ## [33] ellipsis_0.3.1    htmltools_0.5.1.1 assertthat_0.2.1  mime_0.10        
+    ## [37] xtable_1.8-4      httpuv_1.5.5      utf8_1.2.1        stringi_1.5.3    
+    ## [41] crayon_1.4.1
 
 End of the tutorial, Enjoy\~
 
@@ -965,187 +963,40 @@ End of the tutorial, Enjoy\~
 
 R Packages used in this project:
 
--   viridisLite(Garnier 2018)
+-   viridisLite\[@viridisLite\]
 
--   rcdklibs(Guha 2017)
+-   rcdklibs\[@rcdklibs\]
 
--   rJava(Urbanek 2019)
+-   rJava\[@rJava\]
 
--   data.table(Dowle and Srinivasan 2019)
+-   data.table\[@data.table\]
 
--   RColorBrewer(Neuwirth 2014)
+-   RColorBrewer\[@RColorBrewer\]
 
--   magick(Ooms 2019)
+-   magick\[@magick\]
 
--   ggplot2(Wickham 2016)
+-   ggplot2\[@ggplot2\]
 
--   dplyr(Wickham et al. 2019)
+-   dplyr\[@dplyr\]
 
--   stringr(Wickham 2019)
+-   stringr\[@stringr\]
 
--   protViz(Panse and Grossmann 2019)
+-   protViz\[@protViz\]
 
--   cleaver(Gibb 2019)
+-   cleaver\[@cleaver\]
 
--   Biostrings(Pag�s et al. 2019)
+-   Biostrings\[@Biostrings\]
 
--   IRanges(Lawrence et al. 2013)
+-   IRanges\[@IRanges\]
 
--   Cardinal(Bemis et al. 2015)
+-   Cardinal\[@Cardinal\]
 
--   tcltk(R Core Team 2019)
+-   tcltk\[@tcltk\]
 
--   BiocParallel(Morgan et al. 2019)
+-   BiocParallel\[@BiocParallel\]
 
--   spdep(Bivand and Wong 2018)
+-   spdep\[@spdep1\]
 
--   FTICRMS(Barkauskas 2012)
+-   FTICRMS\[@FTICRMS\]
 
--   UniProt.ws(Carlson 2019)
-
-<div id="refs" class="references csl-bib-body hanging-indent">
-
-<div id="ref-FTICRMS" class="csl-entry">
-
-Barkauskas, Don. 2012. *FTICRMS: Programs for Analyzing Fourier
-Transform-Ion Cyclotron Resonance Mass Spectrometry Data*.
-<https://CRAN.R-project.org/package=FTICRMS>.
-
-</div>
-
-<div id="ref-Cardinal" class="csl-entry">
-
-Bemis, Kyle D., April Harry, Livia S. Eberlin, Christina Ferreira,
-Stephanie M. van de Ven, Parag Mallick, Mark Stolowitz, and Olga Vitek.
-2015. “Cardinal: An r Package for Statistical Analysis of Mass
-Spectrometry-Based Imaging Experiments.” *Bioinformatics*.
-<https://doi.org/10.1093/bioinformatics/btv146>.
-
-</div>
-
-<div id="ref-spdep1" class="csl-entry">
-
-Bivand, Roger, and David W. S. Wong. 2018. “Comparing Implementations of
-Global and Local Indicators of Spatial Association.” *TEST* 27 (3):
-716–48. <https://doi.org/10.1007/s11749-018-0599-x>.
-
-</div>
-
-<div id="ref-UniProt.ws" class="csl-entry">
-
-Carlson, Marc. 2019. *UniProt.ws: R Interface to UniProt Web Services*.
-
-</div>
-
-<div id="ref-data.table" class="csl-entry">
-
-Dowle, Matt, and Arun Srinivasan. 2019. *Data.table: Extension of
-‘Data.frame‘*. <https://CRAN.R-project.org/package=data.table>.
-
-</div>
-
-<div id="ref-viridisLite" class="csl-entry">
-
-Garnier, Simon. 2018. *viridisLite: Default Color Maps from ’Matplotlib’
-(Lite Version)*. <https://CRAN.R-project.org/package=viridisLite>.
-
-</div>
-
-<div id="ref-cleaver" class="csl-entry">
-
-Gibb, Sebastian. 2019. *Cleaver: Cleavage of Polypeptide Sequences*.
-<https://github.com/sgibb/cleaver/>.
-
-</div>
-
-<div id="ref-rcdklibs" class="csl-entry">
-
-Guha, Rajarshi. 2017. *Rcdklibs: The CDK Libraries Packaged for r*.
-<https://CRAN.R-project.org/package=rcdklibs>.
-
-</div>
-
-<div id="ref-IRanges" class="csl-entry">
-
-Lawrence, Michael, Wolfgang Huber, Hervé Pagès, Patrick Aboyoun, Marc
-Carlson, Robert Gentleman, Martin Morgan, and Vincent Carey. 2013.
-“Software for Computing and Annotating Genomic Ranges.” *PLoS
-Computational Biology* 9.
-<https://doi.org/10.1371/journal.pcbi.1003118>.
-
-</div>
-
-<div id="ref-BiocParallel" class="csl-entry">
-
-Morgan, Martin, Valerie Obenchain, Michel Lang, Ryan Thompson, and
-Nitesh Turaga. 2019. *BiocParallel: Bioconductor Facilities for Parallel
-Evaluation*. <https://github.com/Bioconductor/BiocParallel>.
-
-</div>
-
-<div id="ref-RColorBrewer" class="csl-entry">
-
-Neuwirth, Erich. 2014. *RColorBrewer: ColorBrewer Palettes*.
-<https://CRAN.R-project.org/package=RColorBrewer>.
-
-</div>
-
-<div id="ref-magick" class="csl-entry">
-
-Ooms, Jeroen. 2019. *Magick: Advanced Graphics and Image-Processing in
-r*. <https://CRAN.R-project.org/package=magick>.
-
-</div>
-
-<div id="ref-Biostrings" class="csl-entry">
-
-Pag�s, H., P. Aboyoun, R. Gentleman, and S. DebRoy. 2019. *Biostrings:
-Efficient Manipulation of Biological Strings*.
-
-</div>
-
-<div id="ref-protViz" class="csl-entry">
-
-Panse, Christian, and Jonas Grossmann. 2019. *protViz: Visualizing and
-Analyzing Mass Spectrometry Related Data in Proteomics*.
-
-</div>
-
-<div id="ref-tcltk" class="csl-entry">
-
-R Core Team. 2019. *R: A Language and Environment for Statistical
-Computing*. Vienna, Austria: R Foundation for Statistical Computing.
-<https://www.R-project.org/>.
-
-</div>
-
-<div id="ref-rJava" class="csl-entry">
-
-Urbanek, Simon. 2019. *rJava: Low-Level r to Java Interface*.
-<https://CRAN.R-project.org/package=rJava>.
-
-</div>
-
-<div id="ref-ggplot2" class="csl-entry">
-
-Wickham, Hadley. 2016. *Ggplot2: Elegant Graphics for Data Analysis*.
-Springer-Verlag New York. <https://ggplot2.tidyverse.org>.
-
-</div>
-
-<div id="ref-stringr" class="csl-entry">
-
-———. 2019. *Stringr: Simple, Consistent Wrappers for Common String
-Operations*. <https://CRAN.R-project.org/package=stringr>.
-
-</div>
-
-<div id="ref-dplyr" class="csl-entry">
-
-Wickham, Hadley, Romain Fran�ois, Lionel Henry, and Kirill Muller. 2019.
-*Dplyr: A Grammar of Data Manipulation*.
-<https://CRAN.R-project.org/package=dplyr>.
-
-</div>
-
-</div>
+-   UniProt.ws\[@UniProt.ws\]

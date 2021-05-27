@@ -24,35 +24,44 @@ vignette: >
   %\VignetteIndexEntry{1. HiTMaP}
   %\VignetteEncoding{UTF-8}
   %\VignetteEngine{knitr::rmarkdown}
+editor_options: 
+  markdown: 
+    wrap: 72
 ---
-
 
 ```{r setup, echo=FALSE, message=FALSE}
 knitr::opts_chunk$set(cache = T)
 ```
 
--- An R package of High-resolution Informatics Toolbox for Maldi-imaging Proteomics
+-- An R package of High-resolution Informatics Toolbox for Maldi-imaging
+Proteomics
 
-Find our published research article on *Nature Communications*: 
- 
-DOI:10.1038/s41467-021-23461-w
- 
-![DOI:10.1038/s41467-021-23461-w](https://img.shields.io/badge/DOI-10.1038%2Fs41467--021--23461--w-orange.svg)
- 
+Find our published research article on *Nature Communications*:
+
+<DOI:10.1038/s41467-021-23461-w>
+
+![<DOI:10.1038/s41467-021-23461-w>](https://img.shields.io/badge/DOI-10.1038%252Fs41467--021--23461--w-orange.svg)
+
 ![zenodo](https://zenodo.org/badge/187550066.svg)
 
 # Package installation
-This is a tutorial for the use of HiTMaP (An R package of High-resolution Informatics Toolbox for Maldi-imaging Proteomics). User's may run HiTMaP using Docker, or through R, however Docker is recommended to avoid issues with package dependency.
+
+This is a tutorial for the use of HiTMaP (An R package of
+High-resolution Informatics Toolbox for Maldi-imaging Proteomics).
+User's may run HiTMaP using Docker, or through R, however Docker is
+recommended to avoid issues with package dependency.
 
 ## Installation of docker image
 
-HiTMaP has been encapsulated into a docker image. Using a bash terminal, user's can download the latest version by using the code as below.
+HiTMaP has been encapsulated into a docker image. Using a bash terminal,
+user's can download the latest version by using the code as below.
 
 ```{bash eval=FALSE, include=T}
 docker pull mashuoa/hitmap
 ```
 
 Seting up and running the docker container:
+
 ```{bash eval=FALSE, include=T}
 # For windows user's, run the image with a local user\Documents\expdata folder mapped to the docker container:
 docker run --name hitmap -v %userprofile%\Documents\expdata:/root/expdata -a stdin -a stdout -i -t mashuoa/hitmap /bin/bash 
@@ -66,6 +75,7 @@ R
 ```
 
 Revoke Docker terminal:
+
 ```{bash eval=FALSE, include=T}
 #use ctrl+d to exit the docker container shell 
 
@@ -74,28 +84,32 @@ docker restart hitmap
 docker container exec -it hitmap /bin/bash
 ```
 
-Stop/remove docker container (warning: if no local disk is mapped to "~/expdata", please backup your existing result files from the container before you remove it):
+Stop/remove docker container (warning: if no local disk is mapped to
+"\~/expdata", please backup your existing result files from the
+container before you remove it):
+
 ```{bash eval=FALSE, include=T}
 docker stop hitmap
 docker rm hitmap
 ```
 
-
-
-If you are using docker GUI, pull the docker image using the codes above and follow the image as below to setup the container.
+If you are using docker GUI, pull the docker image using the codes above
+and follow the image as below to setup the container.
 
 ![Docker GUI setting](Resource/docker_gui_setting.png)
 
 ## Installation code for R console installation
 
-The code below is used for an experienced R user to build a local R/HiTMaP running environment. 
-Major dependencies to note:
+The code below is used for an experienced R user to build a local
+R/HiTMaP running environment. Major dependencies to note:
 
-* R base
-* java running library (for linux, additional configuration is needed: *R CMD javareconf*)
-* orca for plotly (https://github.com/plotly/orca/releases/tag/v1.3.1)
-* magick++ (for Linux, additional configuration is needed to expand the pixel limitation)
-
+-   R base
+-   java running library (for linux, additional configuration is needed:
+    *R CMD javareconf*)
+-   orca for plotly
+    (<https://github.com/plotly/orca/releases/tag/v1.3.1>)
+-   magick++ (for Linux, additional configuration is needed to expand
+    the pixel limitation)
 
 ```{r Install the package, eval=FALSE, message=FALSE, warning=FALSE, include=TRUE}
 #install the git package
@@ -113,10 +127,14 @@ yes
 library(HiTMaP)
 ```
 
-For windows users, Rtools (*https://cran.r-project.org/bin/windows/Rtools/*) is required.
+For windows users, Rtools
+([*https://cran.r-project.org/bin/windows/Rtools/*](https://cran.r-project.org/bin/windows/Rtools/))
+is required.
 
 ## Codes for Linux OS building enviornment
-Run the codes as below to enable the required components in Linux console.
+
+Run the codes as below to enable the required components in Linux
+console.
 
 ```{bash eval=FALSE, include=T}
 sudo apt-get install tcl-dev tk-dev
@@ -148,32 +166,38 @@ sudo apt-get install libgdal-dev
 
 ## Codes for Mac OS building enviornment (optional)
 
-The following code is for a local GUI purpose. Hitmap now has been built on the shiny server system. You can skip this step in the later version. You may need to update the Xcode. Go to your Mac OS terminal and input:
+The following code is for a local GUI purpose. Hitmap now has been built
+on the shiny server system. You can skip this step in the later version.
+You may need to update the Xcode. Go to your Mac OS terminal and input:
 
 ```{bash eval=FALSE, include=T}
 xcode-select --install
 ```
 
-You'll then receive:
-*xcode-select: note: install requested for command line developer tools*
-You will be prompted at this point in a window to update Xcode Command Line tools. 
+You'll then receive: *xcode-select: note: install requested for command
+line developer tools* You will be prompted at this point in a window to
+update Xcode Command Line tools.
 
-You may also need to install the X11.app and tcl/tk support for Mac system:
+You may also need to install the X11.app and tcl/tk support for Mac
+system:
 
-+ X11.app:
-https://www.xquartz.org/
+-   X11.app: <https://www.xquartz.org/>
 
-+ Use the following link to download and install the correct tcltk package for your OS version.
-https://cran.r-project.org/bin/macosx/tools/
-
+-   Use the following link to download and install the correct tcltk
+    package for your OS version.
+    <https://cran.r-project.org/bin/macosx/tools/>
 
 # Example data and source code
-The HitMaP comes with a series of maldi-imaging datasets acquired by FT-ICR mass spectromety. With the following code, you can download these raw data set into a local folder.  
 
-You can download the example data manually through this link: "https://github.com/MASHUOA/HiTMaP/releases/download/1.0/Data.tar.gz"
+The HitMaP comes with a series of maldi-imaging datasets acquired by
+FT-ICR mass spectromety. With the following code, you can download these
+raw data set into a local folder.
 
+You can download the example data manually through this link:
+"<https://github.com/MASHUOA/HiTMaP/releases/download/1.0/Data.tar.gz>"
 
 Or download the files in a R console:
+
 ```{r eval=FALSE, message=FALSE, warning=FALSE, include=TRUE}
 if(!require(piggyback)) install.packages("piggyback")
 library(piggyback)
@@ -192,14 +216,16 @@ untar('Data.tar.gz',exdir =".",  tar="tar")
 #unlink('Data.tar.gz')
 list.dirs()
 ```
-The example data contains three folders for three individual IMS datasets, which each contain a configuration file, and the fasta database, respectively:
-*"./Bovinlens_Trypsin_FT"* 
-*"./MouseBrain_Trypsin_FT"*
-*"./Peptide_calibrants_FT"*
 
-# Proteomics identification on maldi-imaging dataset 
+The example data contains three folders for three individual IMS
+datasets, which each contain a configuration file, and the fasta
+database, respectively: *"./Bovinlens_Trypsin_FT"*
+*"./MouseBrain_Trypsin_FT"* *"./Peptide_calibrants_FT"*
 
-To perform false-discovery rate controlled  peptide and protein annotation, run the following script below in your R session:
+# Proteomics identification on maldi-imaging dataset
+
+To perform false-discovery rate controlled peptide and protein
+annotation, run the following script below in your R session:
 
 ```{r imaging_identification, eval=FALSE, message=FALSE, warning=FALSE, include=TRUE}
 #create candidate list
@@ -262,12 +288,13 @@ imaging_identification(
 
 ```
 
+# Project folder and result structure
 
-# Project folder and result structure 
-
-In the above function, you have performed proteomics analysis on the sample data file. It is a tryptic Bovin lens MALDI-imaging file which is acquired on an FT-ICR MS.
-The function will take the selected data files' root directory as the project folder.
-In this example, the project folder will be:
+In the above function, you have performed proteomics analysis on the
+sample data file. It is a tryptic Bovin lens MALDI-imaging file which is
+acquired on an FT-ICR MS. The function will take the selected data
+files' root directory as the project folder. In this example, the
+project folder will be:
 
 ```{r locate the project folder, message=FALSE, warning=FALSE}
 library(HiTMaP)
@@ -276,31 +303,42 @@ datafile=c("Bovin_lens")
 
 ```
 
-
-After the whole identification process, you will get two sub-folders within the project folder:
+After the whole identification process, you will get two sub-folders
+within the project folder:
 
 ```{r The sub-folder in the project folder}
 list.dirs(wd, recursive=FALSE)
 ```
 
-1. The one which has an identical name to an input data file contains the identification result of that input:
-   + the protein and peptides list of each segmentation region
-   + the PMF matching plot of each segmentation
-   + the image that indicates segmentations' boundary (applies to either K-mean segmentation (powered by Cardinal) or manually defined segmentation)
-   + folders of each region contains the detailed identification process, FDR plots and isotopic pattern matching plots
+1.  The one which has an identical name to an input data file contains
+    the identification result of that input:
 
-2. "Summary folder" contains: 
-   + the identification summary of protein and peptides across all the data
-   + the candidate list of all possible proteins and peptides (if *use_previous_candidates* is set as **TRUE**)
-   + the Cluster imaging files of the protein of interest
-   + the database stats result for resolution-based candidates binning (optional)
-   
-   
+    -   the protein and peptides list of each segmentation region
+    -   the PMF matching plot of each segmentation
+    -   the image that indicates segmentations' boundary (applies to
+        either K-mean segmentation (powered by Cardinal) or manually
+        defined segmentation)
+    -   folders of each region contains the detailed identification
+        process, FDR plots and isotopic pattern matching plots
+
+2.  "Summary folder" contains:
+
+    -   the identification summary of protein and peptides across all
+        the data
+    -   the candidate list of all possible proteins and peptides (if
+        *use_previous_candidates* is set as **TRUE**)
+    -   the Cluster imaging files of the protein of interest
+    -   the database stats result for resolution-based candidates
+        binning (optional)
+
 # Identification result visulasation and interpretation
 
-To plot the MALDI-image peptide and protein images, use the following functions:
+To plot the MALDI-image peptide and protein images, use the following
+functions:
 
-To check the segmentation result over the sample, you need to d to each data file ID folder and find the "spatialKMeans_image_plot.png" (if you are using the spatial K-means method for segmentation.)
+To check the segmentation result over the sample, you need to navigate
+to each data file ID folder and find the "spatialKMeans_image_plot.png"
+(if you are using the spatial K-means method for segmentation.)
 
 ```{r VisulazeKmean}
 library(magick)
@@ -308,10 +346,30 @@ p<-image_read(paste0(wd,datafile," ID/spatialKMeans_image_plot.png"))
 print(p)
 ```
 
-The pixels in image data now has been categorized into four regions according to the initial setting of segmentation (*spectra_segments_per_file=5*). The rainbow shaped bovine lens segmentation image (on the left panel) shows a unique statistical classification based on the mz features of each region (on the right panel).
+The pixels in image data now has been categorized into four regions
+according to the initial setting of segmentation
+(*spectra_segments_per_file=5*). The rainbow shaped bovine lens
+segmentation image (on the left panel) shows a unique statistical
+classification based on the mz features of each region (on the right
+panel).
 
-The identification will take place on the **mean spectra** of each region. To check the peptide mass fingerprint (PMF) matching quality, 
-you could locate the PMF spectrum matching plot of each individual region.
+The mouse brain example segmentation result (spatialKmeans n=9) shown as
+below:
+
+![](Resource/spatialKMeans_image_plot_9_segs_mb.png)
+
+For further investigation of the segmentation process, you may find a
+PCA images set in the **"Datafile ID"** folder. THe PCA images are good
+summary of features and potential region of interests within a data
+file. The combination of these PCs of interest will guide you to the
+insightful tissue structure profile.
+
+![](Resource/PCA_image_MB.png)
+
+The identification will take place on the **mean spectra** of each
+region. To check the peptide mass fingerprint (PMF) matching quality,
+you could locate the PMF spectrum matching plot of each individual
+region.
 
 ```{r}
 library(magick)
@@ -319,7 +377,8 @@ p_pmf<-image_read(paste0(wd,datafile," ID/Bovin_lens 3PMF spectrum match.png"))
 print(p_pmf)
 ```
 
-A list of the peptides and proteins annotated within each region has also been created for manual exploration of the results.
+A list of the peptides and proteins annotated within each region has
+also been created for manual exploration of the results.
 
 ```{r}
 peptide_pmf_result<-read.csv(paste0(wd,datafile," ID/Peptide_segment_PMF_RESULT_3.csv"))
@@ -333,47 +392,64 @@ head(protein_pmf_result)
 
 # Scoring system for protein and peptide
 
-**Score** in peptide result table shows the isotopic pattern matching score of the peptide (Pepscore). In Protein result table, it shows the protein score (Proscore). The 'Pepscore' consist of two parts: Intensity_Score and Mass_error_Score:
+**Score** in peptide result table shows the isotopic pattern matching
+score of the peptide (Pepscore). In Protein result table, it shows the
+protein score (Proscore). The 'Pepscore' consist of two parts:
+Intensity_Score and Mass_error_Score:
 
-   + Intensity_Score indicates how well a putative isotopic pattern can be matched to the observed spectrum.The default scoring method is SQRTP. It combines the 'square root mean' differences between observed and theoretical peaks and observed proportion of the isotopic peaks above a certain relative intensity threshold.
-   
-   + Mass_error_Score indicates the summary of mass error (in *ppm*) for every detected isotopic peak. In order to integrate the Mass_error_Score in to scoring system, the mean ppm error has been normalized by ppm tolerance, and supplied to the probability normal distributions (*pnorm* function for R). The resulting value (quantiles of the given probability density) is deducted by 0.5 and converted into an absolute value.
- 
+-   Intensity_Score indicates how well a putative isotopic pattern can
+    be matched to the observed spectrum.The default scoring method is
+    SQRTP. It combines the 'square root mean' differences between
+    observed and theoretical peaks and observed proportion of the
+    isotopic peaks above a certain relative intensity threshold.
 
-<img src="https://render.githubusercontent.com/render/math?math=%24Intensity%5C_Score%3D%5Clog(PeakCount_%7BObserved%7D%2FPeakCount_%7BTheoritical%7D)-%5Clog(%5Csqrt%7B%5Cfrac%7B%5Csum_%7Bx%20%3D%201%7D%5E%7Bn%7D%20(Theoritical%5C_intensity_x-Observed%5C_intensity_x)%5E2%7D%7B%5Csum_%7Bx%20%3D%201%7D%5E%7Bn%7D%20(Theoritical%5C_intensity_x)%5E2(Observed%5C_intensity_x)%5E2%7D%7D%24">\
- 
+-   Mass_error_Score indicates the summary of mass error (in *ppm*) for
+    every detected isotopic peak. In order to integrate the
+    Mass_error_Score in to scoring system, the mean ppm error has been
+    normalized by ppm tolerance, and supplied to the probability normal
+    distributions (*pnorm* function for R). The resulting value
+    (quantiles of the given probability density) is deducted by 0.5 and
+    converted into an absolute value.
 
-<img src="https://render.githubusercontent.com/render/math?math=%24Mass%5C_error%5C_Score%3D%7C(p%5C_norm%5C_dist(%5Cfrac%7Bmean%5C_ppm%5C_error%7D%7Bppm%5C_tolerance%7D)-0.5)%7C%24">\
- 
+<img src="https://render.githubusercontent.com/render/math?math=%24Intensity%5C_Score%3D%5Clog(PeakCount_%7BObserved%7D%2FPeakCount_%7BTheoritical%7D)-%5Clog(%5Csqrt%7B%5Cfrac%7B%5Csum_%7Bx%20%3D%201%7D%5E%7Bn%7D%20(Theoritical%5C_intensity_x-Observed%5C_intensity_x)%5E2%7D%7B%5Csum_%7Bx%20%3D%201%7D%5E%7Bn%7D%20(Theoritical%5C_intensity_x)%5E2(Observed%5C_intensity_x)%5E2%7D%7D%24"/>
 
-<img src="https://render.githubusercontent.com/render/math?math=%24Pepscore%3DIntensity%5C_Score-Mass%5C_error%5C_Score%24">\
- 
+<img src="https://render.githubusercontent.com/render/math?math=%24Mass%5C_error%5C_Score%3D%7C(p%5C_norm%5C_dist(%5Cfrac%7Bmean%5C_ppm%5C_error%7D%7Bppm%5C_tolerance%7D)-0.5)%7C%24"/>
 
-**Proscore** in the protein result table shows the overall estimation of the protein identification Accuracy.\
+<img src="https://render.githubusercontent.com/render/math?math=%24Pepscore%3DIntensity%5C_Score-Mass%5C_error%5C_Score%24"/>
 
-<img src="https://render.githubusercontent.com/render/math?math=%24Proscore%3D%5Cfrac%7B%5Csum_%7Bx%20%3D%201%7D%5E%7Bn%7D(Pepscore_x*log(Intensity_x))%7D%7Bmean(log(Intensity))%7D*Protein%5C_coverage*Normalized%5C_intensity%5C_factor%24">\
- 
+**Proscore** in the protein result table shows the overall estimation of
+the protein identification Accuracy.
+<img src="https://render.githubusercontent.com/render/math?math=%24Proscore%3D%5Cfrac%7B%5Csum_%7Bx%20%3D%201%7D%5E%7Bn%7D(Pepscore_x*log(Intensity_x))%7D%7Bmean(log(Intensity))%7D*Protein%5C_coverage*Normalized%5C_intensity%5C_factor%24"/>
 
-A *Peptide_region_file.csv* has also been created to summarise all the IDs in this data file:
+A *Peptide_region_file.csv* has also been created to summarise all the
+IDs in this data file:
 
 ```{r}
 Identification_summary_table<-read.csv(paste0(wd,datafile," ID/Peptide_region_file.csv"))
 head(Identification_summary_table)
 ```
 
-The details of protein/peptide identification process has been save to the folder named by the segmentation:
+The details of protein/peptide identification process has been save to
+the folder named by the segmentation:
 
 ```{r The sub-folder in the result folder}
 list.dirs(paste0(wd,datafile," ID/"), recursive=FALSE)
 ```
 
-In the identification details folder, you will find a series of FDR file and plots to demonstrate the FDR model and score cutoff threshold:
+In the identification details folder, you will find a series of FDR file
+and plots to demonstrate the FDR model and score cutoff threshold:
 
 ```{r The file in the details sub-folder}
 dir(paste0(wd,datafile," ID/1/"), recursive=FALSE)
 ```
 
-In this folder, you will find the FDR plots for protein and peptide annotation. The software will take the proscore and its FDR model to trim the final identification results. The *unique_peptide_ranking_vs_mz_feature.png* is a plot that could tell you the number of peptide candidates that have been matched to the mz features in the first round run. You can also access the peptide spectrum match (first MS dimension) data via the "/ppm" subfolder.
+In this folder, you will find the FDR plots for protein and peptide
+annotation. The software will take the proscore and its FDR model to
+trim the final identification results. The
+*unique_peptide_ranking_vs_mz_feature.png* is a plot that could tell you
+the number of peptide candidates that have been matched to the mz
+features in the first round run. You can also access the peptide
+spectrum match (first MS dimension) data via the "/ppm" subfolder.
 
 ```{r FDR plot, message=FALSE}
 library(magick)
@@ -386,7 +462,8 @@ print(p_combined)
 
 ```
 
-You will also find a *Matching_Score_vs_mz* plot for further investigation on peptide matching quality. 
+You will also find a *Matching_Score_vs_mz* plot for further
+investigation on peptide matching quality.
 
 ```{r p_Matching_Score_vs_mz plot, message=FALSE}
 library(magick)
@@ -398,23 +475,39 @@ print(p_Matching_Score_vs_mz)
 
 # Identification summary and cluster imaging
 
-In the project summary folder, you will find four files and a sub-folder:
+In the project summary folder, you will find four files and a
+sub-folder:
+
 ```{r dir summary folder}
 wd_sum=paste(wd,"/Summary folder", sep="")
 dir(wd_sum)
 ```
 
-"candidatelist.csv" and "protein_index.csv" contains the candidates used for this analysis. They are output after the candidate processing while *output_candidatelist* set as TRUE, and can be used repeatedly while *use_previous_candidates* set as TRUE.
+"candidatelist.csv" and "protein_index.csv" contains the candidates used
+for this analysis. They are output after the candidate processing while
+*output_candidatelist* set as TRUE, and can be used repeatedly while
+*use_previous_candidates* set as TRUE.
 
-We have implemented a functionality to perform additional statistical analysis around the number of enzymatically generated peptides derived from a given proteome database. If the user sets the argument ‘Database_stats’ to TRUE in the main workflow, the function will be called. Briefly, the function will list all of the m/z’s of a unique formulae from the peptide candidate pool within a given m/z range. The m/z’s will then be binned using three tolerance window: 1 ppm, 2 ppm and 5 ppm. A plot showing the number of unique formulae vs. m/z bins will be generated and exported to the summary folder (DB_stats_mz_bin).
-
+We have implemented a functionality to perform additional statistical
+analysis around the number of enzymatically generated peptides derived
+from a given proteome database. If the user sets the argument
+'Database_stats' to TRUE in the main workflow, the function will be
+called. Briefly, the function will list all of the m/z's of a unique
+formulae from the peptide candidate pool within a given m/z range. The
+m/z's will then be binned using three tolerance window: 1 ppm, 2 ppm and
+5 ppm. A plot showing the number of unique formulae vs. m/z bins will be
+generated and exported to the summary folder (DB_stats_mz_bin).
 
 ![Proteome database stats](Resource/DB_stats_bin_mz_ppm.png)
 
+"Peptide_Summary.csv" and "Protein_Summary.csv" contains the table of
+the project identification summary. You could set the
+*plot_cluster_image_grid* as TRUE to enable the cluster imaging
+function. Please be noted that you could indicate *Rotate_IMG* with a
+CSV file path that indicates the rotation degree of image files.
 
-"Peptide_Summary.csv" and "Protein_Summary.csv" contains the table of the project identification summary. You could set the *plot_cluster_image_grid* as TRUE to enable the cluster imaging function. Please be noted that you could indicate *Rotate_IMG* with a CSV file path that indicates the rotation degree of image files. 
-
-**Note**: 90$^\circ$, 180$^\circ$ and 270$^\circ$ are recommended for image rotation. You may find an example CSV file in the library/HiTMaP/data folder.
+**Note**: 90°, 180° and 270° are recommended for image rotation. You may
+find an example CSV file in the library/HiTMaP/data folder.
 
 ```{r summary table, message=FALSE, warning=FALSE}
 library(dplyr)
@@ -423,56 +516,68 @@ Protein_Summary_tb<-read.csv(paste(wd,"/Summary folder","/Protein_Summary.csv", 
 
 ```
 
+Finally, you are able visualize the annotated proteins and their
+associated peptide distributions via the cluster image rendering
+function.
 
-Finally, you are able visualize the annotated proteins and their associated peptide distributions via the cluster image rendering function.
+<img src="Resource/Bovin_lens.png" title="Bovin_lens" alt="Bovin lens cluster image rendering" width="100%"/>
 
 vimentin:
 
-```{r C, echo=FALSE, cache=FALSE, paged.print=TRUE}
+```{r C, eval=FALSE, cache=FALSE, include=FALSE, paged.print=TRUE}
 library(magick)
 p_cluster4<-image_read(paste0("~/expdata/Bovinlens_Trypsin_FT/Summary folder/cluster Ion images/unique/452_cluster_imaging.png"))
 print(p_cluster4)
 ```
+
 β-crystallin:
 
-```{r , echo=FALSE, cache=FALSE, paged.print=TRUE}
+```{r , eval=FALSE, echo=FALSE, cache=FALSE, paged.print=TRUE}
 p_cluster1<-image_read(paste0("~/expdata/Bovinlens_Trypsin_FT/Summary folder/cluster Ion images/unique/791_cluster_imaging.png"))
 print(p_cluster1)
 ```
+
 α-crystallin:
 
-```{r , echo=FALSE, cache=FALSE, paged.print=TRUE}
+```{r , eval=FALSE, echo=FALSE, cache=FALSE, paged.print=TRUE}
 p_cluster3<-image_read(paste0("~/expdata/Bovinlens_Trypsin_FT/Summary folder/cluster Ion images/unique/5479_cluster_imaging.png"))
 print(p_cluster3)
 ```
 
+![](Resource/Mouse_brain.png)
+
 Secernin 1
 
-```{r , echo=FALSE, cache=FALSE, paged.print=TRUE}
+```{r , eval=FALSE, echo=FALSE, cache=FALSE, paged.print=TRUE}
 p_cluster3<-image_read(paste0("~/expdata/MouseBrain_Trypsin_FT/Summary folder/cluster Ion images/unique/2823_cluster_imaging.png"))
 print(p_cluster3)
 ```
+
 CX6A1 cytochrome coxidase subunit 6A1
 
-```{r , echo=FALSE, cache=FALSE, paged.print=TRUE}
+```{r , eval=FALSE, echo=FALSE, cache=FALSE, paged.print=TRUE}
 p_cluster3<-image_read(paste0("~/expdata/MouseBrain_Trypsin_FT/Summary folder/cluster Ion images/unique/16305_cluster_imaging.png"))
 print(p_cluster3)
 ```
 
 Myelin basic protein
 
-```{r , echo=FALSE, cache=FALSE, paged.print=TRUE}
+```{r , eval=FALSE, echo=FALSE, cache=FALSE, paged.print=TRUE}
 p_cluster3<-image_read(paste0("~/expdata/MouseBrain_Trypsin_FT org rds/Summary folder/cluster Ion images/unique/9585_cluster_imaging.png"))
 print(p_cluster3)
 ```
 
 # Details of parameter setting
 
-
 ## Modification
-You can choose one or a list of modifications from the unimod modification list. *Peptide_modification* function is used to load/rebuild the modification database into the global enviornment of R. It will be called automatically in the identification work flow. you can use the *code_name* or *record_id* to refer the modification (see example data "peptide calibrants" to find more details). The pipeline will select the *non-hidden* modifications.
 
-
+You can choose one or a list of modifications from the unimod
+modification list. *Peptide_modification* function is used to
+load/rebuild the modification database into the global enviornment of R.
+It will be called automatically in the identification work flow. you can
+use the *code_name* or *record_id* to refer the modification (see
+example data "peptide calibrants" to find more details). The pipeline
+will select the *non-hidden* modifications.
 
 ```{r warning=FALSE}
 
@@ -484,27 +589,35 @@ head(modification_list['&'(stringr::str_detect(modification_list$code_name,"Ca")
 
 ```
 
-If a modification occurs on a particular site, you will also need to specify the position of a modifications.
+If a modification occurs on a particular site, you will also need to
+specify the position of a modifications.
 
-* *Anywhere*, side chain of possible amino acids
-* *Any N-term*, any N-term of enzymatic peptide 
-* *Protein N-term*, any N-term of protein 
- 
+-   *Anywhere*, side chain of possible amino acids
+-   *Any N-term*, any N-term of enzymatic peptide
+-   *Protein N-term*, any N-term of protein
+
 ```{r}
 unimod.df[["positions"]]
 ```
+
 ## Amino acid substitution
-You can set the *Substitute_AA* to make the uncommon amino acid available to the workflow:
+
+You can set the *Substitute_AA* to make the uncommon amino acid
+available to the workflow:
 *Substitute_AA=list(AA=c("X"),AA_new_formula=c("C5H5NO2"),Formula_with_water=c(FALSE))*
 
-* AA: the single letter amino acid to be replaced
-* AA_new_formula: the new formula for the amino acid
-* Formula_with_water: Set *TRUE* to indicate the formula represents the intact amino acid, *FALSE* to indicate that the formula already lost one H2O molecule and can be considered as AA backbone.
-
+-   AA: the single letter amino acid to be replaced
+-   AA_new_formula: the new formula for the amino acid
+-   Formula_with_water: Set *TRUE* to indicate the formula represents
+    the intact amino acid, *FALSE* to indicate that the formula already
+    lost one H2O molecule and can be considered as AA backbone.
 
 ## Digestion site and enzyme
 
-The *Digestion_site* allows you to specify a list of pre-defined enzyme and customized digestion rules in regular expression format. You can either use the enzyme name, customized cleavage rule or combination of them to get the enzymatics peptides list. 
+The *Digestion_site* allows you to specify a list of pre-defined enzyme
+and customized digestion rules in regular expression format. You can
+either use the enzyme name, customized cleavage rule or combination of
+them to get the enzymatics peptides list.
 
 ```{r message=FALSE, warning=FALSE, include=FALSE}
   grid.ftable <- function(d, padding = unit(2, "mm"), ...) {
@@ -547,7 +660,6 @@ The *Digestion_site* allows you to specify a list of pre-defined enzyme and cust
 }
 ```
 
-
 ```{r echo=TRUE, message=F, warning=FALSE, paged.print=T, fig.height=8,fig.width=8.35,dpi=300}
 Cleavage_rules<-Cleavage_rules_fun()
 Cleavage_df<-data.frame(Enzyme=names(Cleavage_rules),Cleavage_rules=unname(Cleavage_rules),stringsAsFactors = F)
@@ -556,12 +668,10 @@ grid.ftable(Cleavage_df, gp = gpar(fontsize=9,fill = rep(c("grey90", "grey95")))
 
 ```
 
-
-
-
 # Example workflow command
 
-Below is a list of commands including the parameters for the example data sets.
+Below is a list of commands including the parameters for the example
+data sets.
 
 ## Peptide calibrant
 
@@ -614,6 +724,7 @@ imaging_identification(datafile=paste0(wd,datafile),
 ```
 
 ## Bovine lens
+
 ```{r eval=FALSE, include=T}
 library(HiTMaP)
 datafile=c("Bovinlens_Trypsin_FT/Bovin_lens.imzML")
@@ -669,8 +780,8 @@ imaging_identification(datafile=paste0(wd,datafile),Digestion_site="trypsin",
 
 ```
 
-
 ## Mouse brain
+
 ```{r eval=FALSE, include=T}
 library(HiTMaP)
 datafile=c("MouseBrain_Trypsin_FT/Mouse_brain.imzML")
@@ -708,8 +819,6 @@ imaging_identification(datafile=paste0(wd,datafile),Digestion_site="trypsin",
                        Protein_desc_of_interest=c("Secernin","GN=MBP","Cytochrome"))
 
 ```
-
-
 
 ```{r eval=FALSE, include=FALSE}
 wd=paste0(file.path(path.package(package="HiTMaP")),"/data/")
@@ -1142,7 +1251,6 @@ imaging_identification(datafile=paste0(wd,datafile),Digestion_site="trypsin",Fas
 
 ```
 
-
 ```{r Mouse_brain_michael, eval=FALSE, include=F}
 library(HiTMaP)
 datafile=c("01-root mean square.imzML")
@@ -1243,61 +1351,59 @@ imaging_identification(datafile=paste0(wd,datafile),Digestion_site="trypsin",
 
 ```
 
-
 # Cite this project
 
-This study has been accepted by Nature Communications: 
-DOI:10.1038/s41467-021-23461-w
-“Automated annotation and visualisation of high-resolution spatial proteomic mass spectrometry imaging data using HIT-MAP” online on the 28th May 2021.
+This study has been accepted by Nature Communications:
+<DOI:10.1038/s41467-021-23461-w> "Automated annotation and visualisation
+of high-resolution spatial proteomic mass spectrometry imaging data
+using HIT-MAP" online on the 28th May 2021.
 
 # Session information
 
 ```{r}
-toLatex(sessionInfo())
+sessionInfo()
 ```
 
-
-
-End of the tutorial, Enjoy~
-
+End of the tutorial, Enjoy\~
 
 # References
+
 R Packages used in this project:
 
-   + viridisLite[@viridisLite]
+-   viridisLite[\@viridisLite]
 
-   + rcdklibs[@rcdklibs]
+-   rcdklibs[\@rcdklibs]
 
-   + rJava[@rJava]
+-   rJava[\@rJava]
 
-   + data.table[@data.table]
+-   data.table[\@data.table]
 
-   + RColorBrewer[@RColorBrewer]
+-   RColorBrewer[\@RColorBrewer]
 
-   + magick[@magick]
+-   magick[\@magick]
 
-   + ggplot2[@ggplot2]
+-   ggplot2[\@ggplot2]
 
-   + dplyr[@dplyr]
+-   dplyr[\@dplyr]
 
-   + stringr[@stringr]
+-   stringr[\@stringr]
 
-   + protViz[@protViz]
+-   protViz[\@protViz]
 
-   + cleaver[@cleaver]
+-   cleaver[\@cleaver]
 
-   + Biostrings[@Biostrings]
+-   Biostrings[\@Biostrings]
 
-   + IRanges[@IRanges]
+-   IRanges[\@IRanges]
 
-   + Cardinal[@Cardinal]
+-   Cardinal[\@Cardinal]
 
-   + tcltk[@tcltk]
+-   tcltk[\@tcltk]
 
-   + BiocParallel[@BiocParallel]
+-   BiocParallel[\@BiocParallel]
 
-   + spdep[@spdep1]
+-   spdep[\@spdep1]
 
-   + FTICRMS[@FTICRMS]
+-   FTICRMS[\@FTICRMS]
 
-   + UniProt.ws[@UniProt.ws]
+-   UniProt.ws[\@UniProt.ws]
