@@ -1,15 +1,7 @@
 ---
 title: "HiT-MaP"
 output:
-  github_document:
-    toc: true
-    toc_depth: 2
-  md_document:
-    variant: gfm
-  word_document: default
-  pdf_document: default
   html_document: 
-    keep_md: yes
     toc: yes
     toc_float: yes
     collapsed: no
@@ -19,6 +11,13 @@ output:
     fig_width: 10
     fig_height: 10
     number_sections: yes
+  md_document:
+    variant: gfm
+  word_document: default
+  pdf_document: default
+  github_document:
+    toc: true
+    toc_depth: 2
 bibliography: references.bib
 vignette: >
   %\VignetteIndexEntry{1. HiTMaP}
@@ -1348,6 +1347,25 @@ imaging_identification(datafile=paste0(wd,datafile),Digestion_site="trypsin",
                        pixel_size_um = 50,
                        Plot_score_abs_cutoff=-0.1,
                        remove_score_outlier=F)
+
+library(HiTMaP)
+datafile=c("aqueous_tl-root mean square.imzML","organic_tr-root mean square.imzML")
+wd="D:/dropbox/Dropbox (Uni of Auckland)/Mouse_Brain_Test_3/"
+
+# Data pre-processing and proteomics annotation
+library(HiTMaP)
+imaging_identification(datafile=paste0(wd,datafile),Digestion_site="trypsin",
+                       Fastadatabase="uniprot_mouse_20210107.fasta",output_candidatelist=T,
+                       preprocess=list(force_preprocess=T,
+                               use_preprocessRDS=TRUE,
+                               smoothSignal=list(method="Disable"),
+                               reduceBaseline=list(method="Disable"),
+                               peakPick=list(method="adaptive"),
+                               peakAlign=list(tolerance=5, units="ppm"),
+                               normalize=list(method=c("rms","tic","reference")[1],mz=1)),
+                       spectra_segments_per_file=9,use_previous_candidates=F,ppm=25,FDR_cutoff = 0.05,IMS_analysis=T,
+                       Rotate_IMG=NULL,
+                       mzrange = c(500,4000),plot_cluster_image_grid=F)
 
 ```
 
