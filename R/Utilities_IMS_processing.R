@@ -2224,7 +2224,7 @@ Load_IMS_decov_combine<-function(datafile,workdir,import_ppm=5,SPECTRUM_batch="o
       
     }else{
       
-      combinedimdata<-cbind(combinedimdata,imdata)
+      combinedimdata<-Cardinal::cbind(combinedimdata,imdata)
       
     }
     

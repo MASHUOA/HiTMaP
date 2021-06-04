@@ -370,6 +370,8 @@ imaging_identification<-function(
     # generate combined IMS data for multiple files or use a link to load the pre-processed IMS data
     
     if (!is.null(cluster_rds_path)){
+    
+    cluster_rds_path
     imdata=readRDS(paste0(workdir[1],"/",cluster_rds_path))
     message("cluster imdata loaded.")
     
@@ -379,8 +381,18 @@ imaging_identification<-function(
                                        deconv_peaklist="Load_exist",preprocessRDS_rotated=T)
 
 
-    imdata=readRDS(paste0(workdir[1],"/",cluster_rds_path))
+    imdata=readRDS(paste0(workdir[1],"/",basename(cluster_rds_path)))
+    
     message("cluster imdata generated and loaded.")
+    }
+    
+    # test combined imdata
+    if (class(imdata)[1]=="matrix"){
+      
+      do.call(Cardinal::cbind,imdata)->imdata
+      
+      saveRDS(imdata,paste0(workdir[1],"/combinedimdata.rds"),compress = T)
+      
     }
     
     # Setup output folder and queue the R calls for cluster image randering

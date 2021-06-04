@@ -1361,11 +1361,29 @@ imaging_identification(datafile=paste0(wd,datafile),Digestion_site="trypsin",
                                smoothSignal=list(method="Disable"),
                                reduceBaseline=list(method="Disable"),
                                peakPick=list(method="adaptive"),
-                               peakAlign=list(tolerance=5, units="ppm"),
+                               peakAlign=list(tolerance=2.5, units="ppm"),
                                normalize=list(method=c("rms","tic","reference")[1],mz=1)),
-                       spectra_segments_per_file=9,use_previous_candidates=F,ppm=25,FDR_cutoff = 0.05,IMS_analysis=T,
+                       spectra_segments_per_file=9,use_previous_candidates=F,ppm=5,FDR_cutoff = 0.05,IMS_analysis=T,
                        Rotate_IMG=NULL,
                        mzrange = c(500,4000),plot_cluster_image_grid=F)
+
+library(HiTMaP)
+datafile=c("aqueous_tl-root mean square.imzML","organic_tr-root mean square.imzML")
+wd="D:/dropbox/Dropbox (Uni of Auckland)/Mouse_Brain_Test_3/"
+library(HiTMaP)
+imaging_identification(datafile=paste0(wd,datafile),Digestion_site="trypsin",
+                       Fastadatabase="uniprot_mouse_20210107.fasta",output_candidatelist=F,
+                       preprocess=list(force_preprocess=F,
+                               use_preprocessRDS=TRUE,
+                               smoothSignal=list(method="Disable"),
+                               reduceBaseline=list(method="Disable"),
+                               peakPick=list(method="adaptive"),
+                               peakAlign=list(tolerance=2.5, units="ppm"),
+                               normalize=list(method=c("rms","tic","reference")[1],mz=1)),
+                       spectra_segments_per_file=9,use_previous_candidates=T,ppm=5,FDR_cutoff = 0.05,IMS_analysis=F,
+                       Rotate_IMG=NULL,
+                       mzrange = c(500,4000),plot_cluster_image_grid=T,pixel_size_um = 150,remove_score_outlier=F,attach_summary_cluster = F, remove_cluster_from_grid=F)
+
 
 ```
 
