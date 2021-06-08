@@ -631,7 +631,7 @@ FDR_cutoff_plot_protein<-function(Protein_feature_result,FDR_cutoff=0.1,plot_fdr
   Proscore_cutoff<-min(c(df$breaks[(df$FDR_m.av<=FDR_cutoff)==T],df$breaks[(df$FDR<=FDR_cutoff)==T]),na.rm = T)
 
   #Output protein scoring result
-  message(paste("Protein score cutoff:",Proscore_cutoff))
+  message(paste("Protein score cutoff:",round(Proscore_cutoff,digits = 4)))
   if (!is.null(outputdir) && plot_fdr){
 
     png(paste0(outputdir,"/Protein_FDR.png"))

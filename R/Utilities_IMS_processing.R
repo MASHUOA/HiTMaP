@@ -1297,10 +1297,10 @@ Preprocessing_segmentation<-function(datafile,
     setwd(workdir[z])
     if (ppm>=25) {
       instrument_ppm=50
-      import_ppm = instrument_ppm*2/9
+      import_ppm = floor(instrument_ppm*2/9)[1]
     }else{
       instrument_ppm=10
-      import_ppm = instrument_ppm*2/9
+      import_ppm = floor(instrument_ppm*2/9)[1]
     }
 
     #setup import ppm which ensure pickpicking has correct number of data points (halfwindow>=2) per peak to work with
