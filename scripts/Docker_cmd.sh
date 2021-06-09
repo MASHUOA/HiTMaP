@@ -21,3 +21,10 @@ docker image push mashuoa/hitmap:latest
 #vi etc/ImageMagick-6/policy.xml
 #cp etc/ImageMagick-6/policy.xml /root/exp/
 #cp /root/expdata/policy.xml etc/ImageMagick-6/ 
+docker tag mashuoa/hitmap:base_R405 mashuoa/hitmap:natcomm
+
+docker tag mashuoa/hitmap:base_R405 mashuoa/hitmap:latest
+
+docker image push mashuoa/hitmap:latest
+
+docker image push mashuoa/hitmap:natcomm

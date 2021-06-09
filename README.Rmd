@@ -1,6 +1,9 @@
 ---
 title: "HiT-MaP"
 output:
+  github_document:
+    toc: true
+    toc_depth: 2
   html_document: 
     toc: yes
     toc_float: yes
@@ -11,13 +14,10 @@ output:
     fig_width: 10
     fig_height: 10
     number_sections: yes
-  md_document:
-    variant: gfm
   word_document: default
   pdf_document: default
-  github_document:
-    toc: true
-    toc_depth: 2
+  md_document:
+    variant: gfm
 bibliography: references.bib
 vignette: >
   %\VignetteIndexEntry{1. HiTMaP}
@@ -58,6 +58,9 @@ user's can download the latest version by using the code as below.
 ```{bash eval=FALSE, include=T}
 docker pull mashuoa/hitmap
 ```
+
+Note: The mashuoa/hitmap:latest contains the stable build release (built from the Dockerfile at MASHUOA/hitmap_docker with the effort from John Reeves <j.reeves@garvan.org.au>). The mashuoa/hitmap:natcomm contains the original version when this project been accepted (minor changes applied to enhance the multi-files cluster image rendering). We are able to supply a singularity template to the users who want to deploy the HiTMaP on an HPC server. This scripts also are available at the MASHUOA/hitmap_docker.
+
 
 Seting up and running the docker container:
 
@@ -506,7 +509,7 @@ function. Please be noted that you could indicate *Rotate_IMG* with a
 CSV file path that indicates the rotation degree of image files.
 
 **Note**: 90°, 180° and 270° are recommended for image rotation. You may
-find an example CSV file in the library/HiTMaP/data folder.
+find an example CSV file in the *expdata/MouseBrain_Trypsin_FT/file_rotationbk.csv*.
 
 ```{r summary table, message=FALSE, warning=FALSE}
 library(dplyr)

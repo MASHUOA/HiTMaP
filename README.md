@@ -59,6 +59,15 @@ user’s can download the latest version by using the code as below.
 docker pull mashuoa/hitmap
 ```
 
+Note: The mashuoa/hitmap:latest contains the stable build release (built
+from the Dockerfile at MASHUOA/hitmap\_docker with the effort from John
+Reeves <j.reeves@garvan.org.au>). The mashuoa/hitmap:natcomm contains
+the original version when this project been accepted (minor changes
+applied to enhance the multi-files cluster image rendering). We are able
+to supply a singularity template to the users who want to deploy the
+HiTMaP on an HPC server. This scripts also are available at the
+MASHUOA/hitmap\_docker.
+
 Seting up and running the docker container:
 
 ``` bash
@@ -649,7 +658,8 @@ function. Please be noted that you could indicate *Rotate\_IMG* with a
 CSV file path that indicates the rotation degree of image files.
 
 **Note**: 90°, 180° and 270° are recommended for image rotation. You may
-find an example CSV file in the library/HiTMaP/data folder.
+find an example CSV file in the
+*expdata/MouseBrain\_Trypsin\_FT/file\_rotationbk.csv*.
 
 ``` r
 library(dplyr)
