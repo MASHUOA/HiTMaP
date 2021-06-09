@@ -59,13 +59,13 @@ user's can download the latest version by using the code as below.
 docker pull mashuoa/hitmap
 ```
 
-Note: 
+Tags of available docker images: 
  
 1. **mashuoa/hitmap:latest** contains the stable build release (built from the Dockerfile at MASHUOA/hitmap_docker with the effort from John Reeves <j.reeves@garvan.org.au>). 
  
 2. **mashuoa/hitmap:natcomms** contains the original version when this project been accepted (minor changes applied to enhance the multi-files cluster image rendering). 
  
-3. **mashuoa/hitmap:shiny_server** contains the developing graphical user interface of HiTMaP. We are happy to hear your voice regarding the High-RES IMS pre-processing, segmentation and annotation as well as their corresponding GUI configurations.
+3. **mashuoa/hitmap:shiny_server** contains the developing graphical user interface of HiTMaP. Please map the 3838 port to the container and access the GUI via http://localhost:3838/. We are happy to hear your voice regarding the High-RES IMS pre-processing, segmentation and annotation as well as their corresponding GUI configurations.
  
 4. We are able to supply a singularity template to the users who want to deploy the HiTMaP on an HPC server. This scripts also are available at the MASHUOA/hitmap_docker.
  
