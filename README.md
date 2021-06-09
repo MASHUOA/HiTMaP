@@ -61,7 +61,7 @@ docker pull mashuoa/hitmap
 
 Note: The mashuoa/hitmap:latest contains the stable build release (built
 from the Dockerfile at MASHUOA/hitmap\_docker with the effort from John
-Reeves <j.reeves@garvan.org.au>). The mashuoa/hitmap:natcomm contains
+Reeves <j.reeves@garvan.org.au>). The mashuoa/hitmap:natcomms contains
 the original version when this project been accepted (minor changes
 applied to enhance the multi-files cluster image rendering). We are able
 to supply a singularity template to the users who want to deploy the
