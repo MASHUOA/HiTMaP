@@ -43,6 +43,14 @@ Find our published research article on *Nature Communications*:
 
 ![zenodo](https://zenodo.org/badge/187550066.svg)
 
+Maintainer: George Guo <george.guo@auckland.ac.nz>
+
+About us:
+
+[Mass Spectrometry Hub \| UOA](https://mash.auckland.ac.nz/)
+
+[Garvan Institute of Medical Research](https://www.garvan.org.au/)
+
 # Package installation
 
 This is a tutorial for the use of HiTMaP (An R package of
