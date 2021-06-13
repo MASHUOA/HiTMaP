@@ -47,21 +47,24 @@ Find our published research article on *Nature Communications*:
   
  About us: 
   
- [Mass Spectrometry Hub | UOA](https://mash.auckland.ac.nz/) 
+ [Mass Spectrometry Hub | University of Auckland](https://mash.auckland.ac.nz/) 
   
- [Garvan Institute of Medical Research](https://www.garvan.org.au/)
+ [Cancer research theme | Garvan Institute of Medical Research](https://www.garvan.org.au/)
+ 
+ [MSRC Schey lab | Vanderbilt University](https://lab.vanderbilt.edu/msrc-schey-lab/)
  
 # Package installation
 
 This is a tutorial for the use of HiTMaP (An R package of
 High-resolution Informatics Toolbox for Maldi-imaging Proteomics).
-User's may run HiTMaP using Docker, or through R, however Docker is
+User's may run HiTMaP using Docker, or through R console, however Docker is
 recommended to avoid issues with package dependency.
 
 ## Installation of docker image
 
-HiTMaP has been encapsulated into a docker image. Using a bash terminal,
-user's can download the latest version by using the code as below.
+HiTMaP has been encapsulated into a docker image. After a proper installation and configuration of Docker engine ([Docker documentation](https://docker-docs.netlify.app/install/overview/)),
+user's can download the latest version of HiT-MaP by using the bash code as below.
+ 
 
 ```{bash eval=FALSE, include=T}
 docker pull mashuoa/hitmap
@@ -113,7 +116,7 @@ docker rm hitmap
 ```
 
 If you are using docker GUI, pull the docker image using the codes above
-and follow the image as below to setup the container.
+and follow the image as below to setup the container. if you are using **mashuoa/hitmap:shiny_server**, please also map local host:3838 to the container (Ports -> local hosts -> 3838).
 
 ![Docker GUI setting](Resource/docker_gui_setting.png)
 
