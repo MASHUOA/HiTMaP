@@ -1347,8 +1347,7 @@ Preprocessing_segmentation<-function(datafile,
         peaklist_deco<-HiTMaP:::isopattern_ppm_filter_peaklist(peaklist_deco,ppm=ppm,threshold=0)
         write.csv(peaklist_deco,paste0(gsub(".imzML$","",datafile[z])  ," ID/Sum_spec_decov.csv"),row.names = F)
 
-        imdata_ed<-imdata_ed %>% peakBin(peaklist_deco$mz, tolerance=ppm, units="ppm") %>% process()
-        saveRDS(imdata_ed,paste0(gsub(".imzML$","",datafile[z])  ," ID/preprocessed_peakpicked_imdata.RDS"))
+        
 
 
 
@@ -1373,10 +1372,12 @@ Preprocessing_segmentation<-function(datafile,
           }else if (!is.null(preprocess$peakPick$method)){
             imdata_ed<- imdata_ed %>% peakPick(method=preprocess$peakPick$method, window=4) %>% process()
           }else{
-            imdata_ed<- imdata_ed %>% peakPick(method="adaptive", window=4) %>% process()
+            #imdata_ed<- imdata_ed %>% peakPick(method="adaptive", window=4) %>% process()
+            imdata_ed<-imdata_ed %>% peakBin(peaklist_deco$mz, tolerance=ppm, units="ppm") %>% process()
           }
-
-        if(is.null(preprocess$peakAlign$level)) preprocess$peakAlign$level<-"local"
+          saveRDS(imdata_ed,paste0(gsub(".imzML$","",datafile[z])  ," ID/preprocessed_peakpicked_imdata.RDS"))
+          
+        if (is.null(preprocess$peakAlign$level)) preprocess$peakAlign$level<-"local"
           if (preprocess$peakAlign$level=="global"){
           if (preprocess$peakAlign$tolerance==0 ) {
             message("preprocess$peakAlign$tolerance set as zero, step bypassed")

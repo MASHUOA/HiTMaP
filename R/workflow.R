@@ -109,6 +109,7 @@ imaging_identification<-function(
                use_previous_candidates=FALSE,
                score_method="SQRTP",
                plot_cluster_image_grid=FALSE,
+               deconv_peaklist="New",
                plot_cluster_image_maxretry=2,
                plot_cluster_image_overwrite=F,
                smooth.image="gaussian",
@@ -378,7 +379,7 @@ imaging_identification<-function(
     }else{
     cluster_rds_path<-Load_IMS_decov_combine(datafile=datafile,workdir=workdir,import_ppm=ppm,SPECTRUM_batch="overall",
                                        ppm=ppm,threshold=0,rotate=Rotate_IMG,mzrange=mzrange,
-                                       deconv_peaklist="Load_exist",preprocessRDS_rotated=T)
+                                       deconv_peaklist=deconv_peaklist,preprocessRDS_rotated=T)
 
 
     imdata=readRDS(paste0(workdir[1],"/",basename(cluster_rds_path)))
