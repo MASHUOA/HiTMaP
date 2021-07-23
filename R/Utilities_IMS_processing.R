@@ -1266,7 +1266,7 @@ Preprocessing_segmentation<-function(datafile,
                                      BPPARAM=bpparam(),
                                      preprocess=list(force_preprocess=FALSE,use_preprocessRDS=TRUE,smoothSignal=list(method="gaussian"),
                                                      reduceBaseline=list(method="locmin"),
-                                                     peakPick=list(method="adaptive"),
+                                                     peakPick=list(method="Default"),
                                                      peakAlign=list(tolerance=ppm/2, units="ppm", level=c("local","global")),
                                                      normalize=list(method=c("rms","tic","reference")[1],mz=1)),
                                      ...){
@@ -1297,10 +1297,10 @@ Preprocessing_segmentation<-function(datafile,
     setwd(workdir[z])
     if (ppm>=25) {
       instrument_ppm=50
-      import_ppm = floor(instrument_ppm*2/9)[1]
+      import_ppm = floor(instrument_ppm*2/5)[1]
     }else{
       instrument_ppm=10
-      import_ppm = floor(instrument_ppm*2/9)[1]
+      import_ppm = floor(instrument_ppm*2/5)[1]
     }
 
     #setup import ppm which ensure pickpicking has correct number of data points (halfwindow>=2) per peak to work with
@@ -1369,10 +1369,10 @@ Preprocessing_segmentation<-function(datafile,
           }
         
           if (preprocess$peakPick$method=="Disable") {
-          }else if (!is.null(preprocess$peakPick$method)){
+          }else if (preprocess$peakPick$method %in% c("adaptive","mad","simple")){
             imdata_ed<- imdata_ed %>% peakPick(method=preprocess$peakPick$method, window=4) %>% process()
-          }else{
-            #imdata_ed<- imdata_ed %>% peakPick(method="adaptive", window=4) %>% process()
+          }else if (preprocess$peakPick$method == "Default"){
+            #add an peak picking function other than the Cardinal options.
             imdata_ed<-imdata_ed %>% peakBin(peaklist_deco$mz, tolerance=ppm, units="ppm") %>% process()
           }
           saveRDS(imdata_ed,paste0(gsub(".imzML$","",datafile[z])  ," ID/preprocessed_peakpicked_imdata.RDS"))
@@ -2097,7 +2097,7 @@ Load_IMS_combine<-function(datafile,rotate=NULL,ppm=5,...){
   return(imdata)
 }
 
-Load_IMS_decov_combine<-function(datafile,workdir,import_ppm=5,SPECTRUM_batch="overall",
+Load_IMS_decov_combine<-function(datafile,workdir,import_ppm=5,SPECTRUM_batch="overall",mass_correction_tol_ppm=12,
                                  ppm=5,threshold=0,rotate=NULL,mzrange="auto-detect",
                                  deconv_peaklist=c("Load_exist","New"),preprocessRDS_rotated=T,...){
   
@@ -2157,11 +2157,152 @@ Load_IMS_decov_combine<-function(datafile,workdir,import_ppm=5,SPECTRUM_batch="o
     }
     
     deconv_peaklist_list<-NULL
+    
     for (z in 1:length(datafile)){
       
       deconv_peaklist_list[[datafile[z]]] <- read.csv(paste0(workdir[z],"/",datafile[z] ," ID/",SPECTRUM_batch,"_deconv_Spectrum.csv"))
       
     }
+    
+    if (mzAlign_runs=="TopNfeature_mean"){
+      message("Performing mz alignment across all runs..." )
+      
+      mz.ref.list.top.quantile<-lapply(deconv_peaklist_list,function(x,quantile=0.15){
+        maxs<-matter::locmax(x$intensities)
+        cutoff <- quantile(x$intensities[maxs], 1 - quantile)
+        maxs <- maxs[x$intensities[maxs] >= cutoff]
+        mz.ref <- x$m.z[maxs]
+        return(mz.ref)
+      })
+      
+      
+      
+      mz.ref.list.top.quantile.spec<-lapply(names(mz.ref.list.top.quantile),function(x,mz.ref.list.top.quantile,deconv_peaklist_list){
+        
+        deconv_peaklist_list[[x]][deconv_peaklist_list[[x]]$m.z %in% mz.ref.list.top.quantile[[x]],] 
+        
+      },mz.ref.list.top.quantile,deconv_peaklist_list)
+      names(mz.ref.list.top.quantile.spec)<-names(mz.ref.list.top.quantile)
+      mz.ref.list.top.quantile.spec.bind<- do.call(rbind,mz.ref.list.top.quantile.spec)
+      mz.ref.list.top.quantile.spec.bind$intensities<-1
+      mz.ref.list.top.quantile.spec.bind<-mz.ref.list.top.quantile.spec.bind[order(mz.ref.list.top.quantile.spec.bind$m.z),]
+      rownames(mz.ref.list.top.quantile.spec.bind)<-1:nrow(mz.ref.list.top.quantile.spec.bind)
+      mz.ref.list.top.quantile.bin<-HiTMaP:::isopattern_ppm_filter_peaklist(mz.ref.list.top.quantile.spec.bind,ppm=ppm_aligment,threshold=0.00)
+      mz.ref.list.top.quantile.final<-mz.ref.list.top.quantile.bin$m.z[mz.ref.list.top.quantile.bin$intensities>(0.55*max(mz.ref.list.top.quantile.bin$intensities))]
+      #match features
+      
+      deconv_peaklist_ref_match <- NULL
+      deconv_peaklist_ref_match_locmax <- NULL
+      for (z in 1:length(datafile)){
+        IMS_datafile_aligment<-function(mz,mz.ref,mz.test,control = loess.control(),span = 0.75,tol_ppm=5,tol_ppm_ext=9,tol.ref="key"){
+        library(matter)
+            tol = tol_ppm * 1e-6
+          i=bsearch(mz.ref,mz.test, tol=tol, tol.ref="key")
+        found <- !is.na(i)
+        if ( sum(found) < 1 ) {
+          warning("no matching peaks found; try a larger tolerance")
+          return(x)
+        }
+        if ( sum(found) < 0.5*length(mz.ref) ) {
+          message("Less than 50% ref peaks found in: ",z," ",datafile[z],"; retrying with a larger tolerance")
+          tol = tol_ppm_ext * 1e-6
+          i=bsearch(mz.ref,mz.test, tol=tol, tol.ref="key")
+          found <- !is.na(i)
+          if ( sum(found) < 0.5*length(mz.ref) ) {
+            message("Less than 50% ref peaks found in: ",z," ",datafile[z],"; consider using a larger tolerance")
+            
+          }
+        }
+        mz.ref <- mz.ref[found]
+        i <- i[found]
+        mz.test <- mz.test[i]
+        diff <- mz.ref - mz.test
+        diff_org <- diff
+        mz.test <- c(mz[1], mz.test, mz[length(mz)])
+        diff <- c(diff[1], diff, diff[length(diff)])
+        shift <- suppressWarnings(loess(diff ~ mz.test, span=span, control=control))
+        dmz <- predict(shift, mz)
+        #warp <- splinefun(mz + dmz, x)
+        return(list(final.mz = mz + dmz, dmz=dmz, mz.ref=mz.ref, diff = diff_org, shift = shift))
+        #return(list(final.mz = mz + dmz, dmz=dmz))
+        }
+        # deconv_peaklist_ref_match[[datafile[z]]] <- IMS_datafile_aligment(mz = deconv_peaklist_list[[datafile[z]]]$m.z,
+        #                                                                   mz.ref = mz.ref.list.top.quantile.final,
+        #                                                                   mz.test = deconv_peaklist_list[[datafile[z]]]$m.z,
+        #                                                                   control = loess.control(),
+        #                                                                   tol_ppm=5,
+        #                                                                   span = 0.75)
+         
+        deconv_peaklist_ref_match_locmax[[datafile[z]]] <- IMS_datafile_aligment(mz = mz.ref.list.top.quantile.spec[[datafile[z]]]$m.z,
+                                                                          mz.ref = mz.ref.list.top.quantile.final,
+                                                                          mz.test = mz.ref.list.top.quantile.spec[[datafile[z]]]$m.z,
+                                                                          control = loess.control(surface = "direct"),
+                                                                          tol_ppm=5,
+                                                                          span = 0.75)
+      }
+      
+     
+      library(ggplot2)
+      #deconv_peaklist_ref_match_df<-dplyr::bind_rows(lapply(deconv_peaklist_ref_match, function(x) list(mz=x$final.mz, dmz=x$dmz)), .id = 'file')
+      #deconv_peaklist_ref_match_df_ref<-dplyr::bind_rows(lapply(deconv_peaklist_ref_match, function(x) list(mz=x$mz.ref, dmz=x$diff)), .id = 'file')
+      
+      
+      
+      deconv_peaklist_ref_match_df<-dplyr::bind_rows(lapply(deconv_peaklist_ref_match_locmax, function(x) list(mz=x$final.mz, dmz=x$dmz)), .id = 'file')
+      deconv_peaklist_ref_match_df_ref<-dplyr::bind_rows(lapply(deconv_peaklist_ref_match_locmax, function(x) list(mz=x$mz.ref, dmz=x$diff)), .id = 'file')
+      
+      
+      deconv_peaklist_ref_match_df$type<-"org"
+      deconv_peaklist_ref_match_df_ref$type<-"ref"
+      
+      deconv_peaklist_ref_match_df$Batch<-deconv_peaklist_ref_match_df$file
+      deconv_peaklist_ref_match_df_ref$Batch<-deconv_peaklist_ref_match_df_ref$file
+      deconv_peaklist_ref_match_df$Batch[str_detect(deconv_peaklist_ref_match_df$Batch,"24Hr|48Hr|72Hr")]<-"Batch 2"
+      deconv_peaklist_ref_match_df$Batch[str_detect(deconv_peaklist_ref_match_df$Batch,"aah_|ff_")]<-"Batch 3"
+      deconv_peaklist_ref_match_df$Batch[str_detect(deconv_peaklist_ref_match_df$Batch,"SILGlucose|20201116|20201109")]<-"Batch 1"
+      deconv_peaklist_ref_match_df_ref$Batch[str_detect(deconv_peaklist_ref_match_df_ref$Batch,"24Hr|48Hr|72Hr")]<-"Batch 2"
+      deconv_peaklist_ref_match_df_ref$Batch[str_detect(deconv_peaklist_ref_match_df_ref$Batch,"aah_|ff_")]<-"Batch 3"
+      deconv_peaklist_ref_match_df_ref$Batch[str_detect(deconv_peaklist_ref_match_df_ref$Batch,"SILGlucose|20201116|20201109")]<-"Batch 1"
+      #deconv_peaklist_ref_match_df<-rbind(deconv_peaklist_ref_match_df,deconv_peaklist_ref_match_df_ref)
+      
+      mz.ref.list.top.quantile.spec.corrected<-mz.ref.list.top.quantile.spec
+      for (z in 1:length(datafile)){
+        mz.ref.list.top.quantile.spec.corrected[[datafile[z]]]$m.z <- predict(deconv_peaklist_ref_match_locmax[[datafile[z]]]$shift,mz.ref.list.top.quantile.spec.corrected[[datafile[z]]]$m.z) + mz.ref.list.top.quantile.spec.corrected[[datafile[z]]]$m.z 
+      }
+      mz.ref.list.top.quantile.spec.corrected_df<-dplyr::bind_rows(lapply(mz.ref.list.top.quantile.spec.corrected, function(x) list(mz=x$m.z)), .id = 'file')
+      mz.ref.list.top.quantile.spec.org_df<-dplyr::bind_rows(lapply(mz.ref.list.top.quantile.spec, function(x) list(mz=x$m.z)), .id = 'file')
+      mz.ref.list.top.quantile.spec.crossvalid<-mz.ref.list.top.quantile.spec.corrected_df
+      mz.ref.list.top.quantile.spec.crossvalid$Corrected<-mz.ref.list.top.quantile.spec.corrected_df$mz
+      mz.ref.list.top.quantile.spec.crossvalid$Original<-mz.ref.list.top.quantile.spec.org_df$mz
+      
+      png(paste0(workdir[1],"/","ClusterIMS_mz_correction.png"),width = 2160, height = 1080, res = 300)
+      library(egg)
+      getPalette = colorRampPalette(RColorBrewer::brewer.pal(9, "Spectral"))
+      g<-ggplot(deconv_peaklist_ref_match_df,aes(x=mz,y=dmz/mz* 1e6,group=file,colour=Batch)) + 
+        geom_line() + 
+        geom_point(data=deconv_peaklist_ref_match_df_ref,mapping=aes(x=mz,y=dmz/mz * 1e6,group=file,colour=Batch),size=.5) +
+        scale_fill_manual(values = getPalette(length(unique(deconv_peaklist_ref_match_df$Batch))))+
+        egg::theme_article()+
+        labs(title ="",x = "m/z",y = "mass error (in ppm)") 
+      g2<-ggplot(mz.ref.list.top.quantile.spec.crossvalid,aes(x=Original,y=Corrected,group=file,colour=file)) + 
+        geom_line() + 
+        scale_fill_manual(values = getPalette(length(unique(deconv_peaklist_ref_match_df$file))))+
+        egg::theme_article()+
+        labs(title ="",x = "m/z",y = "mass error (in ppm)") +
+        guides(colour = "none") 
+      print(g)
+      dev.off()
+      
+      saveRDS(deconv_peaklist_ref_match_locmax,paste0(workdir[1],"/deconv_peaklist_ref_match_locmax.rds"))
+      
+      for (z in 1:length(datafile)){
+        
+        deconv_peaklist_list[[datafile[z]]]$m.z <- deconv_peaklist_list[[datafile[z]]]$m.z + 
+          predict(deconv_peaklist_ref_match_locmax[[datafile[z]]]$shift, deconv_peaklist_list[[datafile[z]]]$m.z)
+        
+      }
+      
+      }
     
     deconv_peaklist_bind<-do.call(rbind,deconv_peaklist_list)
     
@@ -2169,12 +2310,20 @@ Load_IMS_decov_combine<-function(datafile,workdir,import_ppm=5,SPECTRUM_batch="o
     
     rownames(deconv_peaklist_bind)<-1:nrow(deconv_peaklist_bind)
     
-    deconv_peaklist_decov<-HiTMaP:::isopattern_ppm_filter_peaklist(deconv_peaklist_bind,ppm=ppm,threshold=threshold)
+    deconv_peaklist_decov<-HiTMaP:::isopattern_ppm_filter_peaklist(deconv_peaklist_bind,ppm=ppm,threshold=0)
     
     write.csv(deconv_peaklist_decov,paste0(workdir[z],"/","ClusterIMS_deconv_Spectrum.csv"),row.names = F)
+    
+    
+    
   }else if (`&`(deconv_peaklist=="Load_exist",file.exists(paste0(workdir[1],"/","ClusterIMS_deconv_Spectrum.csv")))){
+    
+    if (file.exists(paste0(workdir[1],"/deconv_peaklist_ref_match_locmax.rds"))) deconv_peaklist_ref_match_locmax<-readRDS(paste0(workdir[1],"/deconv_peaklist_ref_match_locmax.rds"))
+    
     deconv_peaklist_decov<-read.csv(paste0(workdir[1],"/","ClusterIMS_deconv_Spectrum.csv"))
+    
     deconv_peaklist_decov<-HiTMaP:::isopattern_ppm_filter_peaklist(deconv_peaklist_decov,ppm=ppm,threshold=threshold)
+    
   }
   
   
@@ -2182,6 +2331,7 @@ Load_IMS_decov_combine<-function(datafile,workdir,import_ppm=5,SPECTRUM_batch="o
   deconv_peaklist_decov_plot<-deconv_peaklist_decov
   #imdata_list<-list()
   imdata<<-NULL
+  
   for (z in 1:length(datafile)){
     
     setwd(workdir[z])
@@ -2209,6 +2359,12 @@ Load_IMS_decov_combine<-function(datafile,workdir,import_ppm=5,SPECTRUM_batch="o
     }
     message("mzbin for ",datafile[z])
     setCardinalBPPARAM(SerialParam())
+    
+    if ( exists("deconv_peaklist_ref_match_locmax")){
+     message("Performing m/z correction...")
+     mz(imdata)<-predict(deconv_peaklist_ref_match_locmax[[datafile[z]]]$shift,mz(imdata)) + mz(imdata)
+    }
+    
     imdata <- imdata %>%
       mzBin(deconv_peaklist_decov_plot$m.z, resolution=ppm, units="ppm")%>%
       process()
