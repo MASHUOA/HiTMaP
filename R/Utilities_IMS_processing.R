@@ -2098,7 +2098,7 @@ Load_IMS_combine<-function(datafile,rotate=NULL,ppm=5,...){
 }
 
 Load_IMS_decov_combine<-function(datafile,workdir,import_ppm=5,SPECTRUM_batch="overall",mass_correction_tol_ppm=12,mzAlign_runs="TopNfeature_mean",
-                                 ppm=5,threshold=0,rotate=NULL,mzrange="auto-detect",ppm_aligment=ppm,
+                                 ppm=5,threshold=0,rotate=NULL,mzrange="auto-detect", ppm_aligment=ppm,
                                  deconv_peaklist=c("Load_exist","New"),preprocessRDS_rotated=T,...){
   
   library(stringr)
