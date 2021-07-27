@@ -2098,7 +2098,7 @@ Load_IMS_combine<-function(datafile,rotate=NULL,ppm=5,...){
 }
 
 Load_IMS_decov_combine<-function(datafile,workdir,import_ppm=5,SPECTRUM_batch="overall",mass_correction_tol_ppm=12,mzAlign_runs="TopNfeature_mean",
-                                 ppm=5,threshold=0,rotate=NULL,mzrange="auto-detect", ppm_aligment=ppm, 
+                                 ppm=5,threshold=0.0000001,rotate=NULL,mzrange="auto-detect", ppm_aligment=ppm, 
                                  deconv_peaklist=c("Load_exist","New"),preprocessRDS_rotated=T,...){
   
   library(stringr)
@@ -2316,7 +2316,7 @@ Load_IMS_decov_combine<-function(datafile,workdir,import_ppm=5,SPECTRUM_batch="o
     
     rownames(deconv_peaklist_bind)<-1:nrow(deconv_peaklist_bind)
     
-    deconv_peaklist_decov<-HiTMaP:::isopattern_ppm_filter_peaklist(deconv_peaklist_bind,ppm=ppm,threshold=0)
+    deconv_peaklist_decov<-HiTMaP:::isopattern_ppm_filter_peaklist(deconv_peaklist_bind,ppm=ppm,threshold=threshold)
     
     write.csv(deconv_peaklist_decov,paste0(workdir[z],"/","ClusterIMS_deconv_Spectrum.csv"),row.names = F)
     
