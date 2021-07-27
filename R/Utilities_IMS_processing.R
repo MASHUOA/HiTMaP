@@ -1517,9 +1517,9 @@ Preprocessing_segmentation<-function(datafile,
         imdata_ed<-imdata
       }
     }
-    imdata_org<-imdata
+    #imdata_org<-imdata
     imdata<-imdata_ed
-
+    gc()
     coordata=as.data.frame(imdata@elementMetadata@coord)
 
     setwd(paste0(gsub(".imzML$","",datafile[z])  ," ID"))
@@ -2097,7 +2097,7 @@ Load_IMS_combine<-function(datafile,rotate=NULL,ppm=5,...){
   return(imdata)
 }
 
-Load_IMS_decov_combine<-function(datafile,workdir,import_ppm=5,SPECTRUM_batch="overall",mass_correction_tol_ppm=12,
+Load_IMS_decov_combine<-function(datafile,workdir,import_ppm=5,SPECTRUM_batch="overall",mass_correction_tol_ppm=12,mzAlign_runs="TopNfeature_mean",
                                  ppm=5,threshold=0,rotate=NULL,mzrange="auto-detect",
                                  deconv_peaklist=c("Load_exist","New"),preprocessRDS_rotated=T,...){
   
@@ -2292,6 +2292,12 @@ Load_IMS_decov_combine<-function(datafile,workdir,import_ppm=5,SPECTRUM_batch="o
         guides(colour = "none") 
       print(g)
       dev.off()
+      
+      mz.ref.list.top.quantile.spec.corrected_df<-dplyr::bind_rows(lapply(mz.ref.list.top.quantile.spec.corrected, function(x) list(mz=x$m.z,
+                                                                                                                                    intensity=x$intensities)), .id = 'file')
+      mz.ref.list.top.quantile.spec.corrected_df$intensity_log<-log(mz.ref.list.top.quantile.spec.corrected_df$intensity)
+      
+      mz.ref.list.top.quantile.spec.corrected_df
       
       saveRDS(deconv_peaklist_ref_match_locmax,paste0(workdir[1],"/deconv_peaklist_ref_match_locmax.rds"))
       
