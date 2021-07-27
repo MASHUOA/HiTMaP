@@ -135,6 +135,7 @@ imaging_identification<-function(
                remove_score_outlier=F,
                Plot_score_IQR_cutoff=0.75,
                Plot_score_abs_cutoff=-0.1,
+               mzAlign_runs="TopNfeature_mean",
                ...
                ){
   suppressMessages(suppressWarnings(library("pacman")))
@@ -377,7 +378,7 @@ imaging_identification<-function(
     message("cluster imdata loaded.")
     
     }else{
-    cluster_rds_path<-Load_IMS_decov_combine(datafile=datafile,workdir=workdir,import_ppm=ppm,SPECTRUM_batch="overall",
+    cluster_rds_path<-Load_IMS_decov_combine(datafile=datafile,workdir=workdir,import_ppm=ppm,SPECTRUM_batch="overall",mzAlign_runs=mzAlign_runs,
                                        ppm=ppm,threshold=0,rotate=Rotate_IMG,mzrange=mzrange,
                                        deconv_peaklist=deconv_peaklist,preprocessRDS_rotated=T)
 

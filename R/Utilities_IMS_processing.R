@@ -1517,9 +1517,9 @@ Preprocessing_segmentation<-function(datafile,
         imdata_ed<-imdata
       }
     }
-    imdata_org<-imdata
+    #imdata_org<-imdata
     imdata<-imdata_ed
-
+    gc()
     coordata=as.data.frame(imdata@elementMetadata@coord)
 
     setwd(paste0(gsub(".imzML$","",datafile[z])  ," ID"))
@@ -2097,8 +2097,8 @@ Load_IMS_combine<-function(datafile,rotate=NULL,ppm=5,...){
   return(imdata)
 }
 
-Load_IMS_decov_combine<-function(datafile,workdir,import_ppm=5,SPECTRUM_batch="overall",mass_correction_tol_ppm=12,
-                                 ppm=5,threshold=0,rotate=NULL,mzrange="auto-detect",
+Load_IMS_decov_combine<-function(datafile,workdir,import_ppm=5,SPECTRUM_batch="overall",mass_correction_tol_ppm=12,mzAlign_runs="TopNfeature_mean",
+                                 ppm=5,threshold=0,rotate=NULL,mzrange="auto-detect",ppm_aligment=ppm,
                                  deconv_peaklist=c("Load_exist","New"),preprocessRDS_rotated=T,...){
   
   library(stringr)
@@ -2194,7 +2194,7 @@ Load_IMS_decov_combine<-function(datafile,workdir,import_ppm=5,SPECTRUM_batch="o
       deconv_peaklist_ref_match <- NULL
       deconv_peaklist_ref_match_locmax <- NULL
       for (z in 1:length(datafile)){
-        IMS_datafile_aligment<-function(mz,mz.ref,mz.test,control = loess.control(),span = 0.75,tol_ppm=5,tol_ppm_ext=9,tol.ref="key"){
+        IMS_datafile_aligment<-function(mz,mz.ref,mz.test,control = loess.control(),span = 0.75,tol_ppm=5,tol_ppm_ext=tol_ppm * 1.8,tol.ref="key"){
         library(matter)
             tol = tol_ppm * 1e-6
           i=bsearch(mz.ref,mz.test, tol=tol, tol.ref="key")
@@ -2237,7 +2237,7 @@ Load_IMS_decov_combine<-function(datafile,workdir,import_ppm=5,SPECTRUM_batch="o
                                                                           mz.ref = mz.ref.list.top.quantile.final,
                                                                           mz.test = mz.ref.list.top.quantile.spec[[datafile[z]]]$m.z,
                                                                           control = loess.control(surface = "direct"),
-                                                                          tol_ppm=5,
+                                                                          tol_ppm=ppm_aligment,
                                                                           span = 0.75)
       }
       
@@ -2292,6 +2292,12 @@ Load_IMS_decov_combine<-function(datafile,workdir,import_ppm=5,SPECTRUM_batch="o
         guides(colour = "none") 
       print(g)
       dev.off()
+      
+      mz.ref.list.top.quantile.spec.corrected_df<-dplyr::bind_rows(lapply(mz.ref.list.top.quantile.spec.corrected, function(x) list(mz=x$m.z,
+                                                                                                                                    intensity=x$intensities)), .id = 'file')
+      mz.ref.list.top.quantile.spec.corrected_df$intensity_log<-log(mz.ref.list.top.quantile.spec.corrected_df$intensity)
+      
+      mz.ref.list.top.quantile.spec.corrected_df
       
       saveRDS(deconv_peaklist_ref_match_locmax,paste0(workdir[1],"/deconv_peaklist_ref_match_locmax.rds"))
       
