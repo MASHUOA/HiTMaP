@@ -1,0 +1,8 @@
+CHANGES IN VERSION 1.0.2 [2021-7-29]
+-----------------------------------
+
+SIGNIFICANT USER-VISIBLE CHANGES
+
+    o Per https://github.com/MASHUOA/HiTMaP/issues/2 
+	  For large image data file, pre-processed result will generate tissue-wide aligned and filtered features for 
+	  statistical analysis e.g. PCA SKM SCC
