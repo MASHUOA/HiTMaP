@@ -6,3 +6,5 @@ SIGNIFICANT USER-VISIBLE CHANGES
     o Per https://github.com/MASHUOA/HiTMaP/issues/2 
 	  For large image data file, pre-processed result will generate tissue-wide aligned and filtered features for 
 	  statistical analysis e.g. PCA SKM SCC
+	  
+	  o Added mass calibration function using locmax peak as ref values and perform loess model prediction to correct the m/z values in each runs 
