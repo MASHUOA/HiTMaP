@@ -1269,6 +1269,7 @@ Preprocessing_segmentation<-function(datafile,
                                                      peakPick=list(method="Default"),
                                                      peakAlign=list(tolerance=ppm/2, units="ppm", level=c("local","global")),
                                                      normalize=list(method=c("rms","tic","reference")[1],mz=1)),
+                                     peakFilter_stats_freq.min=0.05,
                                      ...){
 
   suppressMessages(suppressWarnings(require(data.table)))
@@ -1314,7 +1315,7 @@ Preprocessing_segmentation<-function(datafile,
       dir.create(paste0(gsub(".imzML$","",datafile[z])  ," ID"))
     }
 
-    message("Preparing image data for statistical analysis: ",paste0(gsub(".imzML$","",datafile[z]), ".imzML"))
+    message("Loading raw image data for statistical analysis: ",paste0(gsub(".imzML$","",datafile[z]), ".imzML"))
     if(mzrange[1]=="auto-detect"){
       imdata <- Cardinal::readMSIData(datafile_imzML[z],  attach.only=T,as="MSImagingExperiment",resolution=import_ppm, units="ppm",BPPARAM=SerialParam())
     }else {
@@ -1527,18 +1528,36 @@ Preprocessing_segmentation<-function(datafile,
     if (Bypass_Segmentation!=T){
       message("Segmentation in progress...")
       #cl=autoStopCluster(makeCluster(6))
+      
+      #Prepare imdata for segmentation
+      if (Segmentation[1] %in% c("PCA","spatialKMeans","spatialShrunkenCentroids")){
+      if (exists("preprocess$peakAlign$tolerance")){
+        if (preprocess$peakAlign$tolerance==0 ) {
+          message("preprocess$peakAlign$tolerance set as zero, step bypassed")
+        }else if ('&'(!is.null(preprocess$peakAlign$tolerance),!is.null(preprocess$peakAlign$tolerance))){
+          message("preprocess$peakAlign$tolerance set as ", preprocess$peakAlign$tolerance)
+          imdata_stats<- imdata %>% peakAlign(tolerance=preprocess$peakAlign$tolerance, units=preprocess$peakAlign$units)
+        }
+      }else{
+          message("preprocess$peakAlign$tolerance missing, use default tolerance in ppm ", ppm/2)
+          imdata_stats<- imdata %>% peakAlign(tolerance=ppm/2, units="ppm")
+      }
+      
+      imdata_stats<-imdata_stats %>% peakFilter(freq.min=peakFilter_stats_freq.min) %>% process()
+      }
+    
       if (Segmentation[1]=="PCA") {
         if ('&'(Segmentation_ncomp=="auto-detect",Segmentation_variance_coverage>0)){
-          Segmentation_ncomp_running<-PCA_ncomp_selection(imdata=imdata,variance_coverage=Segmentation_variance_coverage,outputdir=paste0(getwd(),"/"))
+          Segmentation_ncomp_running<-PCA_ncomp_selection(imdata_stats,variance_coverage=Segmentation_variance_coverage,outputdir=paste0(getwd(),"/"))
         }else{Segmentation_ncomp_running<-Segmentation_ncomp}
       }
       else if (Segmentation[1]=="spatialKMeans" && segmentation_num!=1) {
         if ('&'(Segmentation_ncomp=="auto-detect",Segmentation_variance_coverage>0)){
-          Segmentation_ncomp_running<-PCA_ncomp_selection(imdata=imdata,variance_coverage=Segmentation_variance_coverage,outputdir=paste0(getwd(),"/"))
+          Segmentation_ncomp_running<-PCA_ncomp_selection(imdata_stats,variance_coverage=Segmentation_variance_coverage,outputdir=paste0(getwd(),"/"))
         }else{Segmentation_ncomp_running<-Segmentation_ncomp}
         set.seed(1)
 
-        skm <-  suppressMessages(suppressWarnings(spatialKMeans(imdata, r=Smooth_range, k=segmentation_num, method="adaptive",ncomp=Segmentation_ncomp_running,BPPARAM =BPPARAM )))
+        skm <-  suppressMessages(suppressWarnings(spatialKMeans(imdata_stats, r=Smooth_range, k=segmentation_num, method="adaptive",ncomp=Segmentation_ncomp_running,BPPARAM =BPPARAM )))
         message(paste0(Segmentation[1], " finished: ",name))
         png(paste(getwd(),"/",Segmentation[1],"_image_plot_",segmentation_num,"_segs.png",sep=""),width = 1024,height = 720)
 
@@ -1596,9 +1615,9 @@ Preprocessing_segmentation<-function(datafile,
       else if (Segmentation[1]=="spatialShrunkenCentroids" && segmentation_num!=1) {
         set.seed(1)
         if ('&'(Segmentation_ncomp=="auto-detect",Segmentation_variance_coverage>0)){
-          Segmentation_ncomp_running<-PCA_ncomp_selection(imdata=imdata,variance_coverage=Segmentation_variance_coverage,outputdir=paste0(getwd(),"/"))
+          Segmentation_ncomp_running<-PCA_ncomp_selection(imdata_stats,variance_coverage=Segmentation_variance_coverage,outputdir=paste0(getwd(),"/"))
         }else{Segmentation_ncomp_running<-Segmentation_ncomp}
-        skm <-  suppressMessages(suppressWarnings(spatialShrunkenCentroids(imdata, r=Smooth_range, k=segmentation_num, method="adaptive",s=3,BPPARAM =BPPARAM)))
+        skm <-  suppressMessages(suppressWarnings(spatialShrunkenCentroids(imdata_stats, r=Smooth_range, k=segmentation_num, method="adaptive",s=3,BPPARAM =BPPARAM)))
         message(paste0(Segmentation[1], " finished: ",name))
         png(paste(getwd(),"/",Segmentation[1],"_image_plot_",segmentation_num,"_segs.png",sep=""),width = 1024,height = 720)
 
@@ -2000,7 +2019,7 @@ Preprocessing_segmentation<-function(datafile,
     }
   }
   message("workflow successfully completed")
-  return(list(segmentation_label=x,imdata_org=imdata_org,imdata=imdata,imdata_ed=imdata_ed))
+  return(list(segmentation_label=x,imdata_org=NULL,imdata=imdata,imdata_ed=imdata_ed))
 }
 
 
@@ -2100,10 +2119,11 @@ Load_IMS_combine<-function(datafile,rotate=NULL,ppm=5,...){
 Load_IMS_decov_combine<-function(datafile,workdir,import_ppm=5,SPECTRUM_batch="overall",mass_correction_tol_ppm=12,mzAlign_runs="TopNfeature_mean",
                                  ppm=5,threshold=0.0000001,rotate=NULL,mzrange="auto-detect", ppm_aligment=ppm, 
                                  deconv_peaklist=c("Load_exist","New"),preprocessRDS_rotated=T,...){
+  suppressMessages(suppressWarnings(library(matter)))
+  suppressMessages(suppressWarnings(library(stringr)))
+  suppressMessages(suppressWarnings(library(HiTMaP)))
+  suppressMessages(suppressWarnings(library(Cardinal)))
   
-  library(stringr)
-  library(HiTMaP)
-  library(Cardinal)
   datafile_base<-basename(datafile)
   datafile <- str_remove(datafile_base,"\\.imzML$")
   if(length(workdir)!=length(datafile)){
@@ -2131,7 +2151,7 @@ Load_IMS_decov_combine<-function(datafile,workdir,import_ppm=5,SPECTRUM_batch="o
       if (file.exists(paste0(workdir[z],"/",gsub(".imzML$","",datafile[z])  ," ID/preprocessed_imdata.RDS"))){
         imdata<-readRDS(paste0(workdir[z],"/",datafile[z]," ID/","preprocessed_imdata.RDS"))
       }else {
-        message("Preparing image data for statistical analysis: ",paste0(gsub(".imzML$","",datafile[z]), ".imzML"))
+        message("Loading raw image data for statistical analysis: ",paste0(gsub(".imzML$","",datafile[z]), ".imzML"))
         if(mzrange[1]=="auto-detect"){
           imdata <- Cardinal::readMSIData(datafile_imzML[z],  attach.only=T,as="MSImagingExperiment",resolution=import_ppm, units="ppm",BPPARAM=SerialParam())
         }else {
@@ -2195,7 +2215,7 @@ Load_IMS_decov_combine<-function(datafile,workdir,import_ppm=5,SPECTRUM_batch="o
       deconv_peaklist_ref_match_locmax <- NULL
       for (z in 1:length(datafile)){
         IMS_datafile_aligment<-function(mz,mz.ref,mz.test,control = loess.control(),span = 0.75,tol_ppm=5,tol_ppm_ext=tol_ppm * 1.8,tol.ref="key"){
-        library(matter)
+          suppressMessages(suppressWarnings(library(matter)))
             tol = tol_ppm * 1e-6
           i=bsearch(mz.ref,mz.test, tol=tol, tol.ref="key")
         found <- !is.na(i)
@@ -2242,7 +2262,7 @@ Load_IMS_decov_combine<-function(datafile,workdir,import_ppm=5,SPECTRUM_batch="o
       }
       
      
-      library(ggplot2)
+      suppressMessages(suppressWarnings(library(ggplot2)))
       #deconv_peaklist_ref_match_df<-dplyr::bind_rows(lapply(deconv_peaklist_ref_match, function(x) list(mz=x$final.mz, dmz=x$dmz)), .id = 'file')
       #deconv_peaklist_ref_match_df_ref<-dplyr::bind_rows(lapply(deconv_peaklist_ref_match, function(x) list(mz=x$mz.ref, dmz=x$diff)), .id = 'file')
       
@@ -2276,7 +2296,7 @@ Load_IMS_decov_combine<-function(datafile,workdir,import_ppm=5,SPECTRUM_batch="o
       mz.ref.list.top.quantile.spec.crossvalid$Original<-mz.ref.list.top.quantile.spec.org_df$mz
       
       png(paste0(workdir[1],"/","ClusterIMS_mz_correction.png"),width = 2160, height = 1080, res = 300)
-      library(egg)
+      suppressMessages(suppressWarnings(library(egg)))
       getPalette = colorRampPalette(RColorBrewer::brewer.pal(9, "Spectral"))
       g<-ggplot(deconv_peaklist_ref_match_df,aes(x=mz,y=dmz/mz* 1e6,group=file,colour=Batch)) + 
         geom_line() + 
@@ -2351,7 +2371,7 @@ Load_IMS_decov_combine<-function(datafile,workdir,import_ppm=5,SPECTRUM_batch="o
         }
       }
     }else {
-      message("Preparing image data for statistical analysis: ",paste0(gsub(".imzML$","",datafile[z]), ".imzML"))
+      message("Loading raw image data for statistical analysis: ",paste0(gsub(".imzML$","",datafile[z]), ".imzML"))
       if(mzrange[1]=="auto-detect"){
         imdata <- Cardinal::readMSIData(datafile_imzML[z],  attach.only=T,as="MSImagingExperiment",resolution=import_ppm, units="ppm",BPPARAM=SerialParam())
       }else {
@@ -2372,13 +2392,19 @@ Load_IMS_decov_combine<-function(datafile,workdir,import_ppm=5,SPECTRUM_batch="o
     }
     
     New_fdata_LB<-imdata[1,]
-    New_fdata_LB@imageData$data$intensity[1,]<-rep(0,ncol(imdata))
-    New_fdata_LB@featureData@mz<-min(deconv_peaklist_decov_plot$m.z)-1
+    New_fdata_LB@featureData@mz[1]<-min(deconv_peaklist_decov_plot$m.z, na.rm = T)-1
     New_fdata_UB<-New_fdata_LB
-    New_fdata_UB@featureData@mz<-max(deconv_peaklist_decov_plot$m.z)+1
+    New_fdata_UB@featureData@mz[1]<-max(deconv_peaklist_decov_plot$m.z, na.rm = T)+1
     
-    imdata<-rbind(New_fdata_LB,imdata)
-    imdata<-rbind(imdata,New_fdata_UB)
+    if(min(mz(imdata))>min(New_fdata_LB@featureData@mz[1])){
+      message("Adding m/z LB for mzbin...")
+      imdata<-Cardinal::rbind(New_fdata_LB,imdata)
+    }
+    if(max(mz(imdata))<max(New_fdata_UB@featureData@mz[1])){
+      message("Adding m/z UB for mzbin...")
+      imdata<-Cardinal::rbind(imdata,New_fdata_UB)
+    }
+
     
     imdata <- imdata %>%
       mzBin(deconv_peaklist_decov_plot$m.z, resolution=ppm, units="ppm")%>%

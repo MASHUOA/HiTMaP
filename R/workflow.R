@@ -583,7 +583,7 @@ IMS_data_process<-function(datafile,
     #perform the IMS pre-processing and image segmentation
          setwd(workdir[z])
          segmentation_res <- Preprocessing_segmentation(datafile=datafile[z],
-                                         workdir=workdir,
+                                         workdir=workdir[z],
                                          segmentation_num=segmentation_num,
                                          ppm=ppm,import_ppm=import_ppm,Bypass_Segmentation=Bypass_Segmentation,
                                          mzrange=mzrange,
