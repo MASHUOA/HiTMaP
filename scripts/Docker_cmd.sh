@@ -28,3 +28,14 @@ docker tag mashuoa/hitmap:base_R405 mashuoa/hitmap:latest
 docker image push mashuoa/hitmap:latest
 
 docker image push mashuoa/hitmap:natcomms
+
+docker tag mashuoa/hitmap:latest mashuoa/hitmap:largefile
+
+docker image push mashuoa/hitmap:largefile
+
+
+
+wsl --list -v
+wsl --export docker-desktop-data "G:\docker-desktop-data.tar"
+wsl --unregister docker-desktop-data
+wsl --import docker-desktop-data "G:\Docker\data" "G:\docker-desktop-data.tar" --version 2

@@ -1372,7 +1372,7 @@ Preprocessing_segmentation<-function(datafile,
           if (preprocess$peakPick$method=="Disable") {
           }else if (preprocess$peakPick$method %in% c("adaptive","mad","simple")){
             imdata_ed<- imdata_ed %>% peakPick(method=preprocess$peakPick$method, window=4) %>% process()
-          }else if (preprocess$peakPick$method == "Default"){
+          }else if (preprocess$peakPick$method == "Default|default"){
             #add an peak picking function other than the Cardinal options.
             imdata_ed<-imdata_ed %>% peakBin(peaklist_deco$mz, tolerance=ppm, units="ppm") %>% process()
           }
@@ -1436,10 +1436,11 @@ Preprocessing_segmentation<-function(datafile,
           }
           
           if (preprocess$peakPick$method=="Disable") {
-          }else if (!is.null(preprocess$peakPick$method)){
+          }else if (preprocess$peakPick$method %in% c("adaptive","mad","simple")){
             imdata_ed<- imdata_ed %>% peakPick(method=preprocess$peakPick$method, window=4) %>% process()
-          }else{
-            imdata_ed<- imdata_ed %>% peakPick(method="adaptive", window=4) %>% process()
+          }else if (preprocess$peakPick$method == "Default|default"){
+            #add an peak picking function other than the Cardinal options.
+            imdata_ed<-imdata_ed %>% peakBin(peaklist_deco$mz, tolerance=ppm, units="ppm") %>% process()
           }
           
           if(is.null(preprocess$peakAlign$level)) preprocess$peakAlign$level<-"local"
