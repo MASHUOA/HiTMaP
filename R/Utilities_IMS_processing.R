@@ -1267,9 +1267,10 @@ Preprocessing_segmentation<-function(datafile,
                                      preprocess=list(force_preprocess=FALSE,use_preprocessRDS=TRUE,smoothSignal=list(method="gaussian"),
                                                      reduceBaseline=list(method="locmin"),
                                                      peakPick=list(method="Default"),
-                                                     peakAlign=list(tolerance=ppm/2, units="ppm", level=c("local","global")),
+                                                     peakAlign=list(tolerance=ppm/2, units="ppm", level=c("global","local")),
+                                                     peakFilter=list(freq.min=0.05),
                                                      normalize=list(method=c("rms","tic","reference")[1],mz=1)),
-                                     peakFilter_stats_freq.min=0.05,
+                                     
                                      ...){
 
   suppressMessages(suppressWarnings(require(data.table)))
@@ -1544,7 +1545,7 @@ Preprocessing_segmentation<-function(datafile,
           imdata_stats<- imdata %>% peakAlign(tolerance=ppm/2, units="ppm")
       }
       
-      imdata_stats<-imdata_stats %>% peakFilter(freq.min=peakFilter_stats_freq.min) %>% process()
+      imdata_stats<-imdata_stats %>% peakFilter(freq.min=preprocess$peakFilter$freq.min) %>% process()
       }
     
       if (Segmentation[1]=="PCA") {
@@ -2392,7 +2393,8 @@ Load_IMS_decov_combine<-function(datafile,workdir,import_ppm=5,SPECTRUM_batch="o
      mz(imdata)<-predict(deconv_peaklist_ref_match_locmax[[datafile[z]]]$shift,mz(imdata)) + mz(imdata)
     }
     
-    New_fdata_LB<-imdata[1,]
+    New_fdata_LB<-imdata[1:10000,]
+    imdata_all<-imdata[2:10000,]
     New_fdata_LB@featureData@mz[1]<-min(deconv_peaklist_decov_plot$m.z, na.rm = T)-1
     New_fdata_UB<-New_fdata_LB
     New_fdata_UB@featureData@mz[1]<-max(deconv_peaklist_decov_plot$m.z, na.rm = T)+1

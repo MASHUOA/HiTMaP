@@ -99,6 +99,7 @@ imaging_identification<-function(
                                reduceBaseline=list(method="locmin"),
                                peakPick=list(method="adaptive"),
                                peakAlign=list(tolerance=ppm/2, units="ppm"),
+                               peakFilter=list(freq.min=0.05),
                                normalize=list(method=c("rms","tic","reference")[1],mz=1)),
                Smooth_range=1,
                Virtual_segmentation_rankfile=NULL,
