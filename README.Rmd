@@ -771,11 +771,11 @@ wd="~/expdata/"
 library(HiTMaP)
 imaging_identification(datafile=paste0(wd,datafile),Digestion_site="trypsin",
                        Fastadatabase="uniprot-bovin.fasta",output_candidatelist=T,use_previous_candidates=T,
-                       preprocess=list(force_preprocess=TRUE,
+                       preprocess=list(force_preprocess=F,
                                use_preprocessRDS=TRUE,
                                smoothSignal=list(method="Disable"),
                                reduceBaseline=list(method="Disable"),
-                               peakPick=list(method="adaptive"),
+                               peakPick=list(method="Default"),
                                peakAlign=list(tolerance=5, units="ppm"),
                                normalize=list(method=c("rms","tic","reference")[1],mz=1)),
                        spectra_segments_per_file=4,ppm=5,FDR_cutoff = 0.05,IMS_analysis=T,
@@ -798,7 +798,22 @@ imaging_identification(datafile=paste0(wd,datafile),Digestion_site="trypsin",
                        remove_score_outlier=T,
                        Protein_desc_of_interest=c("Crystallin","Phakinin","Filensin","Actin","Vimentin","Cortactin","Visinin","Arpin","Tropomyosin","Myosin Light Chain 3","Kinesin Family Member 14","Dynein Regulatory Complex","Ankyrin Repeat Domain 45"))
 
+# Re-analysis and cluster image rendering using color scale
 
+library(HiTMaP)
+datafile=c("Bovinlens_Trypsin_FT/Bovin_lens.imzML")
+wd="~/expdata/"
+imaging_identification(datafile=paste0(wd,datafile),Digestion_site="trypsin",
+                       Fastadatabase="uniprot-bovin.fasta",
+                       use_previous_candidates=T,ppm=5,IMS_analysis=F,
+                       plot_cluster_image_grid=T,
+                       export_Header_table=T, 
+                       img_brightness=250, 
+                       plot_cluster_image_overwrite=T,
+                       cluster_rds_path = "/Bovin_lens ID/preprocessed_imdata.RDS",pixel_size_um = 150,
+                       Plot_score_abs_cutoff=-0.1,
+                       remove_score_outlier=T,cluster_color_scale="fleximaging",
+                       Protein_desc_of_interest=c("Crystallin","Phakinin","Filensin","Actin","Vimentin","Cortactin","Visinin","Arpin","Tropomyosin","Myosin Light Chain 3","Kinesin Family Member 14","Dynein Regulatory Complex","Ankyrin Repeat Domain 45"))
 
 ```
 
@@ -839,6 +854,21 @@ imaging_identification(datafile=paste0(wd,datafile),Digestion_site="trypsin",
                        Plot_score_abs_cutoff=-0.1,
                        remove_score_outlier=T,
                        Protein_desc_of_interest=c("Secernin","GN=MBP","Cytochrome"))
+
+library(HiTMaP)
+datafile=c("MouseBrain_Trypsin_FT_200brit_man_seg/Mouse_brain.imzML")
+wd="~/expdata/"
+imaging_identification(datafile=paste0(wd,datafile),Digestion_site="trypsin",
+                       Fastadatabase="uniprot_mouse_20210107.fasta",
+                       preprocess=list(force_preprocess=FALSE),
+                       spectra_segments_per_file=9,use_previous_candidates=T,ppm=10,FDR_cutoff = 0.05,IMS_analysis=F,
+                       mzrange = c(500,4000),plot_cluster_image_grid=T,
+                       img_brightness=250, plot_cluster_image_overwrite=T,
+                       cluster_rds_path = "/Mouse_brain ID/preprocessed_imdata.RDS",
+                       pixel_size_um = 50,
+                       Plot_score_abs_cutoff=-0.1,
+                       remove_score_outlier=T,
+                       Protein_desc_of_interest=c("GTR9"))
 
 ```
 
@@ -1407,6 +1437,71 @@ imaging_identification(datafile=paste0(wd,datafile),Digestion_site="trypsin",
                        Rotate_IMG=NULL,
                        mzrange = c(500,4000),plot_cluster_image_grid=T,pixel_size_um = 150,remove_score_outlier=F,attach_summary_cluster = F, remove_cluster_from_grid=F)
 
+datafile=c("aqueous_RMS.imzML","detergent_RMS.imzML")
+wd="D:/dropbox/Dropbox (Uni of Auckland)/PyMT_Test_3/"
+library(HiTMaP)
+imaging_identification(datafile=paste0(wd,datafile),Digestion_site="trypsin",
+                       Fastadatabase="uniprot_mouse_20210107.fasta",output_candidatelist=T,
+                       preprocess=list(force_preprocess=F,
+                               use_preprocessRDS=TRUE,
+                               smoothSignal=list(method="Disable"),
+                               reduceBaseline=list(method="Disable"),
+                               peakPick=list(method="Default"),
+                               peakAlign=list(tolerance=2.5, units="ppm"),
+                               normalize=list(method="Disable")),
+                       spectra_segments_per_file=9,use_previous_candidates=T,ppm=5,FDR_cutoff = 0.05,IMS_analysis=F,Thread=1,
+                       Rotate_IMG=NULL,cluster_rds_path="/combinedimdata.rds",
+                       mzrange = c(500,4000),plot_cluster_image_grid=T,pixel_size_um = 150,remove_score_outlier=F,attach_summary_cluster = F, remove_cluster_from_grid=F,plot_cluster_image_overwrite=T)
+
+
+datafile=c("aqueous_RMS.imzML","detergent_RMS.imzML")
+wd="G:/PyMT_Test_3/"
+library(HiTMaP)
+imaging_identification(datafile=paste0(wd,datafile),Digestion_site="trypsin",
+                       Fastadatabase="uniprot_mouse_20210107.fasta",output_candidatelist=T,
+                       preprocess=list(force_preprocess=F,
+                               use_preprocessRDS=TRUE,
+                               smoothSignal=list(method="Disable"),
+                               reduceBaseline=list(method="Disable"),
+                               peakPick=list(method="Default"),
+                               peakAlign=list(tolerance=2.5, units="ppm"),
+                               normalize=list(method="Disable")),
+                       spectra_segments_per_file=9,use_previous_candidates=T,ppm=5,FDR_cutoff = 0.05,IMS_analysis=F,Thread=1,
+                       Rotate_IMG=NULL,cluster_rds_path="/combinedimdata.rds",
+                       mzrange = c(500,4000),plot_cluster_image_grid=T,pixel_size_um = 150,remove_score_outlier=F,attach_summary_cluster = F, remove_cluster_from_grid=F,plot_cluster_image_overwrite=F)
+
+
+datafile=c("aqueous_RMS.imzML","detergent_RMS.imzML")
+wd="G:/PyMT_Test_3/"
+library(HiTMaP)
+imaging_identification(datafile=paste0(wd,datafile),Digestion_site="trypsin",
+                       Fastadatabase="uniprot_mouse_20210107.fasta",output_candidatelist=T,
+                       preprocess=list(force_preprocess=T,
+                               use_preprocessRDS=TRUE,
+                               smoothSignal=list(method="Disable"),
+                               reduceBaseline=list(method="Disable"),
+                               peakPick=list(method="adaptive"),
+                               peakAlign=list(tolerance=2.5, units="ppm"),
+                               normalize=list(method="Disable")),
+                       spectra_segments_per_file=9,use_previous_candidates=T,ppm=5,FDR_cutoff = 0.05,IMS_analysis=T,Thread=1,
+                       Rotate_IMG=NULL,cluster_rds_path="/combinedimdata.rds",
+                       mzrange = c(500,4000),plot_cluster_image_grid=F,pixel_size_um = 150,remove_score_outlier=F,attach_summary_cluster = F, remove_cluster_from_grid=F,plot_cluster_image_overwrite=T)
+
+datafile=c("aqueous_RMS.imzML","detergent_RMS.imzML")
+wd="~/expdata/"
+library(HiTMaP)
+imaging_identification(datafile=paste0(wd,datafile),Digestion_site="trypsin",
+                       Fastadatabase="uniprot_mouse_20210107.fasta",output_candidatelist=T,
+                       preprocess=list(force_preprocess=T,
+                               use_preprocessRDS=TRUE,
+                               smoothSignal=list(method="Disable"),
+                               reduceBaseline=list(method="Disable"),
+                               peakPick=list(method="adaptive"),
+                               peakAlign=list(tolerance=2.5, units="ppm"),
+                               normalize=list(method="Disable")),
+                       spectra_segments_per_file=9,use_previous_candidates=T,ppm=5,FDR_cutoff = 0.05,IMS_analysis=T,Thread=1,
+                       Rotate_IMG=NULL,cluster_rds_path="/combinedimdata.rds",
+                       mzrange = c(500,4000),plot_cluster_image_grid=F,pixel_size_um = 150,remove_score_outlier=F,attach_summary_cluster = F, remove_cluster_from_grid=F,plot_cluster_image_overwrite=T)
 
 ```
 

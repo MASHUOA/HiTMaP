@@ -11,12 +11,12 @@
 #' HiTMaP_GUI()
 #' }
 #'
-#' @import shiny
 #'
 
 #'
 HiTMaP_GUI <- function(wd="~/", port = 3838) {
-  library(shiny)
+  
+  if(!(require(shiny))) install.packages("shiny")
   appDir <- system.file("HiTMaP_GUI", package = "HiTMaP")
   if (appDir == "") {
     stop("Could not find GUI directory. Try re-install `HiTMaP`.",

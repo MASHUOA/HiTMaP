@@ -42,7 +42,8 @@ imaging_identification(
   preprocess = list(force_preprocess = FALSE, use_preprocessRDS = TRUE, smoothSignal =
     list(method = "disable"), reduceBaseline = list(method = "locmin"), peakPick =
     list(method = "adaptive"), peakAlign = list(tolerance = ppm/2, units = "ppm"),
-    normalize = list(method = c("rms", "tic", "reference")[1], mz = 1)),
+    peakFilter = list(freq.min = 0.05), normalize = list(method = c("rms", "tic",
+    "reference")[1], mz = 1)),
   Smooth_range = 1,
   Virtual_segmentation_rankfile = NULL,
   Rotate_IMG = NULL,
@@ -52,6 +53,7 @@ imaging_identification(
   use_previous_candidates = FALSE,
   score_method = "SQRTP",
   plot_cluster_image_grid = FALSE,
+  deconv_peaklist = "New",
   plot_cluster_image_maxretry = 2,
   plot_cluster_image_overwrite = F,
   smooth.image = "gaussian",
@@ -77,6 +79,7 @@ imaging_identification(
   remove_score_outlier = F,
   Plot_score_IQR_cutoff = 0.75,
   Plot_score_abs_cutoff = -0.1,
+  mzAlign_runs = "TopNfeature_mean",
   ...
 )
 }

@@ -16,4 +16,6 @@ HiTMaP shiny-based graphical user interface (GUI)
 HiTMaP_GUI()
 }
 
+
+
 }

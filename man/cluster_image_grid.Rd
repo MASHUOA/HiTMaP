@@ -21,7 +21,7 @@ cluster_image_grid(
   plot_style = c("fleximaging", "ClusterOnly", "rainbow"),
   protein_coverage = F,
   footer_style = "Length",
-  output_png_width_limit = 1980,
+  output_png_width_limit = 198000,
   attach_summary_cluster = T,
   cluster_color_scale = c("blackwhite", "fleximaging"),
   remove_cluster_from_grid = T,
