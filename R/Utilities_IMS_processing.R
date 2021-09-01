@@ -2393,8 +2393,7 @@ Load_IMS_decov_combine<-function(datafile,workdir,import_ppm=5,SPECTRUM_batch="o
      mz(imdata)<-predict(deconv_peaklist_ref_match_locmax[[datafile[z]]]$shift,mz(imdata)) + mz(imdata)
     }
     
-    New_fdata_LB<-imdata[1:10000,]
-    imdata_all<-imdata[2:10000,]
+    New_fdata_LB<-imdata[1,]
     New_fdata_LB@featureData@mz[1]<-min(deconv_peaklist_decov_plot$m.z, na.rm = T)-1
     New_fdata_UB<-New_fdata_LB
     New_fdata_UB@featureData@mz[1]<-max(deconv_peaklist_decov_plot$m.z, na.rm = T)+1
