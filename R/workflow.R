@@ -651,10 +651,10 @@ IMS_data_process<-function(datafile,
     # }
       
     imdata_sb <- imdata[,unlist(segmentation_label[[SPECTRUM_batch]])]
-    
+    imdata_ed <- imdata_sb
     if(is.null(preprocess$peakAlign$level)) preprocess$peakAlign$level<-"local"
     if (preprocess$peakAlign$level=="local"){
-      imdata_ed <- imdata_sb
+      
       if (preprocess$peakAlign$tolerance==0 ) {
         message("preprocess$peakAlign$tolerance set as zero, step bypassed")
       }else if ('&'(!is.null(preprocess$peakAlign$tolerance),!is.null(preprocess$peakAlign$tolerance))){
@@ -664,8 +664,9 @@ IMS_data_process<-function(datafile,
         message("preprocess$peakAlign$tolerance missing, use default tolerance in ppm ", ppm/2)
         imdata_ed<- imdata_ed %>% peakAlign(tolerance=ppm/2, units="ppm")
       }
+      imdata_ed <- imdata_ed %>% process()
     }
-    imdata_ed <- imdata_ed %>% process()
+    
     imdata_sb <- imdata_ed 
     
    #generate spectrum for each found region

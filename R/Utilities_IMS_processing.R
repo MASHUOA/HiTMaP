@@ -1306,7 +1306,7 @@ Preprocessing_segmentation<-function(datafile,
     }
 
     #setup import ppm which ensure pickpicking has correct number of data points (halfwindow>=2) per peak to work with
-    if (import_ppm > ppm ) import_ppm = ppm/
+    if (import_ppm > ppm ) import_ppm = ppm
 
     imdata_org<-NULL
     imdata<-NULL
@@ -1321,6 +1321,8 @@ Preprocessing_segmentation<-function(datafile,
       imdata <- Cardinal::readMSIData(datafile_imzML[z],  attach.only=T,as="MSImagingExperiment",resolution=import_ppm, units="ppm",BPPARAM=SerialParam())
     }else {
       imdata <- Cardinal::readMSIData(datafile_imzML[z],  attach.only=T,as="MSImagingExperiment",resolution=import_ppm, units="ppm",BPPARAM=SerialParam(),mass.range =mzrange)
+      imdata <-imdata[between(mz(imdata),mzrange[1],mzrange[2]),]
+      
     }
     if(!is.na(rotate[datafile_imzML[z]])){
       imdata <-rotateMSI(imdata=imdata,rotation_degree=rotate[datafile_imzML[z]])
@@ -1544,8 +1546,11 @@ Preprocessing_segmentation<-function(datafile,
           message("preprocess$peakAlign$tolerance missing, use default tolerance in ppm ", ppm/2)
           imdata_stats<- imdata %>% peakAlign(tolerance=ppm/2, units="ppm")
       }
-      
+      if (is.null(preprocess$peakFilter$freq.min)){
+      imdata_stats<-imdata_stats %>% peakFilter(freq.min=0.05) %>% process()
+      }else{
       imdata_stats<-imdata_stats %>% peakFilter(freq.min=preprocess$peakFilter$freq.min) %>% process()
+      }
       }
     
       if (Segmentation[1]=="PCA") {
@@ -2356,12 +2361,15 @@ Load_IMS_decov_combine<-function(datafile,workdir,import_ppm=5,SPECTRUM_batch="o
   
   
   
-  deconv_peaklist_decov_plot<-deconv_peaklist_decov
+  
   #imdata_list<-list()
   imdata<<-NULL
+  imdata<-NULL
+  gc()
+  combinedimdata_list<-NULL
   
   for (z in 1:length(datafile)){
-    
+    deconv_peaklist_decov_plot<-deconv_peaklist_decov
     setwd(workdir[z])
     if (file.exists(paste0(workdir[z],"/",gsub(".imzML$","",datafile[z])  ," ID/preprocessed_imdata.RDS"))){
       imdata<-readRDS(paste0(workdir[z],"/",datafile[z]," ID/","preprocessed_imdata.RDS"))
@@ -2394,17 +2402,21 @@ Load_IMS_decov_combine<-function(datafile,workdir,import_ppm=5,SPECTRUM_batch="o
     }
     
     New_fdata_LB<-imdata[1,]
-    New_fdata_LB@featureData@mz[1]<-min(deconv_peaklist_decov_plot$m.z, na.rm = T)-1
+    New_fdata_LB@featureData@mz[1]<-min(deconv_peaklist_decov_plot$m.z, na.rm = T)-2*ppm/1000000*min(deconv_peaklist_decov_plot$m.z, na.rm = T)
     New_fdata_UB<-New_fdata_LB
-    New_fdata_UB@featureData@mz[1]<-max(deconv_peaklist_decov_plot$m.z, na.rm = T)+1
+    New_fdata_UB@featureData@mz[1]<-max(deconv_peaklist_decov_plot$m.z, na.rm = T)+2*ppm/1000000*min(deconv_peaklist_decov_plot$m.z, na.rm = T)
     
     if(min(mz(imdata))>min(New_fdata_LB@featureData@mz[1])){
-      message("Adding m/z LB for mzbin...")
-      imdata<-Cardinal::rbind(New_fdata_LB,imdata)
+      message("removing ",sum(deconv_peaklist_decov_plot$m.z<min(mz(imdata)))," m/z features from target list, out of LB of ", datafile[z])
+      #imdata<-Cardinal::rbind(New_fdata_LB,imdata)
+      deconv_peaklist_decov_plot<-deconv_peaklist_decov_plot[deconv_peaklist_decov_plot$m.z>=min(mz(imdata)),]
+      deconv_peaklist_decov_plot->deconv_peaklist_decov
     }
     if(max(mz(imdata))<max(New_fdata_UB@featureData@mz[1])){
-      message("Adding m/z UB for mzbin...")
-      imdata<-Cardinal::rbind(imdata,New_fdata_UB)
+      message("removing ",sum(deconv_peaklist_decov_plot$m.z>max(mz(imdata)))," m/z features from target list, out of UB of ", datafile[z])
+      #imdata<-Cardinal::rbind(imdata,New_fdata_UB)
+      deconv_peaklist_decov_plot<-deconv_peaklist_decov_plot[deconv_peaklist_decov_plot$m.z<=max(mz(imdata)),]
+      deconv_peaklist_decov_plot->deconv_peaklist_decov
     }
 
     
@@ -2418,24 +2430,47 @@ Load_IMS_decov_combine<-function(datafile,workdir,import_ppm=5,SPECTRUM_batch="o
     
     #imdata[[z]]<<-imdata
     #imdata_list[[z]]<-imdata
-    if (z==1) {
-      
-      combinedimdata<-imdata
-      
-    }else{
-      
-      combinedimdata<-Cardinal::cbind(combinedimdata,imdata)
-      
-    }
-    
+    # if (z==1) {
+    #   
+    #   combinedimdata<-imdata
+    #   
+    # }else{
+    #   
+    #   combinedimdata<-Cardinal::cbind(combinedimdata[mz(combinedimdata) %in% deconv_peaklist_decov_plot$m.z,],imdata[mz(imdata) %in% deconv_peaklist_decov_plot$m.z,])
+    #   
+    # }
+    combinedimdata_list[[z]]<-imdata
+    rm(imdata)
+    gc()
     #message(class(combinedimdata))
     #message(typeof(combinedimdata))
     
   }
-  #combinedimdata_list<-do.call(cbind,imdata_list)
   
-  #saveRDS(combinedimdata_list,paste0(workdir[1],"/combinedimdata_list.rds"),compress = T)
-  
+  for (z in 1:length(datafile)){
+   
+    combinedimdata_list[[z]]<-combinedimdata_list[[z]][mz(combinedimdata_list[[z]]) %in% deconv_peaklist_decov$m.z,]
+     
+  }
+  gc()
+  saveRDS(combinedimdata_list,paste0(workdir[1],"/combinedimdata_list.rds"),compress = T)
+  #combinedimdata<-do.call(Cardinal::cbind,combinedimdata_list)
+  for (z in 1:length(datafile)){
+  if (z==1) {
+
+    combinedimdata<-combinedimdata_list[[z]]
+
+  }else{
+
+    combinedimdata<-Cardinal::cbind(combinedimdata,combinedimdata_list[[z]])
+
+  }
+    
+    combinedimdata_list[[z]]<-1
+    gc()
+  }
+  #
+  combinedimdata_list
   
   saveRDS(combinedimdata,paste0(workdir[1],"/combinedimdata.rds"),compress = T)
   #combinedimdata_rbind<-do.call(cbind,combinedimdata)

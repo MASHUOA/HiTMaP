@@ -1503,6 +1503,23 @@ imaging_identification(datafile=paste0(wd,datafile),Digestion_site="trypsin",
                        Rotate_IMG=NULL,cluster_rds_path="/combinedimdata.rds",
                        mzrange = c(500,4000),plot_cluster_image_grid=F,pixel_size_um = 150,remove_score_outlier=F,attach_summary_cluster = F, remove_cluster_from_grid=F,plot_cluster_image_overwrite=T)
 
+datafile=c("mouse_kidney_cut.imzML")
+wd="~/expdata/kindney/"
+library(HiTMaP)
+imaging_identification(datafile=paste0(wd,datafile),Digestion_site="trypsin",threshold = 0,
+                       Fastadatabase="uniprot_mouse_20210107.fasta",output_candidatelist=T,
+                      preprocess=list(force_preprocess=T,
+                               use_preprocessRDS=TRUE,
+                               smoothSignal=list(method="gaussian"),
+                               reduceBaseline=list(method="locmin"),
+                               peakPick=list(method="adaptive"),
+                               peakAlign=list(tolerance=25,level="global", units="ppm"),
+                               normalize=list(method="rms")),
+                       spectra_segments_per_file=5,use_previous_candidates=T,ppm=25,FDR_cutoff = 0.05,IMS_analysis=T,Thread=1,
+                       Rotate_IMG=NULL,cluster_rds_path="/combinedimdata.rds",
+                       mzrange = c(1220,1624),plot_cluster_image_grid=T,pixel_size_um = 150,remove_score_outlier=F,attach_summary_cluster = F, remove_cluster_from_grid=F,plot_cluster_image_overwrite=T)
+
+
 ```
 
 # Cite this project
