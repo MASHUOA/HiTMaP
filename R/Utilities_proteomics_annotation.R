@@ -1083,7 +1083,12 @@ protein_scoring<-function(Protein_feature_list,
            "Protein_coverage.Protein_coverage","Intensity_norm","Proscore","desc")
     colnames(df) <- x
 
-    return(list(df,Protein_feature_list_rank))
+    #return(list(df,Protein_feature_list_rank))
+    return(list(Protein_feature_result,
+                Protein_feature_list_rank,
+                Protein_feature_list_rank,
+                Protein_feature_list_rank,
+                Protein_feature_list_rank))
   }
 
   # get protein candidates index from global enviornment
