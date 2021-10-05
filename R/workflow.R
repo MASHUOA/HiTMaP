@@ -791,6 +791,8 @@ IMS_data_process<-function(datafile,
       #Protein scoring and FDR cut-off
       Index_of_protein_sequence<-get("Index_of_protein_sequence", envir = .GlobalEnv)
       Protein_feature_result<-protein_scoring(Protein_feature_list,Peptide_plot_list_rank,BPPARAM = BPPARAM,scoretype="mean",peptide_ID_filter=peptide_ID_filter,use_top_rank=use_top_rank)
+      
+      
       Protein_feature_list_rank<-Protein_feature_result[[2]]
       Protein_feature_list_rank_filtered<-Protein_feature_result[[3]]
       Protein_feature_list_rank_filtered_grouped<-Protein_feature_result[[4]]

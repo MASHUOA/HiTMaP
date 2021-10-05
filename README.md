@@ -259,6 +259,34 @@ datasets, which each contain a configuration file, and the fasta
 database, respectively: *“./Bovinlens\_Trypsin\_FT”*
 *“./MouseBrain\_Trypsin\_FT”* *“./Peptide\_calibrants\_FT”*
 
+An Tiny version of data set is also available by using the code below:
+
+``` r
+if(!require(piggyback)) install.packages("piggyback")
+library(piggyback)
+
+#made sure that this folder has enough space
+wd="~/expdata/"
+dir.create(wd)
+setwd(wd)
+pb_download("Data_tiny.tar.gz", repo = "MASHUOA/HiTMaP", dest = ".")
+untar('Data_tiny.tar.gz',exdir =".",  tar="tar")
+
+#unlink('Data.tar.gz')
+list.dirs()
+```
+
+The tiny version dataset was generated from the Bovinlens and MouseBrain
+original data:
+
+1.  m/z range: 700 - 1400
+
+2.  pixel range:
+
+x &lt;= 20%, y &gt;= 80% (Bovinlens)
+
+x &lt;= 30%, y &lt;= 20% (MouseBrain)
+
 # Proteomics identification on maldi-imaging dataset
 
 To perform false-discovery rate controlled peptide and protein
@@ -427,10 +455,12 @@ p_pmf<-image_read(paste0(wd,datafile," ID/Bovin_lens 3PMF spectrum match.png"))
 print(p_pmf)
 ```
 
+    ## # A tibble: 1 x 7
     ##   format width height colorspace matte filesize density
-    ## 1    PNG  1980   1080       sRGB FALSE    17664   72x72
+    ##   <chr>  <int>  <int> <chr>      <lgl>    <int> <chr>  
+    ## 1 PNG     1980   1080 sRGB       FALSE    17664 72x72
 
-<img src="README_files/figure-gfm/unnamed-chunk-8-1.png" width="1980" />
+![](README_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
 
 A list of the peptides and proteins annotated within each region has
 also been created for manual exploration of the results.
@@ -804,7 +834,7 @@ library(gridExtra)
 grid.ftable(Cleavage_df, gp = gpar(fontsize=9,fill = rep(c("grey90", "grey95"))))
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-20-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-21-1.png)<!-- -->
 
 # Example workflow command
 
@@ -853,7 +883,7 @@ imaging_identification(datafile=paste0(wd,datafile),
   output_candidatelist=T,
   plot_matching_score=T,
   spectra_segments_per_file=1,
-  use_previous_candidates=T,
+  use_previous_candidates=F,
   peptide_ID_filter=1,ppm=5,missedCleavages=0:5,
   Modifications=list(fixed=NULL,fixmod_position=NULL,variable=c("Amide"),varmod_position=c(6)),
   FDR_cutoff=0.1,
@@ -886,11 +916,11 @@ wd="~/expdata/"
 library(HiTMaP)
 imaging_identification(datafile=paste0(wd,datafile),Digestion_site="trypsin",
                        Fastadatabase="uniprot-bovin.fasta",output_candidatelist=T,use_previous_candidates=T,
-                       preprocess=list(force_preprocess=TRUE,
+                       preprocess=list(force_preprocess=F,
                                use_preprocessRDS=TRUE,
                                smoothSignal=list(method="Disable"),
                                reduceBaseline=list(method="Disable"),
-                               peakPick=list(method="adaptive"),
+                               peakPick=list(method="Default"),
                                peakAlign=list(tolerance=5, units="ppm"),
                                normalize=list(method=c("rms","tic","reference")[1],mz=1)),
                        spectra_segments_per_file=4,ppm=5,FDR_cutoff = 0.05,IMS_analysis=T,
@@ -911,6 +941,23 @@ imaging_identification(datafile=paste0(wd,datafile),Digestion_site="trypsin",
                        cluster_rds_path = "/Bovin_lens ID/preprocessed_imdata.RDS",pixel_size_um = 150,
                        Plot_score_abs_cutoff=-0.1,
                        remove_score_outlier=T,
+                       Protein_desc_of_interest=c("Crystallin","Phakinin","Filensin","Actin","Vimentin","Cortactin","Visinin","Arpin","Tropomyosin","Myosin Light Chain 3","Kinesin Family Member 14","Dynein Regulatory Complex","Ankyrin Repeat Domain 45"))
+
+# Re-analysis and cluster image rendering using color scale
+
+library(HiTMaP)
+datafile=c("Bovinlens_Trypsin_FT/Bovin_lens.imzML")
+wd="~/expdata/"
+imaging_identification(datafile=paste0(wd,datafile),Digestion_site="trypsin",
+                       Fastadatabase="uniprot-bovin.fasta",
+                       use_previous_candidates=T,ppm=5,IMS_analysis=F,
+                       plot_cluster_image_grid=T,
+                       export_Header_table=T, 
+                       img_brightness=250, 
+                       plot_cluster_image_overwrite=T,
+                       cluster_rds_path = "/Bovin_lens ID/preprocessed_imdata.RDS",pixel_size_um = 150,
+                       Plot_score_abs_cutoff=-0.1,
+                       remove_score_outlier=T,cluster_color_scale="fleximaging",
                        Protein_desc_of_interest=c("Crystallin","Phakinin","Filensin","Actin","Vimentin","Cortactin","Visinin","Arpin","Tropomyosin","Myosin Light Chain 3","Kinesin Family Member 14","Dynein Regulatory Complex","Ankyrin Repeat Domain 45"))
 ```
 
@@ -951,6 +998,21 @@ imaging_identification(datafile=paste0(wd,datafile),Digestion_site="trypsin",
                        Plot_score_abs_cutoff=-0.1,
                        remove_score_outlier=T,
                        Protein_desc_of_interest=c("Secernin","GN=MBP","Cytochrome"))
+
+library(HiTMaP)
+datafile=c("MouseBrain_Trypsin_FT_200brit_man_seg/Mouse_brain.imzML")
+wd="~/expdata/"
+imaging_identification(datafile=paste0(wd,datafile),Digestion_site="trypsin",
+                       Fastadatabase="uniprot_mouse_20210107.fasta",
+                       preprocess=list(force_preprocess=FALSE),
+                       spectra_segments_per_file=9,use_previous_candidates=T,ppm=10,FDR_cutoff = 0.05,IMS_analysis=F,
+                       mzrange = c(500,4000),plot_cluster_image_grid=T,
+                       img_brightness=250, plot_cluster_image_overwrite=T,
+                       cluster_rds_path = "/Mouse_brain ID/preprocessed_imdata.RDS",
+                       pixel_size_um = 50,
+                       Plot_score_abs_cutoff=-0.1,
+                       remove_score_outlier=T,
+                       Protein_desc_of_interest=c("GTR9"))
 ```
 
 # Cite this project
@@ -966,36 +1028,39 @@ using HIT-MAP” online on the 28th May 2021.
 sessionInfo()
 ```
 
-    ## R version 4.0.4 (2021-02-15)
+    ## R version 4.1.0 (2021-05-18)
     ## Platform: x86_64-w64-mingw32/x64 (64-bit)
     ## Running under: Windows 10 x64 (build 19042)
     ## 
     ## Matrix products: default
     ## 
     ## locale:
-    ## [1] LC_COLLATE=English_Australia.1252  LC_CTYPE=English_Australia.1252   
-    ## [3] LC_MONETARY=English_Australia.1252 LC_NUMERIC=C                      
-    ## [5] LC_TIME=English_Australia.1252    
+    ## [1] LC_COLLATE=Chinese (Simplified)_China.936 
+    ## [2] LC_CTYPE=Chinese (Simplified)_China.936   
+    ## [3] LC_MONETARY=Chinese (Simplified)_China.936
+    ## [4] LC_NUMERIC=C                              
+    ## [5] LC_TIME=Chinese (Simplified)_China.936    
+    ## system code page: 1252
     ## 
     ## attached base packages:
-    ## [1] stats     graphics  grDevices utils     datasets  methods   base     
+    ## [1] grid      stats     graphics  grDevices utils     datasets  methods  
+    ## [8] base     
     ## 
     ## other attached packages:
-    ## [1] gridExtra_2.3 XML_3.99-0.5  protViz_0.6.8 dplyr_1.0.5   magick_2.7.0 
+    ## [1] gridExtra_2.3 XML_3.99-0.7  protViz_0.6.8 dplyr_1.0.7   magick_2.7.3 
     ## [6] HiTMaP_1.0.0 
     ## 
     ## loaded via a namespace (and not attached):
-    ##  [1] Rcpp_1.0.6        compiler_4.0.2    pillar_1.5.1      later_1.1.0.1    
-    ##  [5] tools_4.0.2       digest_0.6.27     gtable_0.3.0      evaluate_0.14    
-    ##  [9] lifecycle_1.0.0   tibble_3.1.0      debugme_1.1.0     pkgconfig_2.0.3  
-    ## [13] rlang_0.4.10      shiny_1.6.0       DBI_1.1.1         yaml_2.2.1       
-    ## [17] xfun_0.22         fastmap_1.1.0     stringr_1.4.0     knitr_1.31       
-    ## [21] generics_0.1.0    vctrs_0.3.6       grid_4.0.2        tidyselect_1.1.0 
-    ## [25] glue_1.4.2        R6_2.5.0          fansi_0.4.2       rmarkdown_2.8    
-    ## [29] purrr_0.3.4       magrittr_2.0.1    codetools_0.2-18  promises_1.2.0.1 
-    ## [33] ellipsis_0.3.1    htmltools_0.5.1.1 assertthat_0.2.1  mime_0.10        
-    ## [37] xtable_1.8-4      httpuv_1.5.5      utf8_1.2.1        stringi_1.5.3    
-    ## [41] crayon_1.4.1
+    ##  [1] Rcpp_1.0.7       highr_0.9        pillar_1.6.3     compiler_4.1.0  
+    ##  [5] tools_4.1.0      digest_0.6.27    evaluate_0.14    lifecycle_1.0.1 
+    ##  [9] tibble_3.1.4     gtable_0.3.0     pkgconfig_2.0.3  png_0.1-7       
+    ## [13] rlang_0.4.11     DBI_1.1.1        cli_3.0.1        rstudioapi_0.13 
+    ## [17] yaml_2.2.1       xfun_0.25        fastmap_1.1.0    stringr_1.4.0   
+    ## [21] knitr_1.34       generics_0.1.0   vctrs_0.3.8      tidyselect_1.1.1
+    ## [25] glue_1.4.2       R6_2.5.1         fansi_0.5.0      rmarkdown_2.11  
+    ## [29] purrr_0.3.4      magrittr_2.0.1   codetools_0.2-18 ellipsis_0.3.2  
+    ## [33] htmltools_0.5.2  assertthat_0.2.1 utf8_1.2.2       stringi_1.7.4   
+    ## [37] crayon_1.4.1
 
 End of the tutorial, Enjoy\~
 
