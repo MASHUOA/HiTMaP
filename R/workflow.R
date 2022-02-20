@@ -159,7 +159,7 @@ imaging_identification<-function(
   if (is.null(Thread)){
   parallel=try(detectCores()/2)
   if (parallel<1 | is.null(parallel)){parallel=1}
-  BPPARAM=HiTMaP:::Parallel.OS(parallel, override_type=BiocParallel::SnowParam())
+  BPPARAM=HiTMaP:::Parallel.OS(parallel)
   setCardinalBPPARAM(BPPARAM = BPPARAM)
   }else{
   parallel=Thread
