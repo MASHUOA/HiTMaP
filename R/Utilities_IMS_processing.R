@@ -1419,7 +1419,8 @@ Preprocessing_segmentation<-function(datafile,
           #peaklist_deco<-HiTMaP:::isopattern_ppm_filter_peaklist(peaklist_deco,ppm=instrument_ppm,threshold=0)
           #imdata_ed<-imdata_ed %>% peakBin(peaklist_deco$mz, resolution=instrument_ppm, units="ppm") %>% process()
 
-        } else if(ppm>=25){
+        } 
+        else if(ppm>=25){
           imdata_ed<-imdata
           #smoothSignal(method="gaussian") %>%
           #reduceBaseline(method="locmin") %>%
@@ -1478,7 +1479,7 @@ Preprocessing_segmentation<-function(datafile,
           }
 
         }
-
+        
         saveRDS(imdata_ed,paste0(gsub(".imzML$","",datafile[z])  ," ID/preprocessed_imdata.RDS"))
       }else{
         imdata_ed<-imdata
@@ -1526,7 +1527,7 @@ Preprocessing_segmentation<-function(datafile,
     imdata<-imdata_ed
     gc()
     coordata=as.data.frame(imdata@elementMetadata@coord)
-
+    setCardinalBPPARAM(BPPARAM)
     setwd(paste0(gsub(".imzML$","",datafile[z])  ," ID"))
 
     if (Bypass_Segmentation!=T){
@@ -1547,9 +1548,9 @@ Preprocessing_segmentation<-function(datafile,
           imdata_stats<- imdata %>% peakAlign(tolerance=ppm/2, units="ppm")
       }
       if (is.null(preprocess$peakFilter$freq.min)){
-      imdata_stats<-imdata_stats %>% peakFilter(freq.min=0.05) %>% process()
+      imdata_stats<-imdata_stats %>% peakFilter(freq.min=0.05) %>% process(BPPARAM = SerialParam())
       }else{
-      imdata_stats<-imdata_stats %>% peakFilter(freq.min=preprocess$peakFilter$freq.min) %>% process()
+      imdata_stats<-imdata_stats %>% peakFilter(freq.min=preprocess$peakFilter$freq.min) %>% process(BPPARAM = SerialParam())
       }
       }
     
@@ -2137,7 +2138,7 @@ Load_IMS_decov_combine<-function(datafile,workdir,import_ppm=5,SPECTRUM_batch="o
     workdir=rep(workdir[1],length(datafile))
   }
   
-  datafile_imzML=datafile
+  datafile_imzML=paste0(datafile,".imzML")
   rotate=HiTMaP:::Parse_rotation(datafile,rotate)
   if (`|`(deconv_peaklist=="New",!file.exists(paste0(workdir[1],"/","ClusterIMS_deconv_Spectrum.csv")))){
     for (z in 1:length(datafile)){
@@ -2371,6 +2372,7 @@ Load_IMS_decov_combine<-function(datafile,workdir,import_ppm=5,SPECTRUM_batch="o
   for (z in 1:length(datafile)){
     deconv_peaklist_decov_plot<-deconv_peaklist_decov
     setwd(workdir[z])
+    
     if (file.exists(paste0(workdir[z],"/",gsub(".imzML$","",datafile[z])  ," ID/preprocessed_imdata.RDS"))){
       imdata<-readRDS(paste0(workdir[z],"/",datafile[z]," ID/","preprocessed_imdata.RDS"))
       if (!preprocessRDS_rotated){
@@ -2393,6 +2395,7 @@ Load_IMS_decov_combine<-function(datafile,workdir,import_ppm=5,SPECTRUM_batch="o
         imdata <-HiTMaP:::rotateMSI(imdata=imdata,rotation_degree=rotate[datafile[z]])
       }
     }
+    
     message("mzbin for ",datafile[z])
     setCardinalBPPARAM(SerialParam())
     
@@ -2456,8 +2459,11 @@ Load_IMS_decov_combine<-function(datafile,workdir,import_ppm=5,SPECTRUM_batch="o
   saveRDS(combinedimdata_list,paste0(workdir[1],"/combinedimdata_list.rds"),compress = T)
   #combinedimdata<-do.call(Cardinal::cbind,combinedimdata_list)
   for (z in 1:length(datafile)){
+    
+    combinedimdata_list[[z]]@centroided<-TRUE
+    
   if (z==1) {
-
+    
     combinedimdata<-combinedimdata_list[[z]]
 
   }else{

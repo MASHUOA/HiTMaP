@@ -22,7 +22,8 @@ Meta_feature_list_fun<-function(database,
                                 adducts=c("M-H","M+Cl"),
                                 cal.mz=TRUE,
                                 bypass=FALSE,
-                                BPPARAM=bpparam()){
+                                BPPARAM=bpparam(),
+                                atom_isotope_sub=NULL){
   suppressMessages(suppressWarnings(require("Rcpp")))
   suppressMessages(suppressWarnings(require(dplyr)))
   suppressMessages(suppressWarnings(require(Rdisop)))
@@ -89,6 +90,39 @@ Meta_feature_list_fun<-function(database,
     candidates<-candidates[candidates$formula!="",]
     candidates<-candidates[!grepl(")n",candidates$formula),]
     meta_symbol<-lapply(unique(candidates$formula),get_atoms)
+    
+    
+    if (!is.null(atom_isotope_sub)){
+      
+      suppressMessages(suppressWarnings(require(enviPat)))
+      suppressMessages(suppressWarnings(require(stringr)))
+      data("isotopes")      
+      candidates_iso<-NULL
+      for (entry in atom_isotope_sub){
+        
+        candidates$Isotype="Normal"
+        isotopes$isotope[isotopes$isotope==entry["to"]][1]->iso_sub_to
+        isotopes$element[isotopes$isotope==entry["from"]][1]->iso_sub
+        candidates->candidates_iso[[iso_sub_to]]
+        meta_symbol_iso<-lapply(meta_symbol,function(x,iso_sub){
+          x[[iso_sub]]->x[["x"]]
+          x[[iso_sub]]<-NULL
+          x
+        },iso_sub)
+        masslist<-lapply(meta_symbol_iso,MonoisotopicMass,isotopes = list(x = 13.0033548378)) 
+        
+        mass_DF<-data.frame(formula=unique(candidates$formula),mass=unlist(masslist),stringsAsFactors = F)
+        candidates_iso[[iso_sub_to]]$mass<-NULL
+        candidates_iso[[iso_sub_to]]<-base::merge(candidates_iso[[iso_sub_to]],mass_DF,by="formula")
+        candidates_iso[[iso_sub_to]]$Isotype=iso_sub_to
+      }
+
+      candidates<-do.call(rbind,c(list(normal=candidates),candidates_iso))
+    }else{
+      candidates$Isotype="Normal"
+    }
+    
+    
     symbol_adducts=bplapply(adducts,convert_peptide_adduct_list,meta_symbol,BPPARAM = BPPARAM,adductslist=adductslist)
 
     
@@ -99,8 +133,8 @@ Meta_feature_list_fun<-function(database,
 
     
     for (i in 1:length(adducts)){
-      candidates_adduct<-unique(candidates[,c("Metabolite.Name","mass","formula")])
-      candidates_adduct<-candidates_adduct[!duplicated(candidates_adduct[,c("Metabolite.Name","formula")]),]
+      candidates_adduct<-unique(candidates[,c("Metabolite.Name","mass","formula","Isotype")])
+      candidates_adduct<-candidates_adduct[!duplicated(candidates_adduct[,c("Metabolite.Name","formula","Isotype")]),]
       adductmass<-as.numeric(as.character(adductslist[adductslist$Name==adducts[i],"Mass"]))
       adducts_Charge<-as.numeric(adductslist[adductslist$Name==adducts[i],"Charge"])
       candidates_adduct$mz<-(as.numeric(candidates_adduct$mass+adductmass))/abs(adducts_Charge)
@@ -113,6 +147,8 @@ Meta_feature_list_fun<-function(database,
       
       
     }
+    
+
   } 
   return(Meta_Summary)                
   
