@@ -216,7 +216,7 @@ FT-ICR mass spectromety. With the following code, you can download these
 raw data set into a local folder.
 
 You can download the example data manually through this link:
-"<https://github.com/MASHUOA/HiTMaP/releases/download/1.0/Data.tar.gz>"
+"<https://github.com/MASHUOA/HiTMaP/releases/download/1.0.1/Data.tar.gz>"
 
 Or download the files in a R console:
 

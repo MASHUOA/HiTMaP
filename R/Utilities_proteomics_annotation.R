@@ -945,7 +945,7 @@ FDR_cutoff_plot<-function(Peptide_plot_list,FDR_cutoff=0.1,FDR_strip=500,plot_fd
 
 }
 
-plot_matching_score<-function(Peptide_plot_list,peaklist,charge,ppm,outputdir=getwd()){
+plot_matching_score<-function(Peptide_plot_list,peaklist,charge,ppm,outputdir=getwd(),filename_col=){
   if (ppm>=25) {
     instrument_ppm=50
   }else{
