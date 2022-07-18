@@ -193,7 +193,7 @@ remove_pep_score_outlier<-function(SMPLIST,IQR_LB=0.75,outputdir=getwd(),abs_cut
   return(SMPLIST[SMPLIST$mz %in% SMPLIST_bin_quantile$mz,])
 }
 
-SCORE_PMF<-function(formula,peaklist,isotopes=NULL,threshold=1,charge=1,ppm=5,print.graphic=F,output.list=F,outputfile=NULL,score_method="SQRTP",similarity_plot_res=72,anno_info=""){
+SCORE_PMF<-function(formula,peaklist,isotopes=NULL,threshold=1,charge=1,ppm=5,print.graphic=F,output.list=F,outputfile=NULL,score_method="SQRTP",similarity_plot_res=72,anno_info="",isolabel="Normal"){
   suppressMessages(suppressWarnings(require(rcdk)))
   suppressMessages(suppressWarnings(require(rcdklibs)))
   suppressMessages(suppressWarnings(require(OrgMassSpecR)))
@@ -303,10 +303,17 @@ SCORE_PMF<-function(formula,peaklist,isotopes=NULL,threshold=1,charge=1,ppm=5,pr
       plot.window(xlim = c(0, 20), ylim = c(-10, 10))
       text(10, 9, top.label)
       text(10, -9, bottom.label)
-      if (anno_info==""){
-        mtext(paste("Formula:",formula,"Score:",round(similarity_score,digits = 2),"Method:",score_method),cex=0.9)
+      if(F){
+        atome_replace<-isotopes$element[isotopes$isotope==as.character(isolabel)]
+        formula_label=stringr::str_replace(formula,atome_replace[1],atome_replace[2])
       }else{
-        mtext(paste(anno_info,"\nFormula:",formula,"Score:",round(similarity_score,digits = 2),"Method:",score_method),cex=0.9)
+        formula_label=formula
+      }
+      
+      if (anno_info==""){
+        mtext(paste("Formula:",formula_label,"Score:",round(similarity_score,digits = 2),"Method:",score_method),cex=0.9)
+      }else{
+        mtext(paste(anno_info,"\nFormula:",formula_label,"Score:",round(similarity_score,digits = 2),"Method:",score_method),cex=0.9)
         
       }
       if(!is.null(pattern_ppm$norm_ppm)){
@@ -419,13 +426,13 @@ SCORE_PMF<-function(formula,peaklist,isotopes=NULL,threshold=1,charge=1,ppm=5,pr
   if (ppm>=25) {
     instrument_ppm=50
   }else{
-    instrument_ppm=8
+    instrument_ppm=max(c(8,ppm),na.rm = T)
   }
 
   #Filter and merge the isotopic pattern using instrument resolution
   pattern=pattern[[formula]]
   pattern=isopattern_ppm_filter(pattern = pattern[,1:2], ppm=instrument_ppm)
-  pattern=pattern[pattern[,2]>=2.5,]
+  pattern=pattern[pattern[,2]>=1,]
 
   #peptide similarity score calculation
   spectrumintensity=unlist(lapply(1:nrow(pattern), function(x,pattern,peaklist,ppm){
@@ -442,7 +449,7 @@ SCORE_PMF<-function(formula,peaklist,isotopes=NULL,threshold=1,charge=1,ppm=5,pr
   spectrum_pk<-do.call(rbind,spectrum_pk)
   spectrum_pk<-unique(spectrum_pk)
   if (nrow(spectrum_pk)>1){
-    spectrum_pk=isopattern_ppm_filter_peaklist(pattern = spectrum_pk, ppm=instrument_ppm)
+    spectrum_pk=isopattern_ppm_filter_peaklist(pattern = spectrum_pk, ppm=ppm)
   }
 
   #peptide ppm-error score calculation
@@ -983,12 +990,19 @@ plot_matching_score<-function(Peptide_plot_list,peaklist,charge,ppm,outputdir=ge
   if(nrow(Peptide_plot_list)!=0){
     Peptide_plot_list_score<-NULL
     for (i in 1:nrow(Peptide_plot_list)){
-      anno_info=paste(Peptide_plot_list[i,anno_col],collapse = "\n")
+      if ("Isotype" %in% anno_col){
+      anno_info=paste(Peptide_plot_list[i,anno_col[anno_col!="Isotype"]],collapse = "\n")
+      isolabel=Peptide_plot_list[i,"Isotype"]
+      }else{
+      anno_info=paste(Peptide_plot_list[i,anno_col],collapse = "\n") 
+      isolabel="Normal"
+      }
+      
       #anno_info=stringr::str_replace_all(anno_info,";","\n")
       if(Peptide_plot_list$isdecoy[i]==0){
         Peptide_plot_list_score[i]<-try(SCORE_PMF(Peptide_plot_list$formula[i],
                                                   peaklist,isotopes=isotopes,
-                                                  charge=charge,ppm=ppm,
+                                                  charge=charge,ppm=ppm,isolabel=isolabel,
                                                   print.graphic=T,output.list=F,
                                                   outputfile=paste0(outputdir,"/",paste(Peptide_plot_list[i,filename_col],collapse = "_"),"_target",".png"),
                                                   similarity_plot_res = similarity_plot_res,
@@ -998,7 +1012,7 @@ plot_matching_score<-function(Peptide_plot_list,peaklist,charge,ppm,outputdir=ge
       }else{
         Peptide_plot_list_score[i]<-try(SCORE_PMF(Peptide_plot_list$formula[i],
                                                   peaklist,isotopes=decoy_isotopes,
-                                                  charge=charge,ppm=ppm,
+                                                  charge=charge,ppm=ppm,isolabel=isolabel,
                                                   print.graphic=T,output.list=F,
                                                   outputfile=paste0(outputdir,"/",
                                                                     paste(Peptide_plot_list[i,filename_col],collapse = "_"),"_decoy",".png"),

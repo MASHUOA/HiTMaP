@@ -2401,7 +2401,12 @@ Load_IMS_decov_combine<-function(datafile,workdir,import_ppm=5,SPECTRUM_batch="o
     
     if ( exists("deconv_peaklist_ref_match_locmax")){
      message("Performing m/z correction...")
-     mz(imdata)<-predict(deconv_peaklist_ref_match_locmax[[datafile[z]]]$shift,mz(imdata)) + mz(imdata)
+      if (class(imdata)=="MSProcessedImagingExperiment"){
+        mz(imdata)<-predict(deconv_peaklist_ref_match_locmax[[datafile[z]]]$shift,mz(imdata)) + mz(imdata)
+      }else{
+        imdata@featureData@mz<-predict(deconv_peaklist_ref_match_locmax[[datafile[z]]]$shift,imdata@featureData@mz) + imdata@featureData@mz
+      }
+     
     }
     
     New_fdata_LB<-imdata[1,]
