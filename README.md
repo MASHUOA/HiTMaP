@@ -1,36 +1,54 @@
 HiT-MaP
 ================
 
--   [Package installation](#package-installation)
-    -   [Installation of docker image](#installation-of-docker-image)
-    -   [Installation code for R console
-        installation](#installation-code-for-r-console-installation)
-    -   [Codes for Linux OS building
-        enviornment](#codes-for-linux-os-building-enviornment)
-    -   [Codes for Mac OS building enviornment
-        (optional)](#codes-for-mac-os-building-enviornment-optional)
--   [Example data and source code](#example-data-and-source-code)
--   [Proteomics identification on maldi-imaging
-    dataset](#proteomics-identification-on-maldi-imaging-dataset)
--   [Project folder and result
-    structure](#project-folder-and-result-structure)
--   [Identification result visulasation and
-    interpretation](#identification-result-visulasation-and-interpretation)
--   [Scoring system for protein and
-    peptide](#scoring-system-for-protein-and-peptide)
--   [Identification summary and cluster
-    imaging](#identification-summary-and-cluster-imaging)
--   [Details of parameter setting](#details-of-parameter-setting)
-    -   [Modification](#modification)
-    -   [Amino acid substitution](#amino-acid-substitution)
-    -   [Digestion site and enzyme](#digestion-site-and-enzyme)
--   [Example workflow command](#example-workflow-command)
-    -   [Peptide calibrant](#peptide-calibrant)
-    -   [Bovine lens](#bovine-lens)
-    -   [Mouse brain](#mouse-brain)
--   [Cite this project](#cite-this-project)
--   [Session information](#session-information)
--   [References](#references)
+-   <a href="#package-installation" id="toc-package-installation">Package
+    installation</a>
+    -   <a href="#installation-of-docker-image"
+        id="toc-installation-of-docker-image">Installation of docker image</a>
+    -   <a href="#installation-code-for-r-console-installation"
+        id="toc-installation-code-for-r-console-installation">Installation code
+        for R console installation</a>
+    -   <a href="#codes-for-linux-os-building-enviornment"
+        id="toc-codes-for-linux-os-building-enviornment">Codes for Linux OS
+        building enviornment</a>
+    -   <a href="#codes-for-mac-os-building-enviornment-optional"
+        id="toc-codes-for-mac-os-building-enviornment-optional">Codes for Mac OS
+        building enviornment (optional)</a>
+-   <a href="#example-data-and-source-code"
+    id="toc-example-data-and-source-code">Example data and source code</a>
+-   <a href="#proteomics-identification-on-maldi-imaging-dataset"
+    id="toc-proteomics-identification-on-maldi-imaging-dataset">Proteomics
+    identification on maldi-imaging dataset</a>
+-   <a href="#project-folder-and-result-structure"
+    id="toc-project-folder-and-result-structure">Project folder and result
+    structure</a>
+-   <a href="#identification-result-visulasation-and-interpretation"
+    id="toc-identification-result-visulasation-and-interpretation">Identification
+    result visulasation and interpretation</a>
+-   <a href="#scoring-system-for-protein-and-peptide"
+    id="toc-scoring-system-for-protein-and-peptide">Scoring system for
+    protein and peptide</a>
+-   <a href="#identification-summary-and-cluster-imaging"
+    id="toc-identification-summary-and-cluster-imaging">Identification
+    summary and cluster imaging</a>
+-   <a href="#details-of-parameter-setting"
+    id="toc-details-of-parameter-setting">Details of parameter setting</a>
+    -   <a href="#modification" id="toc-modification">Modification</a>
+    -   <a href="#amino-acid-substitution"
+        id="toc-amino-acid-substitution">Amino acid substitution</a>
+    -   <a href="#digestion-site-and-enzyme"
+        id="toc-digestion-site-and-enzyme">Digestion site and enzyme</a>
+-   <a href="#example-workflow-command"
+    id="toc-example-workflow-command">Example workflow command</a>
+    -   <a href="#peptide-calibrant" id="toc-peptide-calibrant">Peptide
+        calibrant</a>
+    -   <a href="#bovine-lens" id="toc-bovine-lens">Bovine lens</a>
+    -   <a href="#mouse-brain" id="toc-mouse-brain">Mouse brain</a>
+-   <a href="#cite-this-project" id="toc-cite-this-project">Cite this
+    project</a>
+-   <a href="#session-information" id="toc-session-information">Session
+    information</a>
+-   <a href="#references" id="toc-references">References</a>
 
 – An R package of High-resolution Informatics Toolbox for Maldi-imaging
 Proteomics
@@ -78,14 +96,14 @@ docker pull mashuoa/hitmap
 Tags of available docker images:
 
 1.  **mashuoa/hitmap:latest** contains the stable build release (built
-    from the Dockerfile at MASHUOA/hitmap\_docker with the effort from
+    from the Dockerfile at MASHUOA/hitmap_docker with the effort from
     John Reeves <j.reeves@garvan.org.au>).
 
 2.  **mashuoa/hitmap:natcomms** contains the original version when this
     project been accepted (minor changes applied to enhance the
     multi-files cluster image rendering).
 
-3.  **mashuoa/hitmap:shiny\_server** contains the developing graphical
+3.  **mashuoa/hitmap:shiny_server** contains the developing graphical
     user interface of HiTMaP. Please map the 3838 port to the container
     and access the GUI via <http://localhost:3838/>. We are happy to
     hear your voice regarding the High-RES IMS pre-processing,
@@ -94,14 +112,14 @@ Tags of available docker images:
 
 4.  We are able to supply a singularity template to the users who want
     to deploy the HiTMaP on an HPC server. This scripts also are
-    available at the MASHUOA/hitmap\_docker.
+    available at the MASHUOA/hitmap_docker.
 
 Setting up and running the docker container:
 
 ``` bash
 # For windows user's, run the image with a local user\Documents\expdata folder mapped to the docker container:
 docker run --name hitmap -v %userprofile%\Documents\expdata:/root/expdata -a stdin -a stdout -i -t mashuoa/hitmap /bin/bash 
-
+docker run --name hitmap_r411 -v %userprofile%\Documents\expdata:/root/expdata -a stdin -a stdout -i -t mashuoa/hitmap:base_R411 /bin/bash
 # For linux or mac user's, run the image with a local user/expdata folder mapped to the docker container:
 docker run --name hitmap -v ~/expdata:/root/expdata -a stdin -a stdout -i -t mashuoa/hitmap /bin/bash 
 
@@ -120,7 +138,7 @@ docker container exec -it hitmap /bin/bash
 ```
 
 Stop/remove docker container (warning: if no local disk is mapped to
-“\~/expdata,” please backup your existing result files from the
+“\~/expdata”, please backup your existing result files from the
 container before you remove it):
 
 ``` bash
@@ -130,8 +148,8 @@ docker rm hitmap
 
 If you are using docker GUI, pull the docker image using the codes above
 and follow the image as below to setup the container. if you are using
-**mashuoa/hitmap:shiny\_server**, please also map local host:3838 to the
-container (Ports -&gt; local hosts -&gt; 3838).
+**mashuoa/hitmap:shiny_server**, please also map local host:3838 to the
+container (Ports -\> local hosts -\> 3838).
 
 ![Docker GUI setting](Resource/docker_gui_setting.png)
 
@@ -231,7 +249,7 @@ FT-ICR mass spectromety. With the following code, you can download these
 raw data set into a local folder.
 
 You can download the example data manually through this link:
-“<https://github.com/MASHUOA/HiTMaP/releases/download/1.0/Data.tar.gz>”
+“<https://github.com/MASHUOA/HiTMaP/releases/download/1.0.1/Data.tar.gz>”
 
 Or download the files in a R console:
 
@@ -256,8 +274,8 @@ list.dirs()
 
 The example data contains three folders for three individual IMS
 datasets, which each contain a configuration file, and the fasta
-database, respectively: *“./Bovinlens\_Trypsin\_FT”*
-*“./MouseBrain\_Trypsin\_FT”* *“./Peptide\_calibrants\_FT”*
+database, respectively: *“./Bovinlens_Trypsin_FT”*
+*“./MouseBrain_Trypsin_FT”* *“./Peptide_calibrants_FT”*
 
 An Tiny version of data set is also available by using the code below:
 
@@ -283,9 +301,9 @@ original data:
 
 2.  pixel range:
 
-x &lt;= 20%, y &gt;= 80% (Bovinlens)
+x \<= 20%, y \>= 80% (Bovinlens)
 
-x &lt;= 30%, y &lt;= 20% (MouseBrain)
+x \<= 30%, y \<= 20% (MouseBrain)
 
 # Proteomics identification on maldi-imaging dataset
 
@@ -391,7 +409,7 @@ list.dirs(wd, recursive=FALSE)
     -   the identification summary of protein and peptides across all
         the data
     -   the candidate list of all possible proteins and peptides (if
-        *use\_previous\_candidates* is set as **TRUE**)
+        *use_previous_candidates* is set as **TRUE**)
     -   the Cluster imaging files of the protein of interest
     -   the database stats result for resolution-based candidates
         binning (optional)
@@ -402,31 +420,25 @@ To plot the MALDI-image peptide and protein images, use the following
 functions:
 
 To check the segmentation result over the sample, you need to navigate
-to each data file ID folder and find the
-“spatialKMeans\_image\_plot.png” (if you are using the spatial K-means
-method for segmentation.)
+to each data file ID folder and find the “spatialKMeans_image_plot.png”
+(if you are using the spatial K-means method for segmentation.)
 
 ``` r
 library(magick)
-```
-
-    ## Linking to ImageMagick 6.9.11.57
-    ## Enabled features: cairo, freetype, fftw, ghostscript, heic, lcms, pango, raw, rsvg, webp
-    ## Disabled features: fontconfig, x11
-
-``` r
 p<-image_read(paste0(wd,datafile," ID/spatialKMeans_image_plot.png"))
 print(p)
 ```
 
+    ## # A tibble: 1 x 7
     ##   format width height colorspace matte filesize density
-    ## 1    PNG  1024   2640       sRGB FALSE    30726   72x72
+    ##   <chr>  <int>  <int> <chr>      <lgl>    <int> <chr>  
+    ## 1 PNG     1024   2640 sRGB       FALSE    30726 72x72
 
-<img src="README_files/figure-gfm/VisulazeKmean-1.png" width="1024" />
+![](README_files/figure-gfm/VisulazeKmean-1.png)<!-- -->
 
 The pixels in image data now has been categorized into four regions
 according to the initial setting of segmentation
-(*spectra\_segments\_per\_file=5*). The rainbow shaped bovine lens
+(*spectra_segments_per_file=5*). The rainbow shaped bovine lens
 segmentation image (on the left panel) shows a unique statistical
 classification based on the mz features of each region (on the right
 panel).
@@ -538,17 +550,17 @@ head(protein_pmf_result)
 **Score** in peptide result table shows the isotopic pattern matching
 score of the peptide (Pepscore). In Protein result table, it shows the
 protein score (Proscore). The ‘Pepscore’ consist of two parts:
-Intensity\_Score and Mass\_error\_Score:
+Intensity_Score and Mass_error_Score:
 
--   Intensity\_Score indicates how well a putative isotopic pattern can
+-   Intensity_Score indicates how well a putative isotopic pattern can
     be matched to the observed spectrum.The default scoring method is
     SQRTP. It combines the ‘square root mean’ differences between
     observed and theoretical peaks and observed proportion of the
     isotopic peaks above a certain relative intensity threshold.
 
--   Mass\_error\_Score indicates the summary of mass error (in *ppm*)
-    for every detected isotopic peak. In order to integrate the
-    Mass\_error\_Score in to scoring system, the mean ppm error has been
+-   Mass_error_Score indicates the summary of mass error (in *ppm*) for
+    every detected isotopic peak. In order to integrate the
+    Mass_error_Score in to scoring system, the mean ppm error has been
     normalized by ppm tolerance, and supplied to the probability normal
     distributions (*pnorm* function for R). The resulting value
     (quantiles of the given probability density) is deducted by 0.5 and
@@ -564,7 +576,7 @@ Intensity\_Score and Mass\_error\_Score:
 the protein identification Accuracy.
 <img src="https://render.githubusercontent.com/render/math?math=%24Proscore%3D%5Cfrac%7B%5Csum_%7Bx%20%3D%201%7D%5E%7Bn%7D(Pepscore_x*log(Intensity_x))%7D%7Bmean(log(Intensity))%7D*Protein%5C_coverage*Normalized%5C_intensity%5C_factor%24"/>
 
-A *Peptide\_region\_file.csv* has also been created to summarise all the
+A *Peptide_region_file.csv* has also been created to summarise all the
 IDs in this data file:
 
 ``` r
@@ -645,9 +657,9 @@ dir(paste0(wd,datafile," ID/1/"), recursive=FALSE)
 In this folder, you will find the FDR plots for protein and peptide
 annotation. The software will take the proscore and its FDR model to
 trim the final identification results. The
-*unique\_peptide\_ranking\_vs\_mz\_feature.png* is a plot that could
-tell you the number of peptide candidates that have been matched to the
-mz features in the first round run. You can also access the peptide
+*unique_peptide_ranking_vs_mz_feature.png* is a plot that could tell you
+the number of peptide candidates that have been matched to the mz
+features in the first round run. You can also access the peptide
 spectrum match (first MS dimension) data via the “/ppm” subfolder.
 
 ``` r
@@ -660,12 +672,14 @@ p_combined<-image_append(c(p_FDR_peptide,p_FDR_peptide_his,p_FDR_protein,p_FDR_p
 print(p_combined)
 ```
 
+    ## # A tibble: 1 x 7
     ##   format width height colorspace matte filesize density
-    ## 1    PNG  1920    480       sRGB FALSE        0   72x72
+    ##   <chr>  <int>  <int> <chr>      <lgl>    <int> <chr>  
+    ## 1 PNG     1920    480 sRGB       FALSE        0 72x72
 
-<img src="README_files/figure-gfm/FDR plot-1.png" width="1920" />
+![](README_files/figure-gfm/FDR%20plot-1.png)<!-- -->
 
-You will also find a *Matching\_Score\_vs\_mz* plot for further
+You will also find a *Matching_Score_vs_mz* plot for further
 investigation on peptide matching quality.
 
 ``` r
@@ -675,10 +689,12 @@ p_Matching_Score_vs_mz<-image_read(paste0(wd,datafile," ID/3/Matching_Score_vs_m
 print(p_Matching_Score_vs_mz)
 ```
 
+    ## # A tibble: 1 x 7
     ##   format width height colorspace matte filesize density
-    ## 1    PNG   480    480       sRGB FALSE    47438   72x72
+    ##   <chr>  <int>  <int> <chr>      <lgl>    <int> <chr>  
+    ## 1 PNG      480    480 sRGB       FALSE    47438 72x72
 
-<img src="README_files/figure-gfm/p_Matching_Score_vs_mz plot-1.png" width="480" />
+![](README_files/figure-gfm/p_Matching_Score_vs_mz%20plot-1.png)<!-- -->
 
 # Identification summary and cluster imaging
 
@@ -694,32 +710,32 @@ dir(wd_sum)
     ## [3] "Peptide_Summary.csv"              "Protein_feature_list_trimmed.csv"
     ## [5] "protein_index.csv"                "Protein_Summary.csv"
 
-“candidatelist.csv” and “protein\_index.csv” contains the candidates
-used for this analysis. They are output after the candidate processing
-while *output\_candidatelist* set as TRUE, and can be used repeatedly
-while *use\_previous\_candidates* set as TRUE.
+“candidatelist.csv” and “protein_index.csv” contains the candidates used
+for this analysis. They are output after the candidate processing while
+*output_candidatelist* set as TRUE, and can be used repeatedly while
+*use_previous_candidates* set as TRUE.
 
 We have implemented a functionality to perform additional statistical
 analysis around the number of enzymatically generated peptides derived
 from a given proteome database. If the user sets the argument
-‘Database\_stats’ to TRUE in the main workflow, the function will be
+‘Database_stats’ to TRUE in the main workflow, the function will be
 called. Briefly, the function will list all of the m/z’s of a unique
 formulae from the peptide candidate pool within a given m/z range. The
 m/z’s will then be binned using three tolerance window: 1 ppm, 2 ppm and
 5 ppm. A plot showing the number of unique formulae vs. m/z bins will be
-generated and exported to the summary folder (DB\_stats\_mz\_bin).
+generated and exported to the summary folder (DB_stats_mz_bin).
 
 ![Proteome database stats](Resource/DB_stats_bin_mz_ppm.png)
 
-“Peptide\_Summary.csv” and “Protein\_Summary.csv” contains the table of
+“Peptide_Summary.csv” and “Protein_Summary.csv” contains the table of
 the project identification summary. You could set the
-*plot\_cluster\_image\_grid* as TRUE to enable the cluster imaging
-function. Please be noted that you could indicate *Rotate\_IMG* with a
+*plot_cluster_image_grid* as TRUE to enable the cluster imaging
+function. Please be noted that you could indicate *Rotate_IMG* with a
 CSV file path that indicates the rotation degree of image files.
 
 **Note**: 90°, 180° and 270° are recommended for image rotation. You may
 find an example CSV file in the
-*expdata/MouseBrain\_Trypsin\_FT/file\_rotationbk.csv*.
+*expdata/MouseBrain_Trypsin_FT/file_rotationbk.csv*.
 
 ``` r
 library(dplyr)
@@ -752,10 +768,10 @@ Myelin basic protein
 ## Modification
 
 You can choose one or a list of modifications from the unimod
-modification list. *Peptide\_modification* function is used to
+modification list. *Peptide_modification* function is used to
 load/rebuild the modification database into the global enviornment of R.
 It will be called automatically in the identification work flow. you can
-use the *code\_name* or *record\_id* to refer the modification (see
+use the *code_name* or *record_id* to refer the modification (see
 example data “peptide calibrants” to find more details). The pipeline
 will select the *non-hidden* modifications.
 
@@ -810,19 +826,19 @@ unimod.df[["positions"]]
 
 ## Amino acid substitution
 
-You can set the *Substitute\_AA* to make the uncommon amino acid
+You can set the *Substitute_AA* to make the uncommon amino acid
 available to the workflow:
-*Substitute\_AA=list(AA=c(“X”),AA\_new\_formula=c(“C5H5NO2”),Formula\_with\_water=c(FALSE))*
+*Substitute_AA=list(AA=c(“X”),AA_new_formula=c(“C5H5NO2”),Formula_with_water=c(FALSE))*
 
 -   AA: the single letter amino acid to be replaced
--   AA\_new\_formula: the new formula for the amino acid
--   Formula\_with\_water: Set *TRUE* to indicate the formula represents
+-   AA_new_formula: the new formula for the amino acid
+-   Formula_with_water: Set *TRUE* to indicate the formula represents
     the intact amino acid, *FALSE* to indicate that the formula already
     lost one H2O molecule and can be considered as AA backbone.
 
 ## Digestion site and enzyme
 
-The *Digestion\_site* allows you to specify a list of pre-defined enzyme
+The *Digestion_site* allows you to specify a list of pre-defined enzyme
 and customized digestion rules in regular expression format. You can
 either use the enzyme name, customized cleavage rule or combination of
 them to get the enzymatics peptides list.
@@ -1028,39 +1044,35 @@ using HIT-MAP” online on the 28th May 2021.
 sessionInfo()
 ```
 
-    ## R version 4.1.0 (2021-05-18)
+    ## R version 4.1.3 (2022-03-10)
     ## Platform: x86_64-w64-mingw32/x64 (64-bit)
-    ## Running under: Windows 10 x64 (build 19042)
+    ## Running under: Windows 10 x64 (build 19044)
     ## 
     ## Matrix products: default
     ## 
     ## locale:
-    ## [1] LC_COLLATE=Chinese (Simplified)_China.936 
-    ## [2] LC_CTYPE=Chinese (Simplified)_China.936   
-    ## [3] LC_MONETARY=Chinese (Simplified)_China.936
-    ## [4] LC_NUMERIC=C                              
-    ## [5] LC_TIME=Chinese (Simplified)_China.936    
-    ## system code page: 1252
+    ## [1] LC_COLLATE=English_Australia.1252  LC_CTYPE=English_Australia.1252   
+    ## [3] LC_MONETARY=English_Australia.1252 LC_NUMERIC=C                      
+    ## [5] LC_TIME=English_Australia.1252    
     ## 
     ## attached base packages:
     ## [1] grid      stats     graphics  grDevices utils     datasets  methods  
     ## [8] base     
     ## 
     ## other attached packages:
-    ## [1] gridExtra_2.3 XML_3.99-0.7  protViz_0.6.8 dplyr_1.0.7   magick_2.7.3 
+    ## [1] gridExtra_2.3 XML_3.99-0.10 protViz_0.7.3 dplyr_1.0.9   magick_2.7.3 
     ## [6] HiTMaP_1.0.0 
     ## 
     ## loaded via a namespace (and not attached):
-    ##  [1] Rcpp_1.0.7       highr_0.9        pillar_1.6.3     compiler_4.1.0  
-    ##  [5] tools_4.1.0      digest_0.6.27    evaluate_0.14    lifecycle_1.0.1 
-    ##  [9] tibble_3.1.4     gtable_0.3.0     pkgconfig_2.0.3  png_0.1-7       
-    ## [13] rlang_0.4.11     DBI_1.1.1        cli_3.0.1        rstudioapi_0.13 
-    ## [17] yaml_2.2.1       xfun_0.25        fastmap_1.1.0    stringr_1.4.0   
-    ## [21] knitr_1.34       generics_0.1.0   vctrs_0.3.8      tidyselect_1.1.1
-    ## [25] glue_1.4.2       R6_2.5.1         fansi_0.5.0      rmarkdown_2.11  
-    ## [29] purrr_0.3.4      magrittr_2.0.1   codetools_0.2-18 ellipsis_0.3.2  
-    ## [33] htmltools_0.5.2  assertthat_0.2.1 utf8_1.2.2       stringi_1.7.4   
-    ## [37] crayon_1.4.1
+    ##  [1] Rcpp_1.0.9       pillar_1.8.0     compiler_4.1.3   highr_0.9       
+    ##  [5] tools_4.1.3      digest_0.6.29    evaluate_0.15    lifecycle_1.0.1 
+    ##  [9] tibble_3.1.8     gtable_0.3.0     pkgconfig_2.0.3  png_0.1-7       
+    ## [13] rlang_1.0.4      cli_3.3.0        DBI_1.1.3        rstudioapi_0.13 
+    ## [17] yaml_2.3.5       xfun_0.31        fastmap_1.1.0    stringr_1.4.0   
+    ## [21] knitr_1.39       generics_0.1.3   vctrs_0.4.1      tidyselect_1.1.2
+    ## [25] glue_1.6.2       R6_2.5.1         fansi_1.0.3      rmarkdown_2.14  
+    ## [29] purrr_0.3.4      magrittr_2.0.3   codetools_0.2-18 htmltools_0.5.3 
+    ## [33] assertthat_0.2.1 utf8_1.2.2       stringi_1.7.8
 
 End of the tutorial, Enjoy\~
 
