@@ -48,7 +48,10 @@ cluster_image_grid<-function(clusterID,
    suppressMessages(suppressWarnings(require(grid)))
    suppressMessages(suppressWarnings(require(plotly)))
    suppressMessages(suppressWarnings(require(dplyr)))
-   suppressMessages(suppressWarnings(require(colortools)))
+   suppressMessages(suppressWarnings(if(!require(colortools)) {
+     library(devtools)
+     install_github('gastonstat/colortools')
+   }))
    suppressMessages(suppressWarnings(require(data.table)))
    suppressMessages(suppressWarnings(require(Cardinal)))
   #rotate the image
@@ -84,12 +87,12 @@ cluster_image_grid<-function(clusterID,
     cluster_desc<-unique(candidate$desc)[1]
   }
   if (length(candidateunique)>4){
-
+ 
     mycol=setColors("red", length(candidateunique))#wheel("red", num = length(candidateunique),bg = "white")
   } else if (length(candidateunique)==4){
-    tmp_cols = setColors("red", 12)
-    tetrad_colors <- tmp_cols[c(1, 3, 7, 9)]
-    mycol=tetrad_colors
+    #tmp_cols = setColors("red", 12)
+    #tetrad_colors <- tmp_cols[c(1, 3, 7, 9)]
+    mycol=c("#FF0000", "#FFFF00", "#00FFFF", "#0000FF")
     #mycol=c("#FF0000", "#00FF00", "#0000FF")
   } else if (length(candidateunique)==3){
     #mycol=splitComp("red")
@@ -201,6 +204,7 @@ cluster_image_grid<-function(clusterID,
         #pngfile<-image_trim(pngfile)
         #image_write(pngfile,outputpngsum)
 
+        
 
       }
       else if(plot_style=="fleximaging"){

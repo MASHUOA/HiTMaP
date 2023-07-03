@@ -15,7 +15,7 @@ Encoding: UTF-8
 Packaged:
 BugReports:
 Imports:
-    pryr,colortools,pacman,purrr,lattice,pls,
+    pryr,pacman,purrr,lattice,pls,
     RColorBrewer,magick,ggplot2,reticulate,
     dplyr,stringr,data.table,doParallel,
     iterators,foreach,protViz,cleaver,

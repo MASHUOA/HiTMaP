@@ -141,6 +141,7 @@ install.packages("devtools")
 library(remotes)
 Sys.setenv("R_REMOTES_NO_ERRORS_FROM_WARNINGS" = "true")
 remotes::install_github("MASHUOA/HiTMaP",force=T)
+remotes::install_github("kuwisdelu/Cardinal",force=T)
 3
 no
 #Update all dependencies

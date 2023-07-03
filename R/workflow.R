@@ -140,7 +140,7 @@ imaging_identification<-function(
                ...
                ){
   suppressMessages(suppressWarnings(library("pacman")))
-  suppressMessages(suppressWarnings(p_load(stringr,BiocParallel,data.table,Cardinal)))
+  suppressMessages(suppressWarnings(p_load(stringr,BiocParallel,data.table,Cardinal,parallel)))
 
   if (missing(datafile)) stop("Missing data file, Choose single or multiple imzml file(s) for analysis")
   

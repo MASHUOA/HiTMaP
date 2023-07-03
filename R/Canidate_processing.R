@@ -153,6 +153,7 @@ Meta_feature_list_fun<-function(database,
   return(Meta_Summary)                
   
 }
+
 #' Protein_feature_list_fun
 #'
 #' This is a function that prepare the candiate list for maldi imaging data qualitative or quantitative analysis.
