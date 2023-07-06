@@ -691,7 +691,7 @@ IMS_data_process<-function(datafile,
    #Do first round of peptide search to get putative result
     mz_feature_list<-Do_PMF_search(peaklist_pmf,Peptide_Summary_searchlist,BPPARAM=BPPARAM,ppm = ppm)
     mz_feature_list<-unique(mz_feature_list)
-    message("Iterating peptide information...")
+    message("Summarizing peptide information...")
     Peptide_Summary_searchlist<-as.data.table(Peptide_Summary_searchlist)
     mz_feature_list<-as.data.table(mz_feature_list)
     Peptide_Summary_searchlist$Intensity<-NULL

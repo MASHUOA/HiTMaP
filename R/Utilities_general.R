@@ -365,3 +365,11 @@ resolve_multi_modes<-function(mm,adjust=0.25){
   modes<-get.modes2(mm,adjust=adjust,2,min(mm)-1,max(mm)+1)
   return(list(p=p,modes=modes))
 }
+
+topN_feature<-function (vec, n, dec = T) 
+{
+  inx <- order(vec, decreasing = dec)[1:n]
+  vec <- rep(F, length = length(vec))
+  vec[inx] <- T
+  return(vec)
+}

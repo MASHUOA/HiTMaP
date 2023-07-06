@@ -193,7 +193,7 @@ remove_pep_score_outlier<-function(SMPLIST,IQR_LB=0.75,outputdir=getwd(),abs_cut
   return(SMPLIST[SMPLIST$mz %in% SMPLIST_bin_quantile$mz,])
 }
 
-SCORE_PMF<-function(formula,peaklist,isotopes=NULL,threshold=1,charge=1,ppm=5,print.graphic=F,output.list=F,outputfile=NULL,score_method="SQRTP",similarity_plot_res=72,anno_info="",isolabel="Normal"){
+SCORE_PMF<-function(formula,peaklist,isotopes=NULL,threshold=1,charge=1,ppm=5,print.graphic=F,output.list=F,outputfile=NULL,score_method="SQRTP",similarity_plot_res=72,anno_info="",isolabel="Normal",output_monomz=F){
   suppressMessages(suppressWarnings(require(rcdk)))
   suppressMessages(suppressWarnings(require(rcdklibs)))
   suppressMessages(suppressWarnings(require(OrgMassSpecR)))
@@ -256,6 +256,7 @@ SCORE_PMF<-function(formula,peaklist,isotopes=NULL,threshold=1,charge=1,ppm=5,pr
       similarity_score=-log(sum(abs(score))/length(score))
 
     }    else if (score_method=="Equal-intensity-SQRT"){
+      u <- alignment[,2]; v <- alignment[,3]
       similarity_score <- as.vector((u %*% v) * length(v) / (sqrt(sum(u^2)) * sqrt(sum(v^2))*log(Peak_intensity)) )
     }    else if (score_method=="Mix-SQRT"){
 
@@ -321,8 +322,8 @@ SCORE_PMF<-function(formula,peaklist,isotopes=NULL,threshold=1,charge=1,ppm=5,pr
       }
       dev.off()
     }
-
-    if (abs(similarity_score)==Inf) similarity_score = 0
+    
+    if ('|'(abs(similarity_score)==Inf,is.nan(similarity_score))) similarity_score = 0
 
     if(output.list == FALSE) {
 
@@ -960,7 +961,7 @@ FDR_cutoff_plot<-function(Peptide_plot_list,FDR_cutoff=0.1,FDR_strip=500,plot_fd
 
 }
 
-plot_matching_score<-function(Peptide_plot_list,peaklist,charge,ppm,outputdir=getwd(),filename_col=c("formula","adduct"),anno_col=filename_col,isotopes="default",similarity_plot_res = 72){
+plot_cpd_matching_score<-function(Peptide_plot_list,peaklist,charge,ppm,outputdir=getwd(),filename_col=c("formula","adduct"),anno_col=filename_col,isotopes="default",similarity_plot_res = 72){
   if (ppm>=25) {
     instrument_ppm=50
   }else{
@@ -970,7 +971,7 @@ plot_matching_score<-function(Peptide_plot_list,peaklist,charge,ppm,outputdir=ge
   suppressMessages(suppressWarnings(require(enviPat)))
   suppressMessages(suppressWarnings(require(dplyr)))
   Peptide_plot_list=data_test_rename(unique(c("formula","isdecoy","adduct",filename_col,anno_col)),Peptide_plot_list)
-  if(isotopes=="default") data("isotopes")
+  if(unlist(isotopes)[1]=="default") data("isotopes")
   decoy_isotopes=isotopes
   decoy_isotopes[decoy_isotopes$isotope=="13C",]=data.frame(element="C",isotope="11C",mass=10.99664516,abundance=0.0107,ratioC=0,stringsAsFactors = F)
   #decoy_isotopes_N=isotopes
@@ -985,7 +986,7 @@ plot_matching_score<-function(Peptide_plot_list,peaklist,charge,ppm,outputdir=ge
   if (dir.exists(outputdir)==FALSE){dir.create(outputdir)}
   #Peptide_plot_list1=Peptide_plot_list
   Peptide_plot_list=Peptide_plot_list[!is.na(Peptide_plot_list$Intensity),]
-  Peptide_plot_list=Peptide_plot_list %>% group_by(.dots = unique(c("formula","isdecoy","adduct",filename_col,anno_col))) %>% summarise(Peptide=paste(Peptide,collapse = "_"))
+  Peptide_plot_list=Peptide_plot_list %>% group_by(.dots = unique(c("formula","isdecoy","adduct",filename_col,anno_col))) %>% summarise(Metabolite.Name=paste(Metabolite.Name,collapse = "_"))
   
   if(nrow(Peptide_plot_list)!=0){
     Peptide_plot_list_score<-NULL
@@ -1027,6 +1028,76 @@ plot_matching_score<-function(Peptide_plot_list,peaklist,charge,ppm,outputdir=ge
   
   
 }
+
+plot_matching_score<-function(Peptide_plot_list,peaklist,charge,ppm,outputdir=getwd(),filename_col=c("formula","adduct"),anno_col=filename_col,isotopes="default",similarity_plot_res = 72){
+  if (ppm>=25) {
+    instrument_ppm=50
+  }else{
+    instrument_ppm=8
+  }
+  message("plot matching isotopic pattern")
+  suppressMessages(suppressWarnings(require(enviPat)))
+  suppressMessages(suppressWarnings(require(dplyr)))
+  Peptide_plot_list=data_test_rename(unique(c("formula","isdecoy","adduct",filename_col,anno_col)),Peptide_plot_list)
+  if(unlist(isotopes)[1]=="default") data("isotopes")
+  decoy_isotopes=isotopes
+  decoy_isotopes[decoy_isotopes$isotope=="13C",]=data.frame(element="C",isotope="11C",mass=10.99664516,abundance=0.0107,ratioC=0,stringsAsFactors = F)
+  #decoy_isotopes_N=isotopes
+  decoy_isotopes[decoy_isotopes$isotope=="15N",]=data.frame(element="N",isotope="13N",mass=13.00603905,abundance=0.00364000,ratioC=4,stringsAsFactors = F)
+  decoy_isotopes[decoy_isotopes$isotope=="2H",]=data.frame(element="H",isotope="0H",mass=0.001548286,abundance=0.00011500,ratioC=6,stringsAsFactors = F)
+  decoy_isotopes[decoy_isotopes$isotope=="17O",]=data.frame(element="O",isotope="15O",mass=14.99069774,abundance=0.00038000,ratioC=3,stringsAsFactors = F)
+  decoy_isotopes[decoy_isotopes$isotope=="18O",]=data.frame(element="O",isotope="14O",mass=13.99066884,abundance=0.00205000,ratioC=3,stringsAsFactors = F)
+  decoy_isotopes[decoy_isotopes$isotope=="33S",]=data.frame(element="S",isotope="31S",mass=30.97268292,abundance=0.0075,ratioC=3,stringsAsFactors = F)
+  decoy_isotopes[decoy_isotopes$isotope=="34S",]=data.frame(element="S",isotope="30S",mass=29.9762745,abundance=0.0425,ratioC=3,stringsAsFactors = F)
+  decoy_isotopes[decoy_isotopes$isotope=="35S",]=data.frame(element="S",isotope="29S",mass=28.94414146,abundance=0,ratioC=3,stringsAsFactors = F)
+  decoy_isotopes[decoy_isotopes$isotope=="36S",]=data.frame(element="S",isotope="28S",mass=27.97706058,abundance=0.0001,ratioC=3,stringsAsFactors = F)
+  if (dir.exists(outputdir)==FALSE){dir.create(outputdir)}
+  #Peptide_plot_list1=Peptide_plot_list
+  Peptide_plot_list=Peptide_plot_list[!is.na(Peptide_plot_list$Intensity),]
+  Peptide_plot_list=Peptide_plot_list %>% group_by(.dots = unique(c("formula","isdecoy","adduct",filename_col,anno_col))) %>% summarise(Peptide=paste(Peptide,collapse = "_"))
+  
+  if(nrow(Peptide_plot_list)!=0){
+    Peptide_plot_list_score<-NULL
+    for (i in 1:nrow(Peptide_plot_list)){
+      if ("Isotype" %in% anno_col){
+        anno_info=paste(Peptide_plot_list[i,anno_col[anno_col!="Isotype"]],collapse = "\n")
+        isolabel=Peptide_plot_list[i,"Isotype"]
+      }else{
+        anno_info=paste(Peptide_plot_list[i,anno_col],collapse = "\n") 
+        isolabel="Normal"
+      }
+      
+      #anno_info=stringr::str_replace_all(anno_info,";","\n")
+      if(Peptide_plot_list$isdecoy[i]==0){
+        Peptide_plot_list_score[i]<-try(SCORE_PMF(Peptide_plot_list$formula[i],
+                                                  peaklist,isotopes=isotopes,
+                                                  charge=charge,ppm=ppm,isolabel=isolabel,
+                                                  print.graphic=T,output.list=F,
+                                                  outputfile=paste0(outputdir,"/",paste(Peptide_plot_list[i,filename_col],collapse = "_"),"_target",".png"),
+                                                  similarity_plot_res = similarity_plot_res,
+                                                  anno_info=anno_info))
+        
+        
+      }else{
+        Peptide_plot_list_score[i]<-try(SCORE_PMF(Peptide_plot_list$formula[i],
+                                                  peaklist,isotopes=decoy_isotopes,
+                                                  charge=charge,ppm=ppm,isolabel=isolabel,
+                                                  print.graphic=T,output.list=F,
+                                                  outputfile=paste0(outputdir,"/",
+                                                                    paste(Peptide_plot_list[i,filename_col],collapse = "_"),"_decoy",".png"),
+                                                  similarity_plot_res = similarity_plot_res,
+                                                  anno_info=anno_info))
+      }
+    }
+    Peptide_plot_list$Score<-Peptide_plot_list_score
+    return(Peptide_plot_list)
+  }
+  
+  
+  
+}
+
+
 protein_scoring<-function(Protein_feature_list,
                           Peptide_plot_list_rank,
                           scoretype=c("median","sum","mean"),
