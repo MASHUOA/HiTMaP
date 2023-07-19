@@ -323,7 +323,7 @@ SCORE_PMF<-function(formula,peaklist,isotopes=NULL,threshold=1,charge=1,ppm=5,pr
       dev.off()
     }
     
-    if ('|'(abs(similarity_score)==Inf,is.nan(similarity_score))) similarity_score = 0
+    if (sum(abs(similarity_score)==Inf,is.nan(similarity_score),is.na(similarity_score),na.rm = T)) similarity_score = 0
 
     if(output.list == FALSE) {
 

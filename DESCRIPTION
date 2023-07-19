@@ -24,7 +24,7 @@ Imports:
     EBImage,BiocParallel,BiocGenerics,parallel,
     stats,graphics,grDevices,utils,
     datasets,methods,Rdisop,Rcpp,
-    pacman,devtools,fs,processx,S4Vectors,
+    pacman,fs,processx,S4Vectors,
     spdep,zoo,KEGGREST,OrgMassSpecR,
     enviPat,rgl,multtest,XML,
     BiocManager,

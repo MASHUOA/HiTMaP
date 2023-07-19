@@ -281,6 +281,7 @@ Cpd_spectrum_match_rescore<-function(cpd_list,peaklist,wd=getwd(),
   }  
   cpd_list_rank$mz=as.numeric(as.character(cpd_list_rank$mz))
   cpd_list_2nd$mz=as.numeric(as.character(cpd_list_2nd$mz))
+  cpd_list_2nd<-cpd_list_2nd[cpd_list_2nd$isdecoy==0,]
   write.csv(cpd_list_2nd,paste0(wd,"/",SPECTRUM_batch,"/","CPD_2nd_ID_score_rank_",score_method,".csv"),row.names = F)
 
   #Plot peptide matching spectrum and score 
@@ -1007,8 +1008,8 @@ SCORE_CPD<-function(formula,peaklist,isotopes=NULL,threshold=0.001,charge=1,ppm=
       }
       dev.off()
     }
-    
-    if ('|'(abs(similarity_score)==Inf,is.nan(similarity_score))) similarity_score = 0
+
+    if (sum(abs(similarity_score)==Inf,is.nan(similarity_score),is.na(similarity_score),na.rm = T)) similarity_score = 0
     
     if(output.list == FALSE) {
       
