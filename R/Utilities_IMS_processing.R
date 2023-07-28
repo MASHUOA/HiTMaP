@@ -1364,8 +1364,8 @@ Preprocessing_segmentation<-function(datafile,
           peaklist_deco<-peaklist_deco[peaklist_deco$intensities>0,]
           write.csv(peaklist_deco,paste0(gsub(".imzML$","",datafile[z])  ," ID/Sum_spec.csv"),row.names = F)
           
-          peaklist_deco<-HiTMaP:::isopattern_ppm_filter_peaklist(peaklist_deco,ppm=ppm,threshold=0)
-          write.csv(peaklist_deco,paste0(gsub(".imzML$","",datafile[z])  ," ID/Sum_spec_decov.csv"),row.names = F)
+          #peaklist_deco<-HiTMaP:::isopattern_ppm_filter_peaklist(peaklist_deco,ppm=ppm,threshold=0)
+          #write.csv(peaklist_deco,paste0(gsub(".imzML$","",datafile[z])  ," ID/Sum_spec_decov.csv"),row.names = F)
           
           
           
@@ -1374,8 +1374,8 @@ Preprocessing_segmentation<-function(datafile,
           setCardinalBPPARAM(BPPARAM)
           #smoothSignal(method="gaussian") %>%
           #reduceBaseline(method="locmin") %>%
-          if (!is.null(mz_bin_list)){
-            mz_bin_list->mz_bin_list_s
+          if (!is.null(preprocess$mz_bin_list)){
+            preprocess$mz_bin_list->mz_bin_list_s
             sort(as.numeric(unlist(mz_bin_list_s)))->ref_mz
             peaklist_deco<-data.frame(mz=ref_mz,intensities=rep(1,length(ref_mz)))
             peaklist_deco<-HiTMaP:::isopattern_ppm_filter_peaklist(peaklist_deco,ppm=ppm,threshold=0)
@@ -1387,6 +1387,8 @@ Preprocessing_segmentation<-function(datafile,
             ref_mz<-unique(ref_mz)
             ref_mz<-ref_mz[!is.na(ref_mz)]
             imdata_ed<-imdata_ed %>% mzBin(ref=ref_mz, tolerance=ppm, units="ppm") %>% process()
+            write.csv(peaklist_deco,paste0(gsub(".imzML$","",datafile[z])  ," ID/Sum_spec_decov.csv"),row.names = F)
+            
           }else{
             
           if (preprocess$smoothSignal$method=="Disable") {
@@ -1408,6 +1410,11 @@ Preprocessing_segmentation<-function(datafile,
             imdata_ed<- imdata_ed %>% peakPick(method=preprocess$peakPick$method, window=4) %>% process()
           }else if (preprocess$peakPick$method == "Default|default"){
             #add an peak picking function other than the Cardinal options.
+            peaklist<-summarizeFeatures(imdata_ed,"sum", as="DataFrame")
+            peaklist_deco<-data.frame(mz=peaklist@mz,intensities=peaklist$sum)
+            peaklist_deco<-peaklist_deco[peaklist_deco$intensities>0,]
+            peaklist_deco<-HiTMaP:::isopattern_ppm_filter_peaklist(peaklist_deco,ppm=ppm,threshold=0)
+            write.csv(peaklist_deco,paste0(gsub(".imzML$","",datafile[z])  ," ID/Sum_spec_decov.csv"),row.names = F)
             imdata_ed<-imdata_ed %>% peakBin(peaklist_deco$mz, tolerance=ppm, units="ppm") %>% process()
           }
             
@@ -1422,9 +1429,21 @@ Preprocessing_segmentation<-function(datafile,
             }else if ('&'(!is.null(preprocess$peakAlign$tolerance),!is.null(preprocess$peakAlign$tolerance))){
               message("preprocess$peakAlign$tolerance set as ", preprocess$peakAlign$tolerance)
               imdata_ed<- imdata_ed %>% peakAlign(tolerance=preprocess$peakAlign$tolerance, units=preprocess$peakAlign$units)
+              peaklist<-summarizeFeatures(imdata_ed,"sum", as="DataFrame")
+              peaklist_deco<-data.frame(mz=peaklist@mz,intensities=peaklist$sum)
+              peaklist_deco<-peaklist_deco[peaklist_deco$intensities>0,]
+              write.csv(peaklist_deco,paste0(gsub(".imzML$","",datafile[z])  ," ID/Sum_spec.csv"),row.names = F)
+              peaklist_deco<-HiTMaP:::isopattern_ppm_filter_peaklist(peaklist_deco,ppm=ppm,threshold=0)
+              write.csv(peaklist_deco,paste0(gsub(".imzML$","",datafile[z])  ," ID/Sum_spec_decov.csv"),row.names = F)
             }else {
               message("preprocess$peakAlign$tolerance missing, use default tolerance in ppm ", ppm/2)
               imdata_ed<- imdata_ed %>% peakAlign(tolerance=ppm/2, units="ppm")
+              peaklist<-summarizeFeatures(imdata_ed,"sum", as="DataFrame")
+              peaklist_deco<-data.frame(mz=peaklist@mz,intensities=peaklist$sum)
+              peaklist_deco<-peaklist_deco[peaklist_deco$intensities>0,]
+              write.csv(peaklist_deco,paste0(gsub(".imzML$","",datafile[z])  ," ID/Sum_spec.csv"),row.names = F)
+              peaklist_deco<-HiTMaP:::isopattern_ppm_filter_peaklist(peaklist_deco,ppm=ppm,threshold=0)
+              write.csv(peaklist_deco,paste0(gsub(".imzML$","",datafile[z])  ," ID/Sum_spec_decov.csv"),row.names = F)
             }
           }
           
@@ -1516,7 +1535,7 @@ Preprocessing_segmentation<-function(datafile,
         
         saveRDS(imdata_ed,paste0(gsub(".imzML$","",datafile[z])  ," ID/preprocessed_imdata.RDS"))
       }else{
-        if (!is.null(mz_bin_list)){
+        if (!is.null(preprocess$mz_bin_list)){
           imdata_ed<-imdata
         }
         imdata_ed<-imdata
@@ -1560,6 +1579,9 @@ Preprocessing_segmentation<-function(datafile,
         imdata_ed<-imdata
       }
     }
+    
+    
+    
     #imdata_org<-imdata
     imdata<-imdata_ed
     gc()
@@ -1582,7 +1604,7 @@ Preprocessing_segmentation<-function(datafile,
           }
         }else{
           message("preprocess$peakAlign$tolerance missing, use default tolerance in ppm ", ppm/2)
-          imdata_stats<- imdata %>% peakAlign(tolerance=ppm/2, units="ppm")
+          imdata_stats <- imdata %>% peakAlign(tolerance=ppm/2, units="ppm")
         }
         if (is.null(preprocess$peakFilter$freq.min)){
           imdata_stats<-imdata_stats %>% peakFilter(freq.min=0.05) %>% process(BPPARAM = SerialParam())

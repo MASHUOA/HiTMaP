@@ -42,7 +42,7 @@ sudo iptables -I INPUT 1 -p tcp --dport 80 -j ACCEPT
 
 sudo docker stop hitmap
 sudo docker rm hitmap
-sudo docker run --name hitmap -p 80:3838 -v ~/expdata:/root/expdata -a stdin -a stdout -i -t mashuoa/hitmap:shiny_server /bin/bash 
+sudo docker run --name hitmap -p 80:3838 -v ~/expdata:/root/expdata -a stdin -a stdout -i -t mashuoa/hitmap:gui_latest_deploy /bin/bash 
 R
 library(HiTMaP)
 HiTMaP:::HiTMaP_GUI()
