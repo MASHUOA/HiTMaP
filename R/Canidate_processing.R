@@ -1999,21 +1999,21 @@ Build_adduct_list<-function(){
              ,"positive","positive","positive","positive","positive","positive","positive","negative"
              ,"negative","negative","negative","negative","negative","negative","negative","negative"
              ,"negative","positive","positive","positive","positive","positive","positive","positive"
-             ,"positive","positive")
+             ,"positive","positive","positive")
   formula_add=c("H1","N1H4","Na1","K1","FALSE","FALSE","FALSE","FALSE","C1O2H2","C2O2H4","FALSE","H3",
                 "H2Na1","H1Na2","Na3","H2","H1N1H4","H1Na1","H1K1","C2H5N1","Na2","C4H8N2","C6H11N3",
                 "C1H5O1","C2H4N1","Na2","C3H9O1","C2H3N1Na1","K2","C2H7S1O1","C4H7N2","C3H9O1Na1","H1",
                 "N1H4","Na1","H8O6","K1","C2H4N1","C2H3N1Na1","FALSE","Na1","Cl1","K1","Br1","C2F3O2H1",
-                "FALSE","C1O2H2","C2O2H4","FALSE","He","Ne","Ar","Kr","Xe","Rn","Cu","Co","Ag"
+                "FALSE","C1O2H2","C2O2H4","FALSE","He","Ne","Ar","Kr","Xe","Rn","Cu","Co","Ag","C"
   )
   formula_ded=c("FALSE","FALSE","FALSE","FALSE","FALSE","H1","H2","H3","H1","H1","FALSE","FALSE","FALSE",
                 "FALSE","FALSE","FALSE","FALSE","FALSE","FALSE","FALSE","FALSE","FALSE","FALSE","FALSE",
                 "FALSE","H1","FALSE","FALSE","H1","FALSE","FALSE","FALSE","FALSE","FALSE","FALSE","FALSE",
                 "FALSE","FALSE","FALSE","H3O1","H2","FALSE","H2","FALSE","H1","H1","H1","H1","H1","FALSE",
-                "FALSE","FALSE","FALSE","FALSE","FALSE","FALSE","FALSE","FALSE")
+                "FALSE","FALSE","FALSE","FALSE","FALSE","FALSE","FALSE","FALSE","FALSE")
   Multi=c("1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1"
           ,"1","1","1","1","1","1","1","1","2","2","2","2","2","2","2","1","1","1","1","1","1","2","2","2",
-          "3","1","1","1","1","1","1","1","1","1")
+          "3","1","1","1","1","1","1","1","1","1","1")
   adductslist<-cbind.data.frame(Name,calc,Charge,Mult,Mass,Ion_mode,formula_add,formula_ded,Multi)
   adductslist
 }
