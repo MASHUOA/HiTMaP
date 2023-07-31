@@ -436,10 +436,23 @@ Protein_feature_list_fun<-function(workdir=getwd(),
   if (!is.null(Modifications$fixed)){
     mod.df<-Peptide_modification(retrive_ID = Modifications$fixed,mod_position=Modifications$fixmod_position)
     if(length(unique(mod.df$full_name))==length(Modifications$fixed)){
-    message(paste("Fixed modifications:",unique(mod.df$full_name),"found in unimod DB",sep=" ",collapse = ", "))
+    message(paste("Fixed modifications:",paste0(unique(mod.df$full_name),collapse = "\n"),"found in unimod DB",sep=" ",collapse = ", "))
     #peptide_symbol=bplapply(mod.df,convert_peptide_fixmod,peptide_symbol,BPPARAM = BPPARAM,pep_sequence=tempdf$Peptide,ConvertPeptide=ConvertPeptide)
 
-    
+
+    }else{
+    message(paste("warning:",
+                  Modifications$fixed['&'((Modifications$fixed %in% unique(mod.df$code_name))==F , (Modifications$fixed %in% unique(mod.df$record_id) )==F)],
+                  "not found in unimod DB. Please check the unimod DB again. Any Charactor string that matches code name or number that matches mod ID will be OKAY.",sep=" ",collapse = ", "))
+    }
+    mod.df.comfirm<-mod.df[mod.df$hidden==0,]
+    mod.df.comfirm.hidden<-mod.df[!(mod.df$full_name %in% mod.df.comfirm$full_name),]
+    mod.df.comfirm.hidden_names<-mod.df$code_name[!(mod.df$full_name %in% mod.df.comfirm$full_name)]
+    for(mod.df.comfirm.hidden_name in unique(mod.df.comfirm.hidden_name)){
+      mod.df.comfirm.hidden.select<-mod.df.comfirm.hidden[mod.df.comfirm.hidden$one_letter==Modifications$one_letter[Modifications$variable==mod.df.comfirm.hidden_name],]
+      mod.df.comfirm<-rbind(mod.df.comfirm,mod.df.comfirm.hidden.select)
+    }
+    mod.df<-mod.df.comfirm    
     peptide_symbol_var=convert_peptide_fixmod(mod.df,peptide_symbol,peptide_info=tempdf,BPPARAM = BPPARAM)
     message(paste("Merge modification formula done."))
     tempdf_var<-tempdf
@@ -453,42 +466,44 @@ Protein_feature_list_fun<-function(workdir=getwd(),
     
     tempdf<-tempdf_var
     peptide_symbol<-peptide_symbol_var$peptide_symbol
-    }else{
-    message(paste("warning:",
-                  Modifications$fixed['&'((Modifications$fixed %in% unique(mod.df$code_name))==F , (Modifications$fixed %in% unique(mod.df$record_id) )==F)],
-                  "not found in unimod DB. Please check the unimod DB again. Any Charactor string that matches code name or number that matches mod ID will be OKAY.",sep=" ",collapse = ", "))
-    }
-    
   }
   
   if (!is.null(Modifications$variable)){
     mod.df<-Peptide_modification(retrive_ID = Modifications$variable,mod_position=Modifications$varmod_position)
-    if(length(unique(mod.df$full_name))==length(Modifications$variable)){
-      message(paste("variable modifications:",unique(mod.df$full_name),"found in unimod DB",sep=" ",collapse = ", "))
+    if(length(unique(mod.df$full_name))==length(unique(Modifications$variable))){
+      message(paste("variable modifications:\n",paste0(unique(mod.df$full_name),collapse = "\n"),"found in unimod DB",sep=" ",collapse = ", "))
       #peptide_symbol=bplapply(mod.df,convert_peptide_fixmod,peptide_symbol,BPPARAM = BPPARAM,pep_sequence=tempdf$Peptide,ConvertPeptide=ConvertPeptide)
-      peptide_symbol_var<-convert_peptide_fixmod(mod.df,peptide_symbol,peptide_info=tempdf,BPPARAM = BPPARAM)
-      message(paste("Merge modification formula done."))
-      tempdf_var<-tempdf
-      reserve_entry<-rep(FALSE,nrow(tempdf_var))
-      for (fixmod in mod.df$record_id){
-        mods<-ifelse(peptide_symbol_var$multiplier[[fixmod]]>=1,mod.df$code_name[mod.df$record_id==fixmod],"")
-        tempdf_var$Modification<-paste(tempdf_var$Modification,mods)
-        tempdf_var$pepmz <-tempdf_var$pepmz + peptide_symbol_var$multiplier[[fixmod]]*as.numeric(mod.df$mono_mass[mod.df$record_id==fixmod])
-        reserve_entry<-ifelse('&'(peptide_symbol_var$multiplier[[fixmod]]>=1,reserve_entry==FALSE),TRUE,reserve_entry)
-        }
-      
-      peptide_symbol_var<-peptide_symbol_var$peptide_symbol
-      s1<-peptide_symbol[reserve_entry]
-      s2<-peptide_symbol_var[reserve_entry]
-      identical(peptide_symbol_var,peptide_symbol)
-      peptide_symbol<-c(peptide_symbol,peptide_symbol_var[reserve_entry])
-      tempdf<-rbind(tempdf,tempdf_var[reserve_entry,])
+
     }else{
       message(paste("warning:",
                     Modifications$variable['&'((Modifications$variable %in% unique(mod.df$code_name))==F , (Modifications$variable %in% unique(mod.df$record_id) )==F)],
                     "not found in unimod DB. Please check the unimod DB again. Any Charactor string that matches code name or number that matches mod ID will be OKAY.",sep=" ",collapse = ", "))
     }
+    mod.df.comfirm<-mod.df[mod.df$hidden==0,]
+    mod.df.comfirm.hidden<-mod.df[!(mod.df$full_name %in% mod.df.comfirm$full_name),]
+    mod.df.comfirm.hidden_names<-mod.df$code_name[!(mod.df$full_name %in% mod.df.comfirm$full_name)]
+    for(mod.df.comfirm.hidden_name in unique(mod.df.comfirm.hidden_name)){
+      mod.df.comfirm.hidden.select<-mod.df.comfirm.hidden[mod.df.comfirm.hidden$one_letter==Modifications$one_letter[Modifications$variable==mod.df.comfirm.hidden_name],]
+      mod.df.comfirm<-rbind(mod.df.comfirm,mod.df.comfirm.hidden.select)
+    }
+    mod.df<-mod.df.comfirm
+    peptide_symbol_var<-convert_peptide_fixmod(mod.df,peptide_symbol,peptide_info=tempdf,BPPARAM = BPPARAM)
+    message(paste("Merge modification formula done."))
+    tempdf_var<-tempdf
+    reserve_entry<-rep(FALSE,nrow(tempdf_var))
+    for (fixmod in mod.df$record_id){
+      mods<-ifelse(peptide_symbol_var$multiplier[[fixmod]]>=1,mod.df$code_name[mod.df$record_id==fixmod],"")
+      tempdf_var$Modification<-paste(tempdf_var$Modification,mods)
+      tempdf_var$pepmz <-tempdf_var$pepmz + peptide_symbol_var$multiplier[[fixmod]]*as.numeric(mod.df$mono_mass[mod.df$record_id==fixmod])
+      reserve_entry<-ifelse('&'(peptide_symbol_var$multiplier[[fixmod]]>=1,reserve_entry==FALSE),TRUE,reserve_entry)
+    }
     
+    peptide_symbol_var<-peptide_symbol_var$peptide_symbol
+    s1<-peptide_symbol[reserve_entry]
+    s2<-peptide_symbol_var[reserve_entry]
+    identical(peptide_symbol_var,peptide_symbol)
+    peptide_symbol<-c(peptide_symbol,peptide_symbol_var[reserve_entry])
+    tempdf<-rbind(tempdf,tempdf_var[reserve_entry,])
   }
   
   message(paste("Generating peptide formula with adducts:",paste(adducts,collapse = " ")))
@@ -1632,7 +1647,7 @@ Peptide_modification<-function(retrive_ID=NULL,mod_position=NULL,update_unimod=F
   if (!is.null(retrive_ID)){
     retrive_mod<-data.frame(retrive_ID,mod_position,stringsAsFactors = F)
     unimod.modification.df<-merge(unimod.df$modifications,unimod.df$specificity,by.x=c("record_id"),by.y=c("mod_key"),all.x=T)
-    unimod.modification.df=unimod.modification.df[unimod.modification.df$hidden==0,]
+    #unimod.modification.df=unimod.modification.df[unimod.modification.df$hidden==0,]
     unimod.df$positions_new<-unimod.df$positions
     unimod.df$positions_new$position_ext<-str_replace(unimod.df$positions_new$position,"Anywhere|Any N-term|Any C-term","Peptide")
     unimod.df$positions_new$position_ext<-str_replace(unimod.df$positions_new$position_ext,"Protein N-term|Protein C-term","Protein")
