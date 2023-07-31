@@ -448,7 +448,7 @@ Protein_feature_list_fun<-function(workdir=getwd(),
     mod.df.comfirm<-mod.df[mod.df$hidden==0,]
     mod.df.comfirm.hidden<-mod.df[!(mod.df$full_name %in% mod.df.comfirm$full_name),]
     mod.df.comfirm.hidden_names<-mod.df$code_name[!(mod.df$full_name %in% mod.df.comfirm$full_name)]
-    for(mod.df.comfirm.hidden_name in unique(mod.df.comfirm.hidden_name)){
+    for(mod.df.comfirm.hidden_name in unique(mod.df.comfirm.hidden_names)){
       mod.df.comfirm.hidden.select<-mod.df.comfirm.hidden[mod.df.comfirm.hidden$one_letter==Modifications$one_letter[Modifications$variable==mod.df.comfirm.hidden_name],]
       mod.df.comfirm<-rbind(mod.df.comfirm,mod.df.comfirm.hidden.select)
     }
@@ -482,7 +482,7 @@ Protein_feature_list_fun<-function(workdir=getwd(),
     mod.df.comfirm<-mod.df[mod.df$hidden==0,]
     mod.df.comfirm.hidden<-mod.df[!(mod.df$full_name %in% mod.df.comfirm$full_name),]
     mod.df.comfirm.hidden_names<-mod.df$code_name[!(mod.df$full_name %in% mod.df.comfirm$full_name)]
-    for(mod.df.comfirm.hidden_name in unique(mod.df.comfirm.hidden_name)){
+    for(mod.df.comfirm.hidden_name in unique(mod.df.comfirm.hidden_names)){
       mod.df.comfirm.hidden.select<-mod.df.comfirm.hidden[mod.df.comfirm.hidden$one_letter==Modifications$one_letter[Modifications$variable==mod.df.comfirm.hidden_name],]
       mod.df.comfirm<-rbind(mod.df.comfirm,mod.df.comfirm.hidden.select)
     }
@@ -1960,7 +1960,7 @@ Build_adduct_list<-function(){
                       "M+IsoProp+H","M+ACN+Na","M+2K-H","M+DMSO+H","M+2ACN+H","M+IsoProp+Na+H","2M+H",
                       "2M+NH4","2M+Na","2M+3H2O+2H","2M+K","2M+ACN+H","2M+ACN+Na","M-H2O-H","M+Na-2H",
                       "M+Cl","M+K-2H","M+Br","M+TFA-H","2M-H","2M+FA-H","2M+Hac-H","3M-H","M+He",
-                      "M+Ne","M+Ar","M+Kr","M+Xe","M+Rn","M+Cu","M+Co","M+Ag"
+                      "M+Ne","M+Ar","M+Kr","M+Xe","M+Rn","M+Cu","M+Co","M+Ag","M+Formyl"
   ))
   calc=c("M+1.007276","M+18.033823","M+22.989218","M+38.963158","M-0.00054858","M-1.007276","M/2-1.007276",
          "M/3-1.007276","M+44.998201","M+59.013851","M+0.00054858","M/3+1.007276","M/3+8.334590","M/3+15.7661904",
@@ -1970,15 +1970,15 @@ Build_adduct_list<-function(){
          "M+28.02312","2M+38.963158","2M+42.033823","2M+64.015765","M-19.01839","M+20.974666","M+34.969402",
          "M+36.948606","M+78.918885","M+112.985586","2M-1.007276","2M+44.998201","2M+59.013851","3M-1.007276",
          "M+4.002606","M+19.992439","M+39.962383","M+83.911507","M+131.90416","M+222.017563","M+62.9285022",
-         "M+58.9321032","M+106.9034432"
+         "M+58.9321032","M+106.9034432","M+12"
   )
   Charge=c(" 1"," 1"," 1"," 1"," 1","-1","-2","-3","-1","-1","-1"," 3"," 3"," 3"," 3"," 2"," 2"," 2",
            " 2"," 2"," 2"," 2"," 2"," 1"," 1"," 1"," 1"," 1"," 1"," 1"," 1"," 1"," 1"," 1"," 1"," 1"," 1",
-           " 1"," 1","-1","-1","-1","-1","-1","-1","-1","-1","-1","-1","0","0","0","0","0","0","2","2","2"
+           " 1"," 1","-1","-1","-1","-1","-1","-1","-1","-1","-1","-1","0","0","0","0","0","0","2","2","2","1"
   )
   Mult=c("1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1",
          "1","1","1","1","1","1","1","1","2","2","2","2","2","2","2","1","1","1","1","1","1","2","2","2","3",
-         "1","1","1","1","1","1","1","1","1")
+         "1","1","1","1","1","1","1","1","1","1")
   Mass=as.numeric(as.character(c("  1.00727600"," 18.03382300"," 22.98921800"," 38.96315800"," -0.00054858",
                                  " -1.00727600"," -1.00727600"," -1.00727600"," 44.99820100"," 59.01385100",
                                  "  0.00054858","  1.00727600","  8.33459000"," 15.76619000"," 22.98921800",
@@ -1990,7 +1990,7 @@ Build_adduct_list<-function(){
                                  " 20.97466600"," 34.96940200"," 36.94860600"," 78.91888500","112.98558600",
                                  " -1.00727600"," 44.99820100"," 59.01385100","  1.00727600","4.002606","19.992439",
                                  "39.962383", "83.911507","131.90416","222.017563","62.9285022","58.9321032",
-                                 "106.9034432"
+                                 "106.9034432","12"
   )))
   Ion_mode=c("positive","positive","positive","positive","positive","negative","negative","negative"
              ,"negative","negative","negative","positive","positive","positive","positive","positive"
