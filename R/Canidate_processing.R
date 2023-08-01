@@ -1960,7 +1960,7 @@ Build_adduct_list<-function(){
                       "M+IsoProp+H","M+ACN+Na","M+2K-H","M+DMSO+H","M+2ACN+H","M+IsoProp+Na+H","2M+H",
                       "2M+NH4","2M+Na","2M+3H2O+2H","2M+K","2M+ACN+H","2M+ACN+Na","M-H2O-H","M+Na-2H",
                       "M+Cl","M+K-2H","M+Br","M+TFA-H","2M-H","2M+FA-H","2M+Hac-H","3M-H","M+He",
-                      "M+Ne","M+Ar","M+Kr","M+Xe","M+Rn","M+Cu","M+Co","M+Ag","M+Formyl"
+                      "M+Ne","M+Ar","M+Kr","M+Xe","M+Rn","M+Cu","M+Co","M+Ag","M+Formyl","M+Hydroxymethyl","M+Formylation"
   ))
   calc=c("M+1.007276","M+18.033823","M+22.989218","M+38.963158","M-0.00054858","M-1.007276","M/2-1.007276",
          "M/3-1.007276","M+44.998201","M+59.013851","M+0.00054858","M/3+1.007276","M/3+8.334590","M/3+15.7661904",
@@ -1970,15 +1970,15 @@ Build_adduct_list<-function(){
          "M+28.02312","2M+38.963158","2M+42.033823","2M+64.015765","M-19.01839","M+20.974666","M+34.969402",
          "M+36.948606","M+78.918885","M+112.985586","2M-1.007276","2M+44.998201","2M+59.013851","3M-1.007276",
          "M+4.002606","M+19.992439","M+39.962383","M+83.911507","M+131.90416","M+222.017563","M+62.9285022",
-         "M+58.9321032","M+106.9034432","M+12"
+         "M+58.9321032","M+106.9034432","M+13.007276","M+31.017841","M+29.002191"
   )
   Charge=c(" 1"," 1"," 1"," 1"," 1","-1","-2","-3","-1","-1","-1"," 3"," 3"," 3"," 3"," 2"," 2"," 2",
            " 2"," 2"," 2"," 2"," 2"," 1"," 1"," 1"," 1"," 1"," 1"," 1"," 1"," 1"," 1"," 1"," 1"," 1"," 1",
-           " 1"," 1","-1","-1","-1","-1","-1","-1","-1","-1","-1","-1","0","0","0","0","0","0","2","2","2","1"
+           " 1"," 1","-1","-1","-1","-1","-1","-1","-1","-1","-1","-1","0","0","0","0","0","0","2","2","2","1","1","1"
   )
   Mult=c("1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1",
          "1","1","1","1","1","1","1","1","2","2","2","2","2","2","2","1","1","1","1","1","1","2","2","2","3",
-         "1","1","1","1","1","1","1","1","1","1")
+         "1","1","1","1","1","1","1","1","1","1","1","1")
   Mass=as.numeric(as.character(c("  1.00727600"," 18.03382300"," 22.98921800"," 38.96315800"," -0.00054858",
                                  " -1.00727600"," -1.00727600"," -1.00727600"," 44.99820100"," 59.01385100",
                                  "  0.00054858","  1.00727600","  8.33459000"," 15.76619000"," 22.98921800",
@@ -1990,7 +1990,7 @@ Build_adduct_list<-function(){
                                  " 20.97466600"," 34.96940200"," 36.94860600"," 78.91888500","112.98558600",
                                  " -1.00727600"," 44.99820100"," 59.01385100","  1.00727600","4.002606","19.992439",
                                  "39.962383", "83.911507","131.90416","222.017563","62.9285022","58.9321032",
-                                 "106.9034432","12"
+                                 "106.9034432","13.007276","31.017841","29.002191"
   )))
   Ion_mode=c("positive","positive","positive","positive","positive","negative","negative","negative"
              ,"negative","negative","negative","positive","positive","positive","positive","positive"
@@ -1999,21 +1999,21 @@ Build_adduct_list<-function(){
              ,"positive","positive","positive","positive","positive","positive","positive","negative"
              ,"negative","negative","negative","negative","negative","negative","negative","negative"
              ,"negative","positive","positive","positive","positive","positive","positive","positive"
-             ,"positive","positive","positive")
+             ,"positive","positive","positive","positive","positive")
   formula_add=c("H1","N1H4","Na1","K1","FALSE","FALSE","FALSE","FALSE","C1O2H2","C2O2H4","FALSE","H3",
                 "H2Na1","H1Na2","Na3","H2","H1N1H4","H1Na1","H1K1","C2H5N1","Na2","C4H8N2","C6H11N3",
                 "C1H5O1","C2H4N1","Na2","C3H9O1","C2H3N1Na1","K2","C2H7S1O1","C4H7N2","C3H9O1Na1","H1",
                 "N1H4","Na1","H8O6","K1","C2H4N1","C2H3N1Na1","FALSE","Na1","Cl1","K1","Br1","C2F3O2H1",
-                "FALSE","C1O2H2","C2O2H4","FALSE","He","Ne","Ar","Kr","Xe","Rn","Cu","Co","Ag","C"
+                "FALSE","C1O2H2","C2O2H4","FALSE","He","Ne","Ar","Kr","Xe","Rn","Cu","Co","Ag","C1H1","C1H3O1","C1H1O1"
   )
   formula_ded=c("FALSE","FALSE","FALSE","FALSE","FALSE","H1","H2","H3","H1","H1","FALSE","FALSE","FALSE",
                 "FALSE","FALSE","FALSE","FALSE","FALSE","FALSE","FALSE","FALSE","FALSE","FALSE","FALSE",
                 "FALSE","H1","FALSE","FALSE","H1","FALSE","FALSE","FALSE","FALSE","FALSE","FALSE","FALSE",
                 "FALSE","FALSE","FALSE","H3O1","H2","FALSE","H2","FALSE","H1","H1","H1","H1","H1","FALSE",
-                "FALSE","FALSE","FALSE","FALSE","FALSE","FALSE","FALSE","FALSE","FALSE")
+                "FALSE","FALSE","FALSE","FALSE","FALSE","FALSE","FALSE","FALSE","FALSE","FALSE","FALSE")
   Multi=c("1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1","1"
           ,"1","1","1","1","1","1","1","1","2","2","2","2","2","2","2","1","1","1","1","1","1","2","2","2",
-          "3","1","1","1","1","1","1","1","1","1","1")
+          "3","1","1","1","1","1","1","1","1","1","1","1","1")
   adductslist<-cbind.data.frame(Name,calc,Charge,Mult,Mass,Ion_mode,formula_add,formula_ded,Multi)
   adductslist
 }
