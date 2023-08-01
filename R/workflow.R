@@ -722,8 +722,8 @@ IMS_data_process<-function(datafile,
       data(isotopes)
 
       unique_formula<-unique(Peptide_plot_list$formula)
-      #Peptide_plot_list_Score=(bplapply(unique_formula,SCORE_PMF,peaklist=peaklist,isotopes=isotopes,score_method=score_method,charge = 1,ppm=ppm,BPPARAM = BPPARAM))
-      Peptide_plot_list_Score=(lapply(unique_formula,SCORE_PMF,peaklist=peaklist,isotopes=isotopes,score_method=score_method,charge = 1,ppm=ppm))
+      Peptide_plot_list_Score=(bplapply(unique_formula,SCORE_PMF,peaklist=peaklist,isotopes=isotopes,score_method=score_method,charge = 1,ppm=ppm,BPPARAM = BPPARAM))
+      #Peptide_plot_list_Score=(lapply(unique_formula,SCORE_PMF,peaklist=peaklist,isotopes=isotopes,score_method=score_method,charge = 1,ppm=ppm))
       
       Peptide_plot_list_Score_m=as.data.frame(do.call(rbind, Peptide_plot_list_Score))
       names(Peptide_plot_list_Score_m)<-c("Score", "delta_ppm","Intensity")
@@ -749,8 +749,8 @@ IMS_data_process<-function(datafile,
       Peptide_plot_list_decoy<-Peptide_plot_list[Peptide_plot_list$isdecoy==0,]
       Peptide_plot_list_decoy$isdecoy=1
       unique_formula<-unique(Peptide_plot_list_decoy$formula)
-      #Peptide_plot_list_Score=(bplapply(unique_formula,SCORE_PMF,peaklist=peaklist,isotopes=decoy_isotopes,score_method=score_method,charge = 1,ppm=ppm,BPPARAM = BPPARAM))
-      Peptide_plot_list_Score=(lapply(unique_formula,SCORE_PMF,peaklist=peaklist,isotopes=decoy_isotopes,score_method=score_method,charge = 1,ppm=ppm))
+      Peptide_plot_list_Score=(bplapply(unique_formula,SCORE_PMF,peaklist=peaklist,isotopes=decoy_isotopes,score_method=score_method,charge = 1,ppm=ppm,BPPARAM = BPPARAM))
+      #Peptide_plot_list_Score=(lapply(unique_formula,SCORE_PMF,peaklist=peaklist,isotopes=decoy_isotopes,score_method=score_method,charge = 1,ppm=ppm))
       Peptide_plot_list_Score_m=as.data.frame(do.call(rbind, Peptide_plot_list_Score))
       names(Peptide_plot_list_Score_m)<-c("Score", "delta_ppm","Intensity")
       formula_score<-data.frame(formula=unique_formula,Score=Peptide_plot_list_Score_m$Score,Delta_ppm=Peptide_plot_list_Score_m$delta_ppm,Intensity=Peptide_plot_list_Score_m$Intensity)
