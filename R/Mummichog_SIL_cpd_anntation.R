@@ -88,9 +88,11 @@ Cpd_spectrum_match_rescore<-function(cpd_list,peaklist,wd=getwd(),
   suppressMessages(suppressWarnings(require(Biostrings)))
   suppressMessages(suppressWarnings(require(OrgMassSpecR)))
   suppressMessages(suppressWarnings(require(BiocParallel)))
+  suppressMessages(suppressWarnings(require(data.table)))
   data(isotopes)
   cpd_list$formula_mono<-cpd_list$formula
   cpd_list$Matched.Form->cpd_list$adduct
+  cpd_list$Isotype<-"Normal"
   if (SIL_cpd){
     cpd_list$Isotype[str_detect(cpd_list$Matched.Form,"M_13C")]<-"SIL"
     cpd_list$adduct<-str_replace(cpd_list$adduct,".M_13C..","M")
@@ -148,19 +150,39 @@ Cpd_spectrum_match_rescore<-function(cpd_list,peaklist,wd=getwd(),
     Meta_Summary<-rbind.data.frame(Meta_Summary,unique(candidates_adduct))
   }
   
-  Meta_Summary$Isotype<-NULL
-  cpd_list$adduct <- str_remove_all(cpd_list$adduct,"\\[-\\]|\\[+\\]")
-  cpd_list$formula <- NULL
-  cpd_list$Matched.Compound->cpd_list$Metabolite.Name
-  cpd_list<-merge(cpd_list,Meta_Summary,by=c("Metabolite.Name","adduct"),all.x=T)
+  Meta_Summary$Isotype<-"Normal"
+  Meta_Summary<-Meta_Summary[!stringr::str_detect(Meta_Summary$formula,"-"),]
+  # cpd_list$adduct <- str_remove_all(cpd_list$adduct,"\\[-\\]|\\[+\\]")
+  # cpd_list$formula <- NULL
+  # cpd_list$Matched.Compound->cpd_list$Metabolite.Name
+  # cpd_list<-merge(cpd_list,Meta_Summary,by=c("Metabolite.Name","adduct"),all.x=T)
+  cpd_list<-Meta_Summary
+  cpd_list<-cpd_list[!is.na(cpd_list$formula),]
+  
+    #Do first round of peptide search to get putative result
+  mz_feature_list<-Do_PMF_search(peaklist,cpd_list,BPPARAM=BPPARAM,ppm = ppm)
+  mz_feature_list<-unique(mz_feature_list)
+  message("Summarizing cpd information...",length(unique(mz_feature_list$mz))," were found in the first search.")
+  cpd_list<-as.data.table(cpd_list)
+  mz_feature_list<-as.data.table(mz_feature_list)
+  cpd_list$Intensity<-NULL
+  mz_feature_list$mz<-as.character(mz_feature_list$mz)
+  
+  cpd_list$mz<-as.character(cpd_list$mz)
+  cpd_list<-merge(cpd_list,mz_feature_list,by.x="mz",by.y="mz",all.x=T,sort=F)
+  cpd_list$Intensity[is.na(cpd_list$Intensity)]<-0
+  cpd_list<-cpd_list[cpd_list$Intensity>0,]
+  cpd_list$formula<-as.character(cpd_list$formula)
   
   unique_formula<-unique(cpd_list[,c("formula","Isotype")])
   unique_formula<-unique_formula[!is.na(unique_formula$formula),]
   
   #cpd_list_Score=(bplapply(unique_formula,SCORE_CPD,peaklist=peaklist,isotopes=isotopes,score_method=score_method,charge = 1,ppm=ppm,BPPARAM = BPPARAM))
+
   
+  unique_formula<<-unique_formula
   cpd_list_Score=(lapply(unique_formula$formula[unique_formula$Isotype=="Normal"],SCORE_CPD,peaklist=peaklist,isotopes=isotopes,score_method=score_method,charge = -1,ppm=10))
-  
+   cpd_list_Score<<-cpd_list_Score
   cpd_list_Score_m=as.data.frame(do.call(rbind, cpd_list_Score))
   names(cpd_list_Score_m)<-c("Score", "delta_ppm","Intensity")
   cpd_list_Score_m$Isotype<-"Normal"
@@ -231,18 +253,25 @@ Cpd_spectrum_match_rescore<-function(cpd_list,peaklist,wd=getwd(),
     cpd_list_decoy<-merge(cpd_list_decoy,formula_score,by=c("formula","Isotype"),all.x=T)
     cpd_list<-rbind(cpd_list,cpd_list_decoy)
   }
-  
-  cpd_list$mz<-cpd_list$Query.Mass
+  cpd_list$mz->cpd_list$Query.Mass
   cpd_list$mz<-as.numeric(as.character(cpd_list$mz))
-  
+  #cpd_list<<-cpd_list
+  if(all(unique(cpd_list$Score) %in% c(0,NA))){
+    message("No matched feature, proceed to next spectrum")
+    return(1)
+    }
   cpd_list_rank=rank_mz_feature(cpd_list,mz_feature=peaklist,BPPARAM = BPPARAM)
   cpd_list_rank$mz_align<-unlist(cpd_list_rank$mz_align)
+  
   cpd_list_rank<-as.data.frame(unique(cpd_list_rank))
   cpd_list_rank<-cpd_list_rank[!is.na(cpd_list_rank$Score),]
   
 
   
-  dir.create(paste0(wd,"/",SPECTRUM_batch))
+  dir.create(paste0(wd,"/",SPECTRUM_batch), recursive = T)
+  cpd_list_rank<-cpd_list_rank[cpd_list_rank$Intensity>0,]
+  cpd_list_rank<-cpd_list_rank[!is.na(cpd_list_rank$Intensity),]
+  
   write.csv(cpd_list_rank,paste0(wd,"/",SPECTRUM_batch,"/","CPD_1st_ID_score_rank_",score_method,".csv"),row.names = F)
   cpd_list_rank<-read.csv(paste0(wd,"/",SPECTRUM_batch,"/","CPD_1st_ID_score_rank_",score_method,".csv"),stringsAsFactors = F)
   
@@ -262,7 +291,8 @@ Cpd_spectrum_match_rescore<-function(cpd_list,peaklist,wd=getwd(),
       }
     }
     }else{
-      dir.create(paste0(wd,"/",SPECTRUM_batch))
+      if(nrow(cpd_list_rank)>=2){
+        dir.create(paste0(wd,"/",SPECTRUM_batch))
       cpd_list_rank %>% group_by(formula,mz,Isotype) %>% mutate(Score=Score-Score[isdecoy==1])->cpd_list_2nd
       Score_cutoff= FDR_cutoff_plot(cpd_list_2nd,FDR_cutoff=FDR_cutoff,plot_fdr=T,outputdir=paste0(wd,"/",SPECTRUM_batch),adjust_score = F)
       cpd_list_2nd=cpd_list_2nd[((cpd_list_2nd$Score>=Score_cutoff)&(!is.na(cpd_list_2nd$Intensity))),]
@@ -277,7 +307,7 @@ Cpd_spectrum_match_rescore<-function(cpd_list,peaklist,wd=getwd(),
           write.csv(cpd_list_2nd_sil,paste0(wd,"/",SPECTRUM_batch,"/","CPD_2nd_ID_score_rank_SIL_",score_method,".csv"),row.names = F)
         }
       }
-    
+    }
   }  
   cpd_list_rank$mz=as.numeric(as.character(cpd_list_rank$mz))
   cpd_list_2nd$mz=as.numeric(as.character(cpd_list_2nd$mz))
@@ -1075,8 +1105,8 @@ SCORE_CPD<-function(formula,peaklist,isotopes=NULL,threshold=0.001,charge=1,ppm=
     
     filtered_pattern<-pattern[1,]
     filtered_pattern<-t(data.frame(filtered_pattern,stringsAsFactors = F))
-    
-    for (i in 1:(length(pattern_ppm)-1)){
+    if (length(pattern_ppm)>=2){
+        for (i in 1:(length(pattern_ppm)-1)){
       
       pattern_ppm_delta[i]=(pattern_ppm[i+1]-pattern_ppm[i])/pattern_ppm[i]
       
@@ -1093,6 +1123,8 @@ SCORE_CPD<-function(formula,peaklist,isotopes=NULL,threshold=0.001,charge=1,ppm=
       }
       
     }
+    }
+    matrix(filtered_pattern[,1:2],ncol=2)->filtered_pattern
     rownames(filtered_pattern)=1:nrow(filtered_pattern)
     
     return(filtered_pattern)
@@ -1118,9 +1150,9 @@ SCORE_CPD<-function(formula,peaklist,isotopes=NULL,threshold=0.001,charge=1,ppm=
   
   #Filter and merge the isotopic pattern using instrument resolution
   pattern=pattern[[formula]]
-  pattern=isopattern_ppm_filter(pattern = pattern[,1:2], ppm=instrument_ppm)
-  pattern=pattern[topN_feature(pattern[,2],5),]
-  
+  pattern=isopattern_ppm_filter(pattern = matrix(pattern[,1:2],ncol=2), ppm=instrument_ppm)
+  pattern= matrix(pattern[topN_feature(pattern[,2],5),],ncol=2)
+  pattern<-matrix(pattern[,1:2],ncol=2)
   #peptide similarity score calculation
   spectrumintensity=unlist(lapply(1:nrow(pattern), function(x,pattern,peaklist,ppm){
     PMF_spectrum_intensity<-as.numeric(peaklist[between(peaklist$m.z,pattern[x,1]*(1-ppm/1000000),pattern[x,1]*(1+ppm/1000000)),2])
