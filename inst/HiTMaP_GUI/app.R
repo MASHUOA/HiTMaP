@@ -22,8 +22,6 @@ library(plotly)
 if (!require(htmlwidgets)) devtools::install_github("ramnathv/htmlwidgets")
 library(htmlwidgets)
 
-if (!require(shinythemes)) devtools::install_github("rstudio/shinythemes")
-library(shinythemes)
 
 HiTMaP:::Peptide_modification(retrive_ID=NULL,update_unimod=F)
 plan(multiprocess)
@@ -31,7 +29,7 @@ options(shiny.maxRequestSize = 3000*1024^2)
 
 
 
-
+if (!exists("WorkingDir_global", envir=globalenv()))  WorkingDir_global<<-"/root/expdata"
 
 
 

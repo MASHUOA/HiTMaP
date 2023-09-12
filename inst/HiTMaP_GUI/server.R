@@ -51,14 +51,18 @@ Proteomics_par<-c("Database_stats","Fastadatabase","Digestion_site","Digestion_s
 
 # Define server logic required to draw a histogram
 #shiny::shinyServer(function(input, output, session) {
-server<-function(input,output,session,WorkingDir_global){ 
+server<-function(input,output,session,WorkingDir_global){
+  if (!exists("WorkingDir_global", envir=globalenv())) {
+    dir.create("~/expdata")
+    WorkingDir_global<<-"~/expdata"
+  }
     WorkingDir_global<-get("WorkingDir_global", envir = .GlobalEnv)
-    
+
     setwd(WorkingDir_global)
-    
+
     shinyDirChoose(input, 'Projectdir', roots =  c(Root=getwd()))
-    
-    
+
+
     Projectdir <- reactive(input$Projectdir)
     Current_states <- reactiveValues()
     observeEvent(Projectdir(),{
@@ -76,16 +80,16 @@ server<-function(input,output,session,WorkingDir_global){
             updateSelectizeInput(session, 'imzml_file', choices = Current_states[[folder_file_DTDT]]$filename[Current_states[[folder_file_DTDT]]$filetype=="IMS data"])
             updateSelectizeInput(session, 'Fastadatabase', choices = Current_states[[folder_file_DTDT]]$filename[Current_states[[folder_file_DTDT]]$filetype=="Database"],
                                  selected = 1)
-            
+
             #updateSelectizeInput(session, 'RDA_imzml_file_stats', choices = Current_states[[folder_file_DTDT]]$filename[Current_states[[folder_file_DTDT]]$filetype %in% c("IMS data")], server = TRUE)
-            
+
             updateSelectizeInput(session, 'ID_folders_stats', choices = Current_states[[folder_file_DTDT]]$filename[Current_states[[folder_file_DTDT]]$filetype %in% c("ID folder")], server = TRUE )
-            
+
         },
         ignoreNULL = TRUE,
         ignoreInit = TRUE
     )
-    
+
     imzmlibd <- reactive(input$imzmlibd)
 
     output$Projectdir <- renderText({
@@ -99,12 +103,12 @@ server<-function(input,output,session,WorkingDir_global){
             #"Root/"
         }
     })
-    
-    
-    
+
+
+
     rotate_pre <- reactive(input$rotate_pre)
     output$rotate_pre <- renderPrint({rotate_pre()})
-    
+
     output$Projectfile <- renderPrint({
         if (typeof(Projectdir())=="list"){
             dir(paste0(getwd(),"/",paste0(unlist(Projectdir()[[1]]),collapse = '/',sep=""),"/"))            #paste0(unlist(Projectdir()[[2]]),paste0(Projectdir()[[1]],collapse = '/',sep=""),collapse = '/',sep="")
@@ -140,16 +144,16 @@ server<-function(input,output,session,WorkingDir_global){
 
             #Current_states[["imzmlfiles_in_proj"]]<<-current_states_filesum_df$filename[current_states_filesum_df$filetype=="IMS data"]
 
-            
+
     },
     ignoreNULL = TRUE,
     ignoreInit = TRUE
     )
 
-    
+
 
     output$imzmlibd <- renderPrint(imzmlibd())
-    
+
     toListen_upload <- reactive({
         list(input$imzmlibd,input$database,input$config,input$allfiles)
     })
@@ -176,7 +180,7 @@ server<-function(input,output,session,WorkingDir_global){
     ignoreInit = TRUE)
 
     seesion_task_no<-1
-    
+
     observeEvent(input$Pre_processing_run,if(!is.null(req(input$imzml_file_Pre_processing)))
                  {
                      seesion_task_no <<- seesion_task_no + 1
@@ -185,18 +189,18 @@ server<-function(input,output,session,WorkingDir_global){
                      if(!dir.exists(paste0(workdir,"/source/"))) dir.create(paste0(workdir,"/source/"))
                      tasktime<-format(Sys.time(), "%Y %b %d %X")
                      input_future=reactiveValuesToList(input)
-                     
+
                      save(list=c("input_future",
                                  "workdir",
                                  "tasktime"
                      ),
                      file=paste0(workdir,"/source/input_",gsub(":| ","_",tasktime),".RData"), ascii = T,compress  = FALSE
                      )
-                     
+
                      R_cmd_file<-paste0(workdir,"/source/task_Pre_processing_",gsub(":| ","_",tasktime),"_scource.R")
                      input_future<-input_future[names(input_future) %in% Pre_process_par]
                      fileConn<-file(R_cmd_file)
-                     
+
                      writeLines(
                          c("suppressMessages(suppressWarnings(require(HiTMaP)))",
                            paste0("#load(\"",paste0(workdir,"/source/input_",gsub(":| ","_",tasktime),".RData"),"\")"),
@@ -241,23 +245,23 @@ server<-function(input,output,session,WorkingDir_global){
                      #                                            peakPick=list(method=input_future$peakpick_pre),
                      #                                            peakAlign=list(tolerance=input_future$tolerance_pre, units="ppm")))
                      close(fileConn)
-                     
-                     
-                     
-                     # Decoy_adducts, Decoy_mode, Decoy_search, Digestion_site, Digestion_site_2, FDR, 
-                     # Fastadatabase, IMS_analysis, Load_candidatelist, 
-                     # Modifications_fix, Modifications_var, PCA_run, PMFsearch, Peptide_feature_summary, Pre_processing_run, 
-                     # Projectdir, Protein_feature_summary, Proteomics_run, 
-                     # RDA_imzml_file_stats, Segmentation, Segmentation_def, Segmentation_def_pre, 
-                     # Segmentation_ncomp, Segmentation_ncomp_pre, 
-                     # Segmentation_pre, Segmentation_variance_coverage, Segmentation_variance_coverage_pre, 
-                     # Smooth_range, Smooth_range_pre, adducts, allfiles, config, creatorLoadbtn, 
-                     # database, duration, force_Pre_process, 
-                     # force_Pre_process_pre, imzml_file, imzml_file_Pre_processing, imzmlibd, maintabset, missedCleavages, 
-                     # mz_tolerance_ppm, mzrange, mzrange_pre, normalize, normalize_pre, peakAlign, peakAlign_pre, 
-                     # peptide_ID_filter, reduceBaseline, reduceBaseline_pre, segmentation_run, smoothSignal, 
-                     # smoothSignal_pre, start_proc_future, threshold, use_Pre_processRDS, use_Pre_processRDS_pre 
-                     # 
+
+
+
+                     # Decoy_adducts, Decoy_mode, Decoy_search, Digestion_site, Digestion_site_2, FDR,
+                     # Fastadatabase, IMS_analysis, Load_candidatelist,
+                     # Modifications_fix, Modifications_var, PCA_run, PMFsearch, Peptide_feature_summary, Pre_processing_run,
+                     # Projectdir, Protein_feature_summary, Proteomics_run,
+                     # RDA_imzml_file_stats, Segmentation, Segmentation_def, Segmentation_def_pre,
+                     # Segmentation_ncomp, Segmentation_ncomp_pre,
+                     # Segmentation_pre, Segmentation_variance_coverage, Segmentation_variance_coverage_pre,
+                     # Smooth_range, Smooth_range_pre, adducts, allfiles, config, creatorLoadbtn,
+                     # database, duration, force_Pre_process,
+                     # force_Pre_process_pre, imzml_file, imzml_file_Pre_processing, imzmlibd, maintabset, missedCleavages,
+                     # mz_tolerance_ppm, mzrange, mzrange_pre, normalize, normalize_pre, peakAlign, peakAlign_pre,
+                     # peptide_ID_filter, reduceBaseline, reduceBaseline_pre, segmentation_run, smoothSignal,
+                     # smoothSignal_pre, start_proc_future, threshold, use_Pre_processRDS, use_Pre_processRDS_pre
+                     #
                      # Segmentation_ncomp_pre=Segmentation_ncomp_pre
                      # force_Pre_process=force_Pre_process
                      # Smooth_range_pre=Smooth_range_pre
@@ -271,9 +275,9 @@ server<-function(input,output,session,WorkingDir_global){
                      # for(i in names(input)){
                      #     input_future[[i]] <- isolate(input[[i]])
                      # }
-                     
+
                      system_fun<-function(x) { system(paste0("Rscript \"",x,"\"")) }
-                     
+
                      startAsyncTask(
                          dataName,
                          future(system_fun(x=R_cmd_file)),
@@ -287,7 +291,7 @@ server<-function(input,output,session,WorkingDir_global){
                              # caughtWarning = caughtWarning
                              callback_fun(asyncCallbackResults=asyncCallbackResults)
 
-        
+
                          },
                          tracklink=R_cmd_file
                      ) #end callback and call to startAsyncTask
@@ -297,53 +301,53 @@ server<-function(input,output,session,WorkingDir_global){
                      if (asyncDataNumber > 100) {
                          asyncDataNumber <<- 1
                      }
-                     
+
                      library(stringr)
-                     
+
                      if (typeof(input$Projectdir)=="list"){
-                         
+
                          current_states_filesum_df<-current_states_filesum(paste0(getwd(),"/",paste0(unlist(Projectdir()[[1]]),collapse = '/',sep=""),"/"))
                      }else{
                          current_states_filesum_df<-current_states_filesum(getwd())
                      }
                      Current_states[[folder_file_DTDT]]<<-current_states_filesum_df
-                     
+
                      #Current_states[["imzmlfiles_in_proj"]]<<-current_states_filesum_df$filename[current_states_filesum_df$filetype=="IMS data"]
                      # updateSelectizeInput(session, 'imzml_file_Pre_processing', choices = current_states_filesum_df$filename[current_states_filesum_df$filetype=="IMS data"])
-                     # 
+                     #
                      # updateSelectizeInput(session, 'RDA_imzml_file_stats', choices = current_states_filesum_df$filename[current_states_filesum_df$filetype %in% c("IMS data")], server = TRUE)
-                     # 
+                     #
                      # updateSelectizeInput(session, 'ID_folders_stats', choices = current_states_filesum_df$filename[current_states_filesum_df$filetype %in% c("ID folder")], server = TRUE )
-                     # 
+                     #
                  },
                  ignoreNULL = TRUE,
                  ignoreInit = TRUE)
-    
+
     observeEvent(input$ID_folders_stats,
                  {
                      library(stringr)
-                     
+
                      if (typeof(input$Projectdir)=="list"){
-                         
+
                          workdir<-(paste0(getwd(),"/",paste0(unlist(Projectdir()[[1]]),collapse = '/',sep=""),"/"))
-                         
+
                      }else{
-                         
+
                          workdir<-(getwd())
-                         
+
                      }
-                     
+
                      stats_png_file <- dir(paste0(workdir,"/",input$ID_folders_stats))
-                     
+
                      stats_png_file <- stats_png_file[str_detect(stats_png_file,regex(".png$|.jpg$",ignore_case = T))]
-                     
+
                      updateSelectizeInput(session, 'Stats_img', choices = stats_png_file, server = TRUE)
-                     
+
                  },
                  ignoreNULL = TRUE,
                  ignoreInit = TRUE)
-    
-    
+
+
     observeEvent(input$PCA_run,if(!is.null(req(input$imzml_file_Pre_processing)))
                  {
                      seesion_task_no <<- seesion_task_no + 1
@@ -352,14 +356,14 @@ server<-function(input,output,session,WorkingDir_global){
                      if(!dir.exists(paste0(workdir,"/source/"))) dir.create(paste0(workdir,"/source/"))
                      tasktime<-format(Sys.time(), "%Y %b %d %X")
                      input_future=reactiveValuesToList(input)
-                     
+
                      save(list=c("input_future",
                                  "workdir",
                                  "tasktime"
                      ),
                      file=paste0(workdir,"/source/input_",gsub(":| ","_",tasktime),".RData"), ascii = T,compress  = FALSE
                      )
-                     
+
                      R_cmd_file<-paste0(workdir,"/source/task_Pre_processing_segmentation_",gsub(":| ","_",tasktime),"_scource.R")
                      input_future<-input_future[names(input_future) %in% Pre_process_par]
                      fileConn<-file(R_cmd_file)
@@ -391,7 +395,7 @@ server<-function(input,output,session,WorkingDir_global){
                      close(fileConn)
                      dataName <- paste0("PCA_segmentation", "_", seesion_task_no)
                      system_fun<-function(x) { system(paste0("Rscript \"",x,"\"")) }
-                     
+
                      startAsyncTask(
                          dataName,
                          future(system_fun(x=R_cmd_file)),
@@ -404,8 +408,8 @@ server<-function(input,output,session,WorkingDir_global){
                              # caughtError = caughtError,
                              # caughtWarning = caughtWarning
                              callback_fun(asyncCallbackResults=asyncCallbackResults)
-                             
-                             
+
+
                          },
                          tracklink=R_cmd_file
                      ) #end callback and call to startAsyncTask
@@ -416,22 +420,22 @@ server<-function(input,output,session,WorkingDir_global){
                          asyncDataNumber <<- 1
                      }
                      library(stringr)
-                     
+
                      if (typeof(input$Projectdir)=="list"){
-                         
+
                          current_states_filesum_df<-current_states_filesum(paste0(getwd(),"/",paste0(unlist(Projectdir()[[1]]),collapse = '/',sep=""),"/"))
-                     
+
                          }else{
-                          
+
                          current_states_filesum_df<-current_states_filesum(getwd())
                          }
-                     
+
                      Current_states[[folder_file_DTDT]]<<-current_states_filesum_df
                  },
                  ignoreNULL = TRUE,
                  ignoreInit = TRUE)
-    
- 
+
+
     observeEvent(input$segmentation_run,if(!is.null(req(input$imzml_file_Pre_processing)))
                  {
                      seesion_task_no <<- seesion_task_no + 1
@@ -440,26 +444,26 @@ server<-function(input,output,session,WorkingDir_global){
                      if(!dir.exists(paste0(workdir,"/source/"))) dir.create(paste0(workdir,"/source/"))
                      tasktime<-format(Sys.time(), "%Y %b %d %X")
                      input_future=reactiveValuesToList(input)
-                     
+
                      save(list=c("input_future",
                                  "workdir",
                                  "tasktime"
                      ),
                      file=paste0(workdir,"/source/input_",gsub(":| ","_",tasktime),".RData"), ascii = T,compress  = FALSE
                      )
-                     
-                     
+
+
                      input_future<-input_future[names(input_future) %in% Pre_process_par]
-                         
+
                      R_cmd_file<-paste0(workdir,"/source/task_segmentation_",gsub(":| ","_",tasktime),"_scource.R")
-                     
+
                      fileConn<-file(R_cmd_file)
-                     
-                     
+
+
                      writeLines(
-                         
+
                          c("suppressMessages(suppressWarnings(require(HiTMaP)))",
-                           
+
                            paste0("#load(\"",paste0(workdir,"/source/input_",gsub(":| ","_",tasktime),".RData"),"\")"),
                            dput_list(input_future),
                            paste0("workdir=","\"",workdir,"\""),
@@ -483,12 +487,12 @@ server<-function(input,output,session,WorkingDir_global){
                                                                       peakPick=list(method=input_future$peakpick_pre),
                                                                       peakAlign=list(tolerance=input_future$peakAlign_pre, units=\"ppm\")))"),
                          fileConn)
-                     
+
                      close(fileConn)
-                     
+
                      dataName <- paste0(input_future$Segmentation_pre,"_segmentation", "_", seesion_task_no)
                      system_fun<-function(x) { system(paste0("Rscript \"",x,"\"")) }
-                     
+
                      startAsyncTask(
                          dataName,
                          future(system_fun(x=R_cmd_file)),
@@ -496,7 +500,7 @@ server<-function(input,output,session,WorkingDir_global){
                          callback_fun(asyncCallbackResults=asyncCallbackResults)
                          },
                          tracklink=R_cmd_file
-                     ) 
+                     )
                      otherReactiveValues[[NUM_ASYNC_TASKS_RUNNING]] <<-
                          getRunningTasksStatus()
                      asyncDataNumber <<- asyncDataNumber + 1
@@ -506,9 +510,9 @@ server<-function(input,output,session,WorkingDir_global){
                  },
                  ignoreNULL = TRUE,
                  ignoreInit = TRUE)
-    
+
     observeEvent(input$Proteomics_run,
-                 {   
+                 {
                      task_type<-("Proteomics_run")
                      task_type<-str_split(as.character(task_type),regex("\\$"))[[3]]
                      seesion_task_no <<- seesion_task_no + 1
@@ -531,30 +535,30 @@ server<-function(input,output,session,WorkingDir_global){
                      ),
                      file=paste0(workdir,"/source/input_",gsub(":| ","_",tasktime),".RData"), ascii = T,compress  = FALSE
                      )
-                     
-                     
 
-                     
+
+
+
                      R_cmd_file<-paste0(workdir,"/source/task_",task_type,"_",gsub(":| ","_",tasktime),"_scource.R")
-                     
+
                      fileConn<-file(R_cmd_file)
-                     
-                     
-                     
+
+
+
                      writeLines(
-                         
+
                          c("suppressMessages(suppressWarnings(require(HiTMaP)))",
-                           
+
                            paste0("#load(\"",paste0(workdir,"/source/input_",gsub(":| ","_",tasktime),".RData"),"\")"),
                            dput_list(input_future),
                            paste0("workdir=","\"",workdir,"\""),
                            paste0("tasktime=","\"",tasktime,"\""),
 
-                         
+
                          "imaging_identification(
                              datafile=input_future$imzml_file,
                              projectfolder=workdir,
-                             threshold=input_future$threshold, 
+                             threshold=input_future$threshold,
                              ppm=input_future$tolerance,
                              mode=\"Proteomics\",
                              Digestion_site=c(input_future$Digestion_site,input_future$Digestion_site_2),
@@ -621,12 +625,12 @@ server<-function(input,output,session,WorkingDir_global){
                              cluster_rds_path=NULL,
                          )"),
                          fileConn)
-                     
+
                      close(fileConn)
-                     
+
                      dataName <- paste0(task_type, "_", seesion_task_no)
                      system_fun<-function(x) { system(paste0("Rscript \"",x,"\"")) }
-                     
+
                      startAsyncTask(
                          dataName,
                          future(system_fun(x=R_cmd_file)),
@@ -634,7 +638,7 @@ server<-function(input,output,session,WorkingDir_global){
                              callback_fun(asyncCallbackResults=asyncCallbackResults)
                          },
                          tracklink=R_cmd_file
-                     ) 
+                     )
                      otherReactiveValues[[NUM_ASYNC_TASKS_RUNNING]] <<-
                          getRunningTasksStatus()
                      asyncDataNumber <<- asyncDataNumber + 1
@@ -644,11 +648,11 @@ server<-function(input,output,session,WorkingDir_global){
                  },
                  ignoreNULL = TRUE,
                  ignoreInit = TRUE)
-    
+
     Stats_img_outputs<-reactive(input$Stats_img)
-    
+
     stats_img_zoom<-reactiveValues(zoom=1)
-        
+
     output$Stats_img_output <- renderImage({
 
          list(src = paste0(paste0(getwd(),"/",paste0(unlist(Projectdir()[[1]]),collapse = '/',sep=""),"/"),"/",input$ID_folders_stats,"/",input$Stats_img),
@@ -656,7 +660,7 @@ server<-function(input,output,session,WorkingDir_global){
                  width = 750 * stats_img_zoom$zoom,
                  alt = "This is alternate text")
         }, deleteFile = F)
-    
+
     observeEvent(input$zoom_p, {
         if (stats_img_zoom$zoom < 1.5) stats_img_zoom$zoom <- stats_img_zoom$zoom + 0.07
     })
@@ -670,21 +674,21 @@ server<-function(input,output,session,WorkingDir_global){
         ignoreNULL = TRUE,
         ignoreInit = TRUE)
     FAKE_PROCESSED_DATA <- "fakeProcessedData"
-    
+
     otherReactiveValues <-
-        reactiveValues() 
+        reactiveValues()
     #WARNING- DON'T USE VARIABLES TO INITIALIZE LIST KEYS - the variable name will be used, not the value
-    
+
     asyncDataValues <- reactiveValues()
-    
+
     asyncDataNumber <- 1
-    
+
     otherReactiveValues[[DEBUG_CONSOLE_OUTPUT]] <-
         data.table::data.table(time = format(Sys.time(), "%Y %b %d %X"), message = "Placeholder to be deleted", tracklink = "...")[-1, ]
-    
+
     otherReactiveValues[[NUM_ASYNC_TASKS_RUNNING]] <-
         getRunningTasksStatus()
-    
+
     debugConsole <- function(msg,tracklink="...") {
         time <- format(Sys.time(), "%Y %b %d %X")
         newRow <- data.table::data.table(time = time, message = msg , tracklink=tracklink)
@@ -694,11 +698,11 @@ server<-function(input,output,session,WorkingDir_global){
         print(paste0(nrow(otherReactiveValues[[DEBUG_CONSOLE_OUTPUT]]), ": ", time, ": ", msg, ": ",tracklink))
         flush.console()
     }
-    
+
     observeEvent(input$Refresh_Running_task,{
         otherReactiveValues[[NUM_ASYNC_TASKS_RUNNING]] <<- getRunningTasksStatus()
     })
-    
+
     callback_fun<-function(asyncCallbackResults){
          asyncTaskName <- asyncCallbackResults[["asyncTaskName"]]
          taskResult <- asyncCallbackResults[["taskResult"]]
@@ -711,10 +715,10 @@ server<-function(input,output,session,WorkingDir_global){
                         "integer"="is Done.",
                         "character"=substr(taskResult,1,30),
                         "list"=paste("returning with data of size",object.size(taskResult))
-                 
+
                  ),
                  paste0("Rscript file: ",  basename(tracklink))
-                 
+
              ),
              tracklink=tracklink
              )
@@ -726,7 +730,7 @@ server<-function(input,output,session,WorkingDir_global){
         invalidateLater(200)
         processRunningTasks(debug = TRUE)
     })
-    
+
     output[[FAKE_DATA_INFORMATION]] <-
         renderText({
             paste(
@@ -734,7 +738,7 @@ server<-function(input,output,session,WorkingDir_global){
                 paste0(FAKE_PROCESSED_DATA, "-", asyncDataNumber)
             )
         })
-    
+
     try(output[[ASYNC_DATA]] <-
         renderText({
             myList <- reactiveValuesToList(asyncDataValues)
@@ -748,12 +752,12 @@ server<-function(input,output,session,WorkingDir_global){
             }
             return(result)
         }))
-    
+
     output[[NUM_ASYNC_TASKS_RUNNING]] <-renderDataTable({
          otherReactiveValues[[NUM_ASYNC_TASKS_RUNNING]]
 
         })
-    
+
     observeEvent(input$start_proc_future,
                  {
                      duration <-
@@ -780,15 +784,15 @@ server<-function(input,output,session,WorkingDir_global){
                  },
                  ignoreNULL = TRUE,
                  ignoreInit = TRUE)
-    
+
     output[[DEBUG_CONSOLE_OUTPUT]] = renderDataTable({
         DT::datatable(
         {
         data <- otherReactiveValues[[DEBUG_CONSOLE_OUTPUT]]
 
         if (nrow(data)>0){
-            
-        
+
+
         lapply(1:nrow(data), function(i,data) {
             output[[paste0("downloadData", i)]] <<- downloadHandler(
                 filename = function() {
@@ -804,9 +808,9 @@ server<-function(input,output,session,WorkingDir_global){
                 }
             )
         },data)
-        
 
-        
+
+
         #data$tracklink <- NULL
         data %>%
             mutate('Source file' = lapply(1:n(),
@@ -816,10 +820,10 @@ server<-function(input,output,session,WorkingDir_global){
             data.table::data.table(time = format(Sys.time(), "%Y %b %d %X"), message = "Placeholder to be deleted", tracklink = "...")[-1, ]
         }
         },escape =2, options=list(columnDefs = list(list(visible=FALSE, targets=c(3)))))
-        
+
     }, sanitize.text.function = function(x) x)
-    
-    
+
+
     output$hidden_downloads <- renderUI(
 
             lapply(1:nrow(otherReactiveValues[[DEBUG_CONSOLE_OUTPUT]]), function(i) {
@@ -834,11 +838,11 @@ server<-function(input,output,session,WorkingDir_global){
             workdir=paste0(getwd(),"/",paste0(unlist(Projectdir()[[1]]),collapse = '/',sep=""),"/")
             rootname<-max(which(str_split(workdir,"/")[[1]] != ""))
             filename=paste(str_split(workdir,"/")[[1]][rootname],"_", Sys.Date(),".tar", sep="")
-        
+
             return(filename[1])
             },
         content = function(filename) {
-            
+
             workdir<-paste0(paste0(unlist(Projectdir()[[1]]),collapse = '/',sep=""),"/")
             #setwd(workdir)
             #message(workdir)
@@ -850,10 +854,8 @@ server<-function(input,output,session,WorkingDir_global){
             tar(tarfile=filename, files=files_dl,compression="none")
         },contentType = "application/tar"
     )
-    
+
     observeEvent(input$reset, {
         shinyjs::reset("form")
     })
 }
-
-
