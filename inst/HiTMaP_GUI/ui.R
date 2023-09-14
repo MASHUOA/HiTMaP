@@ -103,9 +103,9 @@ fluidPage(
 
         fileInput("config", "Choose configuration file(s)",
                   multiple = FALSE,
-                  accept = c("text/csv",
+                  accept = c("text/csv/xlsx",
                              "text/comma-separated-values,text/plain",
-                             ".csv")),
+                             ".csv",".xlsx")),
         fileInput("allfiles", "Choose and upload all file(s)",
                   multiple = T)
 
@@ -231,9 +231,9 @@ fluidPage(
                 ),
                 br(),
                 tagList(
-                  actionButton(("zoom_m"), "", icon = icon("minus-square-o"), width = "40px",
+                  actionButton(("zoom_m"), "", icon = icon("magnifying-glass-minus"), width = "40px",
                                style = "border-radius: 25px; padding: 0px;"),
-                  actionButton(("zoom_p"), "", icon = icon("plus-square-o"), width = "40px",
+                  actionButton(("zoom_p"), "", icon = icon("magnifying-glass-plus"), width = "40px",
                                style = "border-radius: 25px; padding: 0px;")
                 ),
                 imageOutput("Stats_img_output"),
@@ -473,8 +473,47 @@ fluidPage(
         #     actionButton("input_print_button","input"),
         #     verbatimTextOutput("rotate_pre")
         #
-        #     ),icon = icon("file-export")),
-        tabPanel("Task manger", wellPanel(
+        #     ),icon = icon("file-export
+ 
+ tabPanel("Target selection", wellPanel(
+   {
+     fluidRow(
+       column(3,
+              
+              selectizeInput(
+                'Target_table_file', 'Select Target ID', choices = NULL,
+                multiple = F, options = list(maxItems = 1000)
+              ),br(),
+              
+              selectizeInput(
+                'ID_table_file', 'Select ID input', choices = NULL,
+                multiple = F, options = list(maxItems = 1000)
+              ),br(),
+              
+              actionButton(inputId="PRM_processing_run", icon=NULL, label="Start PRM candidate selection"),
+              
+              br(),
+              
+              selectInput("Analysis_pipeline", label = ("Analysis pipeline"),
+                          choices = list("ProteinPilot" = "ProteinPilot", "Fragpipe" = "Fragpipe", "UserTable" = "UserTable"),
+                          selected = "ProteinPilot"),
+              
+              sliderInput("pep_length", label = ("Set peptide length range"), min = 5,
+                          max = 50, value = c(7, 40)),
+              
+              sliderInput("Score_cutoff", label = ("Set tolerance in ppm"), min = 0,
+                          max = 50, value = 5),
+              
+              checkboxInput("Peptideatlas_mapping", label = "Use Peptideatlas Data", value = TRUE),
+              
+              
+              
+              
+       ))
+   }
+ ),icon = icon("circle-dot")),
+ 
+        tabPanel("Task manager", wellPanel(
             h5(paste0('Available Cores: ', future::availableCores())),
             column(3,h5('Running task:')),column(3,actionButton('Refresh_Running_task',"Refresh")),
             DT::dataTableOutput(NUM_ASYNC_TASKS_RUNNING),

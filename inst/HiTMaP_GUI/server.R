@@ -48,18 +48,19 @@ Proteomics_par<-c("Database_stats","Fastadatabase","Digestion_site","Digestion_s
                   "use_previous_candidates","IMS_analysis","FDR_cutoff","peptide_ID_filter","plot_matching_score",
                   "Protein_feature_summary","Formula_with_water","output_candidatelist","Peptide_feature_summary","Region_feature_summary","parallel")
 
-
+PRM_selection_par<-c("Target_table_file","ID_table_file","Analysis_pipeline","pep_length","Score_cutoff","Peptideatlas_mapping")
 # Define server logic required to draw a histogram
 #shiny::shinyServer(function(input, output, session) {
 server<-function(input,output,session,WorkingDir_global){
   if (!exists("WorkingDir_global", envir=globalenv())) {
-    dir.create("~/expdata")
-    WorkingDir_global<<-"~/expdata"
+    dir.create("Z:/PRM_selection/expdata")
+    WorkingDir_global<<-"Z:/PRM_selection/expdata"
   }
+     
     WorkingDir_global<-get("WorkingDir_global", envir = .GlobalEnv)
 
     setwd(WorkingDir_global)
-
+    message(WorkingDir_global)
     shinyDirChoose(input, 'Projectdir', roots =  c(Root=getwd()))
 
 
@@ -76,6 +77,8 @@ server<-function(input,output,session,WorkingDir_global){
 
     observeEvent(Current_states[[folder_file_DTDT]],
         {
+            updateSelectizeInput(session, 'ID_table_file', choices = Current_states[[folder_file_DTDT]]$filename[Current_states[[folder_file_DTDT]]$filetype=="Config file"])
+            updateSelectizeInput(session, 'Target_table_file', choices = Current_states[[folder_file_DTDT]]$filename[Current_states[[folder_file_DTDT]]$filetype=="Config file"])
             updateSelectizeInput(session, 'imzml_file_Pre_processing', choices = Current_states[[folder_file_DTDT]]$filename[Current_states[[folder_file_DTDT]]$filetype=="IMS data"])
             updateSelectizeInput(session, 'imzml_file', choices = Current_states[[folder_file_DTDT]]$filename[Current_states[[folder_file_DTDT]]$filetype=="IMS data"])
             updateSelectizeInput(session, 'Fastadatabase', choices = Current_states[[folder_file_DTDT]]$filename[Current_states[[folder_file_DTDT]]$filetype=="Database"],
@@ -511,6 +514,72 @@ server<-function(input,output,session,WorkingDir_global){
                  ignoreNULL = TRUE,
                  ignoreInit = TRUE)
 
+    observeEvent(input$PRM_processing_run,if(!is.null(req(input$ID_table_file)))
+    {
+        seesion_task_no <<- seesion_task_no + 1
+        workdir=paste0(getwd(),"/",paste0(unlist(Projectdir()[[1]]),collapse = '/',sep=""),"/")
+        print(workdir)
+        if(!dir.exists(paste0(workdir,"/source/"))) dir.create(paste0(workdir,"/source/"))
+        tasktime<-format(Sys.time(), "%Y %b %d %X")
+        input_future=reactiveValuesToList(input)
+        input_future<-input_future[names(input_future) %in% PRM_selection_par]
+        save(list=c("input_future",
+                    "workdir",
+                    "tasktime"
+        ),
+        file=paste0(workdir,"/source/input_",gsub(":| ","_",tasktime),".RData"), ascii = T,compress  = FALSE
+        )
+        
+        
+        
+        
+        R_cmd_file<-paste0(workdir,"/source/task_PRM_selection_",gsub(":| ","_",tasktime),"_scource.R")
+        
+        fileConn<-file(R_cmd_file)
+        
+        
+        writeLines(
+            
+            c("suppressMessages(suppressWarnings(require(HiTMaP)))",
+              
+              paste0("#load(\"",paste0(workdir,"/source/input_",gsub(":| ","_",tasktime),".RData"),"\")"),
+              dput_list(input_future),
+              paste0("workdir=","\"",workdir,"\""),
+              paste0("tasktime=","\"",tasktime,"\""),
+              "HiTMaP:::PRM_target_slt(
+              GroupID=input_future$Target_table_file,
+              ID_data=input_future$ID_table_file,wd=workdir,
+              Id_pipeline=input_future$Analysis_pipeline,
+              pep_length=input_future$pep_length,
+              score_cutoff=input_future$Score_cutoff,
+              Peptideatlas_mapping=input_future$Peptideatlas_mapping
+              )"),
+            fileConn)
+        
+        close(fileConn)
+        
+        dataName <- paste0("PRM_selection", "_", seesion_task_no)
+        system_fun<-function(x) { system(paste0("Rscript \"",x,"\"")) }
+        
+        startAsyncTask(
+            dataName,
+            future(system_fun(x=R_cmd_file)),
+            callback = function(asyncCallbackResults) {
+                callback_fun(asyncCallbackResults=asyncCallbackResults)
+            },
+            tracklink=R_cmd_file
+        )
+        otherReactiveValues[[NUM_ASYNC_TASKS_RUNNING]] <<-
+            getRunningTasksStatus()
+        asyncDataNumber <<- asyncDataNumber + 1
+        if (asyncDataNumber > 100) {
+            asyncDataNumber <<- 1
+        }
+    },
+    ignoreNULL = TRUE,
+    ignoreInit = TRUE)
+    
+    
     observeEvent(input$Proteomics_run,
                  {
                      task_type<-("Proteomics_run")

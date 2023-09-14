@@ -32,7 +32,7 @@ current_states_filesum<-function(wd=getwd()){
     folder_file_DT_ibd<-folder_file_DT[stringr::str_detect(folder_file_DT,regex('.ibd$', ignore_case = T))]
     
     
-    folder_file_DT_csv<-folder_file_DT[stringr::str_detect(folder_file_DT,regex('.csv$|.txt$', ignore_case = T))]
+    folder_file_DT_csv<-folder_file_DT[stringr::str_detect(folder_file_DT,regex('.csv$|.txt$|.xls|.xlsx', ignore_case = T))]
     folder_file_DT_rda<-folder_file_DT[stringr::str_detect(folder_file_DT,regex('.RDA$|.RDS$|.Rdata$', ignore_case = T))]
     folder_file_DT_fasta<-folder_file_DT[stringr::str_detect(folder_file_DT,regex('.fasta$', ignore_case = T))]
     

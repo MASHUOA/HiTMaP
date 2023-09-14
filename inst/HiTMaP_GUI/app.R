@@ -24,13 +24,12 @@ library(htmlwidgets)
 
 
 HiTMaP:::Peptide_modification(retrive_ID=NULL,update_unimod=F)
-plan(multiprocess)
+plan(multicore)
 options(shiny.maxRequestSize = 3000*1024^2)
 
 
 
 if (!exists("WorkingDir_global", envir=globalenv()))  WorkingDir_global<<-"/root/expdata"
-
 
 
 enableBookmarking("server")
