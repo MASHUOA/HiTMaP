@@ -53,8 +53,8 @@ PRM_selection_par<-c("Target_table_file","ID_table_file","Analysis_pipeline","pe
 #shiny::shinyServer(function(input, output, session) {
 server<-function(input,output,session,WorkingDir_global){
   if (!exists("WorkingDir_global", envir=globalenv())) {
-    dir.create("Z:/PRM_selection/expdata")
-    WorkingDir_global<<-"Z:/PRM_selection/expdata"
+    dir.create("~/expdata")
+    WorkingDir_global<<-"~/expdata"
   }
      
     WorkingDir_global<-get("WorkingDir_global", envir = .GlobalEnv)

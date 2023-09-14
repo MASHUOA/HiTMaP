@@ -29,7 +29,7 @@ options(shiny.maxRequestSize = 3000*1024^2)
 
 
 
-if (!exists("WorkingDir_global", envir=globalenv()))  WorkingDir_global<<-"/root/expdata"
+if (!exists("WorkingDir_global", envir=globalenv()))  WorkingDir_global<<-"~/expdata"
 
 
 enableBookmarking("server")
