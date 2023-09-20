@@ -29,7 +29,7 @@ PRM_target_slt<-function(GroupID,ID_data,TopN_Feat=5,wd=getwd(),
   library(Biostrings)
   library(readxl)
   library(stringr)
-  
+  library(magick)
   library(scales)
   if (!dir.exists(wd)) dir.create(wd,recursive = T)
   setwd(wd)
@@ -104,7 +104,7 @@ PRM_target_slt<-function(GroupID,ID_data,TopN_Feat=5,wd=getwd(),
   ID_data=ID_data[,required_col]
   colnames(ID_data)<-c("Protein","Peptide","Modification","RT","Cleavages","Charge","Score","Intensity")
   ID_data$Intensity<-as.numeric(ID_data$Intensity)
-  
+  ID_data$Cleavages[is.na(ID_data$Cleavages)] <- ""
   for(GroupID_slt in GroupID){
   
     ID_data_slt<-ID_data[ID_data[,"Protein"]==GroupID_slt,]
@@ -137,7 +137,10 @@ PRM_target_slt<-function(GroupID,ID_data,TopN_Feat=5,wd=getwd(),
     ID_data_slt<-cbind(ID_data_slt,ID_data_slt_map)
     }
     
+    ID_data_slt->ID_data_slt_withmiss
+    ID_data_slt_withmiss<-ID_data_slt_withmiss[str_detect(ID_data_slt_withmiss$Cleavages,regex("missed|cleaved",ignore_case = T)),]
     
+    ID_data_slt<-ID_data_slt[!str_detect(ID_data_slt$Cleavages,regex("missed|cleaved",ignore_case = T)),]
     ir1<-IRanges(start=ID_data_slt$start,end=ID_data_slt$end)
     ir1_r<-reduce(ir1,min.gapwidth=0L)
     ol<-findOverlaps(ir1,ir1_r)
@@ -149,29 +152,35 @@ PRM_target_slt<-function(GroupID,ID_data,TopN_Feat=5,wd=getwd(),
     ID_data_slt<-ID_data_slt[order(ID_data_slt$Cluster),]
     ID_data_slt$Modification[is.na(ID_data_slt$Modification)]<-""
     ID_data_slt$Cleavages[is.na(ID_data_slt$Cleavages)]<-""
-    png(paste0(get_pro_acc(GroupID_slt,acc_loc="mid"),"_range.png"),width = 6,height = 4,res = 300,units = "in")
-    plot.new()
-    plotRanges(ir1,main=get_pro_acc(GroupID_slt,acc_loc="mid"))
-    dev.off()
     
-    png(paste0(get_pro_acc(GroupID_slt,acc_loc="mid"),"_reduced_range.png"),width = 6,height = 4,res = 300,units = "in")
-    plot.new()
-    plotRanges(ir1_r,main=get_pro_acc(GroupID_slt,acc_loc="mid"))
-    dev.off()
+    #plotRanges(ir1,main=get_pro_acc(GroupID_slt,acc_loc="mid"),width = 1800,height = 1200,res = 300)->img
+    #image_write(img,path=paste0(get_pro_acc(GroupID_slt,acc_loc="mid"),"_range.png"))
     
-    png(paste0(get_pro_acc(GroupID_slt,acc_loc="mid"),"_ol_range.png"),width = 6,height = 4,res = 300,units = "in")
-    plot.new()
-    plotRanges(ir1,main=get_pro_acc(GroupID_slt,acc_loc="mid"))
-    lines(ir1_acc_all$ir1_acc,ir1_acc_all$Freq,col="red")
-    dev.off()
+    #plotRanges(ir1_r,main=get_pro_acc(GroupID_slt,acc_loc="mid"),width = 1800,height = 1200,res = 300)->img
+    #image_write(img,path=paste0(get_pro_acc(GroupID_slt,acc_loc="mid"),"_reduced_range.png"))
+
+    
+    # plotRanges(ir1,main=get_pro_acc(GroupID_slt,acc_loc="mid"),width = 1800,height = 1200,res = 300)->img
+    # image_draw(img)->img_ol
+    # plot(ir1_acc_all$ir1_acc,ir1_acc_all$Freq,col="red")
+    # lines(ir1_acc_all$ir1_acc,ir1_acc_all$Freq,col="red")
+    # dev.off()
+    # image_write(img_ol,path=paste0(get_pro_acc(GroupID_slt,acc_loc="mid"),"_ol_range.png"))
+    
+    
     
     if (recluster_by_mis){
       ID_data_slt_new<-NULL
         for (clusterID in unique(ID_data_slt$Cluster)){
           
           ID_data_slt[ID_data_slt$Cluster==clusterID,]->ID_data_slt_temp
-          miss_row_num=sum(str_detect(ID_data_slt_temp$Cleavages,"missed"),na.rm = T)
+          ID_data_slt_withmiss['&'(ID_data_slt_withmiss$start<=min(ID_data_slt_temp$start),ID_data_slt_withmiss$end>=max(ID_data_slt_temp$end)),]->ID_data_slt_withmiss_temp 
+          
+          miss_row_num=sum(str_detect(ID_data_slt_temp$Cleavages,regex("missed|cleaved",ignore_case = T)),na.rm = T)
           if('&'(miss_row_num>=1,miss_row_num!=nrow(ID_data_slt_temp))){
+            ID_data_slt_withmiss_temp$Cluster=clusterID
+            ID_data_slt_temp<-rbind(ID_data_slt_temp,ID_data_slt_withmiss_temp)
+            
             ID_data_slt_temp->ID_data_slt_temp_org
             ID_data_slt_temp<-ID_data_slt_temp[!str_detect(ID_data_slt_temp$Cleavages,"missed"),]
             ID_data_slt_temp_org_miss<-ID_data_slt_temp_org[str_detect(ID_data_slt_temp_org$Cleavages,"missed"),]
@@ -294,15 +303,20 @@ get_pro_acc<-function(accession,acc_loc=c("mid","end")){
 }
 
 plotRanges<-function(x,xlim=x,main=deparse(substitute(x)), col="black",sep=0.5,...) { 
+  library(magick)
+  magick::image_graph(...)->img
+  plot.new()
   height<-1 
   if(is(xlim,"IntegerRanges"))
     xlim<-c(min(start(xlim)),max(end(xlim))) 
   bins<-disjointBins(IRanges(start(x),end(x)+1)) 
-  plot.new() 
+ 
   plot.window(xlim,c(0,max(bins)*(height+sep))) 
   ybottom<-bins*(sep+height)-height 
   rect(start(x)-0.5,ybottom,end(x)+0.5,ybottom+height,col=col,...) 
   title(main)
   axis(1) 
+  dev.off()
+  return(img)
 }
 

@@ -1,18 +1,18 @@
 MonoisotopicMass_sil<-function (formula = list(), isotopes = list(), charge = 0, Isotype="Normal",c_num=6) 
 {
   defaultFormula <- list(C = 0, H = 0, N = 0, O = 0, S = 0, 
-                         P = 0, Br = 0, Cl = 0, F = 0, Si = 0, x = 0)
+                         P = 0, Br = 0, Cl = 0, F = 0, Si = 0, x = 0,'[13]C'=0)
   defaultFormula[names(formula)] <- formula
   defaultIsotopes <- list(C = 12, H = 1.0078250321, N = 14.0030740052, 
                           O = 15.9949146221, S = 31.97207069, P = 30.97376151, 
                           Br = 78.9183376, Cl = 34.96885271, F = 18.9984032, Si = 27.9769265327, 
-                          x = 0)
+                          x = 0,'[13]C'=13.003355)
   
   
   defaultIsotopes_13c <- list(C = 13.003355, H = 1.0078250321, N = 14.0030740052, 
                           O = 15.9949146221, S = 31.97207069, P = 30.97376151, 
                           Br = 78.9183376, Cl = 34.96885271, F = 18.9984032, Si = 27.9769265327, 
-                          x = 0)
+                          x = 0,'[13]C'=13.003355)
   defaultIsotopes[names(isotopes)] <- isotopes
   if(Isotype=="Normal"){
       if (charge < 0 & abs(charge) > defaultFormula$H) 
@@ -25,7 +25,7 @@ MonoisotopicMass_sil<-function (formula = list(), isotopes = list(), charge = 0,
              defaultFormula$Br * defaultIsotopes$Br + defaultFormula$Cl * 
              defaultIsotopes$Cl + defaultFormula$F * defaultIsotopes$F + 
              defaultFormula$Si * defaultIsotopes$Si + defaultFormula$x * 
-             defaultIsotopes$x)
+             defaultIsotopes$x + defaultIsotopes$'[13]C' * defaultFormula$'[13]C')
   if (charge != 0) 
     mass <- abs((mass + charge * 1.007276466)/charge)
   }else if(Isotype=="SIL" ){
@@ -41,7 +41,7 @@ MonoisotopicMass_sil<-function (formula = list(), isotopes = list(), charge = 0,
                defaultFormula$Si * defaultIsotopes_13c$Si + defaultFormula$x * 
                defaultIsotopes_13c$x)
     }else{
-      mass <- (defaultFormula$C * defaultIsotopes$C + defaultFormula$H * 
+      mass <- (defaultFormula$C * defaultIsotopes_13c$C + defaultFormula$H * 
                  defaultIsotopes$H + defaultFormula$N * defaultIsotopes$N + 
                  defaultFormula$O * defaultIsotopes$O + defaultFormula$S * 
                  defaultIsotopes$S + defaultFormula$P * defaultIsotopes$P + 
@@ -96,11 +96,11 @@ Cpd_spectrum_match_rescore<-function(cpd_list,peaklist,wd=getwd(),
   if (SIL_cpd){
     cpd_list$Isotype[str_detect(cpd_list$Matched.Form,"M_13C")]<-"SIL"
     cpd_list$adduct<-str_replace(cpd_list$adduct,".M_13C..","M")
-    cpd_list$formula_mono[cpd_list$Isotype=="SIL"]<-str_replace(cpd_list$formula_mono[cpd_list$Isotype=="SIL"],"C","\\[13C\\]")
-   if(is.na(C13_SIL_incorporation) ){ stop("Please specify the incorporation rate of C(13)")}
+    #cpd_list$formula_mono[cpd_list$Isotype=="SIL"]<-str_replace(cpd_list$formula_mono[cpd_list$Isotype=="SIL"],"C","\\[13\\]C")
+   #if(is.na(C13_SIL_incorporation) ){ stop("Please specify the incorporation rate of C(13)")}
    SIL_isotopes<-isotopes 
-   SIL_isotopes$abundance[SIL_isotopes$isotope=="13C"]=C13_SIL_incorporation
-   SIL_isotopes$abundance[SIL_isotopes$isotope=="12C"]=1-C13_SIL_incorporation
+   #SIL_isotopes$abundance[SIL_isotopes$isotope=="13C"]=C13_SIL_incorporation
+   #SIL_isotopes$abundance[SIL_isotopes$isotope=="12C"]=1-C13_SIL_incorporation
   }
   cpd_list->database->candidates
   required_col=c("formula")
@@ -108,11 +108,34 @@ Cpd_spectrum_match_rescore<-function(cpd_list,peaklist,wd=getwd(),
   unique_formula<-as.data.frame(unique(candidates[,c("formula","Isotype")]))
   unique_formula<-unique_formula[!is.na(unique_formula$formula),]
   unique_formula_list<-lapply(unique_formula$formula,get_atoms)
-  names(unique_formula_list)<-unique_formula$formula
+  names(unique_formula_list)<-paste0(unique_formula$formula,"_",unique_formula$Isotype)
+  
+
+  
   masslist<-lapply(1:nrow(unique_formula),function(x,unique_formula,unique_formula_list){
-    MonoisotopicMass_sil(unique_formula_list[[unique_formula$formula[x]]],Isotype=unique_formula$Isotype[x])->mass
+    MonoisotopicMass_sil(unique_formula_list[[paste0(unique_formula$formula[x],"_",unique_formula$Isotype[x])]],Isotype=unique_formula$Isotype[x])->mass
     return(mass)
     },unique_formula,unique_formula_list)
+  
+ if (SIL_cpd){
+  unique_formula_list<-lapply(names(unique_formula_list),function(x){
+    unique_formula_list[[x]]->y
+    if(str_detect(x,"_SIL$")){
+      if(y$C<=6){
+        y$'[13]C'=y$C
+        y$C<-NULL
+      }else{
+        y$C<-y$C-6
+        y$'[13]C'=6
+      }
+    }  
+    return(y)
+  })
+  names(unique_formula_list)<-paste0(unique_formula$formula,"_",unique_formula$Isotype)
+  }
+  
+  unique_formula_list_reduce<-get.formula()
+  
   uniquemass<-unlist(masslist)
   mass_DF<-data.frame(formula=unique_formula$formula,Isotype=unique_formula$Isotype,mass=uniquemass,stringsAsFactors = F)
   candidates<-base::merge(candidates,mass_DF,by=c("formula","Isotype"))
@@ -175,6 +198,7 @@ Cpd_spectrum_match_rescore<-function(cpd_list,peaklist,wd=getwd(),
   cpd_list$formula<-as.character(cpd_list$formula)
   
   unique_formula<-unique(cpd_list[,c("formula","Isotype")])
+  cpd_list_norm<<-cpd_list
   unique_formula<-unique_formula[!is.na(unique_formula$formula),]
   
   #cpd_list_Score=(bplapply(unique_formula,SCORE_CPD,peaklist=peaklist,isotopes=isotopes,score_method=score_method,charge = 1,ppm=ppm,BPPARAM = BPPARAM))
@@ -189,14 +213,31 @@ Cpd_spectrum_match_rescore<-function(cpd_list,peaklist,wd=getwd(),
   formula_score<-data.frame(formula=unique_formula$formula[unique_formula$Isotype=="Normal"],Score=cpd_list_Score_m$Score,Delta_ppm=cpd_list_Score_m$delta_ppm,Intensity=cpd_list_Score_m$Intensity)
   formula_score$Isotype<-"Normal"
   if (SIL_cpd){
+    # candidates_sil<-candidates[candidates$Isotype=="SIL",]
+    # cpd_list_sil<<-candidates_sil
+    # candidates_sil$Intensity<-1
+    # candidates_sil$mz<-candidates_sil$Query.Mass
+    # candidates_sil$charge<--1
+    # candidates_sil<-candidates_sil[,colnames(cpd_list)]
+    # 
+    candidates_sil<-cpd_list
+    candidates_sil$Isotype<-"SIL"
+    cpd_list<-rbind(cpd_list,candidates_sil)
+    cpd_list_all<<-cpd_list
+    unique_formula<-rbind(unique_formula,unique(candidates_sil[,c("formula","Isotype")]))
+    unique_formula_sil<-unique_formula
+    unique_formula_sil$Isotype<-"SIL"
+    unique_formula<-rbind(unique_formula,unique_formula_sil)
     cpd_list_Score=(lapply(unique_formula$formula[unique_formula$Isotype=="SIL"],SCORE_CPD,peaklist=peaklist,isotopes=SIL_isotopes,score_method=score_method,charge = -1,ppm=10))
     
     cpd_list_Score_m=as.data.frame(do.call(rbind, cpd_list_Score))
+    #cpd_list_Score_m_sil<<-cpd_list_Score_m
     names(cpd_list_Score_m)<-c("Score", "delta_ppm","Intensity")
     cpd_list_Score_m$Isotype<-"SIL"
     formula_score_sil<-data.frame(formula=unique_formula$formula[unique_formula$Isotype=="SIL"],Score=cpd_list_Score_m$Score,Delta_ppm=cpd_list_Score_m$delta_ppm,Intensity=cpd_list_Score_m$Intensity)
     formula_score_sil$Isotype<-"SIL"
     formula_score<-rbind(formula_score,formula_score_sil)
+    message("got",nrow(formula_score_sil),"Sil CPD scored.")
   }
   
   cpd_list$Score<-NULL
