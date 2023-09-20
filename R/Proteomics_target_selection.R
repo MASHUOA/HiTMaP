@@ -14,9 +14,9 @@
 
 PRM_target_slt<-function(GroupID,ID_data,TopN_Feat=5,wd=getwd(),
                          Id_pipeline=c("ProteinPilot","Fragpipe", "UserTable"),
-                         Consider_RT=F,Consider_intensities=T,
+                         Consider_RT=F,Consider_intensities=T,ppm_cutoff=15,
                          ref_fasta=NULL,Uniprot_mapping=T,Peptideatlas_mapping=T, 
-                         pep_length=c(7,40),score_cutoff=0,
+                         pep_length=c(7,40),score_cutoff=50,
                          recluster_by_mis=T){
   
   library(curl)
@@ -105,6 +105,7 @@ PRM_target_slt<-function(GroupID,ID_data,TopN_Feat=5,wd=getwd(),
   colnames(ID_data)<-c("Protein","Peptide","Modification","RT","Cleavages","Charge","Score","Intensity")
   ID_data$Intensity<-as.numeric(ID_data$Intensity)
   ID_data$Cleavages[is.na(ID_data$Cleavages)] <- ""
+  ID_data<-ID_data[ID_data$Score>=score_cutoff,]
   for(GroupID_slt in GroupID){
   
     ID_data_slt<-ID_data[ID_data[,"Protein"]==GroupID_slt,]
@@ -269,6 +270,9 @@ PRM_target_slt<-function(GroupID,ID_data,TopN_Feat=5,wd=getwd(),
     }
     ID_data_slt_reduce$Peptide_atlas<-unlist(pep_atlas_info[match(ID_data_slt_reduce$Peptide,names(pep_atlas_info))])
   }
+    
+    ID_data_slt_reduce<-ID_data_slt_reduce[order(ID_data_slt_reduce$Intensity,decreasing = T),]
+    ID_data_slt_reduce<-ID_data_slt_reduce[1:TopN_Feat,]
     
     write.csv(ID_data_slt_reduce,paste0(get_pro_acc(GroupID_slt,acc_loc="mid"),"_final.csv"),row.names = F)
     

@@ -48,7 +48,7 @@ Proteomics_par<-c("Database_stats","Fastadatabase","Digestion_site","Digestion_s
                   "use_previous_candidates","IMS_analysis","FDR_cutoff","peptide_ID_filter","plot_matching_score",
                   "Protein_feature_summary","Formula_with_water","output_candidatelist","Peptide_feature_summary","Region_feature_summary","parallel")
 
-PRM_selection_par<-c("Target_table_file","ID_table_file","Analysis_pipeline","pep_length","Score_cutoff","Peptideatlas_mapping")
+PRM_selection_par<-c("Target_table_file","ID_table_file","Analysis_pipeline","pep_length","Score_cutoff","Peptideatlas_mapping","TopN_Feat","ppm_cutoff")
 # Define server logic required to draw a histogram
 #shiny::shinyServer(function(input, output, session) {
 server<-function(input,output,session,WorkingDir_global){
@@ -552,7 +552,9 @@ server<-function(input,output,session,WorkingDir_global){
               Id_pipeline=input_future$Analysis_pipeline,
               pep_length=input_future$pep_length,
               score_cutoff=input_future$Score_cutoff,
-              Peptideatlas_mapping=input_future$Peptideatlas_mapping
+              Peptideatlas_mapping=input_future$Peptideatlas_mapping,
+              TopN_Feat=input_future$TopN_Feat,
+              ppm_cutoff=input_future$ppm_cutoff
               )"),
             fileConn)
         

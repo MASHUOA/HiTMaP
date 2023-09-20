@@ -41,7 +41,7 @@ MonoisotopicMass_sil<-function (formula = list(), isotopes = list(), charge = 0,
                defaultFormula$Si * defaultIsotopes_13c$Si + defaultFormula$x * 
                defaultIsotopes_13c$x)
     }else{
-      mass <- (defaultFormula$C * defaultIsotopes_13c$C + defaultFormula$H * 
+      mass <- (defaultFormula$C * defaultIsotopes$C + defaultFormula$H * 
                  defaultIsotopes$H + defaultFormula$N * defaultIsotopes$N + 
                  defaultFormula$O * defaultIsotopes$O + defaultFormula$S * 
                  defaultIsotopes$S + defaultFormula$P * defaultIsotopes$P + 
@@ -92,7 +92,7 @@ Cpd_spectrum_match_rescore<-function(cpd_list,peaklist,wd=getwd(),
   data(isotopes)
   cpd_list$formula_mono<-cpd_list$formula
   cpd_list$Matched.Form->cpd_list$adduct
-  cpd_list$Isotype<-"Normal"
+  if(is.null(cpd_list$Isotype)) cpd_list$Isotype<-"Normal"
   if (SIL_cpd){
     cpd_list$Isotype[str_detect(cpd_list$Matched.Form,"M_13C")]<-"SIL"
     cpd_list$adduct<-str_replace(cpd_list$adduct,".M_13C..","M")
@@ -102,28 +102,26 @@ Cpd_spectrum_match_rescore<-function(cpd_list,peaklist,wd=getwd(),
    #SIL_isotopes$abundance[SIL_isotopes$isotope=="13C"]=C13_SIL_incorporation
    #SIL_isotopes$abundance[SIL_isotopes$isotope=="12C"]=1-C13_SIL_incorporation
   }
+  
+  cpd_list<-cpd_list[cpd_list$formula!="",]
+  cpd_list<-cpd_list[!grepl(")n",cpd_list$formula),]
   cpd_list->database->candidates
-  required_col=c("formula")
+  required_col=c("formula","Isotype")
   candidates=data_test_rename(required_col,candidates)
+  candidates$formula_isotype<-paste0(candidates$formula,"_",candidates$Isotype)
   unique_formula<-as.data.frame(unique(candidates[,c("formula","Isotype")]))
   unique_formula<-unique_formula[!is.na(unique_formula$formula),]
   unique_formula_list<-lapply(unique_formula$formula,get_atoms)
   names(unique_formula_list)<-paste0(unique_formula$formula,"_",unique_formula$Isotype)
   
 
-  
-  masslist<-lapply(1:nrow(unique_formula),function(x,unique_formula,unique_formula_list){
-    MonoisotopicMass_sil(unique_formula_list[[paste0(unique_formula$formula[x],"_",unique_formula$Isotype[x])]],Isotype=unique_formula$Isotype[x])->mass
-    return(mass)
-    },unique_formula,unique_formula_list)
-  
- if (SIL_cpd){
+  if (SIL_cpd){
   unique_formula_list<-lapply(names(unique_formula_list),function(x){
     unique_formula_list[[x]]->y
     if(str_detect(x,"_SIL$")){
-      if(y$C<=6){
-        y$'[13]C'=y$C
-        y$C<-NULL
+      if(y$C<6){
+        #y$'[13]C'=y$C
+        y$C<-y$C
       }else{
         y$C<-y$C-6
         y$'[13]C'=6
@@ -133,32 +131,40 @@ Cpd_spectrum_match_rescore<-function(cpd_list,peaklist,wd=getwd(),
   })
   names(unique_formula_list)<-paste0(unique_formula$formula,"_",unique_formula$Isotype)
   }
+  masslist<-lapply(1:nrow(unique_formula),function(x,unique_formula,unique_formula_list){
+    MonoisotopicMass_sil(unique_formula_list[[paste0(unique_formula$formula[x],"_",unique_formula$Isotype[x])]],Isotype=unique_formula$Isotype[x])->mass
+    return(mass)
+    },unique_formula,unique_formula_list)
   
-  unique_formula_list_reduce<-get.formula()
+
+  
+  unique_formula_list_reduce<-atomes.to.formula(unique_formula_list)
   
   uniquemass<-unlist(masslist)
   mass_DF<-data.frame(formula=unique_formula$formula,Isotype=unique_formula$Isotype,mass=uniquemass,stringsAsFactors = F)
   candidates<-base::merge(candidates,mass_DF,by=c("formula","Isotype"))
+  candidates$formula<-unique_formula_list_reduce[match(paste0(candidates$formula,"_",candidates$Isotype),names(unique_formula_list))]
   
   candidates<-candidates[duplicated(names(candidates))==FALSE]
+  
   if (is.null(candidates$Metabolite.Name)){candidates$Metabolite.Name<-candidates$Matched.Compound}
-  Meta_Summary<-NULL
+
+  
   required_col=c("mz","Metabolite.Name","mass","formula","Isotype")
   candidates=data_test_rename(required_col,candidates) 
   candidates$formula<-as.character(candidates$formula)
-  candidates<-candidates[candidates$formula!="",]
-  candidates<-candidates[!grepl(")n",candidates$formula),]
-  meta_symbol<-lapply(unique(candidates$formula),get_atoms)
+  meta_symbol<-unique_formula_list
   
   symbol_adducts=bplapply(adducts,convert_peptide_adduct_list,meta_symbol,BPPARAM = BPPARAM,adductslist=adductslist)
   
   
   symbol_adducts_df=lapply(symbol_adducts,
                            function(x,names_x){
-                             data.frame(formula=names_x,formula_adduct=x)
-                           },unique(candidates$formula))
+                             data.frame(formula_isotype=names_x,formula_adduct=x)
+                           },names(meta_symbol))
+  names(symbol_adducts_df)<-adducts
   
-  
+    Meta_Summary<-NULL
   for (i in 1:length(adducts)){
     candidates_adduct<-unique(candidates[,c("Metabolite.Name","mass","formula","Isotype")])
     candidates_adduct<-candidates_adduct[!duplicated(candidates_adduct[,c("Metabolite.Name","formula","Isotype")]),]
@@ -167,7 +173,8 @@ Cpd_spectrum_match_rescore<-function(cpd_list,peaklist,wd=getwd(),
     candidates_adduct$mz<-(as.numeric(candidates_adduct$mass+adductmass))/abs(adducts_Charge)
     candidates_adduct$adduct<-adducts[i]
     candidates_adduct$charge<-adducts_Charge
-    candidates_adduct<-merge(candidates_adduct,symbol_adducts_df[i])
+    candidates_adduct$formula_isotype<-paste0(candidates_adduct$formula,"_",candidates_adduct$Isotype)
+    candidates_adduct<-merge(candidates_adduct,symbol_adducts_df[[adducts[i]]])
     candidates_adduct$formula<-candidates_adduct$formula_adduct
     candidates_adduct$formula_adduct<-NULL
     Meta_Summary<-rbind.data.frame(Meta_Summary,unique(candidates_adduct))
@@ -1248,4 +1255,14 @@ SCORE_CPD<-function(formula,peaklist,isotopes=NULL,threshold=0.001,charge=1,ppm=
   
   Peak_intensity<-sum(spectrum$Intensity)
   return(as.numeric(data.frame(finalscore,meanppm,Peak_intensity)))
+}
+
+atomes.to.formula<-function(unique_formula_list){
+  lapply(names(unique_formula_list),function(x){
+    unique_formula_list[[x]]->temp
+    temp[temp==0]<-NULL
+    temp_for<-paste0(names(temp),unlist(temp),collapse = "")
+    return(temp_for)
+  })->unique_formula_list_for
+  return(unlist(unique_formula_list_for))
 }

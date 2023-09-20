@@ -490,10 +490,6 @@ fluidPage(
                 multiple = F, options = list(maxItems = 1000)
               ),br(),
               
-              actionButton(inputId="PRM_processing_run", icon=NULL, label="Start PRM candidate selection"),
-              
-              br(),
-              
               selectInput("Analysis_pipeline", label = ("Analysis pipeline"),
                           choices = list("ProteinPilot" = "ProteinPilot", "Fragpipe" = "Fragpipe", "UserTable" = "UserTable"),
                           selected = "ProteinPilot"),
@@ -501,15 +497,24 @@ fluidPage(
               sliderInput("pep_length", label = ("Set peptide length range"), min = 5,
                           max = 50, value = c(7, 40)),
               
-              sliderInput("Score_cutoff", label = ("Set tolerance in ppm"), min = 0,
-                          max = 50, value = 5),
+              sliderInput("Score_cutoff", label = ("Set score cut-off"), min = 0,
+                          max = 100, value = 50),
+              
+              sliderInput("ppm_cutoff", label = ("Set tolerance in ppm"), min = 0,
+                          max = 100, value = 15),
+              
+              sliderInput("TopN_Feat", label = ("Set TopN Features to report"), min = 0,
+                          max = 100, value = 5),
               
               checkboxInput("Peptideatlas_mapping", label = "Use Peptideatlas Data", value = TRUE),
               
               
               
               
-       ))
+       ),column(3,actionButton(inputId="PRM_processing_run", icon=NULL, label="Start PRM candidate selection"),
+               
+               br())
+       )
    }
  ),icon = icon("circle-dot")),
  
