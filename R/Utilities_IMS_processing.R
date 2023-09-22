@@ -1267,7 +1267,7 @@ Preprocessing_segmentation<-function(datafile,
                                      BPPARAM=bpparam(),
                                      preprocess=list(force_preprocess=FALSE,use_preprocessRDS=TRUE,mz_bin_list=NULL,smoothSignal=list(method="gaussian"),
                                                      reduceBaseline=list(method="locmin"),
-                                                     peakPick=list(method="Default"),
+                                                     peakPick=list(method="Default",SNR=6,window=5),
                                                      peakAlign=list(tolerance=ppm/2, units="ppm", level=c("global","local")),
                                                      peakFilter=list(freq.min=0.05),
                                                      normalize=list(method=c("rms","tic","reference")[1],mz=1))){
@@ -1407,7 +1407,9 @@ Preprocessing_segmentation<-function(datafile,
           
           if (preprocess$peakPick$method=="Disable") {
           }else if (preprocess$peakPick$method %in% c("adaptive","mad","simple")){
-            imdata_ed<- imdata_ed %>% peakPick(method=preprocess$peakPick$method, window=4) %>% process()
+            if (is.null(preprocess$peakPick$SNR)) preprocess$peakPick$SNR=6
+            if (is.null(preprocess$peakPick$window)) preprocess$peakPick$window=5
+            imdata_ed<- imdata_ed %>% peakPick(method=preprocess$peakPick$method, SNR=preprocess$peakPick$SNR, window=preprocess$peakPick$window) %>% process()
           }else if (preprocess$peakPick$method == "Default|default"){
             #add an peak picking function other than the Cardinal options.
             peaklist<-summarizeFeatures(imdata_ed,"sum", as="DataFrame")
