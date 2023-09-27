@@ -1303,7 +1303,7 @@ Preprocessing_segmentation<-function(datafile,
         import_ppm = floor(instrument_ppm*2/5)[1]
       }else{
         instrument_ppm=10
-        import_ppm = floor(instrument_ppm*2/5)[1]
+        import_ppm = instrument_ppm
       }
     
     #setup import ppm which ensure pickpicking has correct number of data points (halfwindow>=2) per peak to work with
@@ -1319,10 +1319,10 @@ Preprocessing_segmentation<-function(datafile,
     
     message("Loading raw image data for statistical analysis: ",paste0(gsub(".imzML$","",datafile[z]), ".imzML"))
     if(mzrange[1]=="auto-detect"){
-      imdata <- Cardinal::readMSIData(datafile_imzML[z],  attach.only=T,as="MSImagingExperiment",resolution=import_ppm, units="ppm",BPPARAM=SerialParam())
+      imdata <- Cardinal::readMSIData(datafile_imzML[z],  attach.only=F,as="MSImagingExperiment",resolution=import_ppm, units="ppm",BPPARAM=SerialParam())
       imdata@centroided<-F
     }else {
-      imdata <- Cardinal::readMSIData(datafile_imzML[z],  attach.only=T,as="MSImagingExperiment",resolution=import_ppm, units="ppm",BPPARAM=SerialParam(),mass.range =mzrange)
+      imdata <- Cardinal::readMSIData(datafile_imzML[z],  attach.only=F,as="MSImagingExperiment",resolution=import_ppm, units="ppm",BPPARAM=SerialParam(),mass.range =mzrange)
       imdata <-imdata[between(mz(imdata),mzrange[1],mzrange[2]),]
       imdata@centroided<-F
     }
@@ -1356,22 +1356,33 @@ Preprocessing_segmentation<-function(datafile,
       message("Preparing image data for statistical analysis: ",paste0(gsub(".imzML$","",datafile[z]), ".imzML"))
       if (!is.null(preprocess)){
         imdata_ed<-imdata
+        rm(imdata)
+
+        setCardinalBPPARAM(BPPARAM)
         if  ( ppm<25){
-          setCardinalBPPARAM(SerialParam())
+
           
-          peaklist<-summarizeFeatures(imdata_ed,"sum", as="DataFrame")
-          peaklist_deco<-data.frame(mz=peaklist@mz,intensities=peaklist$sum)
-          peaklist_deco<-peaklist_deco[peaklist_deco$intensities>0,]
-          write.csv(peaklist_deco,paste0(gsub(".imzML$","",datafile[z])  ," ID/Sum_spec.csv"),row.names = F)
+          if (!is.null(preprocess$normalize)){
+            if (preprocess$normalize$method=="Disable") {
+            } else if (preprocess$normalize$method %in% c("rms","tic")){
+              imdata_ed<- imdata_ed %>% normalize(method=preprocess$normalize$method) %>% process()
+            } else if ('&'(preprocess$normalize$method == "reference", !is.null(preprocess$normalize$mz))){
+              norm_feature<-which(dplyr::between(imdata_ed@featureData@mz,
+                                                 preprocess$normalize$mz*(1-ppm/1000000),
+                                                 preprocess$normalize$mz*(1+ppm/1000000)))
+              if (length(norm_feature)>=1){
+                imdata_ed<- imdata_ed %>% normalize(method=preprocess$normalize$method, feature = norm_feature) %>% process(BPPARAM=SerialParam())
+              }
+            } else {
+              imdata_ed<- imdata_ed %>% normalize(method="rms") %>% process()
+            }
+          }
+
           
           #peaklist_deco<-HiTMaP:::isopattern_ppm_filter_peaklist(peaklist_deco,ppm=ppm,threshold=0)
           #write.csv(peaklist_deco,paste0(gsub(".imzML$","",datafile[z])  ," ID/Sum_spec_decov.csv"),row.names = F)
           
-          
-          
-          
-          
-          setCardinalBPPARAM(BPPARAM)
+
           #smoothSignal(method="gaussian") %>%
           #reduceBaseline(method="locmin") %>%
           if (!is.null(preprocess$mz_bin_list)){
@@ -1450,7 +1461,22 @@ Preprocessing_segmentation<-function(datafile,
           }
           
           imdata_ed<- imdata_ed %>% process()
+          #imdata_ed_proc<-as(imdata_ed,"MSProcessedImagingExperiment")
+          gc()
           
+
+          
+          #peaklist<-summarizeFeatures(imdata_ed,"sum", as="DataFrame")
+          #peaklist_deco<-data.frame(mz=peaklist@mz,intensities=peaklist$sum)
+          #peaklist_deco<-peaklist_deco[peaklist_deco$intensities>0,]
+          
+          #peaklist_deco<-HiTMaP:::isopattern_ppm_filter_peaklist(peaklist_deco,ppm=instrument_ppm,threshold=0)
+          #imdata_ed<-imdata_ed %>% peakBin(peaklist_deco$mz, resolution=instrument_ppm, units="ppm") %>% process()
+          
+        } 
+        else if(ppm>=25){
+          #smoothSignal(method="gaussian") %>%
+          #reduceBaseline(method="locmin") %>%
           if (!is.null(preprocess$normalize)){
             if (preprocess$normalize$method=="Disable") {
             } else if (preprocess$normalize$method %in% c("rms","tic")){
@@ -1466,19 +1492,6 @@ Preprocessing_segmentation<-function(datafile,
               imdata_ed<- imdata_ed %>% normalize(method="rms") %>% process()
             }
           }
-          
-          #peaklist<-summarizeFeatures(imdata_ed,"sum", as="DataFrame")
-          #peaklist_deco<-data.frame(mz=peaklist@mz,intensities=peaklist$sum)
-          #peaklist_deco<-peaklist_deco[peaklist_deco$intensities>0,]
-          
-          #peaklist_deco<-HiTMaP:::isopattern_ppm_filter_peaklist(peaklist_deco,ppm=instrument_ppm,threshold=0)
-          #imdata_ed<-imdata_ed %>% peakBin(peaklist_deco$mz, resolution=instrument_ppm, units="ppm") %>% process()
-          
-        } 
-        else if(ppm>=25){
-          imdata_ed<-imdata
-          #smoothSignal(method="gaussian") %>%
-          #reduceBaseline(method="locmin") %>%
           
           if (preprocess$smoothSignal$method=="Disable") {
           }else if (!is.null(preprocess$smoothSignal$method)){
@@ -1517,21 +1530,7 @@ Preprocessing_segmentation<-function(datafile,
           
           imdata_ed<- imdata_ed %>% process()
           
-          if (!is.null(preprocess$normalize)){
-            if (preprocess$normalize$method=="Disable") {
-            } else if (preprocess$normalize$method %in% c("rms","tic")){
-              imdata_ed<- imdata_ed %>% normalize(method=preprocess$normalize$method) %>% process()
-            } else if ('&'(preprocess$normalize$method == "reference", !is.null(preprocess$normalize$mz))){
-              norm_feature<-which(dplyr::between(imdata_ed@featureData@mz,
-                                                 preprocess$normalize$mz*(1-ppm/1000000),
-                                                 preprocess$normalize$mz*(1+ppm/1000000)))
-              if (length(norm_feature)>=1){
-                imdata_ed<- imdata_ed %>% normalize(method=preprocess$normalize$method, feature = norm_feature) %>% process(BPPARAM=SerialParam())
-              }
-            } else {
-              imdata_ed<- imdata_ed %>% normalize(method="rms") %>% process()
-            }
-          }
+          
           
         }
         
