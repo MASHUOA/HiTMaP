@@ -432,9 +432,11 @@ SCORE_PMF<-function(formula,peaklist,isotopes=NULL,threshold=1,charge=1,ppm=5,pr
 
   #Filter and merge the isotopic pattern using instrument resolution
   pattern=pattern[[formula]]
-  pattern=isopattern_ppm_filter(pattern = pattern[,1:2], ppm=instrument_ppm)
-  pattern=pattern[pattern[,2]>=1,]
-
+  #pattern=isopattern_ppm_filter(pattern = pattern[,1:2], ppm=instrument_ppm)
+  #pattern=pattern[pattern[,2]>=1,]
+  pattern=isopattern_ppm_filter(pattern = matrix(pattern[,1:2],ncol=2), ppm=instrument_ppm)
+  pattern= matrix(pattern[topN_feature(pattern[,2],10),],ncol=2)
+  pattern<-matrix(pattern[,1:2],ncol=2)
   #peptide similarity score calculation
   spectrumintensity=unlist(lapply(1:nrow(pattern), function(x,pattern,peaklist,ppm){
     PMF_spectrum_intensity<-as.numeric(peaklist[between(peaklist$m.z,pattern[x,1]*(1-ppm/1000000),pattern[x,1]*(1+ppm/1000000)),2])
@@ -708,7 +710,7 @@ FDR_cutoff_plot<-function(Peptide_plot_list,FDR_cutoff=0.1,FDR_strip=500,plot_fd
   suppressMessages(suppressWarnings(require(dplyr)))
   suppressMessages(suppressWarnings(require(zoo)))
   #suppressMessages(suppressWarnings(require(FTICRMS)))
-  Peptide_plot_list=data_test_rename(c("isdecoy","Score"),Peptide_plot_list)
+  Peptide_plot_list=HiTMaP:::data_test_rename(c("isdecoy","Score"),Peptide_plot_list)
 
   Peptide_plot_list$isdecoy<-factor(Peptide_plot_list$isdecoy)
 
@@ -736,7 +738,7 @@ FDR_cutoff_plot<-function(Peptide_plot_list,FDR_cutoff=0.1,FDR_strip=500,plot_fd
 
       png(paste0(outputdir,"/Peptide_Score_histogram_",plot_name,".png"))
       p<-ggplot(Peptide_plot_list_plot, aes(x=Peptide_plot_list_plot$Score, color=target_decoy, fill=target_decoy)) +
-        geom_histogram(aes(y=..density..), position="Dodge", alpha=0.5, bins = 50)+
+        geom_histogram(aes(y=after_stat(density)), position="Dodge", alpha=0.5, bins = 50)+
         geom_density(alpha=0.6)+ xlim(quantile(Peptide_plot_list_plot$Score, c(0.005,0.995)))+
         geom_vline(data=mu, aes(xintercept=mu$mean, color=mu$target_decoy), linetype="dashed")+
         ggtitle("Peptide score vs Counts") +

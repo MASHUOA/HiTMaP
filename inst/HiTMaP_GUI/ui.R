@@ -63,7 +63,7 @@ fluidPage(
   br(),
   fluidRow(
     column(2,br(),
-     shinyDirButton("Projectdir", "Chose or creat Project", "Creat or choose a Project folder",icon = icon("folder-open"), class = "btn-primary"),br()
+     shinyDirButton("Projectdir", "Choose or create Project", "Create or choose a Project folder",icon = icon("folder-open"), class = "btn-primary"),br()
       ),
     column(2,br(),
            downloadButton(outputId = "projectSavebtn", label = "Save project data")

@@ -268,7 +268,7 @@ percent <- function(x, digits = 2, format = "f", ...) {
 }
 
 
-Parallel.OS<-function(Thread=1,bpprogressbar_t=TRUE,override_type=NULL,bpexportglobals=F){
+Parallel.OS<-function(Thread=1,bpprogressbar_t=TRUE,override_type=NULL,bpexportglobals=F,bpforceGC=T){
   library(BiocParallel)
   if(Thread!=1){
     if(!is.null(override_type)){
@@ -282,6 +282,7 @@ Parallel.OS<-function(Thread=1,bpprogressbar_t=TRUE,override_type=NULL,bpexportg
     
     BiocParallel::bpworkers(BPPARAM)=Thread
     bpexportglobals(BPPARAM)=bpexportglobals
+    BPPARAM$force.GC<-bpforceGC
   }else{
     BPPARAM=BiocParallel::SerialParam() 
   } 

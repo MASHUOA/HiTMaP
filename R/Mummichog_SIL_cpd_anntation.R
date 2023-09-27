@@ -92,36 +92,54 @@ Cpd_spectrum_match_rescore<-function(cpd_list,peaklist,wd=getwd(),
   data(isotopes)
   cpd_list$formula_mono<-cpd_list$formula
   cpd_list$Matched.Form->cpd_list$adduct
+  peaklist$intensities<-as.numeric(peaklist$intensities)
+  peaklist <- peaklist[peaklist$intensities>0,]
+   
   if(is.null(cpd_list$Isotype)) cpd_list$Isotype<-"Normal"
   if (SIL_cpd){
     cpd_list$Isotype[str_detect(cpd_list$Matched.Form,"M_13C")]<-"SIL"
     cpd_list$adduct<-str_replace(cpd_list$adduct,".M_13C..","M")
     #cpd_list$formula_mono[cpd_list$Isotype=="SIL"]<-str_replace(cpd_list$formula_mono[cpd_list$Isotype=="SIL"],"C","\\[13\\]C")
    #if(is.na(C13_SIL_incorporation) ){ stop("Please specify the incorporation rate of C(13)")}
-   SIL_isotopes<-isotopes 
-   #SIL_isotopes$abundance[SIL_isotopes$isotope=="13C"]=C13_SIL_incorporation
-   #SIL_isotopes$abundance[SIL_isotopes$isotope=="12C"]=1-C13_SIL_incorporation
+   
+   if (length(cpd_list$Isotype=="SIL")==0){
+     cpd_list_sil<-cpd_list
+     cpd_list$Isotype="SIL"
+     cpd_list<-rbind(cpd_list,cpd_list_sil)
+   }
+   isotopes$abundance['&'(isotopes$isotope=="13C",isotopes$element=="[13]C")]=C13_SIL_incorporation
+   isotopes['&'(isotopes$isotope=="13C",isotopes$element=="[13]C"),]->addrow
+   addrow$isotope[1]="12C"
+   addrow$mass[1]=12
+   addrow$abundance[1]=1-C13_SIL_incorporation
+   isotopes<-rbind(isotopes,addrow)
+   rownames(isotopes)<-1:nrow(isotopes)
   }
   
   cpd_list<-cpd_list[cpd_list$formula!="",]
   cpd_list<-cpd_list[!grepl(")n",cpd_list$formula),]
   cpd_list->database->candidates
+  
   required_col=c("formula","Isotype")
   candidates=data_test_rename(required_col,candidates)
-  candidates$formula_isotype<-paste0(candidates$formula,"_",candidates$Isotype)
-  unique_formula<-as.data.frame(unique(candidates[,c("formula","Isotype")]))
-  unique_formula<-unique_formula[!is.na(unique_formula$formula),]
+  candidates$formula_isotype<-paste0(candidates$formula_mono,"_",candidates$Isotype)
+  unique_formula<-as.data.frame(unique(candidates[,c("formula_mono","Isotype")]))
   unique_formula_list<-lapply(unique_formula$formula,get_atoms)
   names(unique_formula_list)<-paste0(unique_formula$formula,"_",unique_formula$Isotype)
   
 
+
+  masslist<-lapply(1:nrow(unique_formula),function(x,unique_formula,unique_formula_list){
+    MonoisotopicMass_sil(unique_formula_list[[paste0(unique_formula$formula[x],"_",unique_formula$Isotype[x])]],Isotype=unique_formula$Isotype[x])->mass
+    return(mass)
+    },unique_formula,unique_formula_list)
+  
   if (SIL_cpd){
   unique_formula_list<-lapply(names(unique_formula_list),function(x){
     unique_formula_list[[x]]->y
     if(str_detect(x,"_SIL$")){
       if(y$C<6){
-        #y$'[13]C'=y$C
-        y$C<-y$C
+        y<-NULL
       }else{
         y$C<-y$C-6
         y$'[13]C'=6
@@ -130,13 +148,11 @@ Cpd_spectrum_match_rescore<-function(cpd_list,peaklist,wd=getwd(),
     return(y)
   })
   names(unique_formula_list)<-paste0(unique_formula$formula,"_",unique_formula$Isotype)
+  sil_valid_idx<-which(!unlist(lapply(unique_formula_list,is.null)))
+  unique_formula_list<-unique_formula_list[sil_valid_idx]
+  unique_formula<-unique_formula[sil_valid_idx,]
+  masslist<-masslist[sil_valid_idx]
   }
-  masslist<-lapply(1:nrow(unique_formula),function(x,unique_formula,unique_formula_list){
-    MonoisotopicMass_sil(unique_formula_list[[paste0(unique_formula$formula[x],"_",unique_formula$Isotype[x])]],Isotype=unique_formula$Isotype[x])->mass
-    return(mass)
-    },unique_formula,unique_formula_list)
-  
-
   
   unique_formula_list_reduce<-atomes.to.formula(unique_formula_list)
   
@@ -166,30 +182,29 @@ Cpd_spectrum_match_rescore<-function(cpd_list,peaklist,wd=getwd(),
   
     Meta_Summary<-NULL
   for (i in 1:length(adducts)){
-    candidates_adduct<-unique(candidates[,c("Metabolite.Name","mass","formula","Isotype")])
-    candidates_adduct<-candidates_adduct[!duplicated(candidates_adduct[,c("Metabolite.Name","formula","Isotype")]),]
+    candidates_adduct<-unique(candidates[,c("Metabolite.Name","mass","formula_mono","Isotype")])
+    candidates_adduct<-candidates_adduct[!duplicated(candidates_adduct[,c("Metabolite.Name","formula_mono","Isotype")]),]
     adductmass<-as.numeric(as.character(adductslist[adductslist$Name==adducts[i],"Mass"]))
     adducts_Charge<-as.numeric(adductslist[adductslist$Name==adducts[i],"Charge"])
     candidates_adduct$mz<-(as.numeric(candidates_adduct$mass+adductmass))/abs(adducts_Charge)
     candidates_adduct$adduct<-adducts[i]
     candidates_adduct$charge<-adducts_Charge
-    candidates_adduct$formula_isotype<-paste0(candidates_adduct$formula,"_",candidates_adduct$Isotype)
+    candidates_adduct$formula_isotype<-paste0(candidates_adduct$formula_mono,"_",candidates_adduct$Isotype)
     candidates_adduct<-merge(candidates_adduct,symbol_adducts_df[[adducts[i]]])
     candidates_adduct$formula<-candidates_adduct$formula_adduct
     candidates_adduct$formula_adduct<-NULL
     Meta_Summary<-rbind.data.frame(Meta_Summary,unique(candidates_adduct))
   }
   
-  Meta_Summary$Isotype<-"Normal"
-  Meta_Summary<-Meta_Summary[!stringr::str_detect(Meta_Summary$formula,"-"),]
+  #Meta_Summary$Isotype<-"Normal"
+  #Meta_Summary<-Meta_Summary[!stringr::str_detect(Meta_Summary$formula,"-"),]
   # cpd_list$adduct <- str_remove_all(cpd_list$adduct,"\\[-\\]|\\[+\\]")
   # cpd_list$formula <- NULL
   # cpd_list$Matched.Compound->cpd_list$Metabolite.Name
   # cpd_list<-merge(cpd_list,Meta_Summary,by=c("Metabolite.Name","adduct"),all.x=T)
   cpd_list<-Meta_Summary
-  cpd_list<-cpd_list[!is.na(cpd_list$formula),]
   
-    #Do first round of peptide search to get putative result
+  #Do first round of peptide search to get putative result
   mz_feature_list<-Do_PMF_search(peaklist,cpd_list,BPPARAM=BPPARAM,ppm = ppm)
   mz_feature_list<-unique(mz_feature_list)
   message("Summarizing cpd information...",length(unique(mz_feature_list$mz))," were found in the first search.")
@@ -199,53 +214,35 @@ Cpd_spectrum_match_rescore<-function(cpd_list,peaklist,wd=getwd(),
   mz_feature_list$mz<-as.character(mz_feature_list$mz)
   
   cpd_list$mz<-as.character(cpd_list$mz)
+  cpd_list->cpd_list_full
   cpd_list<-merge(cpd_list,mz_feature_list,by.x="mz",by.y="mz",all.x=T,sort=F)
   cpd_list$Intensity[is.na(cpd_list$Intensity)]<-0
   cpd_list<-cpd_list[cpd_list$Intensity>0,]
   cpd_list$formula<-as.character(cpd_list$formula)
   
   unique_formula<-unique(cpd_list[,c("formula","Isotype")])
-  cpd_list_norm<<-cpd_list
+  
   unique_formula<-unique_formula[!is.na(unique_formula$formula),]
-  
-  #cpd_list_Score=(bplapply(unique_formula,SCORE_CPD,peaklist=peaklist,isotopes=isotopes,score_method=score_method,charge = 1,ppm=ppm,BPPARAM = BPPARAM))
-
-  
   unique_formula<<-unique_formula
-  cpd_list_Score=(lapply(unique_formula$formula[unique_formula$Isotype=="Normal"],SCORE_CPD,peaklist=peaklist,isotopes=isotopes,score_method=score_method,charge = -1,ppm=10))
+  
+  cpd_list_Score=(lapply(unique_formula$formula,try(SCORE_CPD),peaklist=peaklist,isotopes=isotopes,score_method=score_method,charge = -1,ppm=ppm,threshold=1))
    cpd_list_Score<<-cpd_list_Score
   cpd_list_Score_m=as.data.frame(do.call(rbind, cpd_list_Score))
   names(cpd_list_Score_m)<-c("Score", "delta_ppm","Intensity")
-  cpd_list_Score_m$Isotype<-"Normal"
-  formula_score<-data.frame(formula=unique_formula$formula[unique_formula$Isotype=="Normal"],Score=cpd_list_Score_m$Score,Delta_ppm=cpd_list_Score_m$delta_ppm,Intensity=cpd_list_Score_m$Intensity)
-  formula_score$Isotype<-"Normal"
-  if (SIL_cpd){
-    # candidates_sil<-candidates[candidates$Isotype=="SIL",]
-    # cpd_list_sil<<-candidates_sil
-    # candidates_sil$Intensity<-1
-    # candidates_sil$mz<-candidates_sil$Query.Mass
-    # candidates_sil$charge<--1
-    # candidates_sil<-candidates_sil[,colnames(cpd_list)]
-    # 
-    candidates_sil<-cpd_list
-    candidates_sil$Isotype<-"SIL"
-    cpd_list<-rbind(cpd_list,candidates_sil)
-    cpd_list_all<<-cpd_list
-    unique_formula<-rbind(unique_formula,unique(candidates_sil[,c("formula","Isotype")]))
-    unique_formula_sil<-unique_formula
-    unique_formula_sil$Isotype<-"SIL"
-    unique_formula<-rbind(unique_formula,unique_formula_sil)
-    cpd_list_Score=(lapply(unique_formula$formula[unique_formula$Isotype=="SIL"],SCORE_CPD,peaklist=peaklist,isotopes=SIL_isotopes,score_method=score_method,charge = -1,ppm=10))
-    
-    cpd_list_Score_m=as.data.frame(do.call(rbind, cpd_list_Score))
-    #cpd_list_Score_m_sil<<-cpd_list_Score_m
-    names(cpd_list_Score_m)<-c("Score", "delta_ppm","Intensity")
-    cpd_list_Score_m$Isotype<-"SIL"
-    formula_score_sil<-data.frame(formula=unique_formula$formula[unique_formula$Isotype=="SIL"],Score=cpd_list_Score_m$Score,Delta_ppm=cpd_list_Score_m$delta_ppm,Intensity=cpd_list_Score_m$Intensity)
-    formula_score_sil$Isotype<-"SIL"
-    formula_score<-rbind(formula_score,formula_score_sil)
-    message("got",nrow(formula_score_sil),"Sil CPD scored.")
-  }
+  cpd_list_Score_m$Isotype<-unique_formula$Isotype
+  formula_score<-data.frame(formula=unique_formula$formula,Score=cpd_list_Score_m$Score,Delta_ppm=cpd_list_Score_m$delta_ppm,Intensity=cpd_list_Score_m$Intensity,Isotype=unique_formula$Isotype)
+  # if (SIL_cpd){
+  # 
+  #   cpd_list_Score=(lapply(unique_formula$formula[unique_formula$Isotype=="SIL"],SCORE_CPD,peaklist=peaklist,isotopes=SIL_isotopes,score_method=score_method,charge = -1,ppm=10))
+  #   cpd_list_Score_m=as.data.frame(do.call(rbind, cpd_list_Score))
+  #   #cpd_list_Score_m_sil<<-cpd_list_Score_m
+  #   names(cpd_list_Score_m)<-c("Score", "delta_ppm","Intensity")
+  #   cpd_list_Score_m$Isotype<-"SIL"
+  #   formula_score_sil<-data.frame(formula=unique_formula$formula[unique_formula$Isotype=="SIL"],Score=cpd_list_Score_m$Score,Delta_ppm=cpd_list_Score_m$delta_ppm,Intensity=cpd_list_Score_m$Intensity)
+  #   formula_score_sil$Isotype<-"SIL"
+  #   formula_score<-rbind(formula_score,formula_score_sil)
+  #   message("got",nrow(formula_score_sil),"Sil CPD scored.")
+  # }
   
   cpd_list$Score<-NULL
   cpd_list$Delta_ppm<-NULL
@@ -255,46 +252,45 @@ Cpd_spectrum_match_rescore<-function(cpd_list,peaklist,wd=getwd(),
   #generate decoy candidate list if running in "isotope" decoy mode 
   if (Decoy_search && ("isotope" %in% Decoy_mode)){
     decoy_isotopes=isotopes
-    decoy_isotopes[decoy_isotopes$isotope=="13C",]=data.frame(element="C",isotope="11C",mass=10.99664516,aboudance=0.0107,ratioC=0,stringsAsFactors = F)
-    decoy_isotopes[decoy_isotopes$isotope=="15N",]=data.frame(element="N",isotope="13N",mass=13.00603905,aboudance=0.00364000,ratioC=4,stringsAsFactors = F)
-    decoy_isotopes[decoy_isotopes$isotope=="2H",]=data.frame(element="H",isotope="0H",mass=0.001548286,aboudance=0.00011500,ratioC=6,stringsAsFactors = F)
-    decoy_isotopes[decoy_isotopes$isotope=="17O",]=data.frame(element="O",isotope="15O",mass=14.99069774,aboudance=0.00038000,ratioC=3,stringsAsFactors = F)
-    decoy_isotopes[decoy_isotopes$isotope=="18O",]=data.frame(element="O",isotope="14O",mass=13.99066884,aboudance=0.00205000,ratioC=3,stringsAsFactors = F)
-    decoy_isotopes[decoy_isotopes$isotope=="33S",]=data.frame(element="S",isotope="31S",mass=30.97268292,aboudance=0.0075,ratioC=3,stringsAsFactors = F)
-    decoy_isotopes[decoy_isotopes$isotope=="34S",]=data.frame(element="S",isotope="30S",mass=29.9762745,aboudance=0.0425,ratioC=3,stringsAsFactors = F)
-    decoy_isotopes[decoy_isotopes$isotope=="35S",]=data.frame(element="S",isotope="29S",mass=28.94414146,aboudance=0,ratioC=3,stringsAsFactors = F)
-    decoy_isotopes[decoy_isotopes$isotope=="36S",]=data.frame(element="S",isotope="28S",mass=27.97706058,aboudance=0.0001,ratioC=3,stringsAsFactors = F)
+    C_rows<-data.frame(element=c("C","C","[13]C","[13]C"),isotope=c("11C","12C","13C","14C"),mass=c(10.99664516,12,13.003355,14),abundance=c(0.0107,1-0.0107,1-C13_SIL_incorporation,C13_SIL_incorporation),ratioC=0,stringsAsFactors = F)
+    decoy_isotopes[!(decoy_isotopes$element %in% c("[13]C","C")),]->decoy_isotopes
+    decoy_isotopes<-rbind(decoy_isotopes,C_rows)
+    #decoy_isotopes[decoy_isotopes$isotope %in% "13C",]=data.frame(element=c("C","[13]C","[13]C"),isotope=c("11C","13C","14C"),mass=c(10.99664516,13.003355,14.0067),aboudance=c(0.0107,0.0107,1-0.0107),ratioC=0,stringsAsFactors = F)
+    decoy_isotopes[decoy_isotopes$isotope %in% "15N",]=data.frame(element="N",isotope="13N",mass=13.00603905,aboudance=0.00364000,ratioC=4,stringsAsFactors = F)
+    decoy_isotopes[decoy_isotopes$isotope %in% "2H",]=data.frame(element="H",isotope="0H",mass=0.001548286,aboudance=0.00011500,ratioC=6,stringsAsFactors = F)
+    decoy_isotopes[decoy_isotopes$isotope %in% "17O",]=data.frame(element="O",isotope="15O",mass=14.99069774,aboudance=0.00038000,ratioC=3,stringsAsFactors = F)
+    decoy_isotopes[decoy_isotopes$isotope %in% "18O",]=data.frame(element="O",isotope="14O",mass=13.99066884,aboudance=0.00205000,ratioC=3,stringsAsFactors = F)
+    decoy_isotopes[decoy_isotopes$isotope %in% "33S",]=data.frame(element="S",isotope="31S",mass=30.97268292,aboudance=0.0075,ratioC=3,stringsAsFactors = F)
+    decoy_isotopes[decoy_isotopes$isotope %in% "34S",]=data.frame(element="S",isotope="30S",mass=29.9762745,aboudance=0.0425,ratioC=3,stringsAsFactors = F)
+    decoy_isotopes[decoy_isotopes$isotope %in% "35S",]=data.frame(element="S",isotope="29S",mass=28.94414146,aboudance=0,ratioC=3,stringsAsFactors = F)
+    decoy_isotopes[decoy_isotopes$isotope %in% "36S",]=data.frame(element="S",isotope="28S",mass=27.97706058,aboudance=0.0001,ratioC=3,stringsAsFactors = F)
+    decoy_isotopes[decoy_isotopes$isotope %in% "37Cl",]=data.frame(element="Cl",isotope="33Cl",mass=32.965903,aboudance=0.24240000,ratioC=3,stringsAsFactors = F)
+    
     cpd_list_decoy<-cpd_list[cpd_list$isdecoy==0,]
     cpd_list_decoy$isdecoy=1
     unique_formula<-unique(cpd_list_decoy[,c("formula","Isotype")])
-    unique_formula<-unique_formula[!is.na(unique_formula$formula),]
-    cpd_list_Score=(lapply(unique_formula$formula[unique_formula$Isotype=="Normal"],SCORE_CPD,peaklist=peaklist,isotopes=decoy_isotopes,score_method=score_method,charge = -1,ppm=10))
     
+    unique_formula<-unique_formula[!is.na(unique_formula$formula),]
+    unique_formula<<-unique_formula
+    
+    cpd_list_Score=(lapply(unique_formula$formula,SCORE_CPD,peaklist=peaklist,isotopes=decoy_isotopes,score_method=score_method,charge = -1,ppm=ppm,threshold=1))
+    cpd_list_Score<<-cpd_list_Score
     cpd_list_Score_m=as.data.frame(do.call(rbind, cpd_list_Score))
     names(cpd_list_Score_m)<-c("Score", "delta_ppm","Intensity")
-    cpd_list_Score_m$Isotype<-"Normal"
-    formula_score<-data.frame(formula=unique_formula$formula[unique_formula$Isotype=="Normal"],Score=cpd_list_Score_m$Score,Delta_ppm=cpd_list_Score_m$delta_ppm,Intensity=cpd_list_Score_m$Intensity)
-    formula_score$Isotype<-"Normal"
-    if (SIL_cpd){
-      decoy_isotopes_sil=SIL_isotopes
-      decoy_isotopes_sil[decoy_isotopes_sil$isotope=="13C",]=data.frame(element="C",isotope="11C",mass=10.99664516,aboudance=0.0107,ratioC=0,stringsAsFactors = F)
-      decoy_isotopes_sil[decoy_isotopes_sil$isotope=="15N",]=data.frame(element="N",isotope="13N",mass=13.00603905,aboudance=0.00364000,ratioC=4,stringsAsFactors = F)
-      decoy_isotopes_sil[decoy_isotopes_sil$isotope=="2H",]=data.frame(element="H",isotope="0H",mass=0.001548286,aboudance=0.00011500,ratioC=6,stringsAsFactors = F)
-      decoy_isotopes_sil[decoy_isotopes_sil$isotope=="17O",]=data.frame(element="O",isotope="15O",mass=14.99069774,aboudance=0.00038000,ratioC=3,stringsAsFactors = F)
-      decoy_isotopes_sil[decoy_isotopes_sil$isotope=="18O",]=data.frame(element="O",isotope="14O",mass=13.99066884,aboudance=0.00205000,ratioC=3,stringsAsFactors = F)
-      decoy_isotopes_sil[decoy_isotopes_sil$isotope=="33S",]=data.frame(element="S",isotope="31S",mass=30.97268292,aboudance=0.0075,ratioC=3,stringsAsFactors = F)
-      decoy_isotopes_sil[decoy_isotopes_sil$isotope=="34S",]=data.frame(element="S",isotope="30S",mass=29.9762745,aboudance=0.0425,ratioC=3,stringsAsFactors = F)
-      decoy_isotopes_sil[decoy_isotopes_sil$isotope=="35S",]=data.frame(element="S",isotope="29S",mass=28.94414146,aboudance=0,ratioC=3,stringsAsFactors = F)
-      decoy_isotopes_sil[decoy_isotopes_sil$isotope=="36S",]=data.frame(element="S",isotope="28S",mass=27.97706058,aboudance=0.0001,ratioC=3,stringsAsFactors = F)
-      cpd_list_Score=(lapply(unique_formula$formula[unique_formula$Isotype=="SIL"],SCORE_CPD,peaklist=peaklist,isotopes=decoy_isotopes_sil,score_method=score_method,charge = -1,ppm=10))
-      cpd_list_Score_m=as.data.frame(do.call(rbind, cpd_list_Score))
-      names(cpd_list_Score_m)<-c("Score", "delta_ppm","Intensity")
-      cpd_list_Score_m$Isotype<-"SIL"
-      formula_score_sil<-data.frame(formula=unique_formula$formula[unique_formula$Isotype=="SIL"],Score=cpd_list_Score_m$Score,Delta_ppm=cpd_list_Score_m$delta_ppm,Intensity=cpd_list_Score_m$Intensity)
-      formula_score_sil$Isotype<-"SIL"
-      formula_score<-rbind(formula_score,formula_score_sil)
-    }
-    
+    cpd_list_Score_m$Isotype<-unique_formula$Isotype
+    formula_score<-data.frame(formula=unique_formula$formula,Score=cpd_list_Score_m$Score,Delta_ppm=cpd_list_Score_m$delta_ppm,Intensity=cpd_list_Score_m$Intensity,Isotype=unique_formula$Isotype)
+    # if (SIL_cpd){
+    # 
+    #   cpd_list_Score=(lapply(unique_formula$formula[unique_formula$Isotype=="SIL"],SCORE_CPD,peaklist=peaklist,isotopes=SIL_isotopes,score_method=score_method,charge = -1,ppm=10))
+    #   cpd_list_Score_m=as.data.frame(do.call(rbind, cpd_list_Score))
+    #   #cpd_list_Score_m_sil<<-cpd_list_Score_m
+    #   names(cpd_list_Score_m)<-c("Score", "delta_ppm","Intensity")
+    #   cpd_list_Score_m$Isotype<-"SIL"
+    #   formula_score_sil<-data.frame(formula=unique_formula$formula[unique_formula$Isotype=="SIL"],Score=cpd_list_Score_m$Score,Delta_ppm=cpd_list_Score_m$delta_ppm,Intensity=cpd_list_Score_m$Intensity)
+    #   formula_score_sil$Isotype<-"SIL"
+    #   formula_score<-rbind(formula_score,formula_score_sil)
+    #   message("got",nrow(formula_score_sil),"Sil CPD scored.")
+    # }
     cpd_list_decoy$Score<-NULL
     cpd_list_decoy$Delta_ppm<-NULL
     cpd_list_decoy$Intensity<-NULL
@@ -317,13 +313,15 @@ Cpd_spectrum_match_rescore<-function(cpd_list,peaklist,wd=getwd(),
 
   
   dir.create(paste0(wd,"/",SPECTRUM_batch), recursive = T)
-  cpd_list_rank<-cpd_list_rank[cpd_list_rank$Intensity>0,]
+  cpd_list_rank$Delta_ppm[is.na(cpd_list_rank$Delta_ppm)]<-ppm
+  cpd_list_rank<-cpd_list_rank[cpd_list_rank$Intensity>=0,]
   cpd_list_rank<-cpd_list_rank[!is.na(cpd_list_rank$Intensity),]
   
   write.csv(cpd_list_rank,paste0(wd,"/",SPECTRUM_batch,"/","CPD_1st_ID_score_rank_",score_method,".csv"),row.names = F)
-  cpd_list_rank<-read.csv(paste0(wd,"/",SPECTRUM_batch,"/","CPD_1st_ID_score_rank_",score_method,".csv"),stringsAsFactors = F)
   
+  cpd_list_rank<<-cpd_list_rank
   #Peptide score filtering (default=False) 
+  if(nrow(cpd_list_rank)>=2){
   if (adjust_score==F){
     dir.create(paste0(wd,"/",SPECTRUM_batch))
     Score_cutoff= FDR_cutoff_plot(cpd_list_rank,FDR_cutoff=FDR_cutoff,plot_fdr=T,outputdir=paste0(wd,"/",SPECTRUM_batch),adjust_score = adjust_score)
@@ -335,28 +333,79 @@ Cpd_spectrum_match_rescore<-function(cpd_list,peaklist,wd=getwd(),
       cpd_list_2nd_sil=cpd_list_2nd_sil[((cpd_list_2nd_sil$Score>=Score_cutoff_sil)&(!is.na(cpd_list_2nd_sil$Intensity))),]
       if (nrow(cpd_list_2nd_sil)>=1){
         cpd_list_2nd<-rbind(cpd_list_2nd,cpd_list_2nd_sil)
-        write.csv(cpd_list_2nd_sil,paste0(wd,"/",SPECTRUM_batch,"/","CPD_2nd_ID_score_rank_SIL_",score_method,".csv"),row.names = F)
+        cpd_list_2nd<-unique(cpd_list_2nd)
       }
     }
     }else{
-      if(nrow(cpd_list_rank)>=2){
-        dir.create(paste0(wd,"/",SPECTRUM_batch))
-      cpd_list_rank %>% group_by(formula,mz,Isotype) %>% mutate(Score=Score-Score[isdecoy==1])->cpd_list_2nd
-      Score_cutoff= FDR_cutoff_plot(cpd_list_2nd,FDR_cutoff=FDR_cutoff,plot_fdr=T,outputdir=paste0(wd,"/",SPECTRUM_batch),adjust_score = F)
-      cpd_list_2nd=cpd_list_2nd[((cpd_list_2nd$Score>=Score_cutoff)&(!is.na(cpd_list_2nd$Intensity))),]
+      dir.create(paste0(wd,"/",SPECTRUM_batch))
+      cpd_list_rank$Score_org<-cpd_list_rank$Score
+      mz.score.correction <-function(mz.ref,Score.ref,mz,Score,
+                               control = loess.control(),
+                               span = 0.75,fit_type="loess",force=F) {
+        suppressMessages(suppressWarnings(library(matter)))
+        
+        if(fit_type=="loess"){
+          shift <-
+            suppressWarnings(loess(Score.ref ~ mz.ref, span = span, control = control))
+          dScore <- predict(shift, mz)
+        }
+        
+        if(fit_type=="lm"){
+          shift <-
+            suppressWarnings(lm(Score.ref ~ mz.ref))
+          
+          dScore <- predict.lm(shift, data.frame(mz.ref=mz))
+        }
+        
+        if(fit_type=="poly"){
+          shift <-
+            suppressWarnings(lm(Score.ref ~ poly(mz.ref,2)))
+          
+          dScore <- predict.lm(shift, data.frame(mz.ref=mz))
+        }
+        #warp <- splinefun(mz + dScore, x)
+        return(list(
+          final.Score = Score + dScore,
+          dScore = dScore,
+          shift = shift
+        ))
+        #return(list(final.mz = mz + dmz, dmz=dmz))
+      }
+      unique(cpd_list_rank[,c("formula","mz","Score_org","Isotype","isdecoy")])->unique_formula_score
+      unique_formula_score_decoy<-unique_formula_score[unique_formula_score$isdecoy==1,]
+      cpd_list_rank$Score_adj<-mz.score.correction(mz.ref = unique_formula_score_decoy$mz,
+                          Score.ref = unique_formula_score_decoy$Score_org,
+                          mz = cpd_list_rank$mz,
+                          Score = cpd_list_rank$Score_org,
+                          fit_type = "lm")$final.Score
+      cpd_list_rank$Score<-cpd_list_rank$Score_adj
+      Score_cutoff= HiTMaP:::FDR_cutoff_plot(cpd_list_rank,FDR_cutoff=FDR_cutoff,plot_fdr=T,outputdir=paste0(wd,"/",SPECTRUM_batch),adjust_score = F)
+      cpd_list_2nd=cpd_list_rank[((cpd_list_rank$Score>=Score_cutoff)&(!is.na(cpd_list_rank$Intensity))),]
       if(SIL_cpd){
         dir.create(paste0(wd,"/",SPECTRUM_batch,"/","SIL"))
         cpd_list_rank[cpd_list_rank$Isotype=="SIL",]->cpd_list_2nd_sil
-        cpd_list_2nd_sil %>% group_by(formula) %>% mutate(Score=Score-Score[isdecoy==1])->cpd_list_2nd_sil
-        Score_cutoff_sil= FDR_cutoff_plot(cpd_list_2nd_sil,FDR_cutoff=FDR_cutoff,plot_fdr=T,outputdir=paste0(wd,"/",SPECTRUM_batch,"/","SIL"),adjust_score = F)
-        cpd_list_2nd_sil=cpd_list_2nd_sil[((cpd_list_2nd_sil$Score>=Score_cutoff_sil)&(!is.na(cpd_list_2nd_sil$Intensity))),]
+        unique(cpd_list_2nd_sil[,c("formula","mz","Score_org","Isotype","isdecoy")])->unique_formula_score
+        unique_formula_score_decoy<-unique_formula_score[unique_formula_score$isdecoy==1,]
+        cpd_list_2nd_sil$Score_adj<-mz.score.correction(mz.ref = unique_formula_score_decoy$mz,
+                                                     Score.ref = unique_formula_score_decoy$Score_org,
+                                                     mz = cpd_list_2nd_sil$mz,
+                                                     Score = cpd_list_2nd_sil$Score_org,
+                                                     fit_type = "loess")$final.Score
+        cpd_list_2nd_sil$Score<-cpd_list_2nd_sil$Score_adj
+        #plot(cpd_list_2nd_sil$mz,cpd_list_2nd_sil$Score_adj-cpd_list_2nd_sil$Score_org)
+        Score_cutoff= HiTMaP:::FDR_cutoff_plot(cpd_list_2nd_sil,FDR_cutoff=FDR_cutoff,plot_fdr=T,outputdir=paste0(wd,"/",SPECTRUM_batch,"/","SIL"),adjust_score = F)
+        cpd_list_2nd_sil=cpd_list_2nd_sil[((cpd_list_2nd_sil$Score>=Score_cutoff)&(!is.na(cpd_list_2nd_sil$Intensity))),]
         if (nrow(cpd_list_2nd_sil)>=1){
           cpd_list_2nd<-rbind(cpd_list_2nd,cpd_list_2nd_sil)
-          write.csv(cpd_list_2nd_sil,paste0(wd,"/",SPECTRUM_batch,"/","CPD_2nd_ID_score_rank_SIL_",score_method,".csv"),row.names = F)
+          cpd_list_2nd$Score_org->cpd_list_2nd$Score
+          cpd_list_2nd$Score_org<-NULL
+          cpd_list_2nd$Score_adj<-NULL
+          cpd_list_2nd<-unique(cpd_list_2nd)
         }
       }
-    }
-  }  
+     }
+    }            
+  write.csv(cpd_list_2nd_sil,paste0(wd,"/",SPECTRUM_batch,"/","CPD_2nd_ID_score_rank_SIL_",score_method,".csv"),row.names = F)
   cpd_list_rank$mz=as.numeric(as.character(cpd_list_rank$mz))
   cpd_list_2nd$mz=as.numeric(as.character(cpd_list_2nd$mz))
   cpd_list_2nd<-cpd_list_2nd[cpd_list_2nd$isdecoy==0,]
@@ -368,7 +417,7 @@ Cpd_spectrum_match_rescore<-function(cpd_list,peaklist,wd=getwd(),
     try(plot_cpd_matching_score(cpd_list_2nd[cpd_list_2nd$Isotype=="Normal",],peaklist,isotopes = isotopes,charge=-1,ppm,outputdir=paste0(wd,"/",SPECTRUM_batch,"/cpd_spectrum_match")))
     if (SIL_cpd){
       dir.create(paste0(wd,"/",SPECTRUM_batch,"/cpd_spectrum_match_sil"))
-    try(plot_cpd_matching_score(cpd_list_2nd[cpd_list_2nd$Isotype=="SIL",],peaklist,isotopes = SIL_isotopes,charge=-1,ppm,outputdir=paste0(wd,"/",SPECTRUM_batch,"/cpd_spectrum_match_sil")))
+    try(plot_cpd_matching_score(cpd_list_2nd[cpd_list_2nd$Isotype=="SIL",],peaklist,isotopes = isotopes,charge=-1,ppm,outputdir=paste0(wd,"/",SPECTRUM_batch,"/cpd_spectrum_match_sil")))
     }
     
     }
@@ -957,204 +1006,197 @@ mummichog.lib.mod<-function(lib="bta_kegg",lib.new="bta_kegg_13C",C13_number=c(3
   return(mummichog.lib.new)
 }
 
-SCORE_CPD<-function(formula,peaklist,isotopes=NULL,threshold=0.001,charge=1,ppm=5,print.graphic=F,output.list=F,outputfile=NULL,score_method="SQRTP",similarity_plot_res=72,anno_info="",isolabel="Normal",output_monomz=F){
-  suppressMessages(suppressWarnings(require(rcdk)))
-  suppressMessages(suppressWarnings(require(rcdklibs)))
-  suppressMessages(suppressWarnings(require(OrgMassSpecR)))
-  suppressMessages(suppressWarnings(require(enviPat)))
-  suppressMessages(suppressWarnings(require(data.table)))
-  suppressMessages(suppressWarnings(require(rJava)))
-  suppressMessages(suppressWarnings(require(grid)))
-  if (is.null(isotopes)){data("isotopes")}
+Spectrum_scoring <- function(spec.top, spec.bottom, t = 0.25, b = 0, top.label = NULL,
+                             bottom.label = NULL, xlim = c(50, 1200), x.threshold = 0, print.alignment = FALSE,
+                             print.graphic = F, output.list = F,score_method="SQRT",Peak_intensity=0,outputfile=NULL,formula=NULL,pattern_ppm=NULL,ppm_error=0,res=72,anno_info="") {
   
   
-  formula<-as.character(formula)
+  top_tmp <- data.frame(mz = spec.top[,1], intensity = spec.top[,2])
+  top_tmp$normalized <- round((top_tmp$intensity / max(top_tmp$intensity)) ,digits = 3)
+  top_plot <- data.frame(mz = top_tmp$mz, intensity = top_tmp$normalized)   # data frame for plotting spectrum
+  top <- subset(top_plot, top_plot$intensity > b)   # data frame for similarity score calculation
   
-  # define the matching score calculation function
-  Spectrum_scoring <- function(spec.top, spec.bottom, t = 0.25, b = 0, top.label = NULL,
-                               bottom.label = NULL, xlim = c(50, 1200), x.threshold = 0, print.alignment = FALSE,
-                               print.graphic = F, output.list = F,score_method="SQRT",Peak_intensity=0,outputfile=NULL,formula=NULL,pattern_ppm=NULL,ppm_error=0,res=72,anno_info="") {
+  bottom_tmp <- data.frame(mz = spec.bottom[,1], intensity = spec.bottom[,2])
+  bottom_tmp$normalized <- round((bottom_tmp$intensity / max(bottom_tmp$intensity)) ,digits = 3)
+  bottom_plot <- data.frame(mz = bottom_tmp$mz, intensity = bottom_tmp$normalized)   # data frame for plotting spectrum
+  bottom <- subset(bottom_plot, bottom_plot$intensity > b)   # data frame for similarity score calculation
+  
+  alignment <- merge(top, bottom, by = 1, all = TRUE)
+  alignment[,c(2,3)][is.na(alignment[,c(2,3)])] <- 0   # convert NAs to zero (R-Help, Sept. 15, 2004, John Fox)
+  names(alignment) <- c("mz", "intensity.top", "intensity.bottom")
+  
+  if(print.alignment == TRUE) {
+    print(alignment)
+  }
+  
+  ## similarity score calculation
+  
+  match_score <- sum(`&`(alignment$intensity.top>0,alignment$intensity.bottom>0))/sum(alignment$intensity.top>0)
+  
+  if (score_method=="SQRT"){
+    u <- alignment[,2]; v <- alignment[,3]
+    similarity_score <- -log(as.vector(sqrt(sum(((u-v))^2)) / (sqrt(sum(u^2)) * sqrt(sum(v^2)))))
     
+  }else if (score_method=="SQRTP"){
+    u <- alignment[,2]; v <- alignment[,3]
+    similarity_score <- -log(as.vector(sqrt(sum(((u-v))^2) / (sum(u^2) * sum(v^2)))))
+    match_score <- log(sum(`&`(alignment$intensity.top>0,alignment$intensity.bottom>0))/sum(alignment$intensity.top>0))
+    similarity_score <- similarity_score + match_score
     
-    top_tmp <- data.frame(mz = spec.top[,1], intensity = spec.top[,2])
-    top_tmp$normalized <- round((top_tmp$intensity / max(top_tmp$intensity)) ,digits = 3)
-    top_plot <- data.frame(mz = top_tmp$mz, intensity = top_tmp$normalized)   # data frame for plotting spectrum
-    top <- subset(top_plot, top_plot$intensity > b)   # data frame for similarity score calculation
+  }else if (score_method=="SQRTC"){
+    u <- alignment[,2]; v <- alignment[,3]
+    similarity_score <- -log(as.vector(sqrt(sum(((u-v))^2) / (sum(u^2) * sum(v^2)))))
+    match_score <- (sum(`&`(alignment$intensity.top>0,alignment$intensity.bottom>0))/sum(alignment$intensity.top>0))
+    similarity_score <- similarity_score * match_score
     
-    bottom_tmp <- data.frame(mz = spec.bottom[,1], intensity = spec.bottom[,2])
-    bottom_tmp$normalized <- round((bottom_tmp$intensity / max(bottom_tmp$intensity)) ,digits = 3)
-    bottom_plot <- data.frame(mz = bottom_tmp$mz, intensity = bottom_tmp$normalized)   # data frame for plotting spectrum
-    bottom <- subset(bottom_plot, bottom_plot$intensity > b)   # data frame for similarity score calculation
+  }else if (score_method=="balanced-SQRT"){
+    u <- alignment[,2]; v <- alignment[,3]
+    if (Peak_intensity<10) (Peak_intensity=10)
     
-    alignment <- merge(top, bottom, by = 1, all = TRUE)
-    alignment[,c(2,3)][is.na(alignment[,c(2,3)])] <- 0   # convert NAs to zero (R-Help, Sept. 15, 2004, John Fox)
-    names(alignment) <- c("mz", "intensity.top", "intensity.bottom")
+    similarity_score <- -log(as.vector(sqrt(sum(((u-v)*u)^2)) / (sqrt(sum(u^2)) * sqrt(sum(v^2))))) * log(Peak_intensity,10)
     
-    if(print.alignment == TRUE) {
-      print(alignment)
+  }else if (score_method=="Equal-SQRT"){
+    u <- alignment[,2]; v <- alignment[,3]
+    score=-log(v/u)
+    score=score[score!=Inf]
+    similarity_score=-log(sum(abs(score))/length(score))
+    
+  }    else if (score_method=="Equal-intensity-SQRT"){
+    u <- alignment[,2]; v <- alignment[,3]
+    similarity_score <- as.vector((u %*% v) * length(v) / (sqrt(sum(u^2)) * sqrt(sum(v^2))*log(Peak_intensity)) )
+  }    else if (score_method=="Mix-SQRT"){
+    
+    alignment_0=ifelse(alignment==0,0,1)
+    
+    matching_score = sum(alignment_0[,2]==alignment_0[,3])/nrow(alignment_0)
+    
+    alignment1<-alignment[alignment_0[,2]==alignment_0[,3],]
+    
+    u <- alignment1[,2]; v <- alignment1[,3]
+    
+    similarity_score <- as.vector((u %*% v) / (sqrt(sum(u^2)) * sqrt(sum(v^2))))
+  }
+  
+  ## generate plot
+  similarity_score=round((similarity_score-ppm_error),digits = 7)
+  if(print.graphic == TRUE) {
+    suppressMessages(suppressWarnings(require(ggplot2)))
+    tempfilename=outputfile
+    if (!is.null(dev.list())) dev.off()
+    png(tempfilename, bg = "white", width = 6.67, height = 6.67, res = res, units = "in")
+    
+    plot.new()
+    plot.window(xlim = xlim, ylim = c(-125, 125))
+    ticks <- c(-100, -50, 0, 50, 100)
+    for(i in 1:length(top_plot$mz)) {
+      lines(rep(top_plot$mz[i], 2), c(0, top_plot$intensity[i]*100), col = "blue")
+      points(top_plot$mz[i],top_plot$intensity[i]*100, col = "darkblue")
+    }
+    for(i in 1:length(bottom_plot$mz)) {
+      
+      lines(rep(bottom_plot$mz[i], 2), c(0, -bottom_plot$intensity[i]*100), col = "red")
+      if (bottom_plot$intensity[i]!=0){
+        points(bottom_plot$mz[i],-bottom_plot$intensity[i]*100, col = "darkred")
+        if(length(pattern_ppm$plotppm[pattern_ppm$mz==bottom_plot$mz[i]])==1){
+          text(bottom_plot$mz[i],-bottom_plot$intensity[i]*100-7, pattern_ppm$plotppm[pattern_ppm$mz==bottom_plot$mz[i]],cex=0.6,col="gray21")
+        }}
+    }
+    axis(2, at = ticks, labels = abs(ticks), pos = xlim[1], ylab = "Intensity")
+    axis(1, pos = -125)
+    lines(xlim, c(0,0))
+    rect(xlim[1], -125, xlim[2], 125)
+    mtext("m/z", side = 1, line = 2)
+    mtext("intensity (%)", side = 2, line = 2)
+    plot.window(xlim = c(0, 20), ylim = c(-10, 10))
+    text(10, 9, top.label)
+    text(10, -9, bottom.label)
+    if(F){
+      atome_replace<-isotopes$element[isotopes$isotope==as.character(isolabel)]
+      formula_label=stringr::str_replace(formula,atome_replace[1],atome_replace[2])
+    }else{
+      formula_label=formula
     }
     
-    ## similarity score calculation
-    
-    match_score <- sum(`&`(alignment$intensity.top>0,alignment$intensity.bottom>0))/sum(alignment$intensity.top>0)
-    
-    if (score_method=="SQRT"){
-      u <- alignment[,2]; v <- alignment[,3]
-      similarity_score <- -log(as.vector(sqrt(sum(((u-v))^2)) / (sqrt(sum(u^2)) * sqrt(sum(v^2)))))
+    if (anno_info==""){
+      mtext(paste("Formula:",formula_label,"Score:",round(similarity_score,digits = 2),"Method:",score_method),cex=0.9)
+    }else{
+      mtext(paste(anno_info,"\nFormula:",formula_label,"Score:",round(similarity_score,digits = 2),"Method:",score_method),cex=0.9)
       
-    }else if (score_method=="SQRTP"){
-      u <- alignment[,2]; v <- alignment[,3]
-      similarity_score <- -log(as.vector(sqrt(sum(((u-v))^2) / (sum(u^2) * sum(v^2)))))
-      match_score <- log(sum(`&`(alignment$intensity.top>0,alignment$intensity.bottom>0))/sum(alignment$intensity.top>0))
-      similarity_score <- similarity_score + match_score
-    }else if (score_method=="balanced-SQRT"){
-      u <- alignment[,2]; v <- alignment[,3]
-      if (Peak_intensity<10) (Peak_intensity=10)
-      
-      similarity_score <- -log(as.vector(sqrt(sum(((u-v)*u)^2)) / (sqrt(sum(u^2)) * sqrt(sum(v^2))))) * log(Peak_intensity,10)
-      
-    }else if (score_method=="Equal-SQRT"){
-      u <- alignment[,2]; v <- alignment[,3]
-      score=-log(v/u)
-      score=score[score!=Inf]
-      similarity_score=-log(sum(abs(score))/length(score))
-      
-    }    else if (score_method=="Equal-intensity-SQRT"){
-      u <- alignment[,2]; v <- alignment[,3]
-      similarity_score <- as.vector((u %*% v) * length(v) / (sqrt(sum(u^2)) * sqrt(sum(v^2))*log(Peak_intensity)) )
-    }    else if (score_method=="Mix-SQRT"){
-      
-      alignment_0=ifelse(alignment==0,0,1)
-      
-      matching_score = sum(alignment_0[,2]==alignment_0[,3])/nrow(alignment_0)
-      
-      alignment1<-alignment[alignment_0[,2]==alignment_0[,3],]
-      
-      u <- alignment1[,2]; v <- alignment1[,3]
-      
-      similarity_score <- as.vector((u %*% v) / (sqrt(sum(u^2)) * sqrt(sum(v^2))))
     }
-    
-    ## generate plot
-    similarity_score=round((similarity_score-ppm_error),digits = 7)
-    if(print.graphic == TRUE) {
-      suppressMessages(suppressWarnings(require(ggplot2)))
-      tempfilename=outputfile
-      if (!is.null(dev.list())) dev.off()
-      png(tempfilename, bg = "white", width = 6.67, height = 6.67, res = res, units = "in")
-      
-      plot.new()
-      plot.window(xlim = xlim, ylim = c(-125, 125))
-      ticks <- c(-100, -50, 0, 50, 100)
-      for(i in 1:length(top_plot$mz)) {
-        lines(rep(top_plot$mz[i], 2), c(0, top_plot$intensity[i]*100), col = "blue")
-        points(top_plot$mz[i],top_plot$intensity[i]*100, col = "darkblue")
-      }
-      for(i in 1:length(bottom_plot$mz)) {
-        
-        lines(rep(bottom_plot$mz[i], 2), c(0, -bottom_plot$intensity[i]*100), col = "red")
-        if (bottom_plot$intensity[i]!=0){
-          points(bottom_plot$mz[i],-bottom_plot$intensity[i]*100, col = "darkred")
-          if(length(pattern_ppm$plotppm[pattern_ppm$mz==bottom_plot$mz[i]])==1){
-            text(bottom_plot$mz[i],-bottom_plot$intensity[i]*100-7, pattern_ppm$plotppm[pattern_ppm$mz==bottom_plot$mz[i]],cex=0.6,col="gray21")
-          }}
-      }
-      axis(2, at = ticks, labels = abs(ticks), pos = xlim[1], ylab = "Intensity")
-      axis(1, pos = -125)
-      lines(xlim, c(0,0))
-      rect(xlim[1], -125, xlim[2], 125)
-      mtext("m/z", side = 1, line = 2)
-      mtext("intensity (%)", side = 2, line = 2)
-      plot.window(xlim = c(0, 20), ylim = c(-10, 10))
-      text(10, 9, top.label)
-      text(10, -9, bottom.label)
-      if(F){
-        atome_replace<-isotopes$element[isotopes$isotope==as.character(isolabel)]
-        formula_label=stringr::str_replace(formula,atome_replace[1],atome_replace[2])
-      }else{
-        formula_label=formula
-      }
-      
-      if (anno_info==""){
-        mtext(paste("Formula:",formula_label,"Score:",round(similarity_score,digits = 2),"Method:",score_method),cex=0.9)
-      }else{
-        mtext(paste(anno_info,"\nFormula:",formula_label,"Score:",round(similarity_score,digits = 2),"Method:",score_method),cex=0.9)
-        
-      }
-      if(!is.null(pattern_ppm$norm_ppm)){
-        text(pattern_ppm[,1], rep(-8.5,nrow(pattern_ppm)), pattern_ppm$norm_ppm)
-      }
-      dev.off()
+    if(!is.null(pattern_ppm$norm_ppm)){
+      text(pattern_ppm[,1], rep(-8.5,nrow(pattern_ppm)), pattern_ppm$norm_ppm)
     }
+    dev.off()
+  }
+  
+  if (sum(abs(similarity_score)==Inf,is.nan(similarity_score),is.na(similarity_score),na.rm = T)) similarity_score = 0
+  
+  if(output.list == FALSE) {
+    
+    return(similarity_score)
+    
+  }
+  
+  if(output.list == TRUE) {
+    
+    return(list(similarity.score = similarity_score,
+                plot = p))
+    
+  }
+  
+}
 
-    if (sum(abs(similarity_score)==Inf,is.nan(similarity_score),is.na(similarity_score),na.rm = T)) similarity_score = 0
+# define the function to merge the un-resolvable mz of a given fomula by instrument resolution setting
+isopattern_ppm_filter_peaklist<-function(pattern,ppm,threshold=0.001,verbose=F){
+  
+  org_feature=nrow(pattern)
+  
+  pattern<-as.data.frame(pattern)
+  
+  pattern_ppm=as.numeric(as.character(pattern[,1]))
+  
+  pattern_ppm_delta=numeric()
+  
+  filtered_pattern<-pattern[1,]
+  
+  for (i in 1:(length(pattern_ppm)-1)){
     
-    if(output.list == FALSE) {
-      
-      return(similarity_score)
-      
-    }
+    pattern_ppm_delta[i]=(pattern_ppm[i+1]-pattern_ppm[i])/pattern_ppm[i]
     
-    if(output.list == TRUE) {
+    if (pattern_ppm_delta[i]>(ppm/1000000)){
+      filtered_pattern<-rbind(filtered_pattern,pattern[i+1,])
+    } else {
       
-      return(list(similarity.score = similarity_score,
-                  plot = p))
-      
+      newline=c((filtered_pattern[nrow(filtered_pattern),1]*filtered_pattern[nrow(filtered_pattern),2]+pattern[i+1,1]*pattern[i+1,2])/(sum(filtered_pattern[nrow(filtered_pattern),2],pattern[i+1,2])),
+                filtered_pattern[nrow(filtered_pattern),2]+pattern[i+1,2])
+      filtered_pattern[nrow(filtered_pattern),]<-newline
     }
     
   }
   
-  # define the function to merge the un-resolvable mz of a given fomula by instrument resolution setting
-  isopattern_ppm_filter_peaklist<-function(pattern,ppm,threshold=0.001,verbose=F){
-    
-    org_feature=nrow(pattern)
-    
-    pattern<-as.data.frame(pattern)
-    
-    pattern_ppm=as.numeric(as.character(pattern[,1]))
-    
-    pattern_ppm_delta=numeric()
-    
-    filtered_pattern<-pattern[1,]
-    
+  filtered_pattern<-filtered_pattern[filtered_pattern[,2]>=max(filtered_pattern[,2])*threshold,]
+  
+  rownames(filtered_pattern)=1:nrow(filtered_pattern)
+  if(verbose==T){
+    message(paste("Origional Features:",org_feature,"Filtered Features:",nrow(filtered_pattern)))
+  }
+  
+  
+  return(filtered_pattern)
+}
+
+# define the function to merge the un-resolvable mz of a given fomula by instrument resolution setting
+isopattern_ppm_filter<-function(pattern,ppm){
+  
+  pattern_ppm=as.numeric(as.character(pattern[,1]))
+  
+  pattern_ppm_delta=numeric()
+  
+  
+  filtered_pattern<-pattern[1,]
+  filtered_pattern<-t(data.frame(filtered_pattern,stringsAsFactors = F))
+  if (length(pattern_ppm)>=2){
     for (i in 1:(length(pattern_ppm)-1)){
-      
-      pattern_ppm_delta[i]=(pattern_ppm[i+1]-pattern_ppm[i])/pattern_ppm[i]
-      
-      if (pattern_ppm_delta[i]>(ppm/1000000)){
-        filtered_pattern<-rbind(filtered_pattern,pattern[i+1,])
-      } else {
-        
-        newline=c((filtered_pattern[nrow(filtered_pattern),1]*filtered_pattern[nrow(filtered_pattern),2]+pattern[i+1,1]*pattern[i+1,2])/(sum(filtered_pattern[nrow(filtered_pattern),2],pattern[i+1,2])),
-                  filtered_pattern[nrow(filtered_pattern),2]+pattern[i+1,2])
-        filtered_pattern[nrow(filtered_pattern),]<-newline
-      }
-      
-    }
-    
-    filtered_pattern<-filtered_pattern[filtered_pattern[,2]>=max(filtered_pattern[,2])*threshold,]
-    
-    rownames(filtered_pattern)=1:nrow(filtered_pattern)
-    if(verbose==T){
-      message(paste("Origional Features:",org_feature,"Filtered Features:",nrow(filtered_pattern)))
-    }
-    
-    
-    return(filtered_pattern)
-  }
-  
-  # define the function to merge the un-resolvable mz of a given fomula by instrument resolution setting
-  isopattern_ppm_filter<-function(pattern,ppm){
-    
-    pattern_ppm=as.numeric(as.character(pattern[,1]))
-    
-    pattern_ppm_delta=numeric()
-    
-    
-    filtered_pattern<-pattern[1,]
-    filtered_pattern<-t(data.frame(filtered_pattern,stringsAsFactors = F))
-    if (length(pattern_ppm)>=2){
-        for (i in 1:(length(pattern_ppm)-1)){
       
       pattern_ppm_delta[i]=(pattern_ppm[i+1]-pattern_ppm[i])/pattern_ppm[i]
       
@@ -1171,12 +1213,28 @@ SCORE_CPD<-function(formula,peaklist,isotopes=NULL,threshold=0.001,charge=1,ppm=
       }
       
     }
-    }
-    matrix(filtered_pattern[,1:2],ncol=2)->filtered_pattern
-    rownames(filtered_pattern)=1:nrow(filtered_pattern)
-    
-    return(filtered_pattern)
   }
+  matrix(filtered_pattern[,1:2],ncol=2)->filtered_pattern
+  rownames(filtered_pattern)=1:nrow(filtered_pattern)
+  
+  return(filtered_pattern)
+}
+
+SCORE_CPD<-function(formula,peaklist,isotopes=NULL,threshold=0.001,charge=1,ppm=5,print.graphic=F,output.list=F,outputfile=NULL,score_method="SQRTP",similarity_plot_res=72,anno_info="",isolabel="Normal",output_monomz=F){
+  suppressMessages(suppressWarnings(require(rcdk)))
+  suppressMessages(suppressWarnings(require(rcdklibs)))
+  suppressMessages(suppressWarnings(require(OrgMassSpecR)))
+  suppressMessages(suppressWarnings(require(enviPat)))
+  suppressMessages(suppressWarnings(require(data.table)))
+  suppressMessages(suppressWarnings(require(rJava)))
+  suppressMessages(suppressWarnings(require(grid)))
+  if (is.null(isotopes)){data("isotopes")}
+  
+  
+  formula<-as.character(formula)
+  
+  # define the matching score calculation function
+
   
   #generate the isotopic pattern
   pattern<-isopattern(
@@ -1199,7 +1257,7 @@ SCORE_CPD<-function(formula,peaklist,isotopes=NULL,threshold=0.001,charge=1,ppm=
   #Filter and merge the isotopic pattern using instrument resolution
   pattern=pattern[[formula]]
   pattern=isopattern_ppm_filter(pattern = matrix(pattern[,1:2],ncol=2), ppm=instrument_ppm)
-  pattern= matrix(pattern[topN_feature(pattern[,2],5),],ncol=2)
+  pattern= matrix(pattern[topN_feature(pattern[,2],10),],ncol=2)
   pattern<-matrix(pattern[,1:2],ncol=2)
   #peptide similarity score calculation
   spectrumintensity=unlist(lapply(1:nrow(pattern), function(x,pattern,peaklist,ppm){
