@@ -718,9 +718,11 @@ grid.ftable(Cleavage_df, gp = gpar(fontsize=9,fill = rep(c("grey90", "grey95")))
 
 ## Imaging-MS data preprocessing
 
-preprocess$mz_bin_list is an argument for costumized peak-picking and mz bining purpose. If it is not NULL, the workflow will bypass signal smooth, noise reduction, and peakpicking steps. User need to give a numeric vector as the mz input to this argument. The workflow will first filter the vector with the given ppm tolerance to ensure there's no overlapped mz bins (mz +/- ppm tolerance). Then, a m/z binning procedure will be conducted to the image data to produce a peak-picked dataset (the peak bin width will be the ppm tolerance). 
+**preprocess$mz_bin_list** is an argument for costumized peak-picking and mz bining purpose. If it is not NULL, the workflow will bypass signal smooth, noise reduction, and peakpicking steps. User need to give a numeric vector as the mz input to this argument. The workflow will first filter the vector with the given ppm tolerance to ensure there's no overlapped mz bins (mz +/- ppm tolerance). Then, a m/z binning procedure will be conducted to the image data to produce a peak-picked dataset (the peak bin width will be the ppm tolerance). 
 
 If user uses a processed IMS data that contains the centroid feature value (e.g. exported from scils lab with feature list reduced data). User will still be safe to use this mz_bin_list in order to mount the centroid data properly. In this case, the ppm tolerance will only applied to the following annotation procedure.
+
+**normalize=list(method=c("Disable","rms","tic","reference")[1],mz=1)** the current IMS normalization is done on pixel-to-pixel level, which will affect the feature distribution in some tissue. We use "Disable" in the example dataset to minimize the required RAM space and working time. The step may result in a big RAM usage on some IMS data. If the error message mentioned a "vector allocation" issue, Please consider to disable the normalization.
 
 
 
