@@ -1,54 +1,37 @@
 HiT-MaP
 ================
 
--   <a href="#package-installation" id="toc-package-installation">Package
-    installation</a>
-    -   <a href="#installation-of-docker-image"
-        id="toc-installation-of-docker-image">Installation of docker image</a>
-    -   <a href="#installation-code-for-r-console-installation"
-        id="toc-installation-code-for-r-console-installation">Installation code
-        for R console installation</a>
-    -   <a href="#codes-for-linux-os-building-enviornment"
-        id="toc-codes-for-linux-os-building-enviornment">Codes for Linux OS
-        building enviornment</a>
-    -   <a href="#codes-for-mac-os-building-enviornment-optional"
-        id="toc-codes-for-mac-os-building-enviornment-optional">Codes for Mac OS
-        building enviornment (optional)</a>
--   <a href="#example-data-and-source-code"
-    id="toc-example-data-and-source-code">Example data and source code</a>
--   <a href="#proteomics-identification-on-maldi-imaging-dataset"
-    id="toc-proteomics-identification-on-maldi-imaging-dataset">Proteomics
-    identification on maldi-imaging dataset</a>
--   <a href="#project-folder-and-result-structure"
-    id="toc-project-folder-and-result-structure">Project folder and result
-    structure</a>
--   <a href="#identification-result-visulasation-and-interpretation"
-    id="toc-identification-result-visulasation-and-interpretation">Identification
-    result visulasation and interpretation</a>
--   <a href="#scoring-system-for-protein-and-peptide"
-    id="toc-scoring-system-for-protein-and-peptide">Scoring system for
-    protein and peptide</a>
--   <a href="#identification-summary-and-cluster-imaging"
-    id="toc-identification-summary-and-cluster-imaging">Identification
-    summary and cluster imaging</a>
--   <a href="#details-of-parameter-setting"
-    id="toc-details-of-parameter-setting">Details of parameter setting</a>
-    -   <a href="#modification" id="toc-modification">Modification</a>
-    -   <a href="#amino-acid-substitution"
-        id="toc-amino-acid-substitution">Amino acid substitution</a>
-    -   <a href="#digestion-site-and-enzyme"
-        id="toc-digestion-site-and-enzyme">Digestion site and enzyme</a>
--   <a href="#example-workflow-command"
-    id="toc-example-workflow-command">Example workflow command</a>
-    -   <a href="#peptide-calibrant" id="toc-peptide-calibrant">Peptide
-        calibrant</a>
-    -   <a href="#bovine-lens" id="toc-bovine-lens">Bovine lens</a>
-    -   <a href="#mouse-brain" id="toc-mouse-brain">Mouse brain</a>
--   <a href="#cite-this-project" id="toc-cite-this-project">Cite this
-    project</a>
--   <a href="#session-information" id="toc-session-information">Session
-    information</a>
--   <a href="#references" id="toc-references">References</a>
+- [Package installation](#package-installation)
+  - [Installation of docker image](#installation-of-docker-image)
+  - [Installation code for R console
+    installation](#installation-code-for-r-console-installation)
+  - [Codes for Linux OS building
+    enviornment](#codes-for-linux-os-building-enviornment)
+  - [Codes for Mac OS building enviornment
+    (optional)](#codes-for-mac-os-building-enviornment-optional)
+- [Example data and source code](#example-data-and-source-code)
+- [Proteomics identification on maldi-imaging
+  dataset](#proteomics-identification-on-maldi-imaging-dataset)
+- [Project folder and result
+  structure](#project-folder-and-result-structure)
+- [Identification result visulasation and
+  interpretation](#identification-result-visulasation-and-interpretation)
+- [Scoring system for protein and
+  peptide](#scoring-system-for-protein-and-peptide)
+- [Identification summary and cluster
+  imaging](#identification-summary-and-cluster-imaging)
+- [Details of parameter setting](#details-of-parameter-setting)
+  - [Modification](#modification)
+  - [Amino acid substitution](#amino-acid-substitution)
+  - [Digestion site and enzyme](#digestion-site-and-enzyme)
+  - [Imaging-MS data preprocessing](#imaging-ms-data-preprocessing)
+- [Example workflow command](#example-workflow-command)
+  - [Peptide calibrant](#peptide-calibrant)
+  - [Bovine lens](#bovine-lens)
+  - [Mouse brain](#mouse-brain)
+- [Cite this project](#cite-this-project)
+- [Session information](#session-information)
+- [References](#references)
 
 – An R package of High-resolution Informatics Toolbox for Maldi-imaging
 Proteomics
@@ -57,9 +40,19 @@ Find our published research article on *Nature Communications*:
 
 <https://doi.org/10.1038/s41467-021-23461-w>
 
-![<https://doi.org/10.1038/s41467-021-23461-w>](https://img.shields.io/badge/DOI-10.1038/s41467--021--23461--w-orange.svg)
+<figure>
+<img
+src="https://img.shields.io/badge/DOI-10.1038/s41467--021--23461--w-orange.svg"
+alt="https://doi.org/10.1038/s41467-021-23461-w" />
+<figcaption aria-hidden="true"><a
+href="https://doi.org/10.1038/s41467-021-23461-w"
+class="uri">https://doi.org/10.1038/s41467-021-23461-w</a></figcaption>
+</figure>
 
-![zenodo](https://zenodo.org/badge/187550066.svg)
+<figure>
+<img src="https://zenodo.org/badge/187550066.svg" alt="zenodo" />
+<figcaption aria-hidden="true">zenodo</figcaption>
+</figure>
 
 Maintainer: George Guo <george.guo@auckland.ac.nz>
 
@@ -103,16 +96,15 @@ Tags of available docker images:
     project been accepted (minor changes applied to enhance the
     multi-files cluster image rendering).
 
-3.  **mashuoa/hitmap:shiny_server** contains the developing graphical
-    user interface of HiTMaP. Please map the 3838 port to the container
-    and access the GUI via <http://localhost:3838/>. We are happy to
-    hear your voice regarding the High-RES IMS pre-processing,
-    segmentation and annotation as well as their corresponding GUI
-    configurations.
+3.  **mashuoa/hitmap:gui_latest** contains the developing graphical user
+    interface of HiTMaP. Please map the 3838 port to the container and
+    access the GUI via <http://localhost:3838/>. We are happy to hear
+    your voice regarding the High-RES IMS pre-processing, segmentation
+    and annotation as well as their corresponding GUI configurations.
 
 4.  We are able to supply a singularity template to the users who want
     to deploy the HiTMaP on an HPC server. This scripts also are
-    available at the MASHUOA/hitmap_docker.
+    available at the MASHUOA/hitmap/dockerfiles.
 
 Setting up and running the docker container:
 
@@ -138,8 +130,8 @@ docker container exec -it hitmap /bin/bash
 ```
 
 Stop/remove docker container (warning: if no local disk is mapped to
-“\~/expdata”, please backup your existing result files from the
-container before you remove it):
+“~/expdata”, please backup your existing result files from the container
+before you remove it):
 
 ``` bash
 docker stop hitmap
@@ -151,20 +143,22 @@ and follow the image as below to setup the container. if you are using
 **mashuoa/hitmap:shiny_server**, please also map local host:3838 to the
 container (Ports -\> local hosts -\> 3838).
 
-![Docker GUI setting](Resource/docker_gui_setting.png)
+<figure>
+<img src="Resource/docker_gui_setting.png" alt="Docker GUI setting" />
+<figcaption aria-hidden="true">Docker GUI setting</figcaption>
+</figure>
 
 ## Installation code for R console installation
 
 The code below is used for an experienced R user to build a local
 R/HiTMaP running environment. Major dependencies to note:
 
--   R base
--   java running library (for linux, additional configuration is needed:
-    *R CMD javareconf*)
--   orca for plotly
-    (<https://github.com/plotly/orca/releases/tag/v1.3.1>)
--   magick++ (for Linux, additional configuration is needed to expand
-    the pixel limitation)
+- R base
+- java running library (for linux, additional configuration is needed:
+  *R CMD javareconf*)
+- orca for plotly (<https://github.com/plotly/orca/releases/tag/v1.3.1>)
+- magick++ (for Linux, additional configuration is needed to expand the
+  pixel limitation)
 
 ``` r
 #install the git package
@@ -174,6 +168,7 @@ install.packages("devtools")
 library(remotes)
 Sys.setenv("R_REMOTES_NO_ERRORS_FROM_WARNINGS" = "true")
 remotes::install_github("MASHUOA/HiTMaP",force=T)
+remotes::install_github("kuwisdelu/Cardinal",force=T)
 3
 no
 #Update all dependencies
@@ -236,11 +231,11 @@ update Xcode Command Line tools.
 You may also need to install the X11.app and tcl/tk support for Mac
 system:
 
--   X11.app: <https://www.xquartz.org/>
+- X11.app: <https://www.xquartz.org/>
 
--   Use the following link to download and install the correct tcltk
-    package for your OS version.
-    <https://cran.r-project.org/bin/macosx/tools/>
+- Use the following link to download and install the correct tcltk
+  package for your OS version.
+  <https://cran.r-project.org/bin/macosx/tools/>
 
 # Example data and source code
 
@@ -262,7 +257,7 @@ wd="~/expdata/"
 dir.create(wd)
 setwd(wd)
 
-pb_download("HiTMaP-master.zip", repo = "MASHUOA/HiTMaP", dest = ".")
+pb_download("HiTMaP-master.zip", repo = "MASHUOA/HiTMaP", dest = ".",show_progress = F)
 
 pb_download("Data.tar.gz", repo = "MASHUOA/HiTMaP", dest = ".")
 
@@ -346,7 +341,7 @@ imaging_identification(
                                reduceBaseline=list(method="Disable"),
                                peakPick=list(method="adaptive"),
                                peakAlign=list(tolerance=5, units="ppm"),
-                               normalize=list(method=c("rms","tic","reference")[1],mz=1)),
+                               normalize=list(method=c("Disable","rms","tic","reference")[1],mz=1)),
 #==============Set the parameters for image segmentation
                spectra_segments_per_file=4,
                Segmentation="spatialKMeans",
@@ -396,23 +391,23 @@ list.dirs(wd, recursive=FALSE)
 1.  The one which has an identical name to an input data file contains
     the identification result of that input:
 
-    -   the protein and peptides list of each segmentation region
-    -   the PMF matching plot of each segmentation
-    -   the image that indicates segmentations’ boundary (applies to
-        either K-mean segmentation (powered by Cardinal) or manually
-        defined segmentation)
-    -   folders of each region contains the detailed identification
-        process, FDR plots and isotopic pattern matching plots
+    - the protein and peptides list of each segmentation region
+    - the PMF matching plot of each segmentation
+    - the image that indicates segmentations’ boundary (applies to
+      either K-mean segmentation (powered by Cardinal) or manually
+      defined segmentation)
+    - folders of each region contains the detailed identification
+      process, FDR plots and isotopic pattern matching plots
 
 2.  “Summary folder” contains:
 
-    -   the identification summary of protein and peptides across all
-        the data
-    -   the candidate list of all possible proteins and peptides (if
-        *use_previous_candidates* is set as **TRUE**)
-    -   the Cluster imaging files of the protein of interest
-    -   the database stats result for resolution-based candidates
-        binning (optional)
+    - the identification summary of protein and peptides across all the
+      data
+    - the candidate list of all possible proteins and peptides (if
+      *use_previous_candidates* is set as **TRUE**)
+    - the Cluster imaging files of the protein of interest
+    - the database stats result for resolution-based candidates binning
+      (optional)
 
 # Identification result visulasation and interpretation
 
@@ -552,19 +547,19 @@ score of the peptide (Pepscore). In Protein result table, it shows the
 protein score (Proscore). The ‘Pepscore’ consist of two parts:
 Intensity_Score and Mass_error_Score:
 
--   Intensity_Score indicates how well a putative isotopic pattern can
-    be matched to the observed spectrum.The default scoring method is
-    SQRTP. It combines the ‘square root mean’ differences between
-    observed and theoretical peaks and observed proportion of the
-    isotopic peaks above a certain relative intensity threshold.
+- Intensity_Score indicates how well a putative isotopic pattern can be
+  matched to the observed spectrum.The default scoring method is SQRTP.
+  It combines the ‘square root mean’ differences between observed and
+  theoretical peaks and observed proportion of the isotopic peaks above
+  a certain relative intensity threshold.
 
--   Mass_error_Score indicates the summary of mass error (in *ppm*) for
-    every detected isotopic peak. In order to integrate the
-    Mass_error_Score in to scoring system, the mean ppm error has been
-    normalized by ppm tolerance, and supplied to the probability normal
-    distributions (*pnorm* function for R). The resulting value
-    (quantiles of the given probability density) is deducted by 0.5 and
-    converted into an absolute value.
+- Mass_error_Score indicates the summary of mass error (in *ppm*) for
+  every detected isotopic peak. In order to integrate the
+  Mass_error_Score in to scoring system, the mean ppm error has been
+  normalized by ppm tolerance, and supplied to the probability normal
+  distributions (*pnorm* function for R). The resulting value (quantiles
+  of the given probability density) is deducted by 0.5 and converted
+  into an absolute value.
 
 <img src="https://render.githubusercontent.com/render/math?math=%24Intensity%5C_Score%3D%5Clog(PeakCount_%7BObserved%7D%2FPeakCount_%7BTheoritical%7D)-%5Clog(%5Csqrt%7B%5Cfrac%7B%5Csum_%7Bx%20%3D%201%7D%5E%7Bn%7D%20(Theoritical%5C_intensity_x-Observed%5C_intensity_x)%5E2%7D%7B%5Csum_%7Bx%20%3D%201%7D%5E%7Bn%7D%20(Theoritical%5C_intensity_x)%5E2(Observed%5C_intensity_x)%5E2%7D%7D%24"/>
 
@@ -725,7 +720,11 @@ m/z’s will then be binned using three tolerance window: 1 ppm, 2 ppm and
 5 ppm. A plot showing the number of unique formulae vs. m/z bins will be
 generated and exported to the summary folder (DB_stats_mz_bin).
 
-![Proteome database stats](Resource/DB_stats_bin_mz_ppm.png)
+<figure>
+<img src="Resource/DB_stats_bin_mz_ppm.png"
+alt="Proteome database stats" />
+<figcaption aria-hidden="true">Proteome database stats</figcaption>
+</figure>
 
 “Peptide_Summary.csv” and “Protein_Summary.csv” contains the table of
 the project identification summary. You could set the
@@ -808,9 +807,9 @@ head(modification_list['&'(stringr::str_detect(modification_list$code_name,"Ca")
 If a modification occurs on a particular site, you will also need to
 specify the position of a modifications.
 
--   *Anywhere*, side chain of possible amino acids
--   *Any N-term*, any N-term of enzymatic peptide
--   *Protein N-term*, any N-term of protein
+- *Anywhere*, side chain of possible amino acids
+- *Any N-term*, any N-term of enzymatic peptide
+- *Protein N-term*, any N-term of protein
 
 ``` r
 unimod.df[["positions"]]
@@ -830,11 +829,11 @@ You can set the *Substitute_AA* to make the uncommon amino acid
 available to the workflow:
 *Substitute_AA=list(AA=c(“X”),AA_new_formula=c(“C5H5NO2”),Formula_with_water=c(FALSE))*
 
--   AA: the single letter amino acid to be replaced
--   AA_new_formula: the new formula for the amino acid
--   Formula_with_water: Set *TRUE* to indicate the formula represents
-    the intact amino acid, *FALSE* to indicate that the formula already
-    lost one H2O molecule and can be considered as AA backbone.
+- AA: the single letter amino acid to be replaced
+- AA_new_formula: the new formula for the amino acid
+- Formula_with_water: Set *TRUE* to indicate the formula represents the
+  intact amino acid, *FALSE* to indicate that the formula already lost
+  one H2O molecule and can be considered as AA backbone.
 
 ## Digestion site and enzyme
 
@@ -851,6 +850,23 @@ grid.ftable(Cleavage_df, gp = gpar(fontsize=9,fill = rep(c("grey90", "grey95")))
 ```
 
 ![](README_files/figure-gfm/unnamed-chunk-21-1.png)<!-- -->
+
+## Imaging-MS data preprocessing
+
+preprocess\$mz_bin_list is an argument for costumized peak-picking and
+mz bining purpose. If it is not NULL, the workflow will bypass signal
+smooth, noise reduction, and peakpicking steps. User need to give a
+numeric vector as the mz input to this argument. The workflow will first
+filter the vector with the given ppm tolerance to ensure there’s no
+overlapped mz bins (mz +/- ppm tolerance). Then, a m/z binning procedure
+will be conducted to the image data to produce a peak-picked dataset
+(the peak bin width will be the ppm tolerance).
+
+If user uses a processed IMS data that contains the centroid feature
+value (e.g. exported from scils lab with feature list reduced data).
+User will still be safe to use this mz_bin_list in order to mount the
+centroid data properly. In this case, the ppm tolerance will only
+applied to the following annotation procedure.
 
 # Example workflow command
 
@@ -923,7 +939,7 @@ imaging_identification(datafile=paste0(wd,datafile),Digestion_site="trypsin",
                                reduceBaseline=list(method="Disable"),
                                peakPick=list(method="adaptive"),
                                peakAlign=list(tolerance=5, units="ppm"),
-                               normalize=list(method=c("rms","tic","reference")[1],mz=1)),
+                               normalize=list(method=c("Disable","rms","tic","reference")[1],mz=1)),
                        spectra_segments_per_file=4,use_previous_candidates=F,ppm=5,FDR_cutoff = 0.05,IMS_analysis=T,
                        Rotate_IMG="file_rotationbk.csv",plot_cluster_image_grid=F)
 
@@ -938,7 +954,7 @@ imaging_identification(datafile=paste0(wd,datafile),Digestion_site="trypsin",
                                reduceBaseline=list(method="Disable"),
                                peakPick=list(method="Default"),
                                peakAlign=list(tolerance=5, units="ppm"),
-                               normalize=list(method=c("rms","tic","reference")[1],mz=1)),
+                               normalize=list(method=c("Disable","rms","tic","reference")[1],mz=1)),
                        spectra_segments_per_file=4,ppm=5,FDR_cutoff = 0.05,IMS_analysis=T,
                        Rotate_IMG="file_rotationbk.csv",plot_cluster_image_grid=F)
 
@@ -994,7 +1010,20 @@ imaging_identification(datafile=paste0(wd,datafile),Digestion_site="trypsin",
                                reduceBaseline=list(method="Disable"),
                                peakPick=list(method="adaptive"),
                                peakAlign=list(tolerance=5, units="ppm"),
-                               normalize=list(method=c("rms","tic","reference")[1],mz=1)),
+                               normalize=list(method=c("Disable","rms","tic","reference")[1],mz=1)),
+                       spectra_segments_per_file=9,use_previous_candidates=F,ppm=10,FDR_cutoff = 0.05,IMS_analysis=T,
+                       Rotate_IMG="file_rotationbk.csv",
+                       mzrange = c(500,4000),plot_cluster_image_grid=F)
+
+imaging_identification(datafile=paste0(wd,datafile),Digestion_site="trypsin",
+                       Fastadatabase="uniprot_mouse_20210107.fasta",output_candidatelist=T,
+                       preprocess=list(force_preprocess=T,
+                               use_preprocessRDS=TRUE,
+                               smoothSignal=list(method="gaussian"),
+                               reduceBaseline=list(method="locmin"),
+                               peakPick=list(method="adaptive"),
+                               peakAlign=list(tolerance=5, units="ppm"),
+                               normalize=list(method=c("Disable","rms","tic","reference")[1],mz=1)),
                        spectra_segments_per_file=9,use_previous_candidates=F,ppm=10,FDR_cutoff = 0.05,IMS_analysis=T,
                        Rotate_IMG="file_rotationbk.csv",
                        mzrange = c(500,4000),plot_cluster_image_grid=F)
@@ -1074,46 +1103,46 @@ sessionInfo()
     ## [29] purrr_0.3.4      magrittr_2.0.3   codetools_0.2-18 htmltools_0.5.3 
     ## [33] assertthat_0.2.1 utf8_1.2.2       stringi_1.7.8
 
-End of the tutorial, Enjoy\~
+End of the tutorial, Enjoy~
 
 # References
 
 R Packages used in this project:
 
--   viridisLite\[@viridisLite\]
+- viridisLite\[@viridisLite\]
 
--   rcdklibs\[@rcdklibs\]
+- rcdklibs\[@rcdklibs\]
 
--   rJava\[@rJava\]
+- rJava\[@rJava\]
 
--   data.table\[@data.table\]
+- data.table\[@data.table\]
 
--   RColorBrewer\[@RColorBrewer\]
+- RColorBrewer\[@RColorBrewer\]
 
--   magick\[@magick\]
+- magick\[@magick\]
 
--   ggplot2\[@ggplot2\]
+- ggplot2\[@ggplot2\]
 
--   dplyr\[@dplyr\]
+- dplyr\[@dplyr\]
 
--   stringr\[@stringr\]
+- stringr\[@stringr\]
 
--   protViz\[@protViz\]
+- protViz\[@protViz\]
 
--   cleaver\[@cleaver\]
+- cleaver\[@cleaver\]
 
--   Biostrings\[@Biostrings\]
+- Biostrings\[@Biostrings\]
 
--   IRanges\[@IRanges\]
+- IRanges\[@IRanges\]
 
--   Cardinal\[@Cardinal\]
+- Cardinal\[@Cardinal\]
 
--   tcltk\[@tcltk\]
+- tcltk\[@tcltk\]
 
--   BiocParallel\[@BiocParallel\]
+- BiocParallel\[@BiocParallel\]
 
--   spdep\[@spdep1\]
+- spdep\[@spdep1\]
 
--   FTICRMS\[@FTICRMS\]
+- FTICRMS\[@FTICRMS\]
 
--   UniProt.ws\[@UniProt.ws\]
+- UniProt.ws\[@UniProt.ws\]
