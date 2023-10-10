@@ -163,7 +163,7 @@ imaging_identification<-function(
   setCardinalBPPARAM(BPPARAM = BPPARAM)
   }else{
   parallel=Thread
-  BPPARAM=Parallel.OS(parallel)
+  BPPARAM=HiTMaP:::Parallel.OS(parallel)
   setCardinalBPPARAM(BPPARAM = BPPARAM)
   }
 
@@ -789,7 +789,7 @@ IMS_data_process<-function(datafile,
       Peptide_plot_list_2nd$mz=as.numeric(as.character(Peptide_plot_list_2nd$mz))
 
       #Protein scoring and FDR cut-off
-      Index_of_protein_sequence<-get("Index_of_protein_sequence", envir = .GlobalEnv)
+      
       Protein_feature_result<-protein_scoring(Protein_feature_list,Peptide_plot_list_rank,BPPARAM = BPPARAM,scoretype="mean",peptide_ID_filter=peptide_ID_filter,use_top_rank=use_top_rank)
       
       
@@ -804,13 +804,22 @@ IMS_data_process<-function(datafile,
       }else{
             Score_cutoff_protein=Protein_feature_result$Proscore
             if (length(Score_cutoff_protein)==0) Score_cutoff_protein=0}
+      
+      
       Protein_feature_result_cutoff=Protein_feature_result[((Protein_feature_result$Proscore>=Score_cutoff_protein)&(!is.na(Protein_feature_result$Intensity))&(Protein_feature_result$isdecoy==0)),]
       Protein_feature_list_rank=Protein_feature_list_rank[Protein_feature_list_rank$Protein %in% Protein_feature_result_cutoff$Protein,]
       Protein_feature_list_rank$Score=round(Protein_feature_list_rank$Score,digits = 7)
       Protein_feature_list_rank$mz=round(Protein_feature_list_rank$mz,digits = 4)
       Protein_feature_list_rank<-as.data.frame(Protein_feature_list_rank)
-      Protein_feature_list_rank$desc<-NULL
+      
+      if(is.null(Protein_feature_list_rank$desc)){
+      if (exists("Index_of_protein_sequence", envir = .GlobalEnv)){
+      Index_of_protein_sequence<-get("Index_of_protein_sequence", envir = .GlobalEnv)
       Protein_feature_list_rank=merge(Protein_feature_list_rank,Index_of_protein_sequence[,c("recno","desc")],by.x="Protein",by.y="recno",all.x=T)
+      }else{
+        Protein_feature_list_rank$desc<-Protein_feature_list_rank$Protein
+      }
+      }
 
       Protein_feature_list_rank_cutoff<-Protein_feature_list_rank
       Protein_feature_list_rank_cutoff<-Protein_feature_list_rank_cutoff[Protein_feature_list_rank_cutoff$isdecoy==0,]
@@ -864,5 +873,459 @@ IMS_data_process<-function(datafile,
 
 
 
-
+imaging_identification_target<-function(
+    #==============Choose the imzml raw data file(s) to process  make sure the fasta file in the same folder
+  datafile,
+  projectfolder=NULL,
+  threshold=0.001,
+  ppm=5,
+  mode=c("Proteomics","Metabolomics"),
+  Digestion_site="trypsin",
+  missedCleavages=0:1,
+  Fastadatabase="uniprot-bovin.fasta",
+  adducts=c("M+H"),
+  Modifications=list(fixed=NULL,fixmod_position=NULL,variable=NULL,varmod_position=NULL),
+  Substitute_AA=NULL,
+  Decoy_search=TRUE,
+  Decoy_adducts=c("M+ACN+H","M+IsoProp+H","M+DMSO+H","M+Co","M+Ag","M+Cu","M+He","M+Ne","M+Ar","M+Kr","M+Xe","M+Rn"),
+  Decoy_mode = "isotope",
+  mzrange=c(700,4000),
+  Database_stats=F,
+  adjust_score = FALSE,
+  IMS_analysis=TRUE,
+  PMFsearch=IMS_analysis,
+  Load_candidatelist=IMS_analysis || plot_cluster_image_grid,
+  Bypass_generate_spectrum=FALSE,
+  peptide_ID_filter=2,
+  Protein_feature_summary=TRUE,
+  Peptide_feature_summary=TRUE,
+  plot_ion_image=FALSE,
+  parallel=detectCores(),
+  spectra_segments_per_file=4,
+  Segmentation=c("spatialKMeans","spatialShrunkenCentroids","Virtual_segmentation","none","def_file"),
+  Segmentation_def="Segmentation_def.csv",
+  Segmentation_ncomp="auto-detect",
+  Segmentation_variance_coverage=0.8,
+  preprocess=list(force_preprocess=FALSE,use_preprocessRDS=TRUE,smoothSignal=list(method="disable"),
+                  reduceBaseline=list(method="locmin"),
+                  peakPick=list(method="adaptive"),
+                  peakAlign=list(tolerance=ppm/2, units="ppm"),
+                  peakFilter=list(freq.min=0.05),
+                  normalize=list(method=c("rms","tic","reference")[1],mz=1)),
+  Smooth_range=1,
+  Virtual_segmentation_rankfile=NULL,
+  Rotate_IMG=NULL,
+  Region_feature_summary=FALSE,
+  Spectrum_validate=TRUE,
+  output_candidatelist=TRUE,
+  use_previous_candidates=FALSE,
+  score_method="SQRTP",
+  plot_cluster_image_grid=FALSE,
+  deconv_peaklist="New",
+  plot_cluster_image_maxretry=2,
+  plot_cluster_image_overwrite=F,
+  smooth.image="gaussian",
+  componentID_colname="Peptide",
+  ClusterID_colname="Protein",
+  Protein_desc_of_interest=".",
+  Protein_desc_of_exclusion=NULL,
+  plot_unique_component=TRUE,
+  FDR_cutoff=0.05,
+  use_top_rank=NULL,
+  plot_matching_score=F,
+  Component_plot_coloure="mono",
+  cluster_color_scale="blackwhite",
+  plot_layout="line",
+  export_Header_table=T,
+  export_footer_table=T,
+  attach_summary_cluster=T,
+  remove_cluster_from_grid=attach_summary_cluster,
+  pixel_size_um=50,
+  img_brightness=100,
+  Thread=4,
+  cluster_rds_path=NULL,
+  remove_score_outlier=F,
+  Plot_score_IQR_cutoff=0.75,
+  Plot_score_abs_cutoff=-0.1,
+  mzAlign_runs="TopNfeature_mean",
+  ...
+){
+  suppressMessages(suppressWarnings(library("pacman")))
+  suppressMessages(suppressWarnings(p_load(stringr,BiocParallel,data.table,Cardinal,parallel)))
+  
+  if (missing(datafile)) stop("Missing data file, Choose single or multiple imzml file(s) for analysis")
+  
+  # retrieve/parse the working dir info, and convert the filenames
+  if (is.null(projectfolder)){
+    workdir<-base::dirname(datafile[1])
+  }else{ workdir<-projectfolder }
+  
+  datafile <- basename(datafile)
+  datafile <- gsub(".imzML$", "", datafile)
+  datafile_imzML <- paste0(datafile,".imzML")
+  
+  setwd(paste0(workdir[1],"/"))
+  
+  # Set the parallel processing parameter, multicore-fork method has been temporarily disabled due to the reduced performance in docker enviornment
+  if (is.null(Thread)){
+    parallel=try(detectCores()/2)
+    if (parallel<1 | is.null(parallel)){parallel=1}
+    BPPARAM=HiTMaP:::Parallel.OS(parallel)
+    setCardinalBPPARAM(BPPARAM = BPPARAM)
+  }else{
+    parallel=Thread
+    BPPARAM=HiTMaP:::Parallel.OS(parallel)
+    setCardinalBPPARAM(BPPARAM = BPPARAM)
+  }
+  
+  
+  
+  message(paste(try(detectCores()), "Cores detected,",parallel, "threads will be used for computing"))
+  
+  message(paste(length(datafile), "files were selected and will be used for Searching"))
+  
+  message(paste(Fastadatabase, "was selected as database.", "Candidates will be generated through",mode[1] ,"mode" ))
+  
+  
+  # prepare the proteome database, use_previous_candidates=T will override the other argument and load the candidate list directly
+  
+  if(Load_candidatelist){
+    
+    Protein_feature_list<-Protein_feature_list_fun(workdir=workdir,
+                                                   database=Fastadatabase,
+                                                   Digestion_site=Digestion_site,
+                                                   missedCleavages=missedCleavages,
+                                                   adducts=adducts,
+                                                   BPPARAM = BPPARAM,
+                                                   Decoy_adducts=Decoy_adducts,
+                                                   Decoy_search=Decoy_search,
+                                                   Decoy_mode = Decoy_mode,
+                                                   output_candidatelist=output_candidatelist,
+                                                   use_previous_candidates=use_previous_candidates,
+                                                   Substitute_AA=Substitute_AA,
+                                                   Modifications=Modifications,
+                                                   mzrange=mzrange,
+                                                   Protein_desc_of_exclusion=Protein_desc_of_exclusion,
+                                                   Database_stats=Database_stats)
+    
+  }
+  
+  # 
+  
+  if(IMS_analysis){
+    
+    message(paste(Fastadatabase,"was selected as database","\nSpectrum intensity threshold:",percent(threshold),"\nmz tolerance:",ppm,"ppm","Segmentation method:",Segmentation[1],
+                  "\nManual segmentation def file:",ifelse(is.null(Virtual_segmentation_rankfile),"None",Virtual_segmentation_rankfile),"\nBypass spectrum generation:",Bypass_generate_spectrum))
+    
+    #select candidate list for IMS annotation 
+    
+    Peptide_Summary_searchlist<-unique(Protein_feature_list)
+    
+    Peptide_Summary_file<-IMS_data_process(datafile=datafile, workdir=workdir,
+                                           Peptide_Summary_searchlist=Peptide_Summary_searchlist,
+                                           segmentation_num=spectra_segments_per_file,
+                                           threshold=threshold,rotate = Rotate_IMG,
+                                           ppm=ppm,mzrange=mzrange,
+                                           Segmentation=Segmentation,
+                                           Segmentation_ncomp=Segmentation_ncomp,
+                                           PMFsearch = PMFsearch,
+                                           Virtual_segmentation_rankfile = Virtual_segmentation_rankfile,
+                                           BPPARAM = BPPARAM,
+                                           Bypass_generate_spectrum=Bypass_generate_spectrum,
+                                           score_method = score_method,
+                                           Decoy_mode=Decoy_mode,
+                                           Decoy_search=Decoy_search,
+                                           adjust_score=adjust_score,
+                                           peptide_ID_filter=peptide_ID_filter,
+                                           Protein_desc_of_interest=Protein_desc_of_interest,
+                                           plot_matching_score_t=plot_matching_score,
+                                           FDR_cutoff= FDR_cutoff,
+                                           Segmentation_def=Segmentation_def,
+                                           Segmentation_variance_coverage=Segmentation_variance_coverage,
+                                           preprocess=preprocess)
+    
+  }
+  
+  
+  
+  #Summarize the protein result across the datafiles and store these summarized files into the summary folder
+  
+  if(Protein_feature_summary){
+    message("Protein feature summary...")
+    Peptide_Summary_file<-NULL
+    Protein_peptide_Summary_file<-NULL
+    protein_feature_all<-NULL
+    for (i in 1:length(datafile)){
+      datafilename<-gsub(paste(workdir,"/",sep=""),"",gsub(".imzML", "", datafile[i]))
+      currentdir<-paste0(workdir,"/",datafile[i]," ID")
+      setwd(paste(currentdir,sep=""))
+      protein_feature<-NULL
+      for (protein_feature_file in dir()[stringr::str_detect(dir(),"Protein_segment_PMF_RESULT_")]){
+        protein_feature<-fread(protein_feature_file)
+        
+        if(nrow(protein_feature)!=0){
+          protein_feature$Source<-datafilename
+          region_code<-str_replace(protein_feature_file,"Protein_segment_PMF_RESULT_","")
+          region_code<-str_replace(region_code,".csv","")
+          protein_feature$Region<-region_code
+          protein_feature_all<-rbind(protein_feature_all,protein_feature)
+        }
+        
+      }
+      Peptide_Summary_file<-fread("Peptide_region_file.csv")
+      Peptide_Summary_file$Source<-datafilename
+      if(nrow(Peptide_Summary_file)!=0){
+        Protein_peptide_Summary_file<-rbind(Protein_peptide_Summary_file,Peptide_Summary_file)
+      }
+    }
+    message("Protein feature summary...Done.")
+    if (dir.exists(paste(workdir,"/Summary folder",sep=""))==FALSE){dir.create(paste(workdir,"/Summary folder",sep=""))}
+    
+    write.csv(protein_feature_all,paste(workdir,"/Summary folder/Protein_Summary.csv",sep=""),row.names = F)
+    write.csv(Protein_peptide_Summary_file,paste(workdir,"/Summary folder/Protein_peptide_Summary.csv",sep=""),row.names = F)
+  }
+  
+  #Summarize the protein and peptide result across the datafiles and store these summarized files into the summary folder
+  
+  if(Peptide_feature_summary){
+    message("Peptide feature summary...")
+    Peptide_Summary_file<-NULL
+    Peptide_Summary_file_a<-NULL
+    for (i in 1:length(datafile)){
+      datafilename<-gsub(paste(workdir,"/",sep=""),"",gsub(".imzML", "", datafile[i]))
+      currentdir<-paste0(workdir,"/",datafile[i]," ID")
+      
+      setwd(paste(currentdir,sep=""))
+      
+      Peptide_Summary_file<-fread("Peptide_region_file.csv")
+      Peptide_Summary_file$Source<-gsub(".imzML", "", datafile[i])
+      if(nrow(Peptide_Summary_file)!=0){
+        Peptide_Summary_file_a<-rbind(Peptide_Summary_file_a,Peptide_Summary_file)
+      }
+    }
+    Peptide_Summary_file_a<-unique(Peptide_Summary_file_a)
+    message("Peptide feature summary...Done.")
+    if (dir.exists(paste(workdir,"/Summary folder",sep=""))==FALSE){dir.create(paste(workdir,"/Summary folder",sep=""))}
+    write.csv(Peptide_Summary_file_a,paste(workdir,"/Summary folder/Peptide_Summary.csv",sep=""),row.names = F)
+    #Peptide_feature_summary_all_files_new(datafile,workdir,threshold = threshold)
+  }
+  
+  #Summarize the mz feature list 
+  
+  if(Region_feature_summary){
+    message("Region feature summary...")
+    Spectrum_summary<-NULL
+    for (i in 1:length(datafile)){
+      datafilename<-gsub(paste(workdir,"/",sep=""),"",gsub(".imzML", "", datafile[i]))
+      currentdir<-paste0(workdir,"/",datafile[i]," ID")
+      setwd(currentdir)
+      name <-gsub(base::dirname(datafile[i]),"",gsub(".imzML", "", datafile[i]))
+      message(paste("Region_feature_summary",gsub(".imzML", "", datafile[i])))
+      
+      if (dir.exists(paste(workdir,"/Summary folder",sep=""))==FALSE){dir.create(paste(workdir,"/Summary folder",sep=""))}
+      
+      match_pattern <- "Spectrum.csv"
+      spectrum_file_table_sum<-NULL
+      for (spectrum_file in dir(recursive = T)[str_detect(dir(recursive = T), match_pattern)]){
+        spectrum_file_table=fread(spectrum_file)
+        if (nrow(spectrum_file_table)>=1){
+          spectrum_file_table$Region=gsub("/Spectrum.csv","",spectrum_file)
+          spectrum_file_table$Source<-gsub(".imzML", "", datafile[i])
+          spectrum_file_table_sum[[spectrum_file]] <- spectrum_file_table
+        }
+        
+      }
+      spectrum_file_table_sum <- do.call(rbind,spectrum_file_table_sum)
+      Spectrum_summary[[datafile[i]]]=spectrum_file_table_sum
+    }
+    Spectrum_summary <- do.call(rbind,Spectrum_summary)
+    write.csv(Spectrum_summary,file = paste(workdir,"/Summary folder/Region_feature_summary.csv",sep=""),row.names = F)
+    
+  }
+  
+  #Protein cluster image rendering
+  
+  if(plot_cluster_image_grid){
+    
+    message("cluster image rendering...")
+    
+    setwd(workdir[1])
+    
+    # read protein-peptide features result
+    
+    Protein_feature_list=read.csv(file=paste(workdir[1],"/Summary folder/Protein_peptide_Summary.csv",sep=""),stringsAsFactors = F)
+    
+    # remove peptide score outlier from result
+    
+    if (remove_score_outlier){
+      Protein_feature_list <- remove_pep_score_outlier(Protein_feature_list,abs_cutoff=Plot_score_abs_cutoff,IQR_LB = Plot_score_IQR_cutoff)
+    }
+    
+    # extract the protein entries of interest
+    
+    if (sum(Protein_desc_of_interest!=".")>=1){
+      Protein_feature_list_interest<-NULL
+      num_of_interest<-numeric(0)
+      
+      for (interest_desc in Protein_desc_of_interest){
+        idx_iterest_desc<-str_detect(Protein_feature_list$desc,regex(interest_desc,ignore_case = T))
+        if(nrow(Protein_feature_list[idx_iterest_desc,])!=0){
+          Protein_feature_list_interest<-rbind(Protein_feature_list_interest,Protein_feature_list[idx_iterest_desc,])
+        }
+        num_of_interest[interest_desc]<-length(unique(Protein_feature_list[idx_iterest_desc,"Protein"]))
+      }
+      
+      Protein_feature_list=Protein_feature_list_interest
+      message(paste(num_of_interest,"Protein(s) found with annotations of interest:",Protein_desc_of_interest,collapse = "\n"))
+    }
+    
+    Protein_feature_list=as.data.frame(Protein_feature_list)
+    
+    # generate combined IMS data for multiple files or use a link to load the pre-processed IMS data
+    
+    if (!is.null(cluster_rds_path)){
+      
+      cluster_rds_path
+      imdata=readRDS(paste0(workdir[1],"/",cluster_rds_path))
+      message("cluster imdata loaded.")
+      
+    }else{
+      cluster_rds_path<-Load_IMS_decov_combine(datafile=datafile,workdir=workdir,import_ppm=ppm,SPECTRUM_batch="overall",mzAlign_runs=mzAlign_runs,
+                                               ppm=ppm,threshold=0,rotate=Rotate_IMG,mzrange=mzrange,
+                                               deconv_peaklist=deconv_peaklist,preprocessRDS_rotated=T)
+      
+      
+      imdata=readRDS(paste0(workdir[1],"/",basename(cluster_rds_path)))
+      
+      message("cluster imdata generated and loaded.")
+    }
+    
+    # test combined imdata
+    if (class(imdata)[1]=="matrix"){
+      
+      do.call(Cardinal::cbind,imdata)->imdata
+      
+      saveRDS(imdata,paste0(workdir[1],"/combinedimdata.rds"),compress = T)
+      
+    }
+    
+    # Setup output folder and queue the R calls for cluster image randering
+    outputfolder=paste(workdir,"/Summary folder/cluster Ion images/",sep="")
+    if (dir.exists(outputfolder)==FALSE){dir.create(outputfolder)}
+    
+    if (!(plot_unique_component)){
+      setwd(outputfolder)
+      Protein_feature_list_trimmed<-Protein_feature_list
+    }
+    
+    
+    if (plot_unique_component){
+      outputfolder=paste(workdir,"/Summary folder/cluster Ion images/unique/",sep="")
+      
+      if (dir.exists(outputfolder)==FALSE){dir.create(outputfolder)}
+      setwd(outputfolder)
+      Protein_feature_list_unique=Protein_feature_list %>% group_by(mz) %>% dplyr::summarise(num=length(unique(Protein)))
+      Protein_feature_list_unique_mz<-Protein_feature_list_unique$mz[Protein_feature_list_unique$num==1]
+      Protein_feature_list_trimmed<-Protein_feature_list[Protein_feature_list$mz %in% Protein_feature_list_unique_mz, ]
+      write.csv(Protein_feature_list_trimmed,paste(workdir,"/Summary folder/Protein_feature_list_trimmed.csv",sep=""),row.names = F)
+    }
+    
+    #list_of_protein_sequence[!(1:length(list_of_protein_sequence) %in% as.numeric(Protein_feature_list_trimmed$Protein))]<-""
+    #unname(as.character(list_of_protein_sequence))->str_vec
+    #imdata <- imdata %>% peakBin(ref=sort(unique((Protein_feature_list_trimmed$mz_align+Protein_feature_list_trimmed$mz)/2)), tolerance=ppm, units="ppm") %>% process(BPPARAM=SerialParam())
+    save(list=c("Protein_feature_list_trimmed",
+                "imdata",
+                "ClusterID_colname",
+                "componentID_colname",
+                "plot_layout",
+                "export_Header_table",
+                "export_footer_table",
+                "attach_summary_cluster",
+                "remove_cluster_from_grid",
+                "smooth.image",
+                "Component_plot_coloure",
+                "cluster_color_scale",
+                "list_of_protein_sequence",
+                "outputfolder",
+                "peptide_ID_filter",
+                "ppm",
+                "img_brightness",
+                "pixel_size_um"
+    ),
+    file=paste0(workdir,"/cluster_img_grid.RData"))
+    
+    for (clusterID in unique(Protein_feature_list_trimmed$Protein)){
+      cluster_desc<-unique(Protein_feature_list_trimmed$desc[Protein_feature_list_trimmed[[ClusterID_colname]]==clusterID])
+      cluster_desc<-gsub(stringr::str_extract(cluster_desc,"OS=.{1,}"),"",cluster_desc)
+      n_component<-nrow(unique(Protein_feature_list_trimmed[Protein_feature_list_trimmed[[ClusterID_colname]]==clusterID,c(ClusterID_colname,componentID_colname,"moleculeNames","adduct","Modification")]))
+      if (n_component>=peptide_ID_filter){
+        if ('&'(file.exists(paste0(outputfolder,clusterID,"_cluster_imaging.png")),!plot_cluster_image_overwrite)){
+          message("Cluster image rendering Skipped file exists: No.",clusterID," ",cluster_desc)
+          next
+        }else {
+          
+          fileConn<-file(paste0(workdir,"/cluster_img_scource.R"),)
+          writeLines(c("suppressMessages(suppressWarnings(require(HiTMaP)))",
+                       paste0("clusterID=",clusterID),
+                       paste0("suppressMessages(suppressWarnings(load(file =\"", workdir,"/cluster_img_grid.RData\")))"),
+                       "suppressMessages(suppressWarnings(cluster_image_grid(clusterID = clusterID,
+                                      imdata=imdata,
+                                      SMPLIST=Protein_feature_list_trimmed,
+                                      ppm=ppm,
+                                      ClusterID_colname=ClusterID_colname,
+                                      componentID_colname=componentID_colname,
+                                      plot_layout=plot_layout,
+                                      export_Header_table=export_Header_table,
+                                      export_footer_table=export_footer_table,
+                                      attach_summary_cluster=attach_summary_cluster,
+                                      remove_cluster_from_grid=remove_cluster_from_grid,
+                                      plot_style=\"fleximaging\",
+                                      smooth.image=smooth.image,
+                                      Component_plot_coloure=Component_plot_coloure,
+                                      cluster_color_scale=cluster_color_scale,
+                                      list_of_protein_sequence=list_of_protein_sequence,
+                                      workdir=outputfolder,
+                                      pixel_size_um=pixel_size_um,
+                                      img_brightness=img_brightness,
+                                      Component_plot_threshold=peptide_ID_filter)))"),
+                     fileConn)
+          close(fileConn)
+          
+          system(paste0("Rscript \"",paste0(workdir,"/cluster_img_scource.R\"")))
+          
+          
+          if(file.exists(paste0(outputfolder,clusterID,"_cluster_imaging.png"))){
+            message("Cluster image rendering Done: No.",clusterID," ",cluster_desc)
+            
+          }else{
+            retrytime=1
+            repeat{
+              
+              message("Cluster image rendering failed and retry ",retrytime,": No.",clusterID," ",cluster_desc)
+              system(paste0("Rscript \"",paste0(workdir,"/cluster_img_scource.R\"")))
+              
+              if (file.exists(paste0(outputfolder,clusterID,"_cluster_imaging.png"))){
+                message("Cluster image rendering Done: No.",clusterID," ",cluster_desc)
+                
+                break
+              }else if(retrytime>=plot_cluster_image_maxretry){
+                message("Cluster image rendering reaches maximum Retry Attempts: No.",clusterID," ",cluster_desc)
+                
+                break
+              }
+              retrytime=1+retrytime
+            }
+            
+          }
+          
+        }
+        
+        
+      }
+    }
+    
+    
+  }
+  message("Workflow done.")
+}
 
