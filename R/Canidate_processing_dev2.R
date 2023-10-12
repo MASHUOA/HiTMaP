@@ -1,5 +1,5 @@
 
-Protein_feature_list_table_import<-function(workdir=getwd(),
+Protein_feature_list_table_import_fastaref<-function(workdir=getwd(),
                                             ptable,
                                             ptable_pipeline=c("fragpipe","UserTable"),
                                             target_GroupID=NULL,
@@ -58,6 +58,28 @@ Protein_feature_list_table_import<-function(workdir=getwd(),
                  "Modification","pro_end","pepmz",
                  "formula","mz","adduct","isdecoy","charge","desc")
   
+  
+  
+  if (file.exists(database)){
+  Index_of_protein_sequence <- fasta.index(database,
+                                            nrec=-1L, 
+                                            skip=0L)  
+  Index_of_protein_sequence$Accession<-unlist(str_split_fixed(Index_of_protein_sequence$desc," ",2)[,1])
+  Index_of_protein_sequence <-Index_of_protein_sequence 
+  list_of_protein_sequence <- readAAStringSet(database,
+                                              format="fasta",
+                                              nrec=-1L, 
+                                              skip=0L, 
+                                              seek.first.rec=FALSE
+  ) 
+  names_pro<-merge(data.frame(desc=names(list_of_protein_sequence),stringsAsFactors = F),Index_of_protein_sequence,by="desc",sort=F)
+  
+  names(list_of_protein_sequence) <- names_pro$recno
+  Index_of_protein_sequence<<-Index_of_protein_sequence
+  list_of_protein_sequence<<-list_of_protein_sequence
+  }else{
+    stop("Invalid protein fasta database file.")
+  }
   
   if (is.character(ptable)){
     if( '&'(length(ptable)==1,sum(file.exists(ptable))==1) ){
@@ -124,6 +146,13 @@ Protein_feature_list_table_import<-function(workdir=getwd(),
         ptable=unique(ptable)
         colnames(ptable)<-c("Protein","Peptide","start","end","Modification","Cleavages","desc")
         ptable->ptable_candidate
+        unique(ptable_candidate$Protein)->unique_map
+        
+        recon<-Index_of_protein_sequence$recno[match(ptable_candidate$Protein,Index_of_protein_sequence$Accession)]
+        unique((ptable_candidate$Protein[is.na(recon)]))->missing_acc
+        message("The following protein is missing in sequence file and will be removed.",paste0(missing_acc,collapse = ";"))
+        ptable_candidate$Protein<-recon
+        ptable_candidate<-ptable_candidate[!is.na(ptable_candidate$Protein),]
         
       }
       
@@ -181,23 +210,7 @@ Protein_feature_list_table_import<-function(workdir=getwd(),
   
   
   
-  if (!is.null(database)){
-  
-    if (file.exists(database)){
-    Index_of_protein_sequence <<- fasta.index(database,
-                                            nrec=-1L, 
-                                            skip=0L)  
-  
-  
-  list_of_protein_sequence <- readAAStringSet(database,
-                                              format="fasta",
-                                              nrec=-1L, 
-                                              skip=0L, 
-                                              seek.first.rec=FALSE
-  )}else{
-    message("Protein DB is missing, Bypass Protein end modification.")
-  }
-  }
+
   
   if(use_previous_candidates){
     #if (dir.exists(paste(workdir,"/Summary folder",sep=""))==FALSE){dir.create(paste(workdir,"/Summary folder",sep=""))}
@@ -304,14 +317,20 @@ Protein_feature_list_table_import<-function(workdir=getwd(),
     Protein_Summary$Modification[is.na(Protein_Summary$Modification)]<-""
     Protein_Summary$mz<-round(Protein_Summary$mz,digits = 4)
     Protein_Summary<-Protein_Summary[`&`(Protein_Summary$mz>=mzrange[1],Protein_Summary$mz<=mzrange[2]),]
-    if (!exists(Index_of_protein_sequence)){
-    Index_of_protein_sequence<-data.frame(unique(Protein_Summary[,c("Protein","desc")]))
-    Index_of_protein_sequence$recno<-Index_of_protein_sequence$Protein
-    Index_of_protein_sequence$fileno<-1
-    Index_of_protein_sequence$offset<-0
-    Index_of_protein_sequence$seqlength<-0
-    Index_of_protein_sequence$filepath<-ptable_path
-    Protein_Summary$pro_end<-0
+
+    if (!exists("Index_of_protein_sequence")){
+      Index_of_protein_sequence<-data.frame(unique(Protein_Summary[,c("Protein","desc")]))
+      Index_of_protein_sequence$recno<-Index_of_protein_sequence$Protein
+      Index_of_protein_sequence$fileno<-1
+      Index_of_protein_sequence$offset<-0
+      Index_of_protein_sequence$seqlength<-0
+      Index_of_protein_sequence$filepath<-ptable_path
+      Protein_Summary$pro_end<-1000
+    }else{
+      
+      pro_end<-sapply(list_of_protein_sequence,length)
+      pro_end<-data.frame(Protein=names(pro_end),pro_end=pro_end)
+      Protein_Summary$pro_end<-pro_end$pro_end[match(Protein_Summary$Protein,pro_end$Protein)]
     }
     
     Protein_Summary$desc<-NULL

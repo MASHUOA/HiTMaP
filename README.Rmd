@@ -1815,11 +1815,12 @@ library(stringr)
 library(magick)
 library(scales)
 library(BiocParallel)
-workdir="V:/Bioinformatics/amelia/human/"
+library(HiTMaP)
+workdir="V:/Bioinformatics/amelia/GluFib/"
 ptable="psm.tsv"
 ptable_pipeline=c("fragpipe")
 target_GroupID=NULL
-database="protein.fas"
+database="uniprot_mouse 3.fasta"
 missedCleavages=0:1
 adducts=c("M+H","M+Na")
 Decoy_mode=c("isotope")
@@ -1830,10 +1831,7 @@ output_candidatelist=T
 use_previous_candidates=F
 Protein_desc_of_exclusion=NULL
 Database_stats=F
-mod.df_fix<-Peptide_modification(retrive_ID = Modifications$fixed,mod_position=Modifications$fixmod_position)
-mod.df_var<-Peptide_modification(retrive_ID = Modifications$variable,mod_position=Modifications$varmod_position)
-mod.df<-rbind(mod.df_fix,mod.df_var)
-mod.df_unique<-unique(mod.df[,c("record_id","code_name","full_name","ex_code_name","composition", "mono_mass" )])
+
 mod_include_conversion<-c('Methyl'="Methylation",
                'Thiazolidine'="formaldehyde adduct",
                'hydroxymethyl'="hydroxymethyl/formaldehyde induced modifications",
@@ -1843,6 +1841,10 @@ mod_include_conversion<-c('Methyl'="Methylation",
                'Pyro-glu'="Pyro-glu from Q/Loss of ammonia",
                'Acetyl'="N-term(42.0106)"
 )
+mod.df_fix<-HiTMaP:::Peptide_modification(retrive_ID = names(mod_include_conversion))
+mod.df_var<-NULL
+mod.df<-rbind(mod.df_fix,mod.df_var)
+mod.df_unique<-unique(mod.df[,c("record_id","code_name","full_name","ex_code_name","composition", "mono_mass" )])
 Decoy_adducts=c("M+He","M+Ne","M+Ar","M+Kr","M+Xe","M+Rn")
 Protein_feature_list_table_import(workdir=workdir,
                                   ptable=ptable,adducts=adducts,

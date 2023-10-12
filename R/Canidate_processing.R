@@ -1560,7 +1560,7 @@ convert_peptide_adduct<-function(peptide_formula,adductsname,multiplier=c(1,1),a
   adductsformula_add= as.character(adductslist[adductslist$Name==adductsname,"formula_add"])
   adductsformula_ded= as.character(adductslist[adductslist$Name==adductsname,"formula_ded"])
   
-  null_if_false<-function(x){if (x==FALSE){""} else{get.formula(x)@string}}
+  null_if_false<-function(x){if (x==FALSE){""} else{rcdk::get.formula(x)@string}}
   
   adductsformula_add<-null_if_false(adductsformula_add)
   adductsformula_ded<-null_if_false(adductsformula_ded)
