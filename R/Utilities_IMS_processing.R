@@ -2182,7 +2182,7 @@ Load_IMS_combine<-function(datafile,rotate=NULL,ppm=5,...){
   return(imdata)
 }
 
-Load_IMS_decov_combine<-function(datafile,workdir,ppm=5,import_ppm=ppm/2,SPECTRUM_batch="overall",mass_correction_tol_ppm=12,mzAlign_runs="TopNfeature_mean",
+Load_IMS_decov_combine<-function(datafile,workdir,ppm=5,import_ppm=ppm/2,SPECTRUM_batch="overall",mass_correction_tol_ppm=12,mzAlign_runs=c("TopNfeature_mean","Combined_features"),
                                  threshold=0.0000001,rotate=NULL,mzrange="auto-detect", ppm_aligment=ppm, 
                                  deconv_peaklist=c("Load_exist","New"),preprocessRDS_rotated=T,use_rawdata=F){
   suppressMessages(suppressWarnings(library(matter)))
@@ -2332,12 +2332,12 @@ Load_IMS_decov_combine<-function(datafile,workdir,ppm=5,import_ppm=ppm/2,SPECTRU
         #                                                                   tol_ppm=5,
         #                                                                   span = 0.75)
          
-        deconv_peaklist_ref_match_locmax[[datafile[z]]] <- IMS_datafile_aligment(mz = mz.ref.list.top.quantile.spec[[datafile[z]]]$m.z,
+        deconv_peaklist_ref_match_locmax[[datafile[z]]] <- try(IMS_datafile_aligment(mz = mz.ref.list.top.quantile.spec[[datafile[z]]]$m.z,
                                                                           mz.ref = mz.ref.list.top.quantile.final,
                                                                           mz.test = mz.ref.list.top.quantile.spec[[datafile[z]]]$m.z,
                                                                           control = loess.control(surface = "direct"),
                                                                           tol_ppm=ppm_aligment,
-                                                                          span = 0.75)
+                                                                          span = 0.75))
       }
       
      
@@ -2406,9 +2406,6 @@ Load_IMS_decov_combine<-function(datafile,workdir,ppm=5,import_ppm=ppm/2,SPECTRU
           predict(deconv_peaklist_ref_match_locmax[[datafile[z]]]$shift, deconv_peaklist_list[[datafile[z]]]$m.z)
         
       }
-      
-      }
-    
     deconv_peaklist_bind<-do.call(rbind,deconv_peaklist_list)
     
     deconv_peaklist_bind<-deconv_peaklist_bind[order(deconv_peaklist_bind$m.z),]
@@ -2418,6 +2415,22 @@ Load_IMS_decov_combine<-function(datafile,workdir,ppm=5,import_ppm=ppm/2,SPECTRU
     deconv_peaklist_decov<-HiTMaP:::isopattern_ppm_filter_peaklist(deconv_peaklist_bind,ppm=ppm,threshold=threshold)
     
     write.csv(deconv_peaklist_decov,paste0(workdir[z],"/","ClusterIMS_deconv_Spectrum.csv"),row.names = F)
+    }else if (mzAlign_runs=="Combined_features"){
+      rm(deconv_peaklist_ref_match_locmax)
+      
+      deconv_peaklist_bind<-do.call(rbind,deconv_peaklist_list)
+      
+      deconv_peaklist_bind<-deconv_peaklist_bind[order(deconv_peaklist_bind$m.z),]
+      
+      rownames(deconv_peaklist_bind)<-1:nrow(deconv_peaklist_bind)
+      
+      deconv_peaklist_decov<-HiTMaP:::isopattern_ppm_filter_peaklist(deconv_peaklist_bind,ppm=ppm,threshold=threshold)
+      
+      write.csv(deconv_peaklist_decov,paste0(workdir[z],"/","ClusterIMS_deconv_Spectrum.csv"),row.names = F)
+      
+      }
+    
+    
     
     
     
