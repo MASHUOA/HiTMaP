@@ -87,7 +87,6 @@ Setting up and running the docker container:
 ```{bash eval=FALSE, include=T}
 # For windows user's, run the image with a local user\Documents\expdata folder mapped to the docker container:
 docker run --name hitmap -v %userprofile%\Documents\expdata:/root/expdata -a stdin -a stdout -i -t mashuoa/hitmap /bin/bash 
-docker run --name hitmap_r411 -v %userprofile%\Documents\expdata:/root/expdata -a stdin -a stdout -i -t mashuoa/hitmap:base_R411 /bin/bash
 # For linux or mac user's, run the image with a local user/expdata folder mapped to the docker container:
 docker run --name hitmap -v ~/expdata:/root/expdata -a stdin -a stdout -i -t mashuoa/hitmap /bin/bash 
 
