@@ -379,9 +379,10 @@ imaging_identification<-function(
     message("cluster imdata loaded.")
     
     }else{
+      
     cluster_rds_path<-Load_IMS_decov_combine(datafile=datafile,workdir=workdir,import_ppm=ppm,SPECTRUM_batch="overall",mzAlign_runs=mzAlign_runs,
                                        ppm=ppm,threshold=0,rotate=Rotate_IMG,mzrange=mzrange,
-                                       deconv_peaklist=deconv_peaklist,preprocessRDS_rotated=T)
+                                       deconv_peaklist=deconv_peaklist,preprocessRDS_rotated=T,target_mzlist=sort(unique(as.numeric(Protein_feature_list$mz)),decreasing = F))
 
 
     imdata=readRDS(paste0(workdir[1],"/",basename(cluster_rds_path)))

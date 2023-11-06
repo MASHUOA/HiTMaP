@@ -2184,7 +2184,7 @@ Load_IMS_combine<-function(datafile,rotate=NULL,ppm=5,...){
 
 Load_IMS_decov_combine<-function(datafile,workdir,ppm=5,import_ppm=ppm/2,SPECTRUM_batch="overall",mass_correction_tol_ppm=12,mzAlign_runs=c("TopNfeature_mean","Combined_features"),
                                  threshold=0.0000001,rotate=NULL,mzrange="auto-detect", ppm_aligment=ppm, 
-                                 deconv_peaklist=c("Load_exist","New"),preprocessRDS_rotated=T,use_rawdata=F){
+                                 deconv_peaklist=c("Load_exist","New","Target"),preprocessRDS_rotated=T,use_rawdata=F,target_mzlist=NULL){
   suppressMessages(suppressWarnings(library(matter)))
   suppressMessages(suppressWarnings(library(stringr)))
   suppressMessages(suppressWarnings(library(HiTMaP)))
@@ -2442,9 +2442,21 @@ Load_IMS_decov_combine<-function(datafile,workdir,ppm=5,import_ppm=ppm/2,SPECTRU
     
     deconv_peaklist_decov<-HiTMaP:::isopattern_ppm_filter_peaklist(deconv_peaklist_decov,ppm=ppm,threshold=threshold)
     
+  }else if (sum(deconv_peaklist[1]=="Target")==1){
+    if (file.exists(paste0(workdir[1],"/","ClusterIMS_deconv_Spectrum_target.csv"))){
+          deconv_peaklist_decov<-read.csv(paste0(workdir[1],"/","ClusterIMS_deconv_Spectrum_target.csv"))
+          deconv_peaklist_decov<-HiTMaP:::isopattern_ppm_filter_peaklist(deconv_peaklist_decov,ppm=ppm,threshold=threshold)
+    }else{
+     if (!is.null(target_mzlist)){
+       deconv_peaklist_decov=data.frame(m.z=target_mzlist,intensities=1)
+     }else{
+      message("No target mz found, Please check the protein result and try again.")
+    }
+
+    
   }
   
-  
+  }
   
   
   #imdata_list<-list()
@@ -2491,7 +2503,7 @@ Load_IMS_decov_combine<-function(datafile,workdir,ppm=5,import_ppm=ppm/2,SPECTRU
         imdata@featureData@mz<-predict(deconv_peaklist_ref_match_locmax[[datafile[z]]]$shift,imdata@featureData@mz) + imdata@featureData@mz
       }
      
-    }
+    }else(message("No batch level m/z drifting model found, m/z correction bypassed."))
     
     New_fdata_LB<-imdata[1,]
     New_fdata_LB@featureData@mz[1]<-min(deconv_peaklist_decov_plot$m.z, na.rm = T)-2*ppm/1000000*min(deconv_peaklist_decov_plot$m.z, na.rm = T)
@@ -2543,7 +2555,7 @@ Load_IMS_decov_combine<-function(datafile,workdir,ppm=5,import_ppm=ppm/2,SPECTRU
   
   gc()
   
-  saveRDS(combinedimdata_list,paste0(workdir[1],"/combinedimdata_list.rds"),compress = T)
+  saveRDS(combinedimdata_list,paste0(workdir[1],"/",mzAlign_runs,"_",deconv_peaklist,"combinedimdata_list.rds"),compress = T)
   
   for (z in 1:length(datafile)){
     
@@ -2564,9 +2576,9 @@ Load_IMS_decov_combine<-function(datafile,workdir,ppm=5,import_ppm=ppm/2,SPECTRU
   }
   
   
-  saveRDS(combinedimdata,paste0(workdir[1],"/combinedimdata.rds"),compress = T)
+  saveRDS(combinedimdata,paste0(workdir[1],"/",mzAlign_runs,"_",deconv_peaklist,"combinedimdata.rds"),compress = T)
   
-  return(paste0(workdir[1],"/combinedimdata.rds"))
+  return(paste0(workdir[1],"/",mzAlign_runs,"_",deconv_peaklist,"combinedimdata.rds"))
 }
 
 sort_run_msi<-function(combinedimdata,datafiles,norm_coord=T){
