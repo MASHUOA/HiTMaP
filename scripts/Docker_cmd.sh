@@ -54,3 +54,7 @@ wsl --list -v
 wsl --export docker-desktop-data "G:\docker-desktop-data.tar"
 wsl --unregister docker-desktop-data
 wsl --import docker-desktop-data "G:\Docker\data" "G:\docker-desktop-data.tar" --version 2
+
+
+docker run --name alphafold -a stdin -a stdout -i -t mashuoa/alpha_fold:latest_run /bin/bash
+
