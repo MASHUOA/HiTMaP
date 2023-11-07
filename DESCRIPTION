@@ -27,7 +27,7 @@ Imports:
     pacman,fs,processx,S4Vectors,
     spdep,zoo,KEGGREST,OrgMassSpecR,
     enviPat,rgl,multtest,XML,
-    BiocManager,reshape2,readr,
+    BiocManager,reshape2,readr,readxl,
     rcdk,colorspace,OneR,
     gridExtra,grid,gtable,ChemmineR
 VignetteBuilder: knitr
