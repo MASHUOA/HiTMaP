@@ -58,3 +58,4 @@ wsl --import docker-desktop-data "G:\Docker\data" "G:\docker-desktop-data.tar" -
 
 docker run --name alphafold -a stdin -a stdout -i -t mashuoa/alpha_fold:latest_run /bin/bash
 
+docker run --name hitmapstudio -e PASSWORD=rstudio -p 8787:8787 -v G:\Documents\:/home/rstudio -a stdin -a stdout -i -t mashuoa/hitmap:studio

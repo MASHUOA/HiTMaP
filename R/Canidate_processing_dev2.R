@@ -138,6 +138,7 @@ Protein_feature_list_table_import_fastaref<-function(workdir=getwd(),
         (unlist(str_split(mod_split_obs,";")))->all_ob_mod
         table(all_ob_mod)->all_ob_mod_tb
         png("mod.stats.png",width = 8000,height = 5000, res=300,units = "px")
+        plot.new()
         barplot(sort(all_ob_mod_tb,decreasing = T))
         dev.off()
         ptable[,Pep_mod_col]<-paste0(unlist(ptable[,Pep_mod_col]),";",unlist(mod_split_obs))
@@ -280,7 +281,8 @@ Protein_feature_list_table_import_fastaref<-function(workdir=getwd(),
     tempdf$diff<-round(as.numeric(tempdf$pepmz_mod)-as.numeric(tempdf$pepmz),3)
     check_mz_df<-unique(tempdf[,c("Modification","diff")])
     message(paste("Generating peptide formula with adducts:",paste(adducts,collapse = " ")))
-    peptides_symbol_mod_adducts=bplapply(adducts,convert_peptide_adduct_list,peptide_symbol_mod,BPPARAM = BPPARAM,adductslist=adductslist)
+    peptide_symbol_mod<<-peptide_symbol_mod
+    peptides_symbol_mod_adducts=lapply(adducts,convert_peptide_adduct_list,peptide_symbol_mod,adductslist=adductslist)
     
     for (i in 1:length(adducts)){
       adductmass <- as.numeric(as.character(adductslist[adductslist$Name == adducts[i], "Mass"]))
@@ -297,7 +299,7 @@ Protein_feature_list_table_import_fastaref<-function(workdir=getwd(),
     
     if (length(Decoy_adducts)>0 && Decoy_search && ("adducts" %in% Decoy_mode)){
       message(paste("Generating peptide formula with Decoy adducts:",paste(Decoy_adducts,collapse = " ")))
-      peptides_symbol_adducts=bplapply(Decoy_adducts,convert_peptide_adduct_list,peptide_symbol,BPPARAM = BPPARAM,adductslist=adductslist)
+      peptides_symbol_adducts=lapply(Decoy_adducts,convert_peptide_adduct_list,peptide_symbol,adductslist=adductslist)
       for (i in 1:length(Decoy_adducts)){
         adductmass <- as.numeric(as.character(adductslist[adductslist$Name == Decoy_adducts[i], "Mass"]))
         charge=as.numeric(as.character(adductslist$Charge[adductslist$Name==Decoy_adducts[i]]))
