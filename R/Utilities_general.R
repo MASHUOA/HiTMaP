@@ -16,10 +16,10 @@ Load_Cardinal_imaging<-function(datafile=tk_choose.files(filter = Filters,
   name <-basename(datafiles)
   folder<-base::dirname(datafiles)
   if (rotate==0){
-    imdata <-  suppressMessages(suppressWarnings(Cardinal::readImzML(name, folder, attach.only=attach.only,as=as,resolution=resolution, units="ppm",BPPARAM=BPPARAM,mass.range=mzrange,is_centroided=is_centroided)))
+    imdata <-  suppressMessages(suppressWarnings(Cardinal::readImzML(name, folder, attach.only=attach.only,as=as,resolution=resolution, units="ppm",BPPARAM=BPPARAM,mass.range=mzrange,is_centroided=is_centroided, representation = "profile spectrum")))
     
   }else  {
-    imdata <-  suppressMessages(suppressWarnings(Cardinal::readImzML(name, folder, attach.only=attach.only,as=as,resolution=resolution, units="ppm",rotate = rotate,BPPARAM=BPPARAM,mass.range=mzrange,is_centroided=is_centroided)))
+    imdata <-  suppressMessages(suppressWarnings(Cardinal::readImzML(name, folder, attach.only=attach.only,as=as,resolution=resolution, units="ppm",rotate = rotate,BPPARAM=BPPARAM,mass.range=mzrange,is_centroided=is_centroided, representation = "profile spectrum")))
     imdata <-  rotateMSI(imdata=imdata,rotation_degree=rotate)
   }
   
@@ -268,7 +268,7 @@ percent <- function(x, digits = 2, format = "f", ...) {
 }
 
 
-Parallel.OS<-function(Thread=1,bpprogressbar_t=TRUE,override_type=NULL,bpexportglobals=F,bpforceGC=T){
+Parallel.OS<-function(Thread=1,bpprogressbar_t=TRUE,override_type=NULL,bpexportglobals=F,bpforceGC=F){
   library(BiocParallel)
   if(Thread!=1){
     if(!is.null(override_type)){
@@ -373,4 +373,53 @@ topN_feature<-function (vec, n, dec = T)
   vec <- rep(F, length = length(vec))
   vec[inx] <- T
   return(vec)
+}
+
+Imzml_temp_fix<-function(folder=getwd(),name,
+                         representation = c("profile spectrum","centroid spectrum")[1],
+                         ibdbinarytype= c("processed","continuous")[1]){
+
+  xmlpath <- normalizePath(file.path(folder, paste(name, ".imzML", 
+                                                   sep = "")), mustWork = FALSE)
+  
+  if (!file.exists(xmlpath)) .stop("expected file ", xmlpath, " does not exist")
+  ibdpath <- normalizePath(file.path(folder, paste(name, ".ibd", 
+                                                   sep = "")), mustWork = FALSE)
+  
+  if (!file.exists(ibdpath)) .stop("expected file ", ibdpath, " does not exist")
+  
+  message("reading imzML file: '", xmlpath, "'")
+  message("setting imzML file: '", xmlpath, "'"," to the format as ", ibdbinarytype ," ",representation)
+  
+  parse <- CardinalIO::parseImzML(xmlpath, ibd = TRUE)
+  fileContent <- parse[["fileDescription"]][["fileContent"]]
+  if ("IMS:1000030" %in% names(fileContent)) {
+    ibdbinarytype <- "continuous"
+  }
+  else if ("IMS:1000031" %in% names(fileContent)) {
+    ibdbinarytype <- "processed"
+  }
+  else {
+    ibdbinarytype <- NULL
+  }
+  if (!is.null(ibdbinarytype)) 
+    .message("detected ibd binary type: ", sQuote(ibdbinarytype))
+  if ("MS:1000127" %in% names(fileContent)) {
+    representation <- "centroid spectrum"
+  }
+  else if ("MS:1000128" %in% names(fileContent)) {
+    representation <- "profile spectrum"
+  }
+  else {
+    representation <- NULL
+  }
+  if (!is.null(representation)) 
+    .message("detected representation: ", sQuote(representation))
+  if (parse.only) 
+    return(parse)
+  units <- match.arg(units)
+  .message("reading ibd file: '", ibdpath, "'")
+  object <- .attachIbd(parse, name, ibdbinarytype, representation, 
+                       attach.only, mass.range, resolution, units, guess.max)
+  .log.collapse("loaded dataset:", capture.output(print(object)))
 }

@@ -1,0 +1,22 @@
+FROM rocker/rstudio
+
+
+LABEL org.opencontainers.image.licenses="GPL-3.0-or-later" \
+      org.opencontainers.image.source="https://github.com/MASHUOA/hitmap_docker" \
+      org.opencontainers.image.vendor="HiTMaP Docker Project" \
+      org.opencontainers.image.authors="George Guo <george.guo@auckland.ac.nz>"
+
+COPY install_step1.R /rocker_scripts/bin/install_step1.R
+COPY install_step2.R /rocker_scripts/bin/install_step2.R
+COPY install_shiny_deps.R /rocker_scripts/bin/install_shiny_deps.R
+COPY hitmap_shiny_server.sh /rocker_scripts/hitmap_shiny_server.sh
+COPY hitmap_shiny_server2.sh /rocker_scripts/hitmap_shiny_server2.sh
+
+RUN /rocker_scripts/hitmap_shiny_server.sh
+RUN Rscript /rocker_scripts/bin/install_step1.R
+RUN Rscript /rocker_scripts/bin/install_step2.R
+RUN Rscript /rocker_scripts/bin/install_shiny_deps.R
+RUN R CMD javareconf
+RUN /rocker_scripts/hitmap_shiny_server2.sh
+
+COPY ./policy.xml /etc/ImageMagick-6

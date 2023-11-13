@@ -1,4 +1,4 @@
-FROM rocker/r-base:4.3.1
+FROM rocker/rstudio
 
 
 LABEL org.opencontainers.image.licenses="GPL-3.0-or-later" \
@@ -39,10 +39,6 @@ RUN apt-get install -y ghostscript
 RUN apt-get install -y libharfbuzz-dev
 RUN apt-get install -y libfribidi-dev
 RUN rm -rf /var/lib/apt/lists/*
-
-COPY install_step2.R /install_step2.R
-RUN Rscript /install_step2.R
-
 # Replace configuration file for Image Magick
 COPY ./policy.xml /etc/ImageMagick-6
 
@@ -50,3 +46,4 @@ RUN Rscript install.R
 
 RUN R CMD javareconf
 CMD ["/bin/bash"]
+ENTRYPOINT ["/bin/sh","-c"]

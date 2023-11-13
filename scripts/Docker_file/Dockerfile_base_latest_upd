@@ -4,24 +4,16 @@ FROM mashuoa/hitmap:latest
 LABEL org.opencontainers.image.licenses="GPL-3.0-or-later" \
       org.opencontainers.image.source="https://github.com/MASHUOA/hitmap_docker" \
       org.opencontainers.image.vendor="HiTMaP Docker Project" \
-      org.opencontainers.image.authors="George Guo <george.guo@auckland.ac.nz> and John Reeves <j.reeves@garvan.org.au>"
+      org.opencontainers.image.authors="George Guo <george.guo@auckland.ac.nz>"
 
 WORKDIR /build
 
 COPY . .
 
-RUN apt-get update \
- && apt-get upgrade -y 
-
-RUN apt-get install -y libharfbuzz-dev
-RUN apt-get install -y libfribidi-dev
-RUN rm -rf /var/lib/apt/lists/*
 # Install system dependencies and clean up afterwards
 
+#RUN Rscript install.R
 
-
-RUN Rscript install.R
-
-RUN R CMD javareconf
-CMD ["bash"]
-ENTRYPOINT ["bin/bash", "R"]
+#RUN R CMD javareconf
+CMD ["/bin/bash"]
+ENTRYPOINT ["/bin/sh","-c"]
