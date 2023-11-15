@@ -4,7 +4,6 @@ COPY hitmap_shiny_server2.sh /rocker_scripts/hitmap_shiny_server2.sh
 COPY install_step1.R /rocker_scripts/bin/install_step1.R
 COPY install_step2.R /rocker_scripts/bin/install_step2.R
 
-RUN Rscript /rocker_scripts/bin/install_step1.R
 RUN Rscript /rocker_scripts/bin/install_step2.R
 RUN /rocker_scripts/hitmap_shiny_server2.sh
 CMD ["/init"]
