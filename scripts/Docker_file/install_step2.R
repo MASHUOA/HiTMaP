@@ -4,15 +4,14 @@ if (!require(htmlwidgets)) devtools::install_github("ramnathv/htmlwidgets")
 install.packages("tidyverse")
 install.packages("reshape2")
 library(remotes)
+
+
 Sys.setenv("R_REMOTES_NO_ERRORS_FROM_WARNINGS" = "true")
 remotes::install_github(
   "MASHUOA/HiTMaP",
   force=TRUE,
   upgrade="always",
-  verbose=TRUE,
-  build=F
+  verbose=TRUE
 )
-warnings()
-#Update all dependencies
-#BiocManager::install(ask = F)
-library(HiTMaP)
+"https://bioconductor.statistik.tu-dortmund.de/packages/3.17/bioc/src/contrib/Archive/Cardinal/Cardinal_3.2.0.tar.gz"->packageurl
+install.packages(packageurl, repos=NULL, type="source")

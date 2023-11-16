@@ -1423,7 +1423,7 @@ Preprocessing_segmentation<-function(datafile,
             imdata_ed<- imdata_ed %>% peakPick(method=preprocess$peakPick$method, SNR=preprocess$peakPick$SNR, window=preprocess$peakPick$window) %>% process()
           }else if (preprocess$peakPick$method == "Default|default"){
             #add an peak picking function other than the Cardinal options.
-            peaklist<-summarizeFeatures(imdata_ed,"sum", as="DataFrame")
+            peaklist<-summarizeFeatures(imdata_ed,FUN = "sum", as="DataFrame")
             peaklist_deco<-data.frame(mz=peaklist@mz,intensities=peaklist$sum)
             peaklist_deco<-peaklist_deco[peaklist_deco$intensities>0,]
             peaklist_deco<-HiTMaP:::isopattern_ppm_filter_peaklist(peaklist_deco,ppm=ppm,threshold=0)
@@ -1442,7 +1442,7 @@ Preprocessing_segmentation<-function(datafile,
             }else if ('&'(!is.null(preprocess$peakAlign$tolerance),!is.null(preprocess$peakAlign$tolerance))){
               message("preprocess$peakAlign$tolerance set as ", preprocess$peakAlign$tolerance)
               imdata_ed<- imdata_ed %>% peakAlign(tolerance=preprocess$peakAlign$tolerance, units=preprocess$peakAlign$units)
-              peaklist<-summarizeFeatures(imdata_ed,"sum", as="DataFrame")
+              peaklist<-summarizeFeatures(imdata_ed,FUN = "sum", as="DataFrame")
               peaklist_deco<-data.frame(mz=peaklist@mz,intensities=peaklist$sum)
               peaklist_deco<-peaklist_deco[peaklist_deco$intensities>0,]
               write.csv(peaklist_deco,paste0(gsub(".imzML$","",datafile[z])  ," ID/Sum_spec.csv"),row.names = F)
@@ -1451,7 +1451,7 @@ Preprocessing_segmentation<-function(datafile,
             }else {
               message("preprocess$peakAlign$tolerance missing, use default tolerance in ppm ", ppm/2)
               imdata_ed<- imdata_ed %>% peakAlign(tolerance=ppm/2, units="ppm")
-              peaklist<-summarizeFeatures(imdata_ed,"sum", as="DataFrame")
+              peaklist<-summarizeFeatures(imdata_ed,FUN = "sum", as="DataFrame")
               peaklist_deco<-data.frame(mz=peaklist@mz,intensities=peaklist$sum)
               peaklist_deco<-peaklist_deco[peaklist_deco$intensities>0,]
               write.csv(peaklist_deco,paste0(gsub(".imzML$","",datafile[z])  ," ID/Sum_spec.csv"),row.names = F)
