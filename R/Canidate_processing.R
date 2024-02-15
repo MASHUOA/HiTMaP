@@ -457,7 +457,9 @@ Protein_feature_list_fun<-function(workdir=getwd(),
     message(paste("Merge modification formula done."))
     tempdf_var<-tempdf
     reserve_entry<-rep(FALSE,nrow(tempdf_var))
-    for (fixmod in mod.df$record_id){
+    # for (fixmod in mod.df$record_id){
+    # should access the modificaitons using index insdead of using name of each element.
+    for (fixmod in 1:length(mod.df$record_id)){
       mods<-ifelse(peptide_symbol_var$multiplier[[fixmod]]>=1,mod.df$code_name[mod.df$record_id==fixmod],"")
       tempdf_var$Modification<-paste(tempdf_var$Modification,mods)
       tempdf_var$pepmz <-tempdf_var$pepmz + peptide_symbol_var$multiplier[[fixmod]]*as.numeric(mod.df$mono_mass[mod.df$record_id==fixmod])
@@ -491,7 +493,9 @@ Protein_feature_list_fun<-function(workdir=getwd(),
     message(paste("Merge modification formula done."))
     tempdf_var<-tempdf
     reserve_entry<-rep(FALSE,nrow(tempdf_var))
-    for (fixmod in mod.df$record_id){
+    # for (fixmod in mod.df$record_id){
+    # should access the modificaitons using index insdead of using name of each element.
+    for (fixmod in 1:length(mod.df$record_id)){
       mods<-ifelse(peptide_symbol_var$multiplier[[fixmod]]>=1,mod.df$code_name[mod.df$record_id==fixmod],"")
       tempdf_var$Modification<-paste(tempdf_var$Modification,mods)
       tempdf_var$pepmz <-tempdf_var$pepmz + peptide_symbol_var$multiplier[[fixmod]]*as.numeric(mod.df$mono_mass[mod.df$record_id==fixmod])
@@ -1710,21 +1714,17 @@ convert_peptide_fixmod<-function(mod.df,peptide_symbol,peptide_info,BPPARAM=BPPA
   multiplier<-lapply(mod.df.list,multiplier_for_mod,pep_sequence=pep_sequence,peptide_info=peptide_info,BPPARAM=BPPARAM)
   
   names(multiplier)<-as.character(mod.df$record_id)
-  #formula<-ConvertPeptide(peptide)
-  for (fixmod in mod.df$record_id){
-    #for (formula in 1:length(peptide_symbol)){
-    #peptide_symbol[[formula]]<-merge_atoms(peptide_symbol[[formula]],formula_mod[[fixmod]],check_merge = F,mode = "add", multiplier = c(1,multiplier[[fixmod]][formula]))
-    #}
-    #message(formula_mod[[as.character(fixmod)]])
-    #message(multiplier[[as.character(fixmod)]])
-    peptide_symbol[which(multiplier[[as.character(fixmod)]]>=1)]
-    peptide_symbol[which(multiplier[[as.character(fixmod)]]>=1)]<-bplapply(1:length(peptide_symbol[which(multiplier[[as.character(fixmod)]]>=1)]),function(x,symbol,addelements,merge_atoms,multiplier_list){
+
+  # for (fixmod in mod.df$record_id){
+  for (fixmod in 1:length(mod.df$record_id)){ # should also use index to access the modification type, not using name. And also removed all the as.character below for each fixmod
+
+    peptide_symbol[which(multiplier[[fixmod]]>=1)]<-bplapply(1:length(peptide_symbol[which(multiplier[[fixmod]]>=1)]),function(x,symbol,addelements,merge_atoms,multiplier_list){
       if (multiplier_list[x]!=0){
         return(merge_atoms(atoms = symbol[[x]],addelements = addelements,check_merge=F,mode="add",multiplier=c(1,multiplier_list[x])))
       }else{
-        return(symbol[[x]])
+        return(symbol[[x]])#don't think this will get exectued because multiplier_list is a list of all non-zero entries, so multiplier_list[x]!=0 alwasy true
         }
-      },symbol=peptide_symbol[which(multiplier[[as.character(fixmod)]]>=1)],merge_atoms=merge_atoms,addelements=formula_mod[[as.character(fixmod)]], multiplier_list = multiplier[[as.character(fixmod)]][which(multiplier[[as.character(fixmod)]]>=1)],BPPARAM = BPPARAM)
+      },symbol=peptide_symbol[which(multiplier[[fixmod]]>=1)],merge_atoms=merge_atoms,addelements=formula_mod[[fixmod]], multiplier_list = multiplier[[fixmod]][which(multiplier[[fixmod]]>=1)],BPPARAM = BPPARAM)
   }
   
   return(list(peptide_symbol=peptide_symbol,multiplier=multiplier))
