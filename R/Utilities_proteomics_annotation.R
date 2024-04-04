@@ -1411,7 +1411,7 @@ Rotate_IMG=NULL
 Protein_desc_of_interest="."
 Protein_desc_of_exclusion=NULL
 Thread=4
-export_pixel_level_data<-function(projectfolder=NULL,Protein_peptide_file=,
+export_pixel_level_data<-function(projectfolder=NULL,Protein_peptide_file,
                                   datafile=c(),
                                   ppm=5,
                                   Rotate_IMG=NULL,
