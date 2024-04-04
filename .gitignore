@@ -1,0 +1,134 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+.RDataTmp
+.RDataTmp1
+.RDataTmp2
+.RDataTmp3
+.RDataTmp4
+.Rbuildignore
+0.7Heatmap.pdf
+0.7VolcanoPlot.pdf
+0.8Heatmap.pdf
+0.8VolcanoPlot-1.pdf
+0.8VolcanoPlot.pdf
+0.8_Heatmapraw_s_proteincast.csv
+0.8_heatmapInter_L.html
+0.8_heatmapInter_L_nocolv.html
+5479_cluster_imaging.png
+Ali.Rmd
+Ali_deconv.Rmd
+Ali_deconv.html
+Ali_deconv2.Rmd
+Ali_deconv2.html
+Ali_deconv3.Rmd
+Ali_deconv3.html
+Both_high_ven.png
+Feature no.1 255.233 neg.png
+Feature no.2 262.1813 neg.png
+Feature no.3 283.2643 neg.png
+Intensity_high_ven.png
+LCMS correlation result.Rmd
+LCMS-correlation-result.docx
+LCMS-correlation-result.html
+LCMS-correlation-result.md
+LCMS-correlation-result.pdf
+LCMS-correlation-result_files
+Ofb-hi-res-annotated-lipids-ion-image.Rmd
+Ofb-hi-res-annotated-lipids-ion-image15-18.Rmd
+Ofb-hi-res-annotated-lipids-ion-image_cache
+Ofb-hi-res-annotated-lipids-ion-images.Rmd
+Ofb-hi-res-annotated-lipids-ion-images_cache
+Ofb-hi-res-annotated-lipids-ion-imagess.Rmd
+Ofb-hi-res-annotated-lipids-ion-imagess_cache
+PC1_top.csv
+PCA_image.png
+PCA_plot.png
+PROTEIN_FDR.CSV
+PROTEIN_Score_histogram.png
+PROTEIN_Score_histogram_full_scale.png
+Protein_FDR.png
+Protein_Summary_bind_freq_merge.rds
+Protein_Summary_bind_freq_merge_freq.rds
+QCPlot.pdf
+README_cache
+README_pep_cutoff_rank1.Rmd
+README_pep_cutoff_rank1_files
+READMEgit.Rmd
+ROC_table_trim_005.csv
+ROC_table_trim_05.csv
+Rplot.png
+Rplot001.jpg
+Rplot01.png
+Rplot02.png
+Rplot03.png
+Rplot04.png
+Rplot05.png
+Rplot06.png
+Rplot07.png
+Rplot08.png
+Rplot09.png
+Rplots.pdf
+Score_high_ven.png
+Segmentation_enzyme_FDR_LCMS correlation.Rmd
+Segmentation_enzyme_FDR_LCMS-correlation.Rmd
+Segmentation_enzyme_FDR_LCMS-correlation.html
+Segmentation_enzyme_FDR_LCMS-correlation.md
+Segmentation_enzyme_FDR_LCMS-correlation_files
+Spectrum_neg.csv
+a.png
+all_ven.png
+colorwheel.pdf
+colorwheel.png
+coordata.csv
+dotp_thresHeatmap.pdf
+dotp_thresVolcanoPlot-1.pdf
+dotp_thresVolcanoPlot.pdf
+farhana.Rmd
+mse_mean_spec_list_merge_neg.csv
+msstats-1.log
+msstats-10.log
+msstats-11.log
+msstats-12.log
+msstats-13.log
+msstats-2.log
+msstats-3.log
+msstats-4.log
+msstats-5.log
+msstats-6.log
+msstats-7.log
+msstats-8.log
+msstats-9.log
+msstats.log
+mtcars.png
+out.png
+output_df_all_gene_pin_IntAct.RDS
+pathfindR_Results(1)
+pca.RData
+region_protein_df.csv
+region_protein_df_TF.csv
+segmentation test mousebrain.Rmd
+segmentation test mousebrainv2.Rmd
+segmentation test ver2.Rmd
+segmentation test.nb.html
+segmentation-test-ver2.html
+segmentation-test-ver2.md
+segmentation-test-ver2_files
+segmentation-test.Rmd
+segmentation-test.log
+segmentation-test.tex
+segmentation-test_cache
+segmentation-test_files
+segmentation_test_mouse_brain_v2.Rmd
+segmentation_test_mouse_brain_v3.Rmd
+segmentation_test_mouse_brain_v4.Rmd
+sessionInfo.txt
+HiTMaP-web
+spatialKMeans_RESULT centers 5 segs.csv
+spatialKMeans_RESULT cluster 5 segs.csv
+spatialKMeans_RESULT withinss 5 segs.csv
+spatialKMeans_image.png
+spatialKMeans_image_plot_5_segs.png
+venn.svg
+README_1.0.Rmd
