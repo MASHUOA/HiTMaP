@@ -157,7 +157,7 @@ imaging_identification<-function(
 
 # Set the parallel processing parameter, multicore-fork method has been temporarily disabled due to the reduced performance in docker enviornment
   if (is.null(Thread)){
-  parallel=try(detectCores()/2)
+  parallel=try(future::availableCores()/2)
   if (parallel<1 | is.null(parallel)){parallel=1}
   BPPARAM=HiTMaP:::Parallel.OS(parallel)
   setCardinalBPPARAM(BPPARAM = BPPARAM)
@@ -167,7 +167,7 @@ imaging_identification<-function(
   setCardinalBPPARAM(BPPARAM = BPPARAM)
   }
 
-  message(paste(try(detectCores()), "Cores detected,",parallel, "threads will be used for computing"))
+  message(paste(try(future::availableCores()), "Cores detected,",parallel, "threads will be used for computing"))
 
   message(paste(length(datafile), "files were selected and will be used for Searching"))
 

@@ -28,7 +28,7 @@ Imports:
     spdep,zoo,KEGGREST,OrgMassSpecR,
     enviPat,rgl,multtest,XML,
     BiocManager,reshape2,readr,readxl,
-    rcdk,colorspace,OneR,
+    rcdk,colorspace,OneR,future,
     gridExtra,grid,gtable,ChemmineR
 VignetteBuilder: knitr
 Suggests:
