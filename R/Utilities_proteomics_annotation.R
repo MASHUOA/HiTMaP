@@ -1385,3 +1385,82 @@ seq.cov <- function(x,plot_coverage=F){
 
   return(cov_len)
 }
+
+
+#' export_pixel_level_data
+#'
+#' This is a peptide mass fingerprint search function for maldi imaging data analysis
+#' @param datafile the data files' path for the analysis, leave it as blank to enable a graphical user interface to select the data
+#' @param projectfolder optional, if NULL script will extract the path from datafile(s), and use the first workdir as project folder
+#' @param ppm the mz tolerance (in ppm) for peak integration
+#' @param Rotate_IMG specify a configuration file to further change the rotation of the images
+#' @param Protein_desc_of_interest Specify a list of protein descriptions for cluster image plotting. Default setting will plot all reported proteins.
+#' @param Protein_desc_of_exclusion Specify a list of protein descriptions to be excluded from cluster image plotting.
+#' 
+#' @return None
+#'
+#' @examples
+#'
+#' @export
+#'
+projectfolder="G:\\Documents\\expdata\\MouseBrain_Trypsin_FT\\"
+Protein_peptide_file="/Summary folder/Protein_peptide_Summary.csv"
+datafile=c("Mouse_brain_trimmed")
+ppm=10
+Rotate_IMG=NULL
+Protein_desc_of_interest="."
+Protein_desc_of_exclusion=NULL
+Thread=4
+export_pixel_level_data<-function(projectfolder=NULL,Protein_peptide_file=,
+                                  datafile=c(),
+                                  ppm=5,
+                                  Rotate_IMG=NULL,
+                                  Protein_desc_of_interest=".",
+                                  Protein_desc_of_exclusion=NULL,
+                                  Thread=4,
+                                  ...
+){
+  suppressMessages(suppressWarnings(library("pacman")))
+  suppressMessages(suppressWarnings(p_load(stringr,BiocParallel,data.table,Cardinal,parallel)))
+  
+  if (missing(datafile)) stop("Missing data file, Choose single or multiple imzml file(s) for analysis")
+  
+  # retrieve/parse the working dir info, and convert the filenames
+  if (is.null(projectfolder)){
+    workdir<-base::dirname(datafile[1])
+  }else{ workdir<-projectfolder }
+  
+  datafile <- basename(datafile)
+  datafile <- gsub(".imzML$", "", datafile)
+  datafile_imzML <- paste0(datafile,".imzML")
+  
+  setwd(paste0(workdir[1],"/"))
+  
+  # Set the parallel processing parameter, multicore-fork method has been temporarily disabled due to the reduced performance in docker enviornment
+  if (is.null(Thread)){
+    parallel=try(detectCores()/2)
+    if (parallel<1 | is.null(parallel)){parallel=1}
+    BPPARAM=HiTMaP:::Parallel.OS(parallel)
+    setCardinalBPPARAM(BPPARAM = BPPARAM)
+  }else{
+    parallel=Thread
+    BPPARAM=HiTMaP:::Parallel.OS(parallel)
+    setCardinalBPPARAM(BPPARAM = BPPARAM)
+  }
+  
+  message(paste(try(detectCores()), "Cores detected,",parallel, "threads will be used for computing"))
+  
+  message(paste(length(datafile), "files were selected and will be used for data extraction"))
+  
+  if(is.null(Protein_peptide_file)) {
+    message("Missing proteomics data file, will use ID file in each folder respectively")
+    Protein_peptide_file=paste0("/",datafile," ID/Peptide_region_file.csv")
+  }
+  
+  if(file.exists(paste0(workdir,Protein_peptide_file))){
+    read.csv()
+  }
+  
+  
+}
+

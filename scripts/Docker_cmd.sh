@@ -50,6 +50,8 @@ HiTMaP:::HiTMaP_GUI()
 
 docker run --rm -p 80:3838 -v %userprofile%\Documents\expdata:/root/expdata mashuoa/hitmap
 
+
+docker run --entrypoint "/bin/bash" --rm  -a stdin -a stdout -i -t rocker/r-ver:4.3.1
 wsl --list -v
 wsl --export docker-desktop-data "G:\docker-desktop-data.tar"
 wsl --unregister docker-desktop-data
@@ -59,3 +61,22 @@ wsl --import docker-desktop-data "G:\Docker\data" "G:\docker-desktop-data.tar" -
 docker run --name alphafold -a stdin -a stdout -i -t mashuoa/alpha_fold:latest_run /bin/bash
 
 docker run --name hitmapstudio -e PASSWORD=rstudio -p 8787:8787 -v G:\Documents\:/home/rstudio -a stdin -a stdout -i -t mashuoa/hitmap:studio
+docker run --name hitmap_docker -p 80:3838 -v %userprofile%\Documents\expdata:/root/expdata -a stdin -a stdout -i -t mashuoa/hitmap:gui_latest /bin/bash 
+
+docker run --entrypoint "/bin/bash" --user root -v G:\Documents\GitHub\HiTMaP\scripts\Docker_file:/go -a stdin -a stdout -i -t python
+pip3 install spython
+cd /go
+spython recipe Dockerfile_base_latest &> Singularity_base.def
+
+docker pull quay.io/singularity/singularity:v4.0.1
+docker run --entrypoint "/bin/bash" --name singularity_cmd -v G:\Documents\GitHub\HiTMaP\scripts\Docker_file:/go -a stdin -a stdout -i -t quay.io/singularity/singularity:v4.0.1
+sudo singularity build Singularity_base.sif Singularity_base.def
+
+docker run --entrypoint ["/bin/bash"] --name singularity_cmd -v %userprofile%\Documents\go:/go -a stdin -a stdout -i -t quay.io/singularity/singularity:v4.0.1 /bin/bash
+docker run --name singularity -v %userprofile%\Documents\go:/go -a stdin -a stdout -i -t quay.io/singularity/singularity:v4.0.1 pull docker://mashuoa/hitmap:latest
+docker run -v %userprofile%\Documents\go:/go -a stdin -a stdout -i -t quay.io/singularity/singularity:v4.0.1 shell hitmap_latest.sif
+
+
+
+
+

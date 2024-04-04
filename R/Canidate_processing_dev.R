@@ -1,7 +1,7 @@
 
 Protein_feature_list_table_import<-function(workdir=getwd(),
                                             ptable,
-                                            ptable_pipeline=c("fragpipe","UserTable"),
+                                            ptable_pipeline=c("fragpipe","UserTable","maxQuant","ProteomeDiscover","ProteinPilot"),
                                             target_GroupID=NULL,
                                             database=NULL,
                                             missedCleavages=0:1,
@@ -126,7 +126,53 @@ Protein_feature_list_table_import<-function(workdir=getwd(),
         ptable->ptable_candidate
         
       }
-      
+      if (ptable_pipeline[1]=="maxQuant") {
+        ptable=read_delim(ptable,delim = "\t", escape_double = FALSE, trim_ws = TRUE)
+        required_col<-c(Pro_col<-"Proteins",
+                        Pep_col<-"Sequence" ,
+                        #RT_col<-"RT",
+                        pro_start<-"Protein Start",
+                        pro_end<-"Protein End",
+                        Pep_mod_col<-"Modifications",
+                        Cleavage_col<-"Missed cleavages",
+                        Pro_desc="Protein Names")
+        
+        required_col_org<-required_col
+        misscol<-NULL
+        if (sum(!(required_col %in% colnames(ptable)))>=1){
+          message("Required column(s) is missing in identification data:", paste0(required_col[!(required_col %in% colnames(ptable))],collapse = ","),". Will replac these columns by default")
+          which(!(required_col %in% colnames(ptable))) -> misscol    
+          required_col<-required_col[-misscol]
+          misscol<-required_col_org[misscol]
+        }
+        
+
+        ptable=ptable[,required_col]
+        ptable=unique(ptable)
+        ptable[is.na(unlist(ptable[,Pep_mod_col])),Pep_mod_col]<-""
+        ptable[,Pep_mod_col]->mod_excl_id
+        lapply(unlist(mod_excl_id),str_split_1,pattern=', ')->mod_split
+        lapply(mod_split,function(x){
+          x<-unlist(x)
+          names(mod_include_conversion[mod_include_conversion %in% x])->x
+          paste0(x,collapse = ";")
+        })->mod_split_final
+        ptable[,Pep_mod_col]<-unlist(mod_split_final)
+        
+        ptable[,Pep_mod_col]<-str_remove(unlist(ptable[,Pep_mod_col]),";$|^;")
+        ptable=unique(ptable)
+        
+        if (!is.null(misscol)){
+          for (eachcol in misscol){
+            ptable[,eachcol]<-1
+          }
+        }
+        ptable<-ptable[,required_col_org]
+        
+        colnames(ptable)<-c("Protein","Peptide","start","end","Modification","Cleavages","desc")
+        ptable->ptable_candidate
+        
+      }
       if (ptable_pipeline[1] %in% c("UserTable")) {
         required_col<-c(Pro_col<-"Protein",
                         Pep_col<-"Sequence" ,

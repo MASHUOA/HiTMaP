@@ -17,6 +17,3 @@ install.packages("shinythemes")
 install.packages("tidyverse")
 install.packages("shinyjs")
 install.packages("reshape2")
-"https://bioconductor.statistik.tu-dortmund.de/packages/3.17/bioc/src/contrib/Archive/Cardinal/Cardinal_3.2.0.tar.gz"->packageurl
-install.packages(packageurl, repos=NULL, type="source")
-BiocManager::install(c("EBImage","ChemmineR"))
