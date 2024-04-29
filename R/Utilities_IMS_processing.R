@@ -1598,6 +1598,7 @@ Preprocessing_segmentation<-function(datafile,
       if (Segmentation[1] %in% c("PCA","spatialKMeans","spatialShrunkenCentroids")){
         if (exists("preprocess$peakAlign$tolerance")){
           if (preprocess$peakAlign$tolerance==0 ) {
+            imdata_stats<- imdata 
             message("preprocess$peakAlign$tolerance set as zero, step bypassed")
           }else if ('&'(!is.null(preprocess$peakAlign$tolerance),!is.null(preprocess$peakAlign$units))){
             message("preprocess$peakAlign$tolerance set as ", preprocess$peakAlign$tolerance)
