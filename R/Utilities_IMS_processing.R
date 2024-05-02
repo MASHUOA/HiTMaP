@@ -1593,16 +1593,16 @@ Preprocessing_segmentation<-function(datafile,
     if (Bypass_Segmentation!=T){
       message("Segmentation in progress...")
       #cl=autoStopCluster(makeCluster(6))
-      
+      imdata_stats <- imdata 
       #Prepare imdata for segmentation
       if (Segmentation[1] %in% c("PCA","spatialKMeans","spatialShrunkenCentroids")){
         if (exists("preprocess$peakAlign$tolerance")){
           if (preprocess$peakAlign$tolerance==0 ) {
-            imdata_stats<- imdata 
+            imdata_stats <- imdata 
             message("preprocess$peakAlign$tolerance set as zero, step bypassed")
           }else if ('&'(!is.null(preprocess$peakAlign$tolerance),!is.null(preprocess$peakAlign$units))){
             message("preprocess$peakAlign$tolerance set as ", preprocess$peakAlign$tolerance)
-            imdata_stats<- imdata %>% peakAlign(tolerance=preprocess$peakAlign$tolerance, units=preprocess$peakAlign$units)
+            imdata_stats <- imdata %>% peakAlign(tolerance=preprocess$peakAlign$tolerance, units=preprocess$peakAlign$units)
           }
         else{
           message("preprocess$peakAlign$tolerance missing, use default tolerance in ppm ", ppm/2)
