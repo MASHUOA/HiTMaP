@@ -1596,10 +1596,11 @@ Preprocessing_segmentation<-function(datafile,
       imdata_stats <- imdata 
       #Prepare imdata for segmentation
       if (Segmentation[1] %in% c("PCA","spatialKMeans","spatialShrunkenCentroids")){
-        if (exists("preprocess$peakAlign$tolerance")){
+        message("Performing forced peak alignment before segmentation...")
+        if (!is.null("preprocess$peakAlign")){
           if (preprocess$peakAlign$tolerance==0 ) {
             imdata_stats <- imdata 
-            message("preprocess$peakAlign$tolerance set as zero, step bypassed")
+            message("preprocess$peakAlign$tolerance set as zero, peak alignment step bypassed")
           }else if ('&'(!is.null(preprocess$peakAlign$tolerance),!is.null(preprocess$peakAlign$units))){
             message("preprocess$peakAlign$tolerance set as ", preprocess$peakAlign$tolerance)
             imdata_stats <- imdata %>% peakAlign(tolerance=preprocess$peakAlign$tolerance, units=preprocess$peakAlign$units)
@@ -1610,9 +1611,9 @@ Preprocessing_segmentation<-function(datafile,
         }
         }
         if (is.null(preprocess$peakFilter$freq.min)){
-          imdata_stats<-imdata_stats %>% peakFilter(freq.min=0.05) %>% process()
+          imdata_stats<-imdata %>% peakFilter(freq.min=0.05) %>% process()
         }else{
-          imdata_stats<-imdata_stats %>% peakFilter(freq.min=preprocess$peakFilter$freq.min) %>% process()
+          imdata_stats<-imdata %>% peakFilter(freq.min=preprocess$peakFilter$freq.min) %>% process()
         }
       }
       

@@ -123,7 +123,7 @@ Meta_feature_list_fun<-function(database,
     }
     
     
-    symbol_adducts=bplapply(adducts,convert_peptide_adduct_list,meta_symbol,BPPARAM = BPPARAM,adductslist=adductslist)
+    symbol_adducts=bplapply(adducts,convert_peptide_adduct_list,meta_symbol,BPPARAM = SerialParam(),adductslist=adductslist)
 
     
     symbol_adducts_df=lapply(symbol_adducts,
@@ -511,7 +511,7 @@ Protein_feature_list_fun<-function(workdir=getwd(),
   }
   
   message(paste("Generating peptide formula with adducts:",paste(adducts,collapse = " ")))
-  peptides_symbol_adducts=bplapply(adducts,convert_peptide_adduct_list,peptide_symbol,BPPARAM = BPPARAM,adductslist=adductslist)
+  peptides_symbol_adducts=bplapply(adducts,convert_peptide_adduct_list,peptide_symbol,BPPARAM = SerialParam(),adductslist=adductslist)
   
   for (i in 1:length(adducts)){
     adductmass <- as.numeric(as.character(adductslist[adductslist$Name == adducts[i], "Mass"]))
@@ -536,7 +536,7 @@ Protein_feature_list_fun<-function(workdir=getwd(),
   
   if (length(Decoy_adducts)>0 && Decoy_search && ("adducts" %in% Decoy_mode)){
     message(paste("Generating peptide formula with Decoy adducts:",paste(Decoy_adducts,collapse = " ")))
-    peptides_symbol_adducts=bplapply(Decoy_adducts,convert_peptide_adduct_list,peptide_symbol,BPPARAM = BPPARAM,adductslist=adductslist)
+    peptides_symbol_adducts=bplapply(Decoy_adducts,convert_peptide_adduct_list,peptide_symbol,BPPARAM = SerialParam(),adductslist=adductslist)
   for (i in 1:length(Decoy_adducts)){
     adductmass <- as.numeric(as.character(adductslist[adductslist$Name == Decoy_adducts[i], "Mass"]))
     charge=as.numeric(as.character(adductslist$Charge[adductslist$Name==Decoy_adducts[i]]))
@@ -1128,7 +1128,7 @@ Protein_feature_list_table_import<-function(workdir=getwd(),
     }
     
     message(paste("Generating peptide formula with adducts:",paste(adducts,collapse = " ")))
-    peptides_symbol_adducts=bplapply(adducts,convert_peptide_adduct_list,peptide_symbol,BPPARAM = BPPARAM,adductslist=adductslist)
+    peptides_symbol_adducts=bplapply(adducts,convert_peptide_adduct_list,peptide_symbol,BPPARAM = SerialParam(),adductslist=adductslist)
     
     for (i in 1:length(adducts)){
       adductmass <- as.numeric(as.character(adductslist[adductslist$Name == adducts[i], "Mass"]))
@@ -1153,7 +1153,7 @@ Protein_feature_list_table_import<-function(workdir=getwd(),
     
     if (length(Decoy_adducts)>0 && Decoy_search && ("adducts" %in% Decoy_mode)){
       message(paste("Generating peptide formula with Decoy adducts:",paste(Decoy_adducts,collapse = " ")))
-      peptides_symbol_adducts=bplapply(Decoy_adducts,convert_peptide_adduct_list,peptide_symbol,BPPARAM = BPPARAM,adductslist=adductslist)
+      peptides_symbol_adducts=bplapply(Decoy_adducts,convert_peptide_adduct_list,peptide_symbol,BPPARAM = SerialParam(),adductslist=adductslist)
       for (i in 1:length(Decoy_adducts)){
         adductmass <- as.numeric(as.character(adductslist[adductslist$Name == Decoy_adducts[i], "Mass"]))
         charge=as.numeric(as.character(adductslist$Charge[adductslist$Name==Decoy_adducts[i]]))
@@ -1724,7 +1724,7 @@ convert_peptide_fixmod<-function(mod.df,peptide_symbol,peptide_info,BPPARAM=BPPA
       }else{
         return(symbol[[x]])#don't think this will get exectued because multiplier_list is a list of all non-zero entries, so multiplier_list[x]!=0 alwasy true
         }
-      },symbol=peptide_symbol[which(multiplier[[fixmod]]>=1)],merge_atoms=merge_atoms,addelements=formula_mod[[fixmod]], multiplier_list = multiplier[[fixmod]][which(multiplier[[fixmod]]>=1)],BPPARAM = BPPARAM)
+      },symbol=peptide_symbol[which(multiplier[[fixmod]]>=1)],merge_atoms=merge_atoms,addelements=formula_mod[[fixmod]], multiplier_list = multiplier[[fixmod]][which(multiplier[[fixmod]]>=1)],BPPARAM = SerialParam())
   }
   
   return(list(peptide_symbol=peptide_symbol,multiplier=multiplier))
