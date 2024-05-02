@@ -1611,9 +1611,9 @@ Preprocessing_segmentation<-function(datafile,
         }
         }
         if (is.null(preprocess$peakFilter$freq.min)){
-          imdata_stats<-imdata %>% peakFilter(freq.min=0.05) %>% process()
+          imdata_stats<-imdata_stats %>% peakFilter(freq.min=0.05) %>% process()
         }else{
-          imdata_stats<-imdata %>% peakFilter(freq.min=preprocess$peakFilter$freq.min) %>% process()
+          imdata_stats<-imdata_stats %>% peakFilter(freq.min=preprocess$peakFilter$freq.min) %>% process()
         }
       }
       
