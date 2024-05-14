@@ -2572,16 +2572,6 @@ Load_IMS_decov_combine<-function(datafile,workdir,ppm=5,import_ppm=ppm/2,SPECTRU
     imdata@elementMetadata@coord@listData[["z"]]<-NULL
     imdata@elementMetadata@resolution=c(x=1,y=1)
 
-      
-
-      
-      imdata <- imdata %>%
-        mzBin(deconv_peaklist_decov_plot$m.z, resolution=ppm, units="ppm")%>%
-        process(BPPARAM=SnowParam(workers = 3))
-      imdata@elementMetadata@coord@listData[["z"]]<-NULL
-      imdata@elementMetadata@resolution=c(x=1,y=1)
-    
-
     combinedimdata_list[[z]]<-imdata
     rm(imdata)
 
