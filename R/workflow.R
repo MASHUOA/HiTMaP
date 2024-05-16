@@ -653,7 +653,7 @@ IMS_data_process<-function(datafile,
     imdata_ed <- imdata_sb
     
     if (!is.null(preprocess$peakAlign)){
-    if (preprocess$peakAlign$method!="Disable") {
+    if (!is.null(preprocess$peakAlign$method) && preprocess$peakAlign$method!="Disable") {
     if (is.null(preprocess$peakAlign$level)) preprocess$peakAlign$level<-"local"
     if (preprocess$peakAlign$level=="local"){
       
