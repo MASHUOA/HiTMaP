@@ -285,7 +285,7 @@ wd="~/expdata/"
 
 
 preprocess = list(force_preprocess=TRUE,
-                  use_preprocessRDS=!force_preprocess,
+                  use_preprocessRDS=FALSE,
                   smoothSignal=list(method = c("Disable", "gaussian", "sgolay", "ma")[1]),
                   reduceBaseline=list(method = c("Disable", "locmin", "median")[1]),
                   peakPick=list(method=c("mad", "simple", "adaptive")[3]),
@@ -619,7 +619,7 @@ print(p_cluster3)
 
 # Pixel level Proteomics data export
 
-```{r}
+```{r eval=FALSE, include=FALSE}
 
 export_pixel_level_data(Protein_peptide_file=,
                         IMS_data_file=list(),

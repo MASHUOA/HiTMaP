@@ -20,6 +20,8 @@ HiT-MaP
   peptide](#scoring-system-for-protein-and-peptide)
 - [Identification summary and cluster
   imaging](#identification-summary-and-cluster-imaging)
+- [Pixel level Proteomics data
+  export](#pixel-level-proteomics-data-export)
 - [Details of parameter setting](#details-of-parameter-setting)
   - [Modification](#modification)
   - [Amino acid substitution](#amino-acid-substitution)
@@ -111,7 +113,6 @@ Setting up and running the docker container:
 ``` bash
 # For windows user's, run the image with a local user\Documents\expdata folder mapped to the docker container:
 docker run --name hitmap -v %userprofile%\Documents\expdata:/root/expdata -a stdin -a stdout -i -t mashuoa/hitmap /bin/bash 
-docker run --name hitmap_r411 -v %userprofile%\Documents\expdata:/root/expdata -a stdin -a stdout -i -t mashuoa/hitmap:base_R411 /bin/bash
 # For linux or mac user's, run the image with a local user/expdata folder mapped to the docker container:
 docker run --name hitmap -v ~/expdata:/root/expdata -a stdin -a stdout -i -t mashuoa/hitmap /bin/bash 
 
@@ -257,7 +258,7 @@ wd="~/expdata/"
 dir.create(wd)
 setwd(wd)
 
-pb_download("HiTMaP-master.zip", repo = "MASHUOA/HiTMaP", dest = ".",show_progress = F)
+pb_download("HiTMaP-master.zip", repo = "MASHUOA/HiTMaP", dest = ".",show_progress = F, tag="1.0.1")
 
 pb_download("Data.tar.gz", repo = "MASHUOA/HiTMaP", dest = ".")
 
@@ -315,6 +316,15 @@ datafile=c("Bovinlens_Trypsin_FT/Bovin_lens.imzML")
 wd="~/expdata/"
 
 
+preprocess = list(force_preprocess=TRUE,
+                  use_preprocessRDS=!force_preprocess,
+                  smoothSignal=list(method = c("Disable", "gaussian", "sgolay", "ma")[1]),
+                  reduceBaseline=list(method = c("Disable", "locmin", "median")[1]),
+                  peakPick=list(method=c("mad", "simple", "adaptive")[3]),
+                  peakAlign=list(tolerance=5, units="ppm", level=c("local","global")[1], method=c("Enable","Disable")[1]),
+                  normalize=list(method=c("Disable","rms","tic","reference")[1], mz=NULL)
+                  )
+
 imaging_identification(
 #==============Choose the imzml raw data file(s) to process  make sure the fasta file in the same folder
                datafile=paste0(wd,datafile),
@@ -335,13 +345,7 @@ imaging_identification(
                use_previous_candidates=F,
                output_candidatelist=T,
 #==============The pre-processing param
-               preprocess=list(force_preprocess=TRUE,
-                               use_preprocessRDS=TRUE,
-                               smoothSignal=list(method="Disable"),
-                               reduceBaseline=list(method="Disable"),
-                               peakPick=list(method="adaptive"),
-                               peakAlign=list(tolerance=5, units="ppm"),
-                               normalize=list(method=c("Disable","rms","tic","reference")[1],mz=1)),
+               preprocess=preprocess,
 #==============Set the parameters for image segmentation
                spectra_segments_per_file=4,
                Segmentation="spatialKMeans",
@@ -762,6 +766,8 @@ CX6A1 cytochrome coxidase subunit 6A1
 
 Myelin basic protein
 
+# Pixel level Proteomics data export
+
 # Details of parameter setting
 
 ## Modification
@@ -849,7 +855,7 @@ library(gridExtra)
 grid.ftable(Cleavage_df, gp = gpar(fontsize=9,fill = rep(c("grey90", "grey95"))))
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-21-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-22-1.png)<!-- -->
 
 ## Imaging-MS data preprocessing
 
@@ -1081,35 +1087,38 @@ using HIT-MAP” online on the 28th May 2021.
 sessionInfo()
 ```
 
-    ## R version 4.1.3 (2022-03-10)
+    ## R version 4.3.3 (2024-02-29 ucrt)
     ## Platform: x86_64-w64-mingw32/x64 (64-bit)
-    ## Running under: Windows 10 x64 (build 19044)
+    ## Running under: Windows 10 x64 (build 19045)
     ## 
     ## Matrix products: default
     ## 
+    ## 
     ## locale:
-    ## [1] LC_COLLATE=English_Australia.1252  LC_CTYPE=English_Australia.1252   
-    ## [3] LC_MONETARY=English_Australia.1252 LC_NUMERIC=C                      
-    ## [5] LC_TIME=English_Australia.1252    
+    ## [1] LC_COLLATE=English_Australia.utf8  LC_CTYPE=English_Australia.utf8   
+    ## [3] LC_MONETARY=English_Australia.utf8 LC_NUMERIC=C                      
+    ## [5] LC_TIME=English_Australia.utf8    
+    ## 
+    ## time zone: Pacific/Auckland
+    ## tzcode source: internal
     ## 
     ## attached base packages:
     ## [1] grid      stats     graphics  grDevices utils     datasets  methods  
     ## [8] base     
     ## 
     ## other attached packages:
-    ## [1] gridExtra_2.3 XML_3.99-0.10 protViz_0.7.3 dplyr_1.0.9   magick_2.7.3 
-    ## [6] HiTMaP_1.0.0 
+    ## [1] gridExtra_2.3   XML_3.99-0.16.1 protViz_0.7.9   dplyr_1.1.4    
+    ## [5] magick_2.8.3    HiTMaP_1.0.0   
     ## 
     ## loaded via a namespace (and not attached):
-    ##  [1] Rcpp_1.0.9       pillar_1.8.0     compiler_4.1.3   highr_0.9       
-    ##  [5] tools_4.1.3      digest_0.6.29    evaluate_0.15    lifecycle_1.0.1 
-    ##  [9] tibble_3.1.8     gtable_0.3.0     pkgconfig_2.0.3  png_0.1-7       
-    ## [13] rlang_1.0.4      cli_3.3.0        DBI_1.1.3        rstudioapi_0.13 
-    ## [17] yaml_2.3.5       xfun_0.31        fastmap_1.1.0    stringr_1.4.0   
-    ## [21] knitr_1.39       generics_0.1.3   vctrs_0.4.1      tidyselect_1.1.2
-    ## [25] glue_1.6.2       R6_2.5.1         fansi_1.0.3      rmarkdown_2.14  
-    ## [29] purrr_0.3.4      magrittr_2.0.3   codetools_0.2-18 htmltools_0.5.3 
-    ## [33] assertthat_0.2.1 utf8_1.2.2       stringi_1.7.8
+    ##  [1] vctrs_0.6.5       cli_3.6.2         knitr_1.46        rlang_1.1.3      
+    ##  [5] xfun_0.43         highr_0.10        stringi_1.8.3     generics_0.1.3   
+    ##  [9] glue_1.7.0        htmltools_0.5.8.1 fansi_1.0.6       rmarkdown_2.26   
+    ## [13] evaluate_0.23     tibble_3.2.1      fastmap_1.1.1     yaml_2.3.8       
+    ## [17] lifecycle_1.0.4   stringr_1.5.1     compiler_4.3.3    codetools_0.2-20 
+    ## [21] Rcpp_1.0.12       pkgconfig_2.0.3   rstudioapi_0.16.0 digest_0.6.35    
+    ## [25] R6_2.5.1          tidyselect_1.2.1  utf8_1.2.4        pillar_1.9.0     
+    ## [29] magrittr_2.0.3    gtable_0.3.5      tools_4.3.3
 
 End of the tutorial, Enjoy~
 
