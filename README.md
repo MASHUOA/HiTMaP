@@ -317,7 +317,7 @@ wd="~/expdata/"
 
 
 preprocess = list(force_preprocess=TRUE,
-                  use_preprocessRDS=!force_preprocess,
+                  use_preprocessRDS=FALSE,
                   smoothSignal=list(method = c("Disable", "gaussian", "sgolay", "ma")[1]),
                   reduceBaseline=list(method = c("Disable", "locmin", "median")[1]),
                   peakPick=list(method=c("mad", "simple", "adaptive")[3]),
