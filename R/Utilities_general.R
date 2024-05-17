@@ -423,3 +423,7 @@ Imzml_temp_fix<-function(folder=getwd(),name,
                        attach.only, mass.range, resolution, units, guess.max)
   .log.collapse("loaded dataset:", capture.output(print(object)))
 }
+  percent<-function(x, digits = 2, format = "f", ...) {
+    paste0(formatC(100 * x, format = format, digits = digits, ...), "%")
+  }
+  

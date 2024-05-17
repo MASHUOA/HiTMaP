@@ -1193,9 +1193,7 @@ PCA_ncomp_selection<-function(imdata,variance_coverage=0.80,outputdir=NULL){
   suppressMessages(suppressWarnings(library(ggplot2)))
   suppressMessages(suppressWarnings(library(gtable)))
   suppressMessages(suppressWarnings(library(egg)))
-  percent<-function(x, digits = 2, format = "f", ...) {
-    paste0(formatC(100 * x, format = format, digits = digits, ...), "%")
-  }
+
 
   PCA_imdata<-Cardinal::PCA(imdata,ncomp=12)
   # if (!is.null(outputdir)){
@@ -1609,7 +1607,7 @@ Preprocessing_segmentation<-function(datafile,
       }
       if (!is.null(preprocess)){
         #imdata_ed<-imdata
-        if ('|'(imdata@metadata[["ibd binary type"]]!="processed",preprocess$force_preprocess)){
+        if (preprocess$force_preprocess){
           imdata_ed<-readRDS(paste0(gsub(".imzML$","",datafile[z])  ," ID/preprocessed_imdata.RDS"))
         }else{
           imdata_ed<-imdata
