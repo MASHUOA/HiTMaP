@@ -1586,7 +1586,7 @@ simple_ion_image_cardinal<-function(datafile=tk_choose.files(filter =  matrix(c(
   for (z in 1:length(datafile)){
     name <-gsub(paste0(base::dirname(datafile[z]),"/"),"",datafile[z])
     folder<-base::dirname(datafile[z])
-    MALDI_IMAGE <- Cardinal::readImzML(name, folder, attach.only=F)
+    MALDI_IMAGE <- Cardinal::readImzML(name, folder )
     print(paste("Plot Ion Images from",name))
     if (dir.exists(paste0(workdir ,"/Ion images/",name))==FALSE){dir.create(paste0(workdir ,"/Ion images/",name))}
 

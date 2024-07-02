@@ -67,7 +67,7 @@ memory_profile<-function(){
   log.txt<-NULL
   
   
-  imdata <- Cardinal::readMSIData(datafile_imzML[z],  attach.only=F,as="MSImagingExperiment",resolution=10, units="ppm",BPPARAM=SerialParam())
+  imdata <- Cardinal::readMSIData(datafile_imzML[z],   as="MSImagingExperiment",resolution=10, units="ppm",BPPARAM=SerialParam())
   imdata@centroided<-F
   imdata->imdata_org
   imdata[,2800:3000]->imdata

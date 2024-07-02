@@ -184,7 +184,7 @@ Cardinal<- function(){
   name <-gsub(paste(workdir,"\\/",sep=""),"",datafile[3])
   
   #imdata <- readImzML(name, folder, as="MSImagingExperiment")
-  imdata <- readImzML(name, folder, attach.only=TRUE, as="MSImagingExperiment")
+  imdata <- readImzML(name, folder,   as="MSImagingExperiment")
   
   summarize(data, sum, .by="pixel")
   
@@ -271,7 +271,7 @@ Cardinal_utilities<- function(){
   name <-gsub(paste(folder,"\\/",sep=""),"",datafile[1])
   
   #imdata <- readImzML(name, folder, as="MSImagingExperiment")
-  imdata <- readImzML(name, folder, attach.only=TRUE, as="MSImagingExperiment")
+  imdata <- readImzML(name, folder,   as="MSImagingExperiment")
   summarize(data, sum, .by="pixel")
   tmp <- data %>%
     smoothSignal() %>%
@@ -851,7 +851,7 @@ Cardinal_old<- function(){
   name <-gsub(paste(workdir,"\\/",sep=""),"",datafile[3])
   
   #imdata <- readImzML(name, folder, as="MSImagingExperiment")
-  imdata <- readImzML(name, folder, attach.only=TRUE, as="MSImagingExperiment")
+  imdata <- readImzML(name, folder,   as="MSImagingExperiment")
   summarize(data, sum, .by="pixel")
   tmp <- imdata %>%
     smoothSignal() %>%

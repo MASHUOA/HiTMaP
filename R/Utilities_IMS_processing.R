@@ -678,7 +678,7 @@ imaging_Spatial_Quant<-function(
       rotate=Rotate_IMG[Rotate_IMG$filenames==datafile[i],"rotation"]
       if(is.null(rotate)) rotate=0
       rotate= as.numeric(rotate)
-      imdata=Load_Cardinal_imaging(datafile[i],preprocessing = F,resolution = ppm,rotate = rotate,attach.only=F)
+      imdata=Load_Cardinal_imaging(datafile[i],preprocessing = F,resolution = ppm,rotate = rotate )
 
 
       currentdir<-paste0(datafile[i] ," ID")
@@ -773,7 +773,7 @@ imaging_Spatial_Quant<-function(
         rotate=Rotate_IMG[Rotate_IMG$filenames==datafile_imzML[i],"rotation"]
         if(is.null(rotate)) rotate=0
         rotate= as.numeric(rotate)
-        imdata[[i]]=Load_Cardinal_imaging(datafile[i],preprocessing = F,resolution = ppm*2,rotate = rotate,attach.only=F,as="MSImagingExperiment")
+        imdata[[i]]=Load_Cardinal_imaging(datafile[i],preprocessing = F,resolution = ppm*2,rotate = rotate, as="MSImagingExperiment")
         mzrangetemp=range(imdata[[1]]@featureData@mz)
         if (is.null(mzrange)) {mzrange=mzrangetemp}else{
           if (mzrange[1]<mzrangetemp[1]){mzrange[1]<-mzrangetemp[1]}
@@ -787,7 +787,7 @@ imaging_Spatial_Quant<-function(
       rotate=Rotate_IMG[Rotate_IMG$filenames==datafile_imzML[i],"rotation"]
       if(is.null(rotate)) rotate=0
       rotate=as.numeric(rotate)
-      imdata[[i]]=Load_Cardinal_imaging(datafile[i],preprocessing = F,resolution = ppm*2,rotate = rotate,attach.only=F,as="MSImagingExperiment",mzrange=mzrange)
+      imdata[[i]]=Load_Cardinal_imaging(datafile[i],preprocessing = F,resolution = ppm*2,rotate = rotate, as="MSImagingExperiment",mzrange=mzrange)
       #imdata[[i]]@elementMetadata@coord=imdata[[i]]@elementMetadata@coord[,c("x","y")]
       if (i==1) {
         combinedimdata<-imdata[[i]]
@@ -1317,10 +1317,10 @@ Preprocessing_segmentation<-function(datafile,
     
     message("Loading raw image data for statistical analysis: ",paste0(gsub(".imzML$","",datafile[z]), ".imzML"))
     if(mzrange[1]=="auto-detect"){
-      imdata <- Cardinal::readMSIData(datafile_imzML[z],  attach.only=F,as="MSImagingExperiment",resolution=import_ppm, units="ppm",BPPARAM=SerialParam())
+      imdata <- Cardinal::readMSIData(datafile_imzML[z],   as="MSImagingExperiment",resolution=import_ppm, units="ppm",BPPARAM=SerialParam())
       imdata@centroided<-F
     }else {
-      imdata <- Cardinal::readMSIData(datafile_imzML[z],  attach.only=F,as="MSImagingExperiment",resolution=import_ppm, units="ppm",BPPARAM=SerialParam(),mass.range =mzrange)
+      imdata <- Cardinal::readMSIData(datafile_imzML[z],   as="MSImagingExperiment",resolution=import_ppm, units="ppm",BPPARAM=SerialParam(),mass.range =mzrange)
       imdata <-imdata[between(mz(imdata),mzrange[1],mzrange[2]),]
       imdata@centroided<-F
     }
@@ -1589,16 +1589,16 @@ Preprocessing_segmentation<-function(datafile,
       imdata_ed<-readRDS(paste0(gsub(".imzML$","",datafile[z])  ," ID/preprocessed_imdata.RDS"))
       #imdata_ed<-imdata
       if(mzrange[1]=="auto-detect"){
-        imdata <- Cardinal::readMSIData(datafile_imzML[z],  attach.only=T,as="MSImagingExperiment",resolution=import_ppm, units="ppm",BPPARAM=SerialParam())
+        imdata <- Cardinal::readMSIData(datafile_imzML[z],   as="MSImagingExperiment",resolution=import_ppm, units="ppm",BPPARAM=SerialParam())
       }else {
-        imdata <- Cardinal::readMSIData(datafile_imzML[z],  attach.only=T,as="MSImagingExperiment",resolution=import_ppm, units="ppm",BPPARAM=SerialParam(),mass.range =mzrange)
+        imdata <- Cardinal::readMSIData(datafile_imzML[z],   as="MSImagingExperiment",resolution=import_ppm, units="ppm",BPPARAM=SerialParam(),mass.range =mzrange)
       }
     }else{
       message("Using image data: ",paste0(gsub(".imzML$","",datafile[z]), ".imzML"))
       if(mzrange[1]=="auto-detect"){
-        imdata <- Cardinal::readMSIData(datafile_imzML[z],  attach.only=T,as="MSImagingExperiment",resolution=import_ppm, units="ppm",BPPARAM=SerialParam())
+        imdata <- Cardinal::readMSIData(datafile_imzML[z],   as="MSImagingExperiment",resolution=import_ppm, units="ppm",BPPARAM=SerialParam())
       }else {
-        imdata <- Cardinal::readMSIData(datafile_imzML[z],  attach.only=T,as="MSImagingExperiment",resolution=import_ppm, units="ppm",BPPARAM=SerialParam(),mass.range =mzrange)
+        imdata <- Cardinal::readMSIData(datafile_imzML[z],   as="MSImagingExperiment",resolution=import_ppm, units="ppm",BPPARAM=SerialParam(),mass.range =mzrange)
       }
       if(!is.na(rotate[datafile_imzML[z]])){
         imdata <-rotateMSI(imdata=imdata,rotation_degree=rotate[datafile_imzML[z]])
@@ -2183,7 +2183,7 @@ Load_IMS_combine<-function(datafile,rotate=NULL,ppm=5,...){
       rotate=Rotate_IMG[Rotate_IMG$filenames==basename(datafile[i]),"rotation"]
       rotate=as.numeric(rotate)
       if (length(rotate)==0){rotate=0}
-      imdata[[i]]=Load_Cardinal_imaging(datafile[i],preprocessing = F,resolution = ppm,rotate = rotate,attach.only=F,as=as,mzrange=mzrange)
+      imdata[[i]]=Load_Cardinal_imaging(datafile[i],preprocessing = F,resolution = ppm,rotate = rotate, as=as,mzrange=mzrange)
       if (i==1) {
         testrange=c(min(imdata[[i]]@featureData@mz),max(imdata[[i]]@featureData@mz))
       }else{
@@ -2200,9 +2200,9 @@ Load_IMS_combine<-function(datafile,rotate=NULL,ppm=5,...){
     rotate=as.numeric(rotate)
     if (length(rotate)==0){rotate=0}
     #if (length(datafile)==1){
-    #imdata[[i]]=Load_Cardinal_imaging(datafile[i],preprocessing = F,resolution = ppm*2,rotate = rotate,attach.only=F,as="MSImageSet",mzrange=mzrange)
+    #imdata[[i]]=Load_Cardinal_imaging(datafile[i],preprocessing = F,resolution = ppm*2,rotate = rotate, as="MSImageSet",mzrange=mzrange)
     #}else{
-    imdata[[i]]=Load_Cardinal_imaging(datafile[i],preprocessing = F,resolution = ppm*2,rotate = rotate,attach.only=F,as=as,mzrange=mzrange)
+    imdata[[i]]=Load_Cardinal_imaging(datafile[i],preprocessing = F,resolution = ppm*2,rotate = rotate, as=as,mzrange=mzrange)
     #}
     #imdata[[i]]@elementMetadata@coord=imdata[[i]]@elementMetadata@coord[,c("x","y")]
     #max(imdata[[i]]@featureData@mz)
@@ -2245,7 +2245,7 @@ Load_IMS_decov_combine<-function(datafile,workdir,ppm=5,import_ppm=ppm/2,SPECTRU
       name <-gsub("/$","",name)
       setwd(workdir[z])
       folder<-base::dirname(datafile[z])
-      #imdata <- Cardinal::readImzML(datafile[z],preprocessing = F,attach.only = T,resolution = 200,rotate = rotate[z],as="MSImageSet",BPPARAM = BPPARAM)
+      #imdata <- Cardinal::readImzML(datafile[z],preprocessing = F, resolution = 200,rotate = rotate[z],as="MSImageSet",BPPARAM = BPPARAM)
       if (!str_detect(datafile[z],".imzML$")){
         datafile_imzML[z]<-paste0(datafile[z],".imzML")
       }
@@ -2267,9 +2267,9 @@ Load_IMS_decov_combine<-function(datafile,workdir,ppm=5,import_ppm=ppm/2,SPECTRU
       }else if (use_rawdata){
         message("Loading raw image data for statistical analysis: ",paste0(gsub(".imzML$","",datafile[z]), ".imzML"))
         if(mzrange[1]=="auto-detect"){
-          imdata <- Cardinal::readMSIData(paste0(workdir[z],"/",datafile_imzML[z]),  attach.only=T,as="MSImagingExperiment",resolution=import_ppm, units="ppm",BPPARAM=SerialParam())
+          imdata <- Cardinal::readMSIData(paste0(workdir[z],"/",datafile_imzML[z]),   as="MSImagingExperiment",resolution=import_ppm, units="ppm",BPPARAM=SerialParam())
         }else {
-          imdata <- Cardinal::readMSIData(paste0(workdir[z],"/",datafile_imzML[z]),  attach.only=T,as="MSImagingExperiment",resolution=import_ppm, units="ppm",BPPARAM=SerialParam(),mass.range =mzrange)
+          imdata <- Cardinal::readMSIData(paste0(workdir[z],"/",datafile_imzML[z]),   as="MSImagingExperiment",resolution=import_ppm, units="ppm",BPPARAM=SerialParam(),mass.range =mzrange)
         }
         if(!is.na(rotate[datafile_imzML[z]])){
           imdata <-HiTMaP:::rotateMSI(imdata=imdata,rotation_degree=rotate[datafile_imzML[z]])
@@ -2522,9 +2522,9 @@ Load_IMS_decov_combine<-function(datafile,workdir,ppm=5,import_ppm=ppm/2,SPECTRU
           }else if (use_rawdata){
       message("Loading raw image data for statistical analysis: ",paste0(gsub(".imzML$","",datafile[z]), ".imzML"))
       if(mzrange[1]=="auto-detect"){
-        imdata <- Cardinal::readMSIData(paste0(workdir[z],"/",datafile_imzML[z]),  attach.only=T,as="MSImagingExperiment",resolution=import_ppm, units="ppm",BPPARAM=SerialParam())
+        imdata <- Cardinal::readMSIData(paste0(workdir[z],"/",datafile_imzML[z]),   as="MSImagingExperiment",resolution=import_ppm, units="ppm",BPPARAM=SerialParam())
       }else {
-        imdata <- Cardinal::readMSIData(paste0(workdir[z],"/",datafile_imzML[z]),  attach.only=T,as="MSImagingExperiment",resolution=import_ppm, units="ppm",BPPARAM=SerialParam(),mass.range =mzrange)
+        imdata <- Cardinal::readMSIData(paste0(workdir[z],"/",datafile_imzML[z]),   as="MSImagingExperiment",resolution=import_ppm, units="ppm",BPPARAM=SerialParam(),mass.range =mzrange)
       }
       if(!is.na(rotate[datafile_imzML[z]])){
         imdata <-HiTMaP:::rotateMSI(imdata=imdata,rotation_degree=rotate[datafile_imzML[z]])
@@ -2650,7 +2650,7 @@ load_pixel_label<-function(combinedimdata,datafile,workdir,coordata_file="coorda
     name <-gsub("/$","",name)
     setwd(workdir[z])
     folder<-base::dirname(datafile[z])
-    #imdata <- Cardinal::readImzML(datafile[z],preprocessing = F,attach.only = T,resolution = 200,rotate = rotate[z],as="MSImageSet",BPPARAM = BPPARAM)
+    #imdata <- Cardinal::readImzML(datafile[z],preprocessing = F, resolution = 200,rotate = rotate[z],as="MSImageSet",BPPARAM = BPPARAM)
     if (!str_detect(datafile[z],".imzML$")){
       datafile_imzML[z]<-paste0(datafile[z],".imzML")
     }
@@ -2988,15 +2988,15 @@ IMS_data_process_quant<-function (datafile, Peptide_Summary_searchlist, segmenta
     name <-gsub(".imzML$","",name)
     name <-gsub("/$","",name)
     folder<-base::dirname(datafile[z])
-    #imdata <- Cardinal::readImzML(datafile[z],preprocessing = F,attach.only = T,resolution = 200,rotate = rotate[z],as="MSImageSet",BPPARAM = BPPARAM)
+    #imdata <- Cardinal::readImzML(datafile[z],preprocessing = F, resolution = 200,rotate = rotate[z],as="MSImageSet",BPPARAM = BPPARAM)
     if (!str_detect(datafile[z],".imzML$")){
       datafile_imzML[z]<-paste0(datafile[z],".imzML")
     }
-    imdata <- Cardinal::readMSIData(datafile_imzML[z],  attach.only=T,as="MSImageSet",resolution=200, units="ppm")
+    imdata <- Cardinal::readMSIData(datafile_imzML[z],   as="MSImageSet",resolution=200, units="ppm")
 
 
     #imdata <- Load_Cardinal_imaging(datafile[z], preprocessing = F,
-    #                               attach.only = T, resolution = 200, rotate = rotate[z],
+    #                                 resolution = 200, rotate = rotate[z],
     #                                as = "MSImageSet", BPPARAM = BPPARAM)
     name <- gsub(base::dirname(datafile[z]), "", datafile[z])
     folder <- base::dirname(datafile[z])
