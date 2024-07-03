@@ -409,7 +409,7 @@ cluster_image_grid<-function(clusterID,
          pngfile_big<-image_average(img_com)
          pngfile_big_info=magick::image_info(pngfile_big)
 
-         pngfile_big_ratio<-c(diff(range(imdata@elementMetadata@coord@listData[["x"]])),diff(range(imdata@elementMetadata@coord@listData[["y"]])))/c(pngfile_big_info$width-1*150,pngfile_big_info$height-1*150)
+         pngfile_big_ratio<-c(diff(range(imdata@elementMetadata@listData@listData[["x"]])),diff(range(imdata@elementMetadata@listData@listData[["y"]])))/c(pngfile_big_info$width-1*150,pngfile_big_info$height-1*150)
 
 
 
@@ -452,7 +452,7 @@ cluster_image_grid<-function(clusterID,
         pngfile_big<-image_average(img_com)
         pngfile_big_info=magick::image_info(pngfile_big)
 
-        pngfile_big_ratio<-c(diff(range(imdata@elementMetadata@coord@listData[["x"]])),diff(range(imdata@elementMetadata@coord@listData[["y"]])))/c(pngfile_big_info$width-1*150,pngfile_big_info$height-1*150)
+        pngfile_big_ratio<-c(diff(range(imdata@elementMetadata@listData@listData[["x"]])),diff(range(imdata@elementMetadata@listData@listData[["y"]])))/c(pngfile_big_info$width-1*150,pngfile_big_info$height-1*150)
 
 
 

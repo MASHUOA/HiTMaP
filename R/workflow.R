@@ -671,8 +671,8 @@ IMS_data_process<-function(datafile,
     imdata_sb <- imdata_ed 
     
    #generate spectrum for each found region
-    spectrum_file_table<- summarizeFeatures(imdata_sb, FUN = "mean")
-    spectrum_file_table<-data.frame(mz=spectrum_file_table@featureData@mz,mean=spectrum_file_table@featureData@listData[["mean"]])
+    spectrum_file_table<- summarizeFeatures(imdata_sb, "mean")
+    spectrum_file_table<-data.frame(mz=spectrum_file_table@featureData@listData[["mz"]],mean=spectrum_file_table@featureData@listData[["mean"]])
     peaklist<-spectrum_file_table
     colnames(peaklist)<-c("m.z","intensities")
     savename=paste(name,SPECTRUM_batch)

@@ -1226,7 +1226,11 @@ SCORE_CPD<-function(formula,peaklist,isotopes=NULL,threshold=0.001,charge=1,ppm=
   suppressMessages(suppressWarnings(require(OrgMassSpecR)))
   suppressMessages(suppressWarnings(require(enviPat)))
   suppressMessages(suppressWarnings(require(data.table)))
-  suppressMessages(suppressWarnings(require(rJava)))
+ suppressMessages(suppressWarnings(if (!require(rJava)){
+  if (Sys.getenv("JAVA_HOME")!="")
+    Sys.setenv(JAVA_HOME="")
+  library(rJava)
+}))
   suppressMessages(suppressWarnings(require(grid)))
   if (is.null(isotopes)){data("isotopes")}
   

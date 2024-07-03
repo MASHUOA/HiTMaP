@@ -774,7 +774,7 @@ imaging_Spatial_Quant<-function(
         if(is.null(rotate)) rotate=0
         rotate= as.numeric(rotate)
         imdata[[i]]=Load_Cardinal_imaging(datafile[i],preprocessing = F,resolution = ppm*2,rotate = rotate, as="MSImagingExperiment")
-        mzrangetemp=range(imdata[[1]]@featureData@mz)
+        mzrangetemp=range(imdata[[1]]@featureData@listData[["mz"]])
         if (is.null(mzrange)) {mzrange=mzrangetemp}else{
           if (mzrange[1]<mzrangetemp[1]){mzrange[1]<-mzrangetemp[1]}
           if (mzrange[2]<mzrangetemp[2]){mzrange[2]<-mzrangetemp[2]}
@@ -788,7 +788,7 @@ imaging_Spatial_Quant<-function(
       if(is.null(rotate)) rotate=0
       rotate=as.numeric(rotate)
       imdata[[i]]=Load_Cardinal_imaging(datafile[i],preprocessing = F,resolution = ppm*2,rotate = rotate, as="MSImagingExperiment",mzrange=mzrange)
-      #imdata[[i]]@elementMetadata@coord=imdata[[i]]@elementMetadata@coord[,c("x","y")]
+      #imdata[[i]]@elementMetadata@listData=imdata[[i]]@elementMetadata@listData[,c("x","y")]
       if (i==1) {
         combinedimdata<-imdata[[i]]
       }else{
@@ -799,7 +799,7 @@ imaging_Spatial_Quant<-function(
     }
 
 
-    combinedimdata@elementMetadata@coord@listData[["z"]]=NULL
+    combinedimdata@elementMetadata@listData@listData[["z"]]=NULL
 
     imdata=combinedimdata
 
@@ -917,7 +917,7 @@ IMS_analysis_fun_2<-function(Peptide_Summary_searchlist,peaklist,ppm,BPPARAM =bp
 virtual_segmentation<-function(imdata,Virtual_segmentation_rankfile="~/GitHub/HiTMaP/inst/data/radius_rank_bovin.csv"){
   library(reshape2)
   library(BiocParallel)
-  coordatadf=imdata@elementMetadata@coord
+  coordatadf=imdata@elementMetadata@listData
   coordatadf$run<-imdata@elementMetadata@run
   coordatadf$indx<-as.numeric(rownames(coordatadf))
   coordatadf<-as.data.frame(coordatadf)
@@ -1172,7 +1172,7 @@ rank_mz_feature<-function(Peptide_plot_list,mz_feature,BPPARAM=bpparam()){
 
 rotateMSI<-function(imdata,rotation_degree=0){
 
-  rotatetmp<-as.data.frame(imdata@elementMetadata@coord@listData)
+  rotatetmp<-as.data.frame(imdata@elementMetadata@listData@listData)
 
   rotatenew<-affine_grid(rotatetmp[,c("x","y")],rotate=rotation_degree,grid = T)
 
@@ -1184,7 +1184,7 @@ rotateMSI<-function(imdata,rotation_degree=0){
 
   rownames(rotatenew)<-paste0("x = ",rotatenew$x,", ","y = ",rotatenew$y,", ","z = ",rotatenew$z)
   rotatenew$z=rotatetmp$z
-  imdata@elementMetadata@coord@listData<-as.list(rotatenew)
+  imdata@elementMetadata@listData@listData<-as.list(rotatenew)
   return(imdata)
 }
 
@@ -1200,7 +1200,7 @@ PCA_ncomp_selection<-function(imdata,variance_coverage=0.80,outputdir=NULL){
   #   saveRDS(PCA_imdata,paste0(outputdir,"PCA_imdata.rds"))
   #   saveRDS(as.data.frame(summary(PCA_imdata)),paste0(outputdir,"PCA_imdata_df.rds"))
   # }
-  PCA_imdata_df<-data.frame(Component=1:length(PCA_imdata@resultData@listData[[1]][["sdev"]]) , Standard.deviation=PCA_imdata@resultData@listData[[1]][["sdev"]])
+  PCA_imdata_df<-data.frame(Component=1:length(PCA_imdata@model[["sdev"]]) , Standard.deviation=PCA_imdata@model[["sdev"]])
   PCA_imdata_df$Standard.deviation<-PCA_imdata_df$Standard.deviation/sum(PCA_imdata_df$Standard.deviation)
   PCA_imdata_df$Component<-as.factor(PCA_imdata_df$Component)
   PCA_imdata_df$Percentage<-percent(PCA_imdata_df$Standard.deviation,digits =1)
@@ -1335,7 +1335,7 @@ Preprocessing_segmentation<-function(datafile,
       
       run(imdata)<-factor(rep("Before",length(run(imdata))))
       Cardinal::cbind(imdata,imdata_r)->imdata_rimdata_new
-      imdata_rimdata_new@elementMetadata@coord@listData[["z"]]<-NULL
+      imdata_rimdata_new@elementMetadata@listData@listData[["z"]]<-NULL
       png(paste0(gsub(".imzML$","",datafile[z])  ," ID/","IMG_roation.png"),width = 1600,height = 800, res=200)
       print(image(imdata_rimdata_new,factor(run(imdata_rimdata_new)) ~ x * y ,superpose=F, key=T,
                   layout=c(1,2)))
@@ -1365,7 +1365,7 @@ Preprocessing_segmentation<-function(datafile,
             } else if (preprocess$normalize$method %in% c("rms","tic")){
               imdata_ed<- imdata_ed %>% normalize(method=preprocess$normalize$method) %>% process()
             } else if ('&'(preprocess$normalize$method == "reference", !is.null(preprocess$normalize$mz))){
-              norm_feature<-which(dplyr::between(imdata_ed@featureData@mz,
+              norm_feature<-which(dplyr::between(imdata_ed@featureData@listData[["mz"]],
                                                  preprocess$normalize$mz*(1-ppm/1000000),
                                                  preprocess$normalize$mz*(1+ppm/1000000)))
               if (length(norm_feature)>=1){
@@ -1414,7 +1414,7 @@ Preprocessing_segmentation<-function(datafile,
             imdata_ed<- imdata_ed %>% peakPick(method=preprocess$peakPick$method, SNR=preprocess$peakPick$SNR, window=preprocess$peakPick$window) %>% process()
           }else if (preprocess$peakPick$method == "Default|default"){
             #add an peak picking function other than the Cardinal options.
-            peaklist<-summarizeFeatures(imdata_ed,FUN = "sum", as="DataFrame")
+            peaklist<-summarizeFeatures(imdata_ed,"sum")
             peaklist_deco<-data.frame(mz=peaklist@mz,intensities=peaklist$sum)
             peaklist_deco<-peaklist_deco[peaklist_deco$intensities>0,]
             peaklist_deco<-HiTMaP:::isopattern_ppm_filter_peaklist(peaklist_deco,ppm=ppm,threshold=0)
@@ -1435,7 +1435,7 @@ Preprocessing_segmentation<-function(datafile,
             }else if ('&'(!is.null(preprocess$peakAlign$tolerance),!is.null(preprocess$peakAlign$units))){
               message("preprocess$peakAlign$tolerance set as ", preprocess$peakAlign$tolerance)
               imdata_ed<- imdata_ed %>% peakAlign(tolerance=preprocess$peakAlign$tolerance, units=preprocess$peakAlign$units)
-              peaklist<-summarizeFeatures(imdata_ed,FUN = "sum", as="DataFrame")
+              peaklist<-summarizeFeatures(imdata_ed,"sum")
               peaklist_deco<-data.frame(mz=peaklist@mz,intensities=peaklist$sum)
               peaklist_deco<-peaklist_deco[peaklist_deco$intensities>0,]
               write.csv(peaklist_deco,paste0(gsub(".imzML$","",datafile[z])  ," ID/Sum_spec.csv"),row.names = F)
@@ -1444,7 +1444,7 @@ Preprocessing_segmentation<-function(datafile,
             }else {
               message("preprocess$peakAlign$tolerance missing, use default tolerance in ppm ", ppm/2)
               imdata_ed<- imdata_ed %>% peakAlign(tolerance=ppm/2, units="ppm")
-              peaklist<-summarizeFeatures(imdata_ed,FUN = "sum", as="DataFrame")
+              peaklist<-summarizeFeatures(imdata_ed,"sum")
               peaklist_deco<-data.frame(mz=peaklist@mz,intensities=peaklist$sum)
               peaklist_deco<-peaklist_deco[peaklist_deco$intensities>0,]
               write.csv(peaklist_deco,paste0(gsub(".imzML$","",datafile[z])  ," ID/Sum_spec.csv"),row.names = F)
@@ -1460,7 +1460,7 @@ Preprocessing_segmentation<-function(datafile,
           
 
           
-          #peaklist<-summarizeFeatures(imdata_ed,"sum", as="DataFrame")
+          #peaklist<-summarizeFeatures(imdata_ed,"sum")
           #peaklist_deco<-data.frame(mz=peaklist@mz,intensities=peaklist$sum)
           #peaklist_deco<-peaklist_deco[peaklist_deco$intensities>0,]
           
@@ -1477,7 +1477,7 @@ Preprocessing_segmentation<-function(datafile,
             } else if (preprocess$normalize$method %in% c("rms","tic")){
               imdata_ed<- imdata_ed %>% normalize(method=preprocess$normalize$method) %>% process()
             } else if ('&'(preprocess$normalize$method == "reference", !is.null(preprocess$normalize$mz))){
-              norm_feature<-which(dplyr::between(imdata_ed@featureData@mz,
+              norm_feature<-which(dplyr::between(imdata_ed@featureData@listData[["mz"]],
                 preprocess$normalize$mz*(1-ppm/1000000),
                 preprocess$normalize$mz*(1+ppm/1000000)))
               if (length(norm_feature)>=1){
@@ -1534,7 +1534,7 @@ Preprocessing_segmentation<-function(datafile,
             }else if ('&'(!is.null(preprocess$peakAlign$tolerance),!is.null(preprocess$peakAlign$units))){
               message("preprocess$peakAlign$tolerance set as ", preprocess$peakAlign$tolerance)
               imdata_ed<- imdata_ed %>% peakAlign(tolerance=preprocess$peakAlign$tolerance, units=preprocess$peakAlign$units)
-              peaklist<-summarizeFeatures(imdata_ed,FUN = "sum", as="DataFrame")
+              peaklist<-summarizeFeatures(imdata_ed,"sum")
               peaklist_deco<-data.frame(mz=peaklist@mz,intensities=peaklist$sum)
               peaklist_deco<-peaklist_deco[peaklist_deco$intensities>0,]
               write.csv(peaklist_deco,paste0(gsub(".imzML$","",datafile[z])  ," ID/Sum_spec.csv"),row.names = F)
@@ -1543,7 +1543,7 @@ Preprocessing_segmentation<-function(datafile,
             }else {
               message("preprocess$peakAlign$tolerance missing, use default tolerance in ppm ", ppm/2)
               imdata_ed<- imdata_ed %>% peakAlign(tolerance=ppm/2, units="ppm")
-              peaklist<-summarizeFeatures(imdata_ed,FUN = "sum", as="DataFrame")
+              peaklist<-summarizeFeatures(imdata_ed,"sum")
               peaklist_deco<-data.frame(mz=peaklist@mz,intensities=peaklist$sum)
               peaklist_deco<-peaklist_deco[peaklist_deco$intensities>0,]
               write.csv(peaklist_deco,paste0(gsub(".imzML$","",datafile[z])  ," ID/Sum_spec.csv"),row.names = F)
@@ -1623,7 +1623,7 @@ Preprocessing_segmentation<-function(datafile,
     #imdata_org<-imdata
     imdata<-imdata_ed
     gc()
-    coordata=as.data.frame(imdata@elementMetadata@coord)
+    coordata=as.data.frame(imdata@elementMetadata@listData)
     setCardinalBPPARAM(BPPARAM)
     setwd(paste0(gsub(".imzML$","",datafile[z])  ," ID"))
     
@@ -1665,7 +1665,7 @@ Preprocessing_segmentation<-function(datafile,
         }else{Segmentation_ncomp_running<-Segmentation_ncomp}
         set.seed(1)
         
-        skm <-  suppressMessages(suppressWarnings(spatialKMeans(imdata_stats, r=Smooth_range, k=segmentation_num, method="adaptive",ncomp=Segmentation_ncomp_running,BPPARAM =BPPARAM )))
+        skm <-  suppressMessages(suppressWarnings(spatialKMeans(imdata_stats, r=Smooth_range, k=segmentation_num, weights ="adaptive",BPPARAM =BPPARAM )))
         message(paste0(Segmentation[1], " finished: ",name))
         png(paste(getwd(),"/",Segmentation[1],"_image_plot_",segmentation_num,"_segs.png",sep=""),width = 1024,height = 720)
         
@@ -1681,9 +1681,9 @@ Preprocessing_segmentation<-function(datafile,
         
         
         png(paste(getwd(),"/",Segmentation[1],"_image_plot_",segmentation_num,"_segs_spec.png",sep=""),width = 1024,height = 480*((segmentation_num)))
-        centers=skm@resultData[[1]][["centers"]]
+        centers=skm@model[["centers"]]
         
-        centers_mz<-skm@featureData@mz
+        centers_mz<-skm@featureData@listData[["mz"]]
         suppressMessages(suppressWarnings(require(ggplot2)))
         sp<-NULL
         sp_plot<-NULL
@@ -1701,15 +1701,15 @@ Preprocessing_segmentation<-function(datafile,
         skmimg_spec<-image_read(paste(getwd(),"/",Segmentation[1],"_image_plot_",segmentation_num,"_segs_spec.png",sep=""))
         skmimg<-image_append(c(skmimg,skmimg_spec),stack = T)
         image_write(skmimg,paste(getwd(),"/",Segmentation[1],"_image_plot_",segmentation_num,"_segs_append.png",sep=""))
-        correlation=as.data.frame(skm@resultData@listData[[1]][["correlation"]])
+        correlation=as.data.frame(skm@model[["correlation"]])
         correlation[,"mz"]<-as.numeric(gsub("m/z = ","",rownames(correlation)))
-        centers=as.data.frame(skm@resultData[[1]][["centers"]])
+        centers=as.data.frame(skm@model[["centers"]])
         centers[,"mz"]<-as.numeric(gsub("m/z = ","",rownames(centers)))
-        cluster=as.data.frame(skm@resultData[[1]][["cluster"]])
+        cluster=as.data.frame(skm@model[["cluster"]])
         cluster$Coor=rownames(cluster)
-        cluster_df<-data.frame(Coor=rownames(cluster),class=skm@resultData[[1]][["cluster"]])
+        cluster_df<-data.frame(Coor=rownames(cluster),class=skm@model[["cluster"]])
         write.csv(cluster_df,paste(Segmentation[1],"_RESULT","cluster",segmentation_num,"segs.csv"),row.names = F)
-        y=skm@resultData[[1]][["cluster"]]
+        y=skm@model[["cluster"]]
         y=as.data.frame(y)
         rownames(y)=1:nrow(y)
         y$pixel=1:nrow(y)
@@ -1725,7 +1725,7 @@ Preprocessing_segmentation<-function(datafile,
         if ('&'(Segmentation_ncomp=="auto-detect",Segmentation_variance_coverage>0)){
           Segmentation_ncomp_running<-PCA_ncomp_selection(imdata_stats,variance_coverage=Segmentation_variance_coverage,outputdir=paste0(getwd(),"/"))
         }else{Segmentation_ncomp_running<-Segmentation_ncomp}
-        skm <-  suppressMessages(suppressWarnings(spatialShrunkenCentroids(imdata_stats, r=Smooth_range, k=segmentation_num, method="adaptive",s=3,BPPARAM =BPPARAM)))
+        skm <-  suppressMessages(suppressWarnings(spatialShrunkenCentroids(imdata_stats, r=Smooth_range, k=segmentation_num, weights="adaptive",s=3,BPPARAM =BPPARAM)))
         message(paste0(Segmentation[1], " finished: ",name))
         png(paste(getwd(),"/",Segmentation[1],"_image_plot_",segmentation_num,"_segs.png",sep=""),width = 1024,height = 720)
         
@@ -1741,9 +1741,9 @@ Preprocessing_segmentation<-function(datafile,
         
         
         png(paste(getwd(),"/",Segmentation[1],"_image_plot_",segmentation_num,"_segs_spec.png",sep=""),width = 1024,height = 480*((segmentation_num)))
-        centers=skm@resultData[[1]][["centers"]]
+        centers=skm@model[["centers"]]
         
-        centers_mz<-skm@featureData@mz
+        centers_mz<-skm@featureData@listData[["mz"]]
         suppressMessages(suppressWarnings(require(ggplot2)))
         sp<-NULL
         sp_plot<-NULL
@@ -1761,20 +1761,20 @@ Preprocessing_segmentation<-function(datafile,
         skmimg_spec<-image_read(paste(getwd(),"/",Segmentation[1],"_image_plot_",segmentation_num,"_segs_spec.png",sep=""))
         skmimg<-image_append(c(skmimg,skmimg_spec),stack = T)
         image_write(skmimg,paste(getwd(),"/",Segmentation[1],"_image_plot_",segmentation_num,"_segs_append.png",sep=""))
-        correlation=as.data.frame(skm@resultData@listData[[1]][["correlation"]])
+        correlation=as.data.frame(skm@model[["correlation"]])
         correlation[,"mz"]<-as.numeric(gsub("m/z = ","",rownames(correlation)))
-        centers=as.data.frame(skm@resultData[[1]][["centers"]])
+        centers=as.data.frame(skm@model[["centers"]])
         centers[,"mz"]<-as.numeric(gsub("m/z = ","",rownames(centers)))
-        cluster=as.data.frame(skm@resultData[[1]][["class"]])
+        cluster=as.data.frame(skm@model[["class"]])
         cluster$Coor=rownames(cluster)
-        cluster_df<-data.frame(Coor=rownames(cluster),class=skm@resultData[[1]][["class"]])
+        cluster_df<-data.frame(Coor=rownames(cluster),class=skm@model[["class"]])
         #write.csv(correlation,paste(Segmentation[1],"_RESULT","correlation",segmentation_num,"segs.csv"),row.names = F)
         write.csv(cluster_df,paste(Segmentation[1],"_RESULT","centers",segmentation_num,"segs.csv"),row.names = F)
         #write.csv(cluster,paste(Segmentation[1],"_RESULT","cluster",segmentation_num,"segs.csv"),row.names = F)
         
         
         
-        y=skm@resultData@listData[[1]][["class"]]
+        y=skm@model[["class"]]
         y=as.data.frame(y)
         rownames(y)=1:nrow(y)
         y$pixel=1:nrow(y)
@@ -2185,10 +2185,10 @@ Load_IMS_combine<-function(datafile,rotate=NULL,ppm=5,...){
       if (length(rotate)==0){rotate=0}
       imdata[[i]]=Load_Cardinal_imaging(datafile[i],preprocessing = F,resolution = ppm,rotate = rotate, as=as,mzrange=mzrange)
       if (i==1) {
-        testrange=c(min(imdata[[i]]@featureData@mz),max(imdata[[i]]@featureData@mz))
+        testrange=c(min(imdata[[i]]@featureData@listData[["mz"]]),max(imdata[[i]]@featureData@listData[["mz"]]))
       }else{
-        if (min(imdata[[i]]@featureData@mz)>testrange[1]) testrange[1]<-min(imdata[[i]]@featureData@mz)
-        if (max(imdata[[i]]@featureData@mz)>testrange[2]) testrange[2]<-max(imdata[[i]]@featureData@mz)
+        if (min(imdata[[i]]@featureData@listData[["mz"]])>testrange[1]) testrange[1]<-min(imdata[[i]]@featureData@listData[["mz"]])
+        if (max(imdata[[i]]@featureData@listData[["mz"]])>testrange[2]) testrange[2]<-max(imdata[[i]]@featureData@listData[["mz"]])
       }
       imdata[[i]]=NULL
     }
@@ -2204,9 +2204,9 @@ Load_IMS_combine<-function(datafile,rotate=NULL,ppm=5,...){
     #}else{
     imdata[[i]]=Load_Cardinal_imaging(datafile[i],preprocessing = F,resolution = ppm*2,rotate = rotate, as=as,mzrange=mzrange)
     #}
-    #imdata[[i]]@elementMetadata@coord=imdata[[i]]@elementMetadata@coord[,c("x","y")]
-    #max(imdata[[i]]@featureData@mz)
-    #min(imdata[[i]]@featureData@mz)
+    #imdata[[i]]@elementMetadata@listData=imdata[[i]]@elementMetadata@listData[,c("x","y")]
+    #max(imdata[[i]]@featureData@listData[["mz"]])
+    #min(imdata[[i]]@featureData@listData[["mz"]])
     if (i==1) {
       combinedimdata=imdata[[i]]
     }else{
@@ -2215,7 +2215,7 @@ Load_IMS_combine<-function(datafile,rotate=NULL,ppm=5,...){
     imdata[[i]]=NULL
   }
 
-  combinedimdata@elementMetadata@coord@listData[["z"]]=NULL
+  combinedimdata@elementMetadata@listData@listData[["z"]]=NULL
 
   imdata=combinedimdata
 
@@ -2282,8 +2282,8 @@ Load_IMS_decov_combine<-function(datafile,workdir,ppm=5,import_ppm=ppm/2,SPECTRU
       message(file_deconv_Spectrum)
       
       if (`|`(deconv_peaklist[1]=="New",!file.exists(file_deconv_Spectrum[1]))){
-      spectrum_file_table<- summarizeFeatures(imdata, FUN = "mean")
-      spectrum_file_table<-data.frame(mz=spectrum_file_table@featureData@mz,mean=spectrum_file_table@featureData@listData[["mean"]])
+      spectrum_file_table<- summarizeFeatures(imdata,"mean")
+      spectrum_file_table<-data.frame(mz=spectrum_file_table@featureData@listData[["mz"]],mean=spectrum_file_table@featureData@listData[["mean"]])
       peaklist<-spectrum_file_table
       colnames(peaklist)<-c("m.z","intensities")
       savename=paste(name,SPECTRUM_batch)
@@ -2540,23 +2540,23 @@ Load_IMS_decov_combine<-function(datafile,workdir,ppm=5,import_ppm=ppm/2,SPECTRU
       if (class(imdata)=="MSProcessedImagingExperiment"){
         mz(imdata)<-predict(deconv_peaklist_ref_match_locmax[[datafile[z]]]$shift,mz(imdata)) + mz(imdata)
       }else{
-        imdata@featureData@mz<-predict(deconv_peaklist_ref_match_locmax[[datafile[z]]]$shift,imdata@featureData@mz) + imdata@featureData@mz
+        imdata@featureData@listData[["mz"]]<-predict(deconv_peaklist_ref_match_locmax[[datafile[z]]]$shift,imdata@featureData@listData[["mz"]]) + imdata@featureData@listData[["mz"]]
       }
      
     }else(message("No batch level m/z drifting model found, m/z correction bypassed."))
     
     New_fdata_LB<-imdata[1,]
-    New_fdata_LB@featureData@mz[1]<-min(deconv_peaklist_decov_plot$m.z, na.rm = T)-2*ppm/1000000*min(deconv_peaklist_decov_plot$m.z, na.rm = T)
+    New_fdata_LB@featureData@listData[["mz"]][1]<-min(deconv_peaklist_decov_plot$m.z, na.rm = T)-2*ppm/1000000*min(deconv_peaklist_decov_plot$m.z, na.rm = T)
     New_fdata_UB<-New_fdata_LB
-    New_fdata_UB@featureData@mz[1]<-max(deconv_peaklist_decov_plot$m.z, na.rm = T)+2*ppm/1000000*min(deconv_peaklist_decov_plot$m.z, na.rm = T)
+    New_fdata_UB@featureData@listData[["mz"]][1]<-max(deconv_peaklist_decov_plot$m.z, na.rm = T)+2*ppm/1000000*min(deconv_peaklist_decov_plot$m.z, na.rm = T)
     
-    if(min(mz(imdata))>min(New_fdata_LB@featureData@mz[1])){
+    if(min(mz(imdata))>min(New_fdata_LB@featureData@listData[["mz"]][1])){
       message("removing ",sum(deconv_peaklist_decov_plot$m.z<min(mz(imdata)))," m/z features from target list, out of LB of ", datafile[z])
       #imdata<-Cardinal::rbind(New_fdata_LB,imdata)
       deconv_peaklist_decov_plot<-deconv_peaklist_decov_plot[deconv_peaklist_decov_plot$m.z>=min(mz(imdata)),]
       deconv_peaklist_decov_plot->deconv_peaklist_decov
     }
-    if(max(mz(imdata))<max(New_fdata_UB@featureData@mz[1])){
+    if(max(mz(imdata))<max(New_fdata_UB@featureData@listData[["mz"]][1])){
       message("removing ",sum(deconv_peaklist_decov_plot$m.z>max(mz(imdata)))," m/z features from target list, out of UB of ", datafile[z])
       #imdata<-Cardinal::rbind(imdata,New_fdata_UB)
       deconv_peaklist_decov_plot<-deconv_peaklist_decov_plot[deconv_peaklist_decov_plot$m.z<=max(mz(imdata)),]
@@ -2567,7 +2567,7 @@ Load_IMS_decov_combine<-function(datafile,workdir,ppm=5,import_ppm=ppm/2,SPECTRU
     imdata <- imdata %>%
     mzBin(deconv_peaklist_decov_plot$m.z, resolution=ppm, units="ppm")%>%
       process()
-    imdata@elementMetadata@coord@listData[["z"]]<-NULL
+    imdata@elementMetadata@listData@listData[["z"]]<-NULL
     imdata@elementMetadata@resolution=c(x=1,y=1)
 
     combinedimdata_list[[z]]<-imdata
@@ -3037,9 +3037,9 @@ IMS_data_process_quant<-function (datafile, Peptide_Summary_searchlist, segmenta
              col = brewer.pal_n(segmentation_num, "Paired"),
              bg = "transparent", xpd = TRUE, cex = 1)
       dev.off()
-      withinss = skm@resultData[[1]][["withinss"]]
-      centers = skm@resultData[[1]][["centers"]]
-      cluster = as.data.frame(skm@resultData[[1]][["cluster"]])
+      withinss = skm@model[["withinss"]]
+      centers = skm@model[["centers"]]
+      cluster = as.data.frame(skm@model[["cluster"]])
       cluster$Coor = rownames(cluster)
       write.csv(withinss, paste("spatialKMeans_RESULT",
                                 "withinss.csv"), row.names = F)
@@ -3089,9 +3089,9 @@ IMS_data_process_quant<-function (datafile, Peptide_Summary_searchlist, segmenta
              col = brewer.pal_n(segmentation_num, "Paired"),
              bg = "transparent", xpd = TRUE, cex = 1)
       dev.off()
-      withinss = skm@resultData[[1]][["withinss"]]
-      centers = skm@resultData[[1]][["centers"]]
-      cluster = as.data.frame(skm@resultData[[1]][["cluster"]])
+      withinss = skm@model[["withinss"]]
+      centers = skm@model[["centers"]]
+      cluster = as.data.frame(skm@model[["cluster"]])
       cluster$Coor = rownames(cluster)
       write.csv(withinss, paste("spatialShrunkenCentroids_RESULT",
                                 "withinss.csv"), row.names = F)

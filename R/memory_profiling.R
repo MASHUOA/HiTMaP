@@ -280,7 +280,7 @@ memory_profile<-function(){
   
     setCardinalBPPARAM(BPPARAM)
     
-    peaklist<-summarizeFeatures(imdata_ed,"sum", as="DataFrame")
+    peaklist<-summarizeFeatures(imdata_ed,"sum")
     peaklist_deco<-data.frame(mz=peaklist@mz,intensities=peaklist$sum)
     peaklist_deco<-peaklist_deco[peaklist_deco$intensities>0,]
     write.csv(peaklist_deco,paste0(gsub(".imzML$","",datafile[z])  ," ID/Sum_spec.csv"),row.names = F)
@@ -331,7 +331,7 @@ memory_profile<-function(){
         imdata_ed<- imdata_ed %>% peakPick(method=preprocess$peakPick$method, SNR=preprocess$peakPick$SNR, window=preprocess$peakPick$window) %>% process()
       }else if (preprocess$peakPick$method == "Default|default"){
         #add an peak picking function other than the Cardinal options.
-        peaklist<-summarizeFeatures(imdata_ed,"sum", as="DataFrame")
+        peaklist<-summarizeFeatures(imdata_ed,"sum")
         peaklist_deco<-data.frame(mz=peaklist@mz,intensities=peaklist$sum)
         peaklist_deco<-peaklist_deco[peaklist_deco$intensities>0,]
         peaklist_deco<-HiTMaP:::isopattern_ppm_filter_peaklist(peaklist_deco,ppm=ppm,threshold=0)
@@ -350,7 +350,7 @@ memory_profile<-function(){
       }else if ('&'(!is.null(preprocess$peakAlign$tolerance),!is.null(preprocess$peakAlign$tolerance))){
         message("preprocess$peakAlign$tolerance set as ", preprocess$peakAlign$tolerance)
         imdata_ed<- imdata_ed %>% peakAlign(tolerance=preprocess$peakAlign$tolerance, units=preprocess$peakAlign$units)
-        peaklist<-summarizeFeatures(imdata_ed,"sum", as="DataFrame")
+        peaklist<-summarizeFeatures(imdata_ed,"sum")
         peaklist_deco<-data.frame(mz=peaklist@mz,intensities=peaklist$sum)
         peaklist_deco<-peaklist_deco[peaklist_deco$intensities>0,]
         write.csv(peaklist_deco,paste0(gsub(".imzML$","",datafile[z])  ," ID/Sum_spec.csv"),row.names = F)
@@ -359,7 +359,7 @@ memory_profile<-function(){
       }else {
         message("preprocess$peakAlign$tolerance missing, use default tolerance in ppm ", ppm/2)
         imdata_ed<- imdata_ed %>% peakAlign(tolerance=ppm/2, units="ppm")
-        peaklist<-summarizeFeatures(imdata_ed,"sum", as="DataFrame")
+        peaklist<-summarizeFeatures(imdata_ed,"sum")
         peaklist_deco<-data.frame(mz=peaklist@mz,intensities=peaklist$sum)
         peaklist_deco<-peaklist_deco[peaklist_deco$intensities>0,]
         write.csv(peaklist_deco,paste0(gsub(".imzML$","",datafile[z])  ," ID/Sum_spec.csv"),row.names = F)
@@ -377,7 +377,7 @@ memory_profile<-function(){
       } else if (preprocess$normalize$method %in% c("rms","tic")){
         imdata_ed<- imdata_ed %>% normalize(method=preprocess$normalize$method) %>% process()
       } else if ('&'(preprocess$normalize$method == "reference", !is.null(preprocess$normalize$mz))){
-        norm_feature<-which(dplyr::between(imdata_ed@featureData@mz,
+        norm_feature<-which(dplyr::between(imdata_ed@featureData@listData[["mz"]],
                                            preprocess$normalize$mz*(1-ppm/1000000),
                                            preprocess$normalize$mz*(1+ppm/1000000)))
         if (length(norm_feature)>=1){

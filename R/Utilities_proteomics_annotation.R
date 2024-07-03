@@ -199,7 +199,11 @@ SCORE_PMF<-function(formula,peaklist,isotopes=NULL,threshold=1,charge=1,ppm=5,pr
   suppressMessages(suppressWarnings(require(OrgMassSpecR)))
   suppressMessages(suppressWarnings(require(enviPat)))
   suppressMessages(suppressWarnings(require(data.table)))
-  suppressMessages(suppressWarnings(require(rJava)))
+ suppressMessages(suppressWarnings(if (!require(rJava)){
+  if (Sys.getenv("JAVA_HOME")!="")
+    Sys.setenv(JAVA_HOME="")
+  library(rJava)
+}))
   suppressMessages(suppressWarnings(require(grid)))
   if (is.null(isotopes)){data("isotopes")}
 
