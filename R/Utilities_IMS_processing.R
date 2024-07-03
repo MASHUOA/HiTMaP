@@ -2086,13 +2086,13 @@ Preprocessing_segmentation<-function(datafile,
         x=1:length(pixels(imdata))
         x=split(x, sort(x%%1))
         names(x)="1"
-        png(paste(getwd(),"/","Segmentation_none","_image_plot_",segmentation_num,"_segs.png",sep=""),width = 1024,height = 720)
+        png(paste(getwd(),"/","Segmentation_none","_image_plot_","no","_segs.png",sep=""),width = 1024,height = 720)
         
         par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(1, 2),
             bty="n",pty="s",xaxt="n",
             yaxt="n",
             no.readonly = TRUE,ann=F)
-        imagefile<-Cardinal::image(imdata, factor(rep(1,length(pixels(imdata)))) ~ x * y, key=T, ann=FALSE,axes=FALSE)
+        imagefile<-Cardinal::image(imdata, key=T, ann=FALSE,axes=FALSE)
         print(imagefile)
         dev.off()
       }
@@ -2101,13 +2101,13 @@ Preprocessing_segmentation<-function(datafile,
       x=1:length(pixels(imdata))
       x=split(x, sort(x%%1))
       names(x)="1"
-      png(paste(getwd(),"/","Segmentation_none","_image_plot_",segmentation_num,"_segs.png",sep=""),width = 1024,height = 720)
+      png(paste(getwd(),"/","Segmentation_none","_image_plot_","no","_segs.png",sep=""),width = 1024,height = 720)
       
       par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(1, 2),
           bty="n",pty="s",xaxt="n",
           yaxt="n",
           no.readonly = TRUE,ann=F)
-      imagefile<-Cardinal::image(imdata, factor(rep(1,length(pixels(imdata)))) ~ x * y, key=T, ann=FALSE,axes=FALSE)
+      imagefile<-Cardinal::image(imdata, key=T, ann=FALSE,axes=FALSE)
       print(imagefile)
       dev.off()
     }else {
