@@ -1,4 +1,4 @@
-FROM rocker/r-base:latest
+FROM rocker/r-base:4.4.1
 
 
 LABEL org.opencontainers.image.licenses="GPL-3.0-or-later" \
@@ -21,18 +21,26 @@ WORKDIR /build
 
 #COPY sandbox-disable /etc/apt/apt.conf.d/sandbox-disable
 
-# Install system dependencies and clean up afterwards
-COPY hitmap_base.sh /hitmap_base.sh
+COPY . .
 
-RUN /hitmap_base.sh
+# Install system dependencies and clean up afterwards
+
+RUN apt-get update \
+ && apt-get upgrade -y 
+RUN apt-get install -y aptitude
+RUN aptitude install -y dialog default-jdk libcurl4-openssl-dev libxml2-dev libssl-dev libudunits2-dev
+RUN aptitude install -y librsvg2-dev libmagick++-dev r-cran-ncdf4 libz-dev libnss-winbind
+RUN aptitude install -y winbind dirmngr gnupg apt-transport-https ca-certificates software-properties-common 
+RUN aptitude install -y libfftw3-dev texlive libgdal-dev ghostscript libharfbuzz-dev libfribidi-dev
 RUN rm -rf /var/lib/apt/lists/*
-COPY install.R /install.R
+
 COPY install_step2.R /install_step2.R
 RUN Rscript /install_step2.R
 
 # Replace configuration file for Image Magick
 COPY ./policy.xml /etc/ImageMagick-6
 
+RUN Rscript install.R
 
 RUN R CMD javareconf
 CMD ["/bin/bash"]

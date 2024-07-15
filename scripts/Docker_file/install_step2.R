@@ -1,20 +1,16 @@
 
 install.packages("BiocManager")
+install.packages("systemfonts")
+install.packages("remotes")
 install.packages("devtools")
-if (!require(plotly)) devtools::install_github("ropensci/plotly@async")
-if (!require(htmlwidgets)) devtools::install_github("ramnathv/htmlwidgets")
+library(devtools)
+if (!require(plotly)) remotes::install_github("ropensci/plotly@async")
+if (!require(htmlwidgets)) remotes::install_github("ramnathv/htmlwidgets")
 install.packages("tidyverse")
 install.packages("reshape2")
-library(devtools)
-BiocManager::install(c("EBImage","ChemmineR","matter","Cardinal"))
+BiocManager::install(c("EBImage","ChemmineR","matter","Cardinal"),ask=F)
 Sys.setenv("R_REMOTES_NO_ERRORS_FROM_WARNINGS" = "true")
-devtools::install_github(
-  "kuwisdelu/Cardinal",
-  force=TRUE,
-  upgrade="always",
-  verbose=TRUE
-)
-devtools::install_github(
+remotes::install_github(
   "MASHUOA/HiTMaP",
   force=TRUE,
   upgrade="always",

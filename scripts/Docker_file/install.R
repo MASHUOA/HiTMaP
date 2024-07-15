@@ -6,6 +6,8 @@ install.packages("ragg")
 install.packages("pkgdown")
 install.packages("devtools")
 BiocManager::install(c("EBImage","ChemmineR","Cardinal"))
+BiocManager::install(c( "XVector", "Biostrings", "KEGGREST","cleaver"))
+remotes::install_github("sneumann/Rdisop")
 library(remotes)
 Sys.setenv("R_REMOTES_NO_ERRORS_FROM_WARNINGS" = "true")
 remotes::install_github(
