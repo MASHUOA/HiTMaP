@@ -773,7 +773,7 @@ imaging_Spatial_Quant<-function(
         rotate=Rotate_IMG[Rotate_IMG$filenames==datafile_imzML[i],"rotation"]
         if(is.null(rotate)) rotate=0
         rotate= as.numeric(rotate)
-        imdata[[i]]=Load_Cardinal_imaging(datafile[i],preprocessing = F,resolution = ppm*2,rotate = rotate, as="MSImagingExperiment")
+        imdata[[i]]=Load_Cardinal_imaging(datafile[i],preprocessing = F,resolution = ppm*2,rotate = rotate)
         mzrangetemp=range(imdata[[1]]@featureData@listData[["mz"]])
         if (is.null(mzrange)) {mzrange=mzrangetemp}else{
           if (mzrange[1]<mzrangetemp[1]){mzrange[1]<-mzrangetemp[1]}
@@ -787,7 +787,7 @@ imaging_Spatial_Quant<-function(
       rotate=Rotate_IMG[Rotate_IMG$filenames==datafile_imzML[i],"rotation"]
       if(is.null(rotate)) rotate=0
       rotate=as.numeric(rotate)
-      imdata[[i]]=Load_Cardinal_imaging(datafile[i],preprocessing = F,resolution = ppm*2,rotate = rotate, as="MSImagingExperiment",mzrange=mzrange)
+      imdata[[i]]=Load_Cardinal_imaging(datafile[i],preprocessing = F,resolution = ppm*2,rotate = rotate,mzrange=mzrange)
       #imdata[[i]]@elementMetadata@listData=imdata[[i]]@elementMetadata@listData[,c("x","y")]
       if (i==1) {
         combinedimdata<-imdata[[i]]
@@ -1256,7 +1256,7 @@ Preprocessing_segmentation<-function(datafile,
                                      mzrange="auto-detect",
                                      Segmentation=c("spatialKMeans","spatialShrunkenCentroids","Virtual_segmentation","none","def_file"),
                                      Segmentation_def="segmentation_def.csv",
-                                     Segmentation_ncomp="auto-detect",
+                                     Segmentation_ncomp=max(segmentation_num),
                                      Segmentation_variance_coverage=0.8,
                                      Smooth_range=1,
                                      colorstyle="Set1",
@@ -1265,7 +1265,7 @@ Preprocessing_segmentation<-function(datafile,
                                      BPPARAM=bpparam(),
                                      preprocess=list(force_preprocess=FALSE,use_preprocessRDS=TRUE,mz_bin_list=NULL,smoothSignal=list(method="gaussian"),
                                                      reduceBaseline=list(method="locmin"),
-                                                     peakPick=list(method="Default",SNR=6,window=5),
+                                                     peakPick=list(method="Default",SNR=6),
                                                      peakAlign=list(tolerance=ppm/2, units="ppm", level=c("global","local")),
                                                      peakFilter=list(freq.min=0.05),
                                                      normalize=list(method=c("rms","tic","reference")[1],mz=1))){
@@ -1317,10 +1317,10 @@ Preprocessing_segmentation<-function(datafile,
     
     message("Loading raw image data for statistical analysis: ",paste0(gsub(".imzML$","",datafile[z]), ".imzML"))
     if(mzrange[1]=="auto-detect"){
-      imdata <- Cardinal::readMSIData(datafile_imzML[z],   as="MSImagingExperiment",resolution=import_ppm, units="ppm",BPPARAM=SerialParam())
+      imdata <- Cardinal::readMSIData(datafile_imzML[z],resolution=import_ppm, units="ppm",BPPARAM=SerialParam())
       imdata@centroided<-F
     }else {
-      imdata <- Cardinal::readMSIData(datafile_imzML[z],   as="MSImagingExperiment",resolution=import_ppm, units="ppm",BPPARAM=SerialParam(),mass.range =mzrange)
+      imdata <- Cardinal::readMSIData(datafile_imzML[z],resolution=import_ppm, units="ppm",BPPARAM=SerialParam(),mass.range =mzrange)
       imdata <-imdata[between(mz(imdata),mzrange[1],mzrange[2]),]
       imdata@centroided<-F
     }
@@ -1410,8 +1410,7 @@ Preprocessing_segmentation<-function(datafile,
           if (preprocess$peakPick$method=="Disable") {
           }else if (preprocess$peakPick$method %in% c("adaptive","mad","simple")){
             if (is.null(preprocess$peakPick$SNR)) preprocess$peakPick$SNR=6
-            if (is.null(preprocess$peakPick$window)) preprocess$peakPick$window=5
-            imdata_ed<- imdata_ed %>% peakPick(method=preprocess$peakPick$method, SNR=preprocess$peakPick$SNR, window=preprocess$peakPick$window) %>% process()
+            imdata_ed<- imdata_ed %>% peakPick(method=preprocess$peakPick$method, SNR=preprocess$peakPick$SNR) %>% process()
           }else if (preprocess$peakPick$method == "Default|default"){
             #add an peak picking function other than the Cardinal options.
             peaklist<-summarizeFeatures(imdata_ed,"sum")
@@ -1519,7 +1518,7 @@ Preprocessing_segmentation<-function(datafile,
           
           if (preprocess$peakPick$method=="Disable") {
           }else if (preprocess$peakPick$method %in% c("adaptive","mad","simple")){
-            imdata_ed<- imdata_ed %>% peakPick(method=preprocess$peakPick$method, window=4) %>% process()
+            imdata_ed<- imdata_ed %>% peakPick(method=preprocess$peakPick$method) %>% process()
           }else if (preprocess$peakPick$method == "Default|default"){
             #add an peak picking function other than the Cardinal options.
             imdata_ed<-imdata_ed %>% peakBin(peaklist_deco$mz, tolerance=ppm, units="ppm") %>% process()
@@ -1589,16 +1588,16 @@ Preprocessing_segmentation<-function(datafile,
       imdata_ed<-readRDS(paste0(gsub(".imzML$","",datafile[z])  ," ID/preprocessed_imdata.RDS"))
       #imdata_ed<-imdata
       if(mzrange[1]=="auto-detect"){
-        imdata <- Cardinal::readMSIData(datafile_imzML[z],   as="MSImagingExperiment",resolution=import_ppm, units="ppm",BPPARAM=SerialParam())
+        imdata <- Cardinal::readMSIData(datafile_imzML[z],resolution=import_ppm, units="ppm",BPPARAM=SerialParam())
       }else {
-        imdata <- Cardinal::readMSIData(datafile_imzML[z],   as="MSImagingExperiment",resolution=import_ppm, units="ppm",BPPARAM=SerialParam(),mass.range =mzrange)
+        imdata <- Cardinal::readMSIData(datafile_imzML[z],resolution=import_ppm, units="ppm",BPPARAM=SerialParam(),mass.range =mzrange)
       }
     }else{
       message("Using image data: ",paste0(gsub(".imzML$","",datafile[z]), ".imzML"))
       if(mzrange[1]=="auto-detect"){
-        imdata <- Cardinal::readMSIData(datafile_imzML[z],   as="MSImagingExperiment",resolution=import_ppm, units="ppm",BPPARAM=SerialParam())
+        imdata <- Cardinal::readMSIData(datafile_imzML[z],resolution=import_ppm, units="ppm",BPPARAM=SerialParam())
       }else {
-        imdata <- Cardinal::readMSIData(datafile_imzML[z],   as="MSImagingExperiment",resolution=import_ppm, units="ppm",BPPARAM=SerialParam(),mass.range =mzrange)
+        imdata <- Cardinal::readMSIData(datafile_imzML[z],resolution=import_ppm, units="ppm",BPPARAM=SerialParam(),mass.range =mzrange)
       }
       if(!is.na(rotate[datafile_imzML[z]])){
         imdata <-rotateMSI(imdata=imdata,rotation_degree=rotate[datafile_imzML[z]])
@@ -1664,8 +1663,8 @@ Preprocessing_segmentation<-function(datafile,
           Segmentation_ncomp_running<-PCA_ncomp_selection(imdata_stats,variance_coverage=Segmentation_variance_coverage,outputdir=paste0(getwd(),"/"))
         }else{Segmentation_ncomp_running<-Segmentation_ncomp}
         set.seed(1)
-        
-        skm <-  suppressMessages(suppressWarnings(spatialKMeans(imdata_stats, r=Smooth_range, k=segmentation_num, weights ="adaptive",BPPARAM =BPPARAM )))
+        imdata_stats<<-imdata_stats
+        skm <-  spatialKMeans(imdata_stats, r=Smooth_range, k=segmentation_num)
         message(paste0(Segmentation[1], " finished: ",name))
         png(paste(getwd(),"/",Segmentation[1],"_image_plot_",segmentation_num,"_segs.png",sep=""),width = 1024,height = 720)
         
@@ -2183,7 +2182,7 @@ Load_IMS_combine<-function(datafile,rotate=NULL,ppm=5,...){
       rotate=Rotate_IMG[Rotate_IMG$filenames==basename(datafile[i]),"rotation"]
       rotate=as.numeric(rotate)
       if (length(rotate)==0){rotate=0}
-      imdata[[i]]=Load_Cardinal_imaging(datafile[i],preprocessing = F,resolution = ppm,rotate = rotate, as=as,mzrange=mzrange)
+      imdata[[i]]=Load_Cardinal_imaging(datafile[i],preprocessing = F,resolution = ppm,rotate = rotate, as,mzrange=mzrange)
       if (i==1) {
         testrange=c(min(imdata[[i]]@featureData@listData[["mz"]]),max(imdata[[i]]@featureData@listData[["mz"]]))
       }else{
@@ -2200,9 +2199,9 @@ Load_IMS_combine<-function(datafile,rotate=NULL,ppm=5,...){
     rotate=as.numeric(rotate)
     if (length(rotate)==0){rotate=0}
     #if (length(datafile)==1){
-    #imdata[[i]]=Load_Cardinal_imaging(datafile[i],preprocessing = F,resolution = ppm*2,rotate = rotate, as="MSImageSet",mzrange=mzrange)
+    #imdata[[i]]=Load_Cardinal_imaging(datafile[i],preprocessing = F,resolution = ppm*2,rotate = rotate,mzrange=mzrange)
     #}else{
-    imdata[[i]]=Load_Cardinal_imaging(datafile[i],preprocessing = F,resolution = ppm*2,rotate = rotate, as=as,mzrange=mzrange)
+    imdata[[i]]=Load_Cardinal_imaging(datafile[i],preprocessing = F,resolution = ppm*2,rotate = rotate,mzrange=mzrange)
     #}
     #imdata[[i]]@elementMetadata@listData=imdata[[i]]@elementMetadata@listData[,c("x","y")]
     #max(imdata[[i]]@featureData@listData[["mz"]])
@@ -2245,7 +2244,7 @@ Load_IMS_decov_combine<-function(datafile,workdir,ppm=5,import_ppm=ppm/2,SPECTRU
       name <-gsub("/$","",name)
       setwd(workdir[z])
       folder<-base::dirname(datafile[z])
-      #imdata <- Cardinal::readImzML(datafile[z],preprocessing = F, resolution = 200,rotate = rotate[z],as="MSImageSet",BPPARAM = BPPARAM)
+      #imdata <- Cardinal::readImzML(datafile[z],preprocessing = F, resolution = 200,rotate = rotate[z],BPPARAM = BPPARAM)
       if (!str_detect(datafile[z],".imzML$")){
         datafile_imzML[z]<-paste0(datafile[z],".imzML")
       }
@@ -2267,9 +2266,9 @@ Load_IMS_decov_combine<-function(datafile,workdir,ppm=5,import_ppm=ppm/2,SPECTRU
       }else if (use_rawdata){
         message("Loading raw image data for statistical analysis: ",paste0(gsub(".imzML$","",datafile[z]), ".imzML"))
         if(mzrange[1]=="auto-detect"){
-          imdata <- Cardinal::readMSIData(paste0(workdir[z],"/",datafile_imzML[z]),   as="MSImagingExperiment",resolution=import_ppm, units="ppm",BPPARAM=SerialParam())
+          imdata <- Cardinal::readMSIData(paste0(workdir[z],"/",datafile_imzML[z]),resolution=import_ppm, units="ppm",BPPARAM=SerialParam())
         }else {
-          imdata <- Cardinal::readMSIData(paste0(workdir[z],"/",datafile_imzML[z]),   as="MSImagingExperiment",resolution=import_ppm, units="ppm",BPPARAM=SerialParam(),mass.range =mzrange)
+          imdata <- Cardinal::readMSIData(paste0(workdir[z],"/",datafile_imzML[z]),resolution=import_ppm, units="ppm",BPPARAM=SerialParam(),mass.range =mzrange)
         }
         if(!is.na(rotate[datafile_imzML[z]])){
           imdata <-HiTMaP:::rotateMSI(imdata=imdata,rotation_degree=rotate[datafile_imzML[z]])
@@ -2522,9 +2521,9 @@ Load_IMS_decov_combine<-function(datafile,workdir,ppm=5,import_ppm=ppm/2,SPECTRU
           }else if (use_rawdata){
       message("Loading raw image data for statistical analysis: ",paste0(gsub(".imzML$","",datafile[z]), ".imzML"))
       if(mzrange[1]=="auto-detect"){
-        imdata <- Cardinal::readMSIData(paste0(workdir[z],"/",datafile_imzML[z]),   as="MSImagingExperiment",resolution=import_ppm, units="ppm",BPPARAM=SerialParam())
+        imdata <- Cardinal::readMSIData(paste0(workdir[z],"/",datafile_imzML[z]),resolution=import_ppm, units="ppm",BPPARAM=SerialParam())
       }else {
-        imdata <- Cardinal::readMSIData(paste0(workdir[z],"/",datafile_imzML[z]),   as="MSImagingExperiment",resolution=import_ppm, units="ppm",BPPARAM=SerialParam(),mass.range =mzrange)
+        imdata <- Cardinal::readMSIData(paste0(workdir[z],"/",datafile_imzML[z]),resolution=import_ppm, units="ppm",BPPARAM=SerialParam(),mass.range =mzrange)
       }
       if(!is.na(rotate[datafile_imzML[z]])){
         imdata <-HiTMaP:::rotateMSI(imdata=imdata,rotation_degree=rotate[datafile_imzML[z]])
@@ -2650,7 +2649,7 @@ load_pixel_label<-function(combinedimdata,datafile,workdir,coordata_file="coorda
     name <-gsub("/$","",name)
     setwd(workdir[z])
     folder<-base::dirname(datafile[z])
-    #imdata <- Cardinal::readImzML(datafile[z],preprocessing = F, resolution = 200,rotate = rotate[z],as="MSImageSet",BPPARAM = BPPARAM)
+    #imdata <- Cardinal::readImzML(datafile[z],preprocessing = F, resolution = 200,rotate = rotate[z],BPPARAM = BPPARAM)
     if (!str_detect(datafile[z],".imzML$")){
       datafile_imzML[z]<-paste0(datafile[z],".imzML")
     }
@@ -2988,11 +2987,11 @@ IMS_data_process_quant<-function (datafile, Peptide_Summary_searchlist, segmenta
     name <-gsub(".imzML$","",name)
     name <-gsub("/$","",name)
     folder<-base::dirname(datafile[z])
-    #imdata <- Cardinal::readImzML(datafile[z],preprocessing = F, resolution = 200,rotate = rotate[z],as="MSImageSet",BPPARAM = BPPARAM)
+    #imdata <- Cardinal::readImzML(datafile[z],preprocessing = F, resolution = 200,rotate = rotate[z],BPPARAM = BPPARAM)
     if (!str_detect(datafile[z],".imzML$")){
       datafile_imzML[z]<-paste0(datafile[z],".imzML")
     }
-    imdata <- Cardinal::readMSIData(datafile_imzML[z],   as="MSImageSet",resolution=200, units="ppm")
+    imdata <- Cardinal::readMSIData(datafile_imzML[z],resolution=200, units="ppm")
 
 
     #imdata <- Load_Cardinal_imaging(datafile[z], preprocessing = F,

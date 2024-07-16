@@ -67,7 +67,7 @@ memory_profile<-function(){
   log.txt<-NULL
   
   
-  imdata <- Cardinal::readMSIData(datafile_imzML[z],   as="MSImagingExperiment",resolution=10, units="ppm",BPPARAM=SerialParam())
+  imdata <- Cardinal::readMSIData(datafile_imzML[z],resolution=10, units="ppm",BPPARAM=SerialParam())
   imdata@centroided<-F
   imdata->imdata_org
   imdata[,2800:3000]->imdata
@@ -203,7 +203,7 @@ memory_profile<-function(){
     tic(paste(resolution,"SS_RB_PP"))
     imdata_ed<- imdata_ed %>% smoothSignal(method=preprocess$smoothSignal$method)
     imdata_ed<- imdata_ed %>% reduceBaseline(method=preprocess$reduceBaseline$method)
-    imdata_ed<- imdata_ed %>% peakPick(method=preprocess$peakPick$method, SNR=preprocess$peakPick$SNR, window=preprocess$peakPick$window) %>% process()
+    imdata_ed<- imdata_ed %>% peakPick(method=preprocess$peakPick$method, SNR=preprocess$peakPick$SNR) %>% process()
     imdatalist[[paste(resolution,"SS_RB_PP")]]<-imdata_ed
     toc(log=TRUE,quiet=TRUE) 
     tic(paste(resolution,"SS_RB_PP_PA"))
@@ -327,8 +327,7 @@ memory_profile<-function(){
       if (preprocess$peakPick$method=="Disable") {
       }else if (preprocess$peakPick$method %in% c("adaptive","mad","simple")){
         if (is.null(preprocess$peakPick$SNR)) preprocess$peakPick$SNR=6
-        if (is.null(preprocess$peakPick$window)) preprocess$peakPick$window=5
-        imdata_ed<- imdata_ed %>% peakPick(method=preprocess$peakPick$method, SNR=preprocess$peakPick$SNR, window=preprocess$peakPick$window) %>% process()
+        imdata_ed<- imdata_ed %>% peakPick(method=preprocess$peakPick$method, SNR=preprocess$peakPick$SNR) %>% process()
       }else if (preprocess$peakPick$method == "Default|default"){
         #add an peak picking function other than the Cardinal options.
         peaklist<-summarizeFeatures(imdata_ed,"sum")

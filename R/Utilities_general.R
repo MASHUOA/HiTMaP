@@ -5,7 +5,7 @@ Load_Cardinal_imaging<-function(datafile=tk_choose.files(filter = Filters,
                                 resolution=2.5,
                                  
                                 preprocessing=F,
-                                rotate=0,as="MSImagingExperiment",
+                                rotate=0,
                                 mzrange=NULL,is_centroided=F){
   #imdata_meta <- importImzMl(datafile, coordinates = matrix(c(2, 4),nrow=1, ncol=2),removeEmptySpectra = F, centroided = T)
   suppressMessages(suppressWarnings(library(stringr)))

@@ -138,7 +138,7 @@ Preprocessing_segmentation<-function(datafile,
         }
         setwd(workdir)
         message("Porject dir",workdir)
-        # imdata <- Cardinal::readMSIData(datafile_imzML[z],  attach.only=T,as="MSImagingExperiment",resolution=200, units="ppm",BPPARAM=BPPARAM,mass.range =mzrange)
+        # imdata <- Cardinal::readMSIData(datafile_imzML[z],  attach.only=T,resolution=200, units="ppm",BPPARAM=BPPARAM,mass.range =mzrange)
         # if(!is.na(rotate[datafile_imzML[z]])){
         #   imdata <-rotateMSI(imdata=imdata,rotation_degree=rotate[datafile_imzML[z]])
         # }else if(!is.na(rotate[datafile[z]])){
@@ -161,7 +161,7 @@ Preprocessing_segmentation<-function(datafile,
         
         if (!file.exists(paste0(gsub(".imzML$","",datafile[z])  ," ID/preprocessed_imdata.RDS"))){
             message("Preparing image data for statistical analysis: ",paste0(gsub(".imzML$","",datafile[z]), ".imzML"))
-            imdata <- Cardinal::readMSIData(datafile_imzML[z],  attach.only=T,as="MSImagingExperiment",resolution=ppm, units="ppm",BPPARAM=BPPARAM,mass.range =mzrange)
+            imdata <- Cardinal::readMSIData(datafile_imzML[z],  attach.only=T,resolution=ppm, units="ppm",BPPARAM=BPPARAM,mass.range =mzrange)
             if(!is.na(rotate[datafile_imzML[z]])){
                 imdata <-rotateMSI(imdata=imdata,rotation_degree=rotate[datafile_imzML[z]])
             }else if(!is.na(rotate[datafile[z]])){
@@ -195,11 +195,11 @@ Preprocessing_segmentation<-function(datafile,
             
             imdata_ed<-readRDS(paste0(gsub(".imzML$","",datafile[z])  ," ID/preprocessed_imdata.RDS"))
             #imdata_ed<-imdata
-            imdata <- Cardinal::readMSIData(datafile_imzML[z],  attach.only=T,as="MSImagingExperiment",resolution=ppm, units="ppm",BPPARAM=BPPARAM,mass.range =mzrange)
+            imdata <- Cardinal::readMSIData(datafile_imzML[z],  attach.only=T,resolution=ppm, units="ppm",BPPARAM=BPPARAM,mass.range =mzrange)
             
         }else{
             message("Using image data: ",paste0(gsub(".imzML$","",datafile[z]), ".imzML"))
-            imdata <- Cardinal::readMSIData(datafile_imzML[z],  attach.only=T,as="MSImagingExperiment",resolution=ppm, units="ppm",BPPARAM=BPPARAM,mass.range =mzrange)
+            imdata <- Cardinal::readMSIData(datafile_imzML[z],  attach.only=T,resolution=ppm, units="ppm",BPPARAM=BPPARAM,mass.range =mzrange)
             if(!is.na(rotate[datafile_imzML[z]])){
                 imdata <-rotateMSI(imdata=imdata,rotation_degree=rotate[datafile_imzML[z]])
             }else if(!is.na(rotate[datafile[z]])){
