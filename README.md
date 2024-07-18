@@ -168,7 +168,9 @@ install.packages("devtools")
 #library(devtools)
 library(remotes)
 Sys.setenv("R_REMOTES_NO_ERRORS_FROM_WARNINGS" = "true")
-remotes::install_github("MASHUOA/HiTMaP",force=T)
+BiocManager::install(c( "XVector", "Biostrings", "KEGGREST","cleaver"))
+remotes::install_github("sneumann/Rdisop")
+remotes::install_github("MASHUOA/HiTMaP",force=T,build_opts = c("--no-resave-data", "--no-manual", "--no-build-vignettes"),configure.vars="CFLAGS= -O3 -Wall -mtune=native -march=native")
 remotes::install_github("kuwisdelu/Cardinal",force=T)
 3
 no
@@ -320,7 +322,7 @@ preprocess = list(force_preprocess=TRUE,
                   use_preprocessRDS=FALSE,
                   smoothSignal=list(method = c("Disable", "gaussian", "sgolay", "ma")[1]),
                   reduceBaseline=list(method = c("Disable", "locmin", "median")[1]),
-                  peakPick=list(method=c("mad", "simple", "adaptive")[3]),
+                  peakPick=list(method=c("diff", "sd", "mad", "quantile", "filter", "cwt")[3]),
                   peakAlign=list(tolerance=5, units="ppm", level=c("local","global")[1], method=c("Enable","Disable")[1]),
                   normalize=list(method=c("Disable","rms","tic","reference")[1], mz=NULL)
                   )

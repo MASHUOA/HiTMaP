@@ -3368,3 +3368,63 @@ Center_of_gravity_and_contour<-function(imdata,BPPARAM=NULL){
   p
 
 }
+
+preprocess_validation<-function(preprocess){
+  library(Cardinal)
+  
+  if (preprocess == "smooth") {
+    preprocess = TRUE
+  }
+  else if (preprocess == "reduceBaseline") {
+    preprocess = TRUE
+  }
+  else if (preprocess == "peakPick") {
+    preprocess = TRUE
+  }
+  else if (preprocess == "peakAlign") {
+    preprocess = TRUE
+  }
+  else {
+    message("Invalid preprocess option, please choose from: none, normalize, smooth, reduceBaseline, peakPick, peakAlign")
+    preprocess = FALSE
+  }
+  ## S4 method for signature 'MSImagingExperiment'  
+  peakAlign(object, ref, spectra = "intensity", index = "mz", tolerance = NA, units = c("ppm", "mz"), ...) 
+  ## S4 method for signature 'MSImagingArrays' 
+  peakAlign(object, ref, spectra = "intensity", index = "mz", tolerance = NA, units = c("ppm", "mz"), ...) 
+  ## S4 method for signature 'SpectralImagingExperiment' 
+  peakAlign(object, ref, spectra = "intensity", index = NULL, tolerance = NA, units = c("relative", "absolute"), nchunks = getCardinalNChunks(), verbose = getCardinalVerbose(), BPPARAM = getCardinalBPPARAM(), ...) 
+  ## S4 method for signature 'SpectralImagingArrays' 
+  peakAlign(object, ref, spectra = "intensity", index = NULL, tolerance = NA, units = c("relative", "absolute"), nchunks = getCardinalNChunks(), verbose = getCardinalVerbose(), BPPARAM = getCardinalBPPARAM(), ...)
+  ## S4 method for signature 'MSImagingExperiment' 
+  peakPick(object, ref, method = c("diff", "sd", "mad", "quantile", "filter", "cwt"), 
+    SNR = 2, type = c("height", "area"), tolerance = NA, units = c("ppm", "mz"), ...) 
+  ## S4 method for signature 'MSImagingArrays' 
+  peakPick(object, ref, method = c("diff", "sd", "mad", "quantile", "filter", "cwt"), 
+    SNR = 2, type = c("height", "area"), tolerance = NA, units = c("ppm", "mz"), ...) 
+  ## S4 method for signature 'SpectralImagingData' 
+  peakPick(object, ref, method = c("diff", "sd", "mad", "quantile", "filter", "cwt"), 
+    SNR = 2, type = c("height", "area"), tolerance = NA, units = c("relative", "absolute"), ...)
+  ## S4 method for signature 'SpectralImagingData' 
+  normalize(object, method = c("tic", "rms", "reference"), ...)
+  
+  ## S4 method for signature 'MSImagingExperiment_OR_Arrays'
+  peakProcess(object, ref, spectra = "intensity", index = "mz", 
+    method = c("diff", "sd", "mad", "quantile", "filter", "cwt"), 
+    SNR = 2, type = c("height", "area"), tolerance = NA, units = c("ppm", "mz"), 
+    sampleSize = NA, filterFreq = TRUE, outfile = NULL, 
+    nchunks = getCardinalNChunks(), verbose = getCardinalVerbose(), BPPARAM = getCardinalBPPARAM(), ...)
+  
+  ## S4 method for signature 'MSImagingExperiment_OR_Arrays' 
+  recalibrate(object, ref, method = c("locmax", "dtw", "cow"), 
+    tolerance = NA, units = c("ppm", "mz"), ...) 
+  ## S4 method for signature 'SpectralImagingData' 
+  recalibrate(object, ref, method = c("locmax", "dtw", "cow"), 
+    tolerance = NA, units = c("relative", "absolute"), ...)
+  ## S4 method for signature 'SpectralImagingData'
+  reduceBaseline(object, method = c("locmin", "hull", "snip", "median"), ...)
+  
+  ## S4 method for signature 'SpectralImagingData' 
+  smooth(x, method = c("gaussian", "bilateral", "adaptive", "diff", "guide", "pag", "sgolay", "ma"), ...)
+  
+}
