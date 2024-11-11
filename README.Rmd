@@ -1874,7 +1874,7 @@ using HIT-MAP" online on the 28th May 2021.
 
 # Session information
 
-```{r}
+```{r `sessionInfo`, include=TRUE, eval=TRUE}
 sessionInfo()
 ```
 

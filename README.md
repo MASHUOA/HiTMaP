@@ -1081,8 +1081,8 @@ using HIT-MAP” online on the 28th May 2021.
 sessionInfo()
 ```
 
-    ## R version 4.3.3 (2024-02-29 ucrt)
-    ## Platform: x86_64-w64-mingw32/x64 (64-bit)
+    ## R version 4.4.2 (2024-10-31 ucrt)
+    ## Platform: x86_64-w64-mingw32/x64
     ## Running under: Windows 10 x64 (build 19045)
     ## 
     ## Matrix products: default
@@ -1097,22 +1097,21 @@ sessionInfo()
     ## tzcode source: internal
     ## 
     ## attached base packages:
-    ## [1] grid      stats     graphics  grDevices utils     datasets  methods  
-    ## [8] base     
+    ## [1] stats     graphics  grDevices utils     datasets  methods   base     
     ## 
     ## other attached packages:
-    ## [1] gridExtra_2.3   XML_3.99-0.16.1 protViz_0.7.9   dplyr_1.1.4    
-    ## [5] magick_2.8.3    HiTMaP_1.0.0   
+    ## [1] gridExtra_2.3 XML_3.99-0.17 protViz_0.7.9 dplyr_1.1.4   magick_2.8.5 
+    ## [6] HiTMaP_1.0.0 
     ## 
     ## loaded via a namespace (and not attached):
-    ##  [1] vctrs_0.6.5       cli_3.6.2         knitr_1.46        rlang_1.1.3      
-    ##  [5] xfun_0.43         highr_0.10        stringi_1.8.3     generics_0.1.3   
-    ##  [9] glue_1.7.0        htmltools_0.5.8.1 fansi_1.0.6       rmarkdown_2.26   
-    ## [13] evaluate_0.23     tibble_3.2.1      fastmap_1.1.1     yaml_2.3.8       
-    ## [17] lifecycle_1.0.4   stringr_1.5.1     compiler_4.3.3    codetools_0.2-20 
-    ## [21] Rcpp_1.0.12       pkgconfig_2.0.3   rstudioapi_0.16.0 digest_0.6.35    
-    ## [25] R6_2.5.1          tidyselect_1.2.1  utf8_1.2.4        pillar_1.9.0     
-    ## [29] magrittr_2.0.3    gtable_0.3.5      tools_4.3.3
+    ##  [1] vctrs_0.6.5       cli_3.6.3         knitr_1.49        rlang_1.1.4      
+    ##  [5] xfun_0.49         generics_0.1.3    glue_1.8.0        htmltools_0.5.8.1
+    ##  [9] fansi_1.0.6       rmarkdown_2.29    grid_4.4.2        evaluate_1.0.1   
+    ## [13] tibble_3.2.1      fastmap_1.2.0     yaml_2.3.10       lifecycle_1.0.4  
+    ## [17] compiler_4.4.2    codetools_0.2-20  Rcpp_1.0.13-1     pkgconfig_2.0.3  
+    ## [21] rstudioapi_0.17.1 digest_0.6.37     R6_2.5.1          tidyselect_1.2.1 
+    ## [25] utf8_1.2.4        pillar_1.9.0      magrittr_2.0.3    gtable_0.3.6     
+    ## [29] tools_4.4.2
 
 End of the tutorial, Enjoy~
 
