@@ -799,7 +799,7 @@ imaging_Spatial_Quant<-function(
     }
 
 
-    combinedimdata@elementMetadata@listData@listData[["z"]]=NULL
+    combinedimdata@elementMetadata@listData[["z"]]=NULL
 
     imdata=combinedimdata
 
@@ -1172,7 +1172,7 @@ rank_mz_feature<-function(Peptide_plot_list,mz_feature,BPPARAM=bpparam()){
 
 rotateMSI<-function(imdata,rotation_degree=0){
 
-  rotatetmp<-as.data.frame(imdata@elementMetadata@listData@listData)
+  rotatetmp<-as.data.frame(imdata@elementMetadata@listData)
 
   rotatenew<-affine_grid(rotatetmp[,c("x","y")],rotate=rotation_degree,grid = T)
 
@@ -1184,7 +1184,7 @@ rotateMSI<-function(imdata,rotation_degree=0){
 
   rownames(rotatenew)<-paste0("x = ",rotatenew$x,", ","y = ",rotatenew$y,", ","z = ",rotatenew$z)
   rotatenew$z=rotatetmp$z
-  imdata@elementMetadata@listData@listData<-as.list(rotatenew)
+  imdata@elementMetadata@listData<-as.list(rotatenew)
   return(imdata)
 }
 
@@ -1335,7 +1335,7 @@ Preprocessing_segmentation<-function(datafile,
       
       run(imdata)<-factor(rep("Before",length(run(imdata))))
       Cardinal::cbind(imdata,imdata_r)->imdata_rimdata_new
-      imdata_rimdata_new@elementMetadata@listData@listData[["z"]]<-NULL
+      imdata_rimdata_new@elementMetadata@listData[["z"]]<-NULL
       png(paste0(gsub(".imzML$","",datafile[z])  ," ID/","IMG_roation.png"),width = 1600,height = 800, res=200)
       print(image(imdata_rimdata_new,factor(run(imdata_rimdata_new)) ~ x * y ,superpose=F, key=T,
                   layout=c(1,2)))
@@ -2214,7 +2214,7 @@ Load_IMS_combine<-function(datafile,rotate=NULL,ppm=5,...){
     imdata[[i]]=NULL
   }
 
-  combinedimdata@elementMetadata@listData@listData[["z"]]=NULL
+  combinedimdata@elementMetadata@listData[["z"]]=NULL
 
   imdata=combinedimdata
 
@@ -2566,7 +2566,7 @@ Load_IMS_decov_combine<-function(datafile,workdir,ppm=5,import_ppm=ppm/2,SPECTRU
     imdata <- imdata %>%
     mzBin(deconv_peaklist_decov_plot$m.z, resolution=ppm, units="ppm")%>%
       process()
-    imdata@elementMetadata@listData@listData[["z"]]<-NULL
+    imdata@elementMetadata@listData[["z"]]<-NULL
     imdata@elementMetadata@resolution=c(x=1,y=1)
 
     combinedimdata_list[[z]]<-imdata
