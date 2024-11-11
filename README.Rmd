@@ -884,14 +884,7 @@ preprocess = list(force_preprocess=TRUE,
                   peakAlign=list(tolerance=5, units="ppm", level=c("local","global")[1], method=c("Enable","Disable")[1]),
                   normalize=list(method=c("Disable","rms","tic","reference")[1], mz=NULL)
                   )
-# Data pre-processing and proteomics annotation
-library(HiTMaP)
-imaging_identification(datafile=paste0(wd,datafile),Digestion_site="trypsin",
-                       Fastadatabase="uniprot_mouse_20210107.fasta",output_candidatelist=T,
-                       preprocess=preprocess,
-                       spectra_segments_per_file=9,use_previous_candidates=F,ppm=10,FDR_cutoff = 0.05,IMS_analysis=T,
-                       Rotate_IMG="file_rotationbk.csv",
-                       mzrange = c(500,4000),plot_cluster_image_grid=F)
+
 # Data pre-processing and proteomics annotation
 library(HiTMaP)
 imaging_identification(datafile=paste0(wd,datafile),Digestion_site="trypsin",
@@ -901,12 +894,6 @@ imaging_identification(datafile=paste0(wd,datafile),Digestion_site="trypsin",
                        Rotate_IMG="file_rotationbk.csv",
                        mzrange = c(500,4000),plot_cluster_image_grid=F)
 
-imaging_identification(datafile=paste0(wd,datafile),Digestion_site="trypsin",
-                       Fastadatabase="uniprot_mouse_20210107.fasta",output_candidatelist=T,
-                       preprocess=preprocess,
-                       spectra_segments_per_file=9,use_previous_candidates=F,ppm=10,FDR_cutoff = 0.05,IMS_analysis=T,
-                       Rotate_IMG="file_rotationbk.csv",
-                       mzrange = c(500,4000),plot_cluster_image_grid=F)
 
 # Re-analysis and cluster image rendering
 library(HiTMaP)
