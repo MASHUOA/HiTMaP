@@ -12,7 +12,7 @@ docker run --rm -p 80:3838 -v %userprofile%\Documents\expdata:/root/expdata mash
 ssh gguo484@md-cer00340.its.auckland.ac.nz
 password:2authentoken
 
-docker run --name hitmap -v %userprofile%\Documents\expdata:/root/expdata -a stdin -a stdout -i -t mashuoa/hitmap:base_nodata /bin/bash 
+docker run --name hitmap -v %userprofile%\Documents\expdata:/root/expdata -a stdin -a stdout -i -t mashuoa/hitmap:latest /bin/bash 
 docker commit cf8d5717bbbf mashuoa/hitmap:latest
 docker image push mashuoa/hitmap:latest
 #sudo apt-get install vim
@@ -62,7 +62,7 @@ docker run --name alphafold -a stdin -a stdout -i -t mashuoa/alpha_fold:latest_r
 
 docker run --name hitmapstudio -e PASSWORD=rstudio -p 8787:8787 -v G:\Documents\:/home/rstudio -a stdin -a stdout -i -t mashuoa/hitmap:studio
 docker run --name hitmap_docker -p 80:3838 -v %userprofile%\Documents\expdata:/root/expdata -a stdin -a stdout -i -t mashuoa/hitmap:gui_latest /bin/bash 
-
+docker run --name R_docker -p 80:3838 -v %userprofile%\Documents\expdata:/root/expdata -a stdin -a stdout -i -t rocker/r-base:4.4.1 /bin/bash 
 docker run --entrypoint "/bin/bash" --user root -v G:\Documents\GitHub\HiTMaP\scripts\Docker_file:/go -a stdin -a stdout -i -t python
 pip3 install spython
 cd /go
@@ -76,7 +76,9 @@ docker run --entrypoint ["/bin/bash"] --name singularity_cmd -v %userprofile%\Do
 docker run --name singularity -v %userprofile%\Documents\go:/go -a stdin -a stdout -i -t quay.io/singularity/singularity:v4.0.1 pull docker://mashuoa/hitmap:latest
 docker run -v %userprofile%\Documents\go:/go -a stdin -a stdout -i -t quay.io/singularity/singularity:v4.0.1 shell hitmap_latest.sif
 
+docker pull thegang/apptainer:1.2.4
+docker run -v G:\Documents\GitHub\HiTMaP\scripts\Docker_file\:/work/ thegang/apptainer:1.2.4 build Singularity_base.sif Singularity_base.def
 
+docker run --user root -v G:\Documents\GitHub\HiTMaP\scripts\Docker_file\:/work/ thegang/apptainer:1.2.4 build Singularity_base.sif Singularity_base.def
 
-
-
+docker run --name rstudio -e PASSWORD=rstudio -p 8787:8787 -v %userprofile%\Documents\expdata:/root/expdata -a stdin -a stdout -i -t rocker/rstudio

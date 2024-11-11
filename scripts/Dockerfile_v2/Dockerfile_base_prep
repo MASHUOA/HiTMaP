@@ -1,0 +1,20 @@
+FROM rocker/r-base:latest
+
+
+LABEL org.opencontainers.image.licenses="GPL-3.0-or-later" \
+      org.opencontainers.image.source="https://github.com/MASHUOA/hitmap_docker" \
+      org.opencontainers.image.vendor="HiTMaP Docker Project" \
+      org.opencontainers.image.authors="George Guo <george.guo@auckland.ac.nz>"
+
+WORKDIR /build
+COPY hitmap_base.sh /hitmap_base.sh
+
+RUN /hitmap_base.sh
+RUN rm -rf /var/lib/apt/lists/*
+COPY hitmap_base.sh /hitmap_base.sh
+COPY install.R /install.R
+COPY install_step2.R /install_step2.R
+RUN Rscript /install.R
+
+RUN R CMD javareconf
+CMD ["/bin/bash"]

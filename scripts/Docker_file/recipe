@@ -1,0 +1,72 @@
+Bootstrap: docker
+From: rocker/r-base:4.3.1
+Stage: spython-base
+
+%files
+sandbox-disable /etc/apt/apt.conf.d/sandbox-disable
+. .
+install_step2.R /install_step2.R
+./policy.xml /etc/ImageMagick-6
+%labels
+org.opencontainers.image.licenses="GPL-3.0-or-later" 
+org.opencontainers.image.source="https://github.com/MASHUOA/hitmap_docker" 
+org.opencontainers.image.vendor="HiTMaP Docker Project" 
+org.opencontainers.image.authors="George Guo <george.guo@auckland.ac.nz>"
+%post
+
+
+
+mkdir -p /build
+cd /build
+whoami
+usermod --add-subuids 100000-200000 --add-subgids 100000-200000 root
+#RUN chmod -R a+x /var/cache/apt/*
+chown -Rv _apt:root /var/cache/apt/archives/partial/
+chmod -Rv 700 /var/cache/apt/archives/partial/
+chmod -R a=u,go-w /var/cache/apt/*
+
+
+
+# Install system dependencies and clean up afterwards
+
+apt-get update \
+&& apt-get upgrade -y
+
+apt-get install -y dialog
+apt-get install -y default-jdk
+apt-get install -y libcurl4-openssl-dev
+apt-get install -y libxml2-dev
+apt-get install -y libssl-dev
+apt-get install -y libudunits2-dev
+apt-get install -y librsvg2-dev
+apt-get install -y libmagick++-dev
+apt-get install -y r-cran-ncdf4
+apt-get install -y libz-dev
+apt-get install -y libnss-winbind
+apt-get install -y winbind
+apt-get install -y dirmngr
+apt-get install -y gnupg
+apt-get install -y apt-transport-https
+apt-get install -y ca-certificates
+apt-get install -y software-properties-common
+apt-get install -y libfftw3-dev
+apt-get install -y texlive
+apt-get install -y libgdal-dev
+apt-get install -y ghostscript
+apt-get install -y libharfbuzz-dev
+apt-get install -y libfribidi-dev
+rm -rf /var/lib/apt/lists/*
+
+Rscript /install_step2.R
+
+# Replace configuration file for Image Magick
+
+Rscript install.R
+
+R CMD javareconf
+%runscript
+cd /build
+exec /bin/bash /bin/bash "$@"
+%startscript
+cd /build
+exec /bin/bash /bin/bash "$@"

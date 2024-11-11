@@ -165,9 +165,11 @@ R/HiTMaP running environment. Major dependencies to note:
 #install the git package
 install.packages("remotes")
 install.packages("devtools")
+install.packages("BiocManager")
 #library(devtools)
 library(remotes)
 Sys.setenv("R_REMOTES_NO_ERRORS_FROM_WARNINGS" = "true")
+
 BiocManager::install(c( "XVector", "Biostrings", "KEGGREST","cleaver"))
 remotes::install_github("sneumann/Rdisop")
 remotes::install_github("MASHUOA/HiTMaP",force=T,build_opts = c("--no-resave-data", "--no-manual", "--no-build-vignettes"),configure.vars="CFLAGS= -O3 -Wall -mtune=native -march=native")
@@ -1015,31 +1017,34 @@ imaging_identification(datafile=paste0(wd,datafile),Digestion_site="trypsin",
 library(HiTMaP)
 datafile=c("MouseBrain_Trypsin_FT/Mouse_brain.imzML")
 wd="~/expdata/"
-
+preprocess = list(force_preprocess=TRUE,
+                  use_preprocessRDS=FALSE,
+                  smoothSignal=list(method = c("Disable", "gaussian", "sgolay", "ma")[1]),
+                  reduceBaseline=list(method = c("Disable", "locmin", "median")[1]),
+                  peakPick=list(method=c("diff", "sd", "mad", "quantile", "filter", "cwt")[3]),
+                  peakAlign=list(tolerance=5, units="ppm", level=c("local","global")[1], method=c("Enable","Disable")[1]),
+                  normalize=list(method=c("Disable","rms","tic","reference")[1], mz=NULL)
+                  )
 # Data pre-processing and proteomics annotation
 library(HiTMaP)
 imaging_identification(datafile=paste0(wd,datafile),Digestion_site="trypsin",
                        Fastadatabase="uniprot_mouse_20210107.fasta",output_candidatelist=T,
-                       preprocess=list(force_preprocess=T,
-                               use_preprocessRDS=TRUE,
-                               smoothSignal=list(method="Disable"),
-                               reduceBaseline=list(method="Disable"),
-                               peakPick=list(method="adaptive"),
-                               peakAlign=list(tolerance=5, units="ppm"),
-                               normalize=list(method=c("Disable","rms","tic","reference")[1],mz=1)),
+                       preprocess=preprocess,
+                       spectra_segments_per_file=9,use_previous_candidates=F,ppm=10,FDR_cutoff = 0.05,IMS_analysis=T,
+                       Rotate_IMG="file_rotationbk.csv",
+                       mzrange = c(500,4000),plot_cluster_image_grid=F)
+# Data pre-processing and proteomics annotation
+library(HiTMaP)
+imaging_identification(datafile=paste0(wd,datafile),Digestion_site="trypsin",
+                       Fastadatabase="uniprot_mouse_20210107.fasta",output_candidatelist=T,
+                       preprocess=preprocess,
                        spectra_segments_per_file=9,use_previous_candidates=F,ppm=10,FDR_cutoff = 0.05,IMS_analysis=T,
                        Rotate_IMG="file_rotationbk.csv",
                        mzrange = c(500,4000),plot_cluster_image_grid=F)
 
 imaging_identification(datafile=paste0(wd,datafile),Digestion_site="trypsin",
                        Fastadatabase="uniprot_mouse_20210107.fasta",output_candidatelist=T,
-                       preprocess=list(force_preprocess=T,
-                               use_preprocessRDS=TRUE,
-                               smoothSignal=list(method="gaussian"),
-                               reduceBaseline=list(method="locmin"),
-                               peakPick=list(method="adaptive"),
-                               peakAlign=list(tolerance=5, units="ppm"),
-                               normalize=list(method=c("Disable","rms","tic","reference")[1],mz=1)),
+                       preprocess=preprocess,
                        spectra_segments_per_file=9,use_previous_candidates=F,ppm=10,FDR_cutoff = 0.05,IMS_analysis=T,
                        Rotate_IMG="file_rotationbk.csv",
                        mzrange = c(500,4000),plot_cluster_image_grid=F)

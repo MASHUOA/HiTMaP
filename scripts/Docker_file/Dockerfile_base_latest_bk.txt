@@ -1,0 +1,73 @@
+FROM rocker/r-base:latest
+
+
+LABEL org.opencontainers.image.licenses="GPL-3.0-or-later" \
+      org.opencontainers.image.source="https://github.com/MASHUOA/hitmap_docker" \
+      org.opencontainers.image.vendor="HiTMaP Docker Project" \
+      org.opencontainers.image.authors="George Guo <george.guo@auckland.ac.nz>"
+
+WORKDIR /build
+#RUN whoami
+#RUN id
+#RUN usermod -a -G sudo root
+#RUN gpasswd -d root nogroup
+#RUN su - root
+#RUN id
+#RUN apt-get update
+#RUN usermod --add-subuids 100000-200000 --add-subgids 100000-200000 root
+#RUN apt-get autoremove && apt-get clean && apt-get autoclean
+#RUN chmod -Rv 700 /var/cache/apt/archives/partial/
+#RUN chmod -R a=u,go-w /var/cache/apt/*
+
+#COPY sandbox-disable /etc/apt/apt.conf.d/sandbox-disable
+
+COPY . .
+
+# Install system dependencies and clean up afterwards
+RUN add-apt-repository -y ppa:cran/imagemagick
+RUN apt-get update \
+ && apt-get upgrade -y 
+RUN apt-get install -y aptitude
+RUN aptitude install -y libfontconfig1-dev libfreetype6-dev
+RUN aptitude install -y dialog default-jdk libcurl4-openssl-dev libxml2-dev libssl-dev libudunits2-dev
+RUN aptitude install -y librsvg2-common libcairo-gobject2 gir1.2-freedesktop libcairo2=1.18.0-1+b1 gir1.2-rsvg-2.0=2.58.0+dfsg-1
+RUN aptitude install -y libxcb1=1.15-1 libxcb1-dev=1.15-1 libxcb-shm0=1.15-1
+RUN aptitude install -y libmagickwand-6.q16-dev libmagickcore-6.q16-dev libxrender-dev libxext-dev libxcb1-dev=1.15-1 libxcb-shm0-dev libxcb-render0-dev libx11-dev libglib2.0-bin libcairo2-dev libmagick++-6.q16-dev libgdk-pixbuf-2.0-dev libglib2.0-dev libgdk-pixbuf-2.0-dev
+RUN aptitude install -y librsvg2-dev libmagick++-dev r-cran-ncdf4 libz-dev libnss-winbind
+RUN aptitude install -y winbind dirmngr gnupg apt-transport-https ca-certificates software-properties-common 
+RUN aptitude install -y libfftw3-dev texlive libgdal-dev ghostscript libharfbuzz-dev libfribidi-dev
+RUN apt-get install -y dialog
+RUN apt-get install -y default-jdk
+RUN apt-get install -y libcurl4-openssl-dev
+RUN apt-get install -y libxml2-dev
+RUN apt-get install -y libssl-dev
+RUN apt-get install -y libudunits2-dev
+RUN apt-get install -y librsvg2-dev
+RUN apt-get install -y libmagick++-dev
+RUN apt-get install -y r-cran-ncdf4
+RUN apt-get install -y libz-dev
+RUN apt-get install -y libnss-winbind
+RUN apt-get install -y winbind
+RUN apt-get install -y dirmngr
+RUN apt-get install -y gnupg
+RUN apt-get install -y apt-transport-https
+RUN apt-get install -y ca-certificates
+RUN apt-get install -y software-properties-common
+RUN apt-get install -y libfftw3-dev
+RUN apt-get install -y texlive
+RUN apt-get install -y libgdal-dev
+RUN apt-get install -y ghostscript
+RUN apt-get install -y libharfbuzz-dev
+RUN apt-get install -y libfribidi-dev
+RUN rm -rf /var/lib/apt/lists/*
+
+COPY install_step2.R /install_step2.R
+RUN Rscript /install_step2.R
+
+# Replace configuration file for Image Magick
+COPY ./policy.xml /etc/ImageMagick-6
+
+RUN Rscript install.R
+
+RUN R CMD javareconf
+CMD ["/bin/bash"]

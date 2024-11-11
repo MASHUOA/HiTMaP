@@ -5,10 +5,10 @@ install.packages("textshaping")
 install.packages("ragg")
 install.packages("pkgdown")
 install.packages("devtools")
+library(remotes)
 BiocManager::install(c("EBImage","ChemmineR","Cardinal"))
 BiocManager::install(c( "XVector", "Biostrings", "KEGGREST","cleaver"))
 remotes::install_github("sneumann/Rdisop")
-library(remotes)
 Sys.setenv("R_REMOTES_NO_ERRORS_FROM_WARNINGS" = "true")
 remotes::install_github(
   "MASHUOA/HiTMaP",

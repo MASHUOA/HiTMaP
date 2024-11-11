@@ -1,0 +1,1 @@
+docker run --name hitmap -v %userprofile%\Documents\expdata:/root/expdata -a stdin -a stdout -i -t mashuoa/hitmap:latest /bin/bash 
