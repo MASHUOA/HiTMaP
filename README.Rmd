@@ -125,6 +125,7 @@ The code below is used for an experienced R user to build a local
 R/HiTMaP running environment. Major dependencies to note:
 
 -   R base
+-   Rtools, Windows user required ([*https://cran.r-project.org/bin/windows/Rtools/*](https://cran.r-project.org/bin/windows/Rtools/))
 -   java running library (for linux, additional configuration is needed:
     *R CMD javareconf*)
 -   orca for plotly
@@ -140,22 +141,17 @@ install.packages("BiocManager")
 #library(devtools)
 library(remotes)
 Sys.setenv("R_REMOTES_NO_ERRORS_FROM_WARNINGS" = "true")
+options(install.packages.check.source = "no")
+BiocManager::install(c( "XVector", "Biostrings", "KEGGREST","cleaver"),INSTALL_opts="-Wno-error")
+BiocManager::install(c("EBImage","Rdisop"))
+remotes::install_github("MASHUOA/HiTMaP",force=T,build_opts = c("--no-resave-data", "--no-manual","-Wno-error", "--no-build-vignettes"),configure.vars="CFLAGS= -O3 -Wall -mtune=native -march=native -Wno-error",ask = F)
 
-BiocManager::install(c( "XVector", "Biostrings", "KEGGREST","cleaver"))
-remotes::install_github("sneumann/Rdisop")
-remotes::install_github("MASHUOA/HiTMaP",force=T,build_opts = c("--no-resave-data", "--no-manual", "--no-build-vignettes"),configure.vars="CFLAGS= -O3 -Wall -mtune=native -march=native")
-remotes::install_github("kuwisdelu/Cardinal",force=T)
-3
-no
 #Update all dependencies
 BiocManager::install(ask = F)
-yes
 library(HiTMaP)
 ```
 
-For windows users, Rtools
-([*https://cran.r-project.org/bin/windows/Rtools/*](https://cran.r-project.org/bin/windows/Rtools/))
-is required.
+
 
 ## Codes for Linux OS building enviornment
 
@@ -163,31 +159,46 @@ Run the codes as below to enable the required components in Linux
 console.
 
 ```{bash eval=FALSE, include=T}
-sudo apt-get install tcl-dev tk-dev
-sudo apt-get install r-cran-ncdf4
-sudo apt-get install libz-dev
-sudo apt install libxml2-dev
-sudo apt install libssl-dev
-sudo apt install libcurl4-openssl-dev
-sudo apt-get install libnss-winbind winbind
-sudo apt install dirmngr gnupg apt-transport-https ca-certificates software-properties-common
+function apt_install() {
+    if ! dpkg -s "$@" >/dev/null 2>&1; then
+        if [ "$(find /var/lib/apt/lists/* | wc -l)" = "0" ]; then
+            apt-get update
+        fi
+        apt-get install -y --allow-downgrades --no-install-recommends "$@"
+    fi
+}
 
-sudo add-apt-repository ppa:webupd8team/y-ppa-manager
-sudo apt-get update
-sudo apt-get install y-ppa-manager
-sudo y-ppa-manager
-
-sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys
-sudo add-apt-repository 'deb https://cloud.r-project.org/bin/linux/ubuntu focal-cran40/'
-sudo apt-cache policy r-base
-sudo apt-get purge r-base
-sudo apt-get install r-base-core="4.0.2-1.2004.0"
-sudo apt-get install libmagick++-dev
-
-sudo apt-get install libfftw3-dev
-sudo apt-get install r-base-dev texlive-full
-sudo apt-get install libudunits2-dev
-sudo apt-get install libgdal-dev
+apt_install \
+    sudo \
+    gdebi-core \
+    libcairo2=1.18.0-1+b1 \
+	libcairo-script-interpreter2=1.18.0-1+b1 \
+    lsb-release \
+    libcurl4-openssl-dev \
+    libcairo2-dev \
+    libxt-dev \
+    xtail \
+    wget \
+    default-jdk \
+    libxml2-dev \
+    libssl-dev \
+    libudunits2-dev \
+    librsvg2-dev \
+    libmagick++-dev \
+    r-cran-ncdf4 \
+    libz-dev \
+    libnss-winbind \
+    winbind \
+    dirmngr \
+    gnupg \
+    apt-transport-https \
+    ca-certificates \
+    software-properties-common \
+    libfftw3-dev \
+    texlive \
+    libgdal-dev \
+    ghostscript \
+    g++
 ```
 
 ## Codes for Mac OS building enviornment (optional)
