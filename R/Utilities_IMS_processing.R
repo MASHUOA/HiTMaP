@@ -1363,7 +1363,7 @@ Preprocessing_segmentation<-function(datafile,
           if (!is.null(preprocess$normalize)){
             if (preprocess$normalize$method=="Disable") {
             } else if (preprocess$normalize$method %in% c("rms","tic")){
-              imdata_ed<- imdata_ed %>% normalize(method=preprocess$normalize$method) %>% process()
+              imdata_ed<- imdata_ed %>% normalize(method=preprocess$normalize$method) %>% process(BPPARAM=SerialParam())
             } else if ('&'(preprocess$normalize$method == "reference", !is.null(preprocess$normalize$mz))){
               norm_feature<-which(dplyr::between(imdata_ed@featureData@listData[["mz"]],
                                                  preprocess$normalize$mz*(1-ppm/1000000),
@@ -1372,7 +1372,7 @@ Preprocessing_segmentation<-function(datafile,
                 imdata_ed<- imdata_ed %>% normalize(method=preprocess$normalize$method, feature = norm_feature) %>% process(BPPARAM=SerialParam())
               }
             } else {
-              imdata_ed<- imdata_ed %>% normalize(method="rms") %>% process()
+              imdata_ed<- imdata_ed %>% normalize(method="rms") %>% process(BPPARAM=SerialParam())
             }
           }
 
@@ -1410,7 +1410,7 @@ Preprocessing_segmentation<-function(datafile,
           if (preprocess$peakPick$method=="Disable") {
           }else if (preprocess$peakPick$method %in% c("adaptive","mad","simple")){
             if (is.null(preprocess$peakPick$SNR)) preprocess$peakPick$SNR=6
-            imdata_ed<- imdata_ed %>% peakPick(method=preprocess$peakPick$method, SNR=preprocess$peakPick$SNR) %>% process()
+            imdata_ed<- imdata_ed %>% peakPick(method=preprocess$peakPick$method, SNR=preprocess$peakPick$SNR) %>% process(BPPARAM=SerialParam())
           }else if (preprocess$peakPick$method == "Default|default"){
             #add an peak picking function other than the Cardinal options.
             peaklist<-summarizeFeatures(imdata_ed,"sum")
@@ -1418,7 +1418,7 @@ Preprocessing_segmentation<-function(datafile,
             peaklist_deco<-peaklist_deco[peaklist_deco$intensities>0,]
             peaklist_deco<-HiTMaP:::isopattern_ppm_filter_peaklist(peaklist_deco,ppm=ppm,threshold=0)
             write.csv(peaklist_deco,paste0(gsub(".imzML$","",datafile[z])  ," ID/Sum_spec_decov.csv"),row.names = F)
-            imdata_ed<-imdata_ed %>% peakBin(peaklist_deco$mz, tolerance=ppm, units="ppm") %>% process()
+            imdata_ed<-imdata_ed %>% peakBin(peaklist_deco$mz, tolerance=ppm, units="ppm") %>% process(BPPARAM=SerialParam())
           }
             
           }
@@ -1474,7 +1474,7 @@ Preprocessing_segmentation<-function(datafile,
           if (!is.null(preprocess$normalize)){
             if (preprocess$normalize$method=="Disable") {
             } else if (preprocess$normalize$method %in% c("rms","tic")){
-              imdata_ed<- imdata_ed %>% normalize(method=preprocess$normalize$method) %>% process()
+              imdata_ed<- imdata_ed %>% normalize(method=preprocess$normalize$method) %>% process(BPPARAM=SerialParam())
             } else if ('&'(preprocess$normalize$method == "reference", !is.null(preprocess$normalize$mz))){
               norm_feature<-which(dplyr::between(imdata_ed@featureData@listData[["mz"]],
                 preprocess$normalize$mz*(1-ppm/1000000),
@@ -1483,7 +1483,7 @@ Preprocessing_segmentation<-function(datafile,
                 imdata_ed<- imdata_ed %>% normalize(method=preprocess$normalize$method, feature = norm_feature) %>% process(BPPARAM=SerialParam())
               }
             } else {
-              imdata_ed<- imdata_ed %>% normalize(method="rms") %>% process()
+              imdata_ed<- imdata_ed %>% normalize(method="rms") %>% process(BPPARAM=SerialParam())
             }
           }
           if (!is.null(preprocess$mz_bin_list)){
@@ -1498,7 +1498,7 @@ Preprocessing_segmentation<-function(datafile,
             ref_mz<-ref_mz[ref_mz*(1+ppm/1000000)<=ref_mz_range[2]]
             ref_mz<-unique(ref_mz)
             ref_mz<-ref_mz[!is.na(ref_mz)]
-            imdata_ed<-imdata_ed %>% mzBin(ref=ref_mz, tolerance=ppm, units="ppm") %>% process()
+            imdata_ed<-imdata_ed %>% mzBin(ref=ref_mz, tolerance=ppm, units="ppm") %>% process(BPPARAM=SerialParam())
             write.csv(peaklist_deco,paste0(gsub(".imzML$","",datafile[z])  ," ID/Sum_spec_decov.csv"),row.names = F)
             
           }else{
@@ -1518,7 +1518,7 @@ Preprocessing_segmentation<-function(datafile,
           
           if (preprocess$peakPick$method=="Disable") {
           }else if (preprocess$peakPick$method %in% c("adaptive","mad","simple")){
-            imdata_ed<- imdata_ed %>% peakPick(method=preprocess$peakPick$method) %>% process()
+            imdata_ed<- imdata_ed %>% peakPick(method=preprocess$peakPick$method) %>% process(BPPARAM=SerialParam())
           }else if (preprocess$peakPick$method == "Default|default"){
             #add an peak picking function other than the Cardinal options.
             imdata_ed<-imdata_ed %>% peakBin(peaklist_deco$mz, tolerance=ppm, units="ppm") %>% process()
@@ -1570,7 +1570,7 @@ Preprocessing_segmentation<-function(datafile,
             ref_mz<-ref_mz[ref_mz*(1+ppm/1000000)<=ref_mz_range[2]]
             ref_mz<-unique(ref_mz)
             ref_mz<-ref_mz[!is.na(ref_mz)]
-            imdata_ed<-imdata %>% mzBin(ref=ref_mz, tolerance=ppm, units="ppm") %>% process()
+            imdata_ed<-imdata %>% mzBin(ref=ref_mz, tolerance=ppm, units="ppm") %>% process(BPPARAM=SerialParam())
             write.csv(peaklist_deco,paste0(gsub(".imzML$","",datafile[z])  ," ID/Sum_spec_decov.csv"),row.names = F)
         }else{        
           imdata_ed<-imdata
