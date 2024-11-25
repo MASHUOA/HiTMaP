@@ -16,10 +16,10 @@ Load_Cardinal_imaging<-function(datafile=tk_choose.files(filter = Filters,
   name <-basename(datafiles)
   folder<-base::dirname(datafiles)
   if (rotate==0){
-    imdata <-  suppressMessages(suppressWarnings(Cardinal::readImzML(name, folder,  as=as,resolution=resolution, units="ppm",BPPARAM=BPPARAM,mass.range=mzrange,is_centroided=is_centroided, representation = "profile spectrum")))
+    imdata <-  suppressMessages(suppressWarnings(Cardinal::readImzML(name, folder,resolution=resolution, units="ppm",BPPARAM=BPPARAM,mass.range=mzrange,is_centroided=is_centroided, representation = "profile spectrum")))
     
   }else  {
-    imdata <-  suppressMessages(suppressWarnings(Cardinal::readImzML(name, folder,  as=as,resolution=resolution, units="ppm",rotate = rotate,BPPARAM=BPPARAM,mass.range=mzrange,is_centroided=is_centroided, representation = "profile spectrum")))
+    imdata <-  suppressMessages(suppressWarnings(Cardinal::readImzML(name, folder,resolution=resolution, units="ppm",rotate = rotate,BPPARAM=BPPARAM,mass.range=mzrange,is_centroided=is_centroided, representation = "profile spectrum")))
     imdata <-  rotateMSI(imdata=imdata,rotation_degree=rotate)
   }
   

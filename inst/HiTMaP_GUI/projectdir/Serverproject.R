@@ -132,7 +132,7 @@ Preprocessing_segmentation<-function(datafile,
         name <-gsub(".imzML$","",name)
         name <-gsub("/$","",name)
         folder<-base::dirname(datafile[z])
-        #imdata <- Cardinal::readImzML(datafile[z],preprocessing = F,attach.only = T,resolution = 200,rotate = rotate[z],as="MSImageSet",BPPARAM = BPPARAM)
+        #imdata <- Cardinal::readImzML(datafile[z],preprocessing = F,attach.only = T,resolution = 200,rotate = rotate[z],BPPARAM = BPPARAM)
         if (!str_detect(datafile[z],".imzML$")){
             datafile_imzML[z]<-paste0(datafile[z],".imzML")
         }
@@ -679,7 +679,7 @@ Preprocessing_segmentation<-function(datafile,
                 
                 #msset <- generateImage(region_pattern, coord=coordata[,1:2],
                 #                        range=c(1000, 5000), centers=c(2000, 3000, 4000),
-                #                        resolution=100, step=3.3, as="MSImageSet")
+                #                        resolution=100, step=3.3)
                 #msset@pixelData@data[["sample"]]=region_pattern
                 png(paste(getwd(),"\\","Virtual_segmentation",gsub("/"," ",name),'.png',sep=""),width = 1024,height = 1024)
                 #plot(skm, col=c("pink", "blue", "red","orange","navyblue"), type=c('p','h'), key=FALSE)

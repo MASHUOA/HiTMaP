@@ -468,59 +468,7 @@ convert_peptide_modsymbol<-function(mod.df,peptide_symbol,peptide_info,BPPARAM=B
   suppressMessages(suppressWarnings(require(stats)))
   pep_sequence=peptide_info$Peptide
   peptide_seqinfo=peptide_info[,c("start","end")]
-  
-  merge_atoms<-function(atoms,addelements,check_merge=T,mode=c("add","ded"),multiplier=c(1,1)){
-    
-    atomsorg=atoms
-    
-    if (missing(mode)) mode="add"
-    
-    if (mode=="ded"){
-      for (x in names(addelements)){
-        addelements[[x]]=-addelements[[x]]
-      }
-    }
-    
-    for (x in names(addelements)){
-      if (is.null(atoms[[x]])){
-        atoms[[x]]=addelements[[x]]
-      }else {
-        atoms[[x]]=(atoms[[x]]*multiplier[1]) + (addelements[[x]]*multiplier[2])
-      } 
-    }
-    
-    if (check_merge==F){
-      for (x in names(atoms)){
-        if (atoms[[x]]<0){
-          stop("add atoms failed due to incorrect number of",x)
-        } 
-      }
-      
-    }
-    return(as.list(atoms))
-    
-  }
-  
-  get_atoms_mod<-function(Symbol){
-    #form = "C5H11BrO" 
-    if (Symbol!=""){
-      ups = c(gregexpr("[[:upper:]]", Symbol)[[1]], nchar(Symbol) + 1) 
-      seperated = sapply(1:(length(ups)-1), function(x) substr(Symbol, ups[x], ups[x+1] - 1)) 
-      elements =  gsub("[[:digit:]]", "", seperated) 
-      elements =  gsub(" ", "", elements)
-      elements =  gsub("\\)", "", elements)
-      elements =  gsub("\\(", "", elements)
-      elements =  gsub("-", "", elements)
-      nums = gsub("[[:alpha:]]", "", seperated) 
-      nums = gsub(" ", "", nums) 
-      nums = gsub("\\(", "", nums) 
-      nums = gsub("\\)", "", nums) 
-      ans = data.frame(elements = as.character(elements), num = as.numeric(ifelse(nums == "", 1, nums)), stringsAsFactors = FALSE)
-      list<-as.list(ans$num)
-      names(list)=ans$elements
-      return(list)
-    }else{return(NULL)}
-  }
+
   
   mod.df.list <-unique(mod.df[,c("record_id","code_name","full_name","ex_code_name","composition", "mono_mass")])
   formula_mod<-lapply(mod.df.list$composition,get_atoms_mod)

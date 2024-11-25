@@ -378,8 +378,8 @@ Protein_feature_list_fun<-function(workdir=getwd(),
   if (length(grep("X",tempdf$Peptide))!=0 && !("X" %in% Substitute_AA$AA))  tempdf<-tempdf[-grep("X",tempdf$Peptide),]
   if (length(grep("U",tempdf$Peptide))!=0 && !("U" %in% Substitute_AA$AA))  tempdf<-tempdf[-grep("U",tempdf$Peptide),]
   
-  mod.df_fix<-Peptide_modification(retrive_ID = Modifications$fixed,mod_position=Modifications$fixmod_position)
-  mod.df_var<-Peptide_modification(retrive_ID = Modifications$variable,mod_position=Modifications$varmod_position)
+  mod.df_fix<-Peptide_modification(retrive_ID = Modifications$fixed,mod_position=Modifications$fixmod_position,one_letter = Modifications$fixmod_one_letter)
+  mod.df_var<-Peptide_modification(retrive_ID = Modifications$variable,mod_position=Modifications$varmod_position,one_letter = Modifications$varmod_one_letter)
   mod.df<-rbind(mod.df_fix,mod.df_var)
   if (is.null(mod.df)){
     min_mod_massdiff<-100
@@ -438,36 +438,33 @@ Protein_feature_list_fun<-function(workdir=getwd(),
   # system.time({peptide_symbol6=lapply(uniquepep,ConvertPeptide.2,Substitute_AA=Substitute_AA,Element_tbl=Element_tbl_m)})
   
   if (!is.null(Modifications$fixed)){
-    mod.df<-Peptide_modification(retrive_ID = Modifications$fixed,mod_position=Modifications$fixmod_position)
-    if(length(unique(mod.df$full_name))==length(Modifications$fixed)){
-    message(paste("Fixed modifications:",paste0(unique(mod.df$full_name),collapse = "\n"),"found in unimod DB",sep=" ",collapse = ", "))
-    #peptide_symbol=bplapply(mod.df,convert_peptide_fixmod,peptide_symbol,BPPARAM = BPPARAM,pep_sequence=tempdf$Peptide,ConvertPeptide=ConvertPeptide)
 
-
+    mod.df<-Peptide_modification(retrive_ID = Modifications$fixed,mod_position=Modifications$fixmod_position,one_letter = Modifications$fixmod_one_letter)
+    if(length(unique(mod.df$full_name))==length(unique(Modifications$fixed))){
+      message(paste("fixed modifications:\n",paste0(unique(mod.df$full_name),collapse = "\n"),"found in unimod DB",sep=" ",collapse = ", "))
+      #peptide_symbol=bplapply(mod.df,convert_peptide_fixmod,peptide_symbol,BPPARAM = BPPARAM,pep_sequence=tempdf$Peptide,ConvertPeptide=ConvertPeptide)
     }else{
-    message(paste("warning:",
-                  Modifications$fixed['&'((Modifications$fixed %in% unique(mod.df$code_name))==F , (Modifications$fixed %in% unique(mod.df$record_id) )==F)],
-                  "not found in unimod DB. Please check the unimod DB again. Any Charactor string that matches code name or number that matches mod ID will be OKAY.",sep=" ",collapse = ", "))
+      message(paste("warning:",
+                    Modifications$fixed['&'((Modifications$fixed %in% unique(mod.df$code_name))==F , (Modifications$fixed %in% unique(mod.df$record_id) )==F)],
+                    "not found in unimod DB. Please check the unimod DB again. Any Charactor string that matches code name or number that matches mod ID will be OKAY.",sep=" ",collapse = ", "))
     }
     mod.df.comfirm<-mod.df[mod.df$hidden==0,]
     mod.df.comfirm.hidden<-mod.df[!(mod.df$full_name %in% mod.df.comfirm$full_name),]
     mod.df.comfirm.hidden_names<-mod.df$code_name[!(mod.df$full_name %in% mod.df.comfirm$full_name)]
     for(mod.df.comfirm.hidden_name in unique(mod.df.comfirm.hidden_names)){
-      mod.df.comfirm.hidden.select<-mod.df.comfirm.hidden[mod.df.comfirm.hidden$one_letter==Modifications$one_letter[Modifications$variable==mod.df.comfirm.hidden_name],]
+      mod.df.comfirm.hidden.select<-mod.df.comfirm.hidden[mod.df.comfirm.hidden$one_letter==Modifications$fixmod_one_letter[Modifications$fixed==mod.df.comfirm.hidden_name],]
       mod.df.comfirm<-rbind(mod.df.comfirm,mod.df.comfirm.hidden.select)
     }
-    mod.df<-mod.df.comfirm    
-    peptide_symbol_var=convert_peptide_fixmod(mod.df,peptide_symbol,peptide_info=tempdf,BPPARAM = BPPARAM)
+    mod.df<-mod.df.comfirm
+    peptide_symbol_var<-convert_peptide_fixmod(mod.df,peptide_symbol,peptide_info=tempdf,BPPARAM = BPPARAM)
     message(paste("Merge modification formula done."))
     tempdf_var<-tempdf
     reserve_entry<-rep(FALSE,nrow(tempdf_var))
-    # for (fixmod in mod.df$record_id){
-    # should access the modificaitons using index insdead of using name of each element.
     for (fixmod in 1:length(mod.df$record_id)){
-      mods<-ifelse(peptide_symbol_var$multiplier[[fixmod]]>=1,mod.df$code_name[mod.df$record_id==fixmod],"")
+      mods<-ifelse(peptide_symbol_var$multiplier[[mod.df$record_id[fixmod]]]>=1,mod.df$code_name[fixmod],"")
       tempdf_var$Modification<-paste(tempdf_var$Modification,mods)
-      tempdf_var$pepmz <-tempdf_var$pepmz + peptide_symbol_var$multiplier[[fixmod]]*as.numeric(mod.df$mono_mass[mod.df$record_id==fixmod])
-      reserve_entry<-ifelse('&'(peptide_symbol_var$multiplier[[fixmod]]>=1,reserve_entry==FALSE),TRUE,reserve_entry)
+      tempdf_var$pepmz <-tempdf_var$pepmz + peptide_symbol_var$multiplier[[mod.df$record_id[fixmod]]]*as.numeric(mod.df$mono_mass[fixmod])
+      reserve_entry<-ifelse('&'(peptide_symbol_var$multiplier[[mod.df$record_id[fixmod]]]>=1,reserve_entry==FALSE),TRUE,reserve_entry)
     }
     
     tempdf<-tempdf_var
@@ -475,7 +472,7 @@ Protein_feature_list_fun<-function(workdir=getwd(),
   }
   
   if (!is.null(Modifications$variable)){
-    mod.df<-Peptide_modification(retrive_ID = Modifications$variable,mod_position=Modifications$varmod_position)
+    mod.df<-Peptide_modification(retrive_ID = Modifications$variable,mod_position=Modifications$varmod_position,one_letter = Modifications$varmod_one_letter)
     if(length(unique(mod.df$full_name))==length(unique(Modifications$variable))){
       message(paste("variable modifications:\n",paste0(unique(mod.df$full_name),collapse = "\n"),"found in unimod DB",sep=" ",collapse = ", "))
       #peptide_symbol=bplapply(mod.df,convert_peptide_fixmod,peptide_symbol,BPPARAM = BPPARAM,pep_sequence=tempdf$Peptide,ConvertPeptide=ConvertPeptide)
@@ -500,10 +497,10 @@ Protein_feature_list_fun<-function(workdir=getwd(),
     # for (fixmod in mod.df$record_id){
     # should access the modificaitons using index insdead of using name of each element.
     for (fixmod in 1:length(mod.df$record_id)){
-      mods<-ifelse(peptide_symbol_var$multiplier[[fixmod]]>=1,mod.df$code_name[mod.df$record_id==fixmod],"")
+      mods<-ifelse(peptide_symbol_var$multiplier[[mod.df$record_id[fixmod]]]>=1,mod.df$code_name[fixmod],"")
       tempdf_var$Modification<-paste(tempdf_var$Modification,mods)
-      tempdf_var$pepmz <-tempdf_var$pepmz + peptide_symbol_var$multiplier[[fixmod]]*as.numeric(mod.df$mono_mass[mod.df$record_id==fixmod])
-      reserve_entry<-ifelse('&'(peptide_symbol_var$multiplier[[fixmod]]>=1,reserve_entry==FALSE),TRUE,reserve_entry)
+      tempdf_var$pepmz <-tempdf_var$pepmz + peptide_symbol_var$multiplier[[mod.df$record_id[fixmod]]]*as.numeric(mod.df$mono_mass[fixmod])
+      reserve_entry<-ifelse('&'(peptide_symbol_var$multiplier[[mod.df$record_id[fixmod]]]>=1,reserve_entry==FALSE),TRUE,reserve_entry)
     }
     
     peptide_symbol_var<-peptide_symbol_var$peptide_symbol
@@ -1063,7 +1060,7 @@ Protein_feature_list_table_import<-function(workdir=getwd(),
     # system.time({peptide_symbol6=lapply(uniquepep,ConvertPeptide.2,Substitute_AA=Substitute_AA,Element_tbl=Element_tbl_m)})
     
     if (!is.null(Modifications$fixed)){
-      mod.df<-Peptide_modification(retrive_ID = Modifications$fixed,mod_position=Modifications$fixmod_position)
+      mod.df<-Peptide_modification(retrive_ID = Modifications$fixed,mod_position=Modifications$fixmod_position,update_unimod=F)
       if(length(unique(mod.df$full_name))==length(Modifications$fixed)){
         message(paste("Fixed modifications:",paste0(unique(mod.df$full_name),collapse = "\n"),"found in unimod DB",sep=" ",collapse = ", "))
         #peptide_symbol=bplapply(mod.df,convert_peptide_fixmod,peptide_symbol,BPPARAM = BPPARAM,pep_sequence=tempdf$Peptide,ConvertPeptide=ConvertPeptide)
@@ -1098,7 +1095,7 @@ Protein_feature_list_table_import<-function(workdir=getwd(),
     }
     
     if (!is.null(Modifications$variable)){
-      mod.df<-Peptide_modification(retrive_ID = Modifications$variable,mod_position=Modifications$varmod_position)
+      mod.df<-Peptide_modification(retrive_ID = Modifications$variable,mod_position=Modifications$varmod_position,one_letter=Modifications$varmod_one_letter,update_unimod=F)
       if(length(unique(mod.df$full_name))==length(unique(Modifications$variable))){
         message(paste("variable modifications:\n",paste0(unique(mod.df$full_name),collapse = "\n"),"found in unimod DB",sep=" ",collapse = ", "))
         #peptide_symbol=bplapply(mod.df,convert_peptide_fixmod,peptide_symbol,BPPARAM = BPPARAM,pep_sequence=tempdf$Peptide,ConvertPeptide=ConvertPeptide)
@@ -1108,14 +1105,7 @@ Protein_feature_list_table_import<-function(workdir=getwd(),
                       Modifications$variable['&'((Modifications$variable %in% unique(mod.df$code_name))==F , (Modifications$variable %in% unique(mod.df$record_id) )==F)],
                       "not found in unimod DB. Please check the unimod DB again. Any Charactor string that matches code name or number that matches mod ID will be OKAY.",sep=" ",collapse = ", "))
       }
-      mod.df.comfirm<-mod.df[mod.df$hidden==0,]
-      mod.df.comfirm.hidden<-mod.df[!(mod.df$full_name %in% mod.df.comfirm$full_name),]
-      mod.df.comfirm.hidden_names<-mod.df$code_name[!(mod.df$full_name %in% mod.df.comfirm$full_name)]
-      for(mod.df.comfirm.hidden_name in unique(mod.df.comfirm.hidden_names)){
-        mod.df.comfirm.hidden.select<-mod.df.comfirm.hidden[mod.df.comfirm.hidden$one_letter==Modifications$one_letter[Modifications$variable==mod.df.comfirm.hidden_name],]
-        mod.df.comfirm<-rbind(mod.df.comfirm,mod.df.comfirm.hidden.select)
-      }
-      mod.df<-mod.df.comfirm
+      
       peptide_symbol_var<-convert_peptide_fixmod(mod.df,peptide_symbol,peptide_info=tempdf,BPPARAM = BPPARAM)
       message(paste("Merge modification formula done."))
       tempdf_var<-tempdf
@@ -1522,52 +1512,7 @@ fastafile_utils<-function(){
 convert_peptide_adduct<-function(peptide_formula,adductsname,multiplier=c(1,1),adductslist=Build_adduct_list()){
    suppressMessages(suppressWarnings(require(rcdk)))
    suppressMessages(suppressWarnings(require(OrgMassSpecR)))
-  
-  merge_atoms<-function(atoms,addelements,check_merge=T,mode=c("add","ded"),multiplier=c(1,1)){
-    
-    atomsorg=atoms
-    
-    if (missing(mode)) mode="add"
-    
-    if (mode=="ded"){
-      for (x in names(addelements)){
-        addelements[[x]]=-addelements[[x]]
-      }
-    }
-    
-    for (x in names(addelements)){
-      if (is.null(atoms[[x]])){
-        atoms[[x]]=addelements[[x]]
-      }else {
-        atoms[[x]]=(atoms[[x]]*multiplier[1]) + (addelements[[x]]*multiplier[2])
-      } 
-    }
-    
-    if (check_merge==F){
-      for (x in names(atoms)){
-        if (atoms[[x]]<0){
-          stop("add atoms failed due to incorrect number of",x)
-        } 
-      }
-      
-    }
-    return(as.list(atoms))
-    
-  }
-  get_atoms<-function(Symbol){
-    #form = "C5H11BrO" 
-    if (Symbol!=""){
-      ups = c(gregexpr("[[:upper:]]", Symbol)[[1]], nchar(Symbol) + 1) 
-      seperated = sapply(1:(length(ups)-1), function(x) substr(Symbol, ups[x], ups[x+1] - 1)) 
-      elements =  gsub("[[:digit:]]", "", seperated) 
-      nums = gsub("[[:alpha:]]", "", seperated) 
-      ans = data.frame(elements = as.character(elements), num = as.numeric(ifelse(nums == "", 1, nums)), stringsAsFactors = FALSE)
-      list<-as.list(ans$num)
-      names(list)=ans$elements
-      return(list)
-    }else{return(NULL)}
-  }
-  
+
   
   adductsformula_add= as.character(adductslist[adductslist$Name==adductsname,"formula_add"])
   adductsformula_ded= as.character(adductslist[adductslist$Name==adductsname,"formula_ded"])
@@ -1605,58 +1550,6 @@ convert_peptide_fixmod<-function(mod.df,peptide_symbol,peptide_info,BPPARAM=BPPA
    pep_sequence=peptide_info$Peptide
    peptide_seqinfo=peptide_info[,c("start","end")]
 
-  merge_atoms<-function(atoms,addelements,check_merge=T,mode=c("add","ded"),multiplier=c(1,1)){
-    
-    atomsorg=atoms
-    
-    if (missing(mode)) mode="add"
-    
-    if (mode=="ded"){
-      for (x in names(addelements)){
-        addelements[[x]]=-addelements[[x]]
-      }
-    }
-    
-    for (x in names(addelements)){
-      if (is.null(atoms[[x]])){
-        atoms[[x]]=addelements[[x]]
-      }else {
-        atoms[[x]]=(atoms[[x]]*multiplier[1]) + (addelements[[x]]*multiplier[2])
-      } 
-    }
-    
-    if (check_merge==F){
-      for (x in names(atoms)){
-        if (atoms[[x]]<0){
-          stop("add atoms failed due to incorrect number of",x)
-        } 
-      }
-      
-    }
-    return(as.list(atoms))
-    
-  }
-  
-  get_atoms_mod<-function(Symbol){
-    #form = "C5H11BrO" 
-    if (Symbol!=""){
-      ups = c(gregexpr("[[:upper:]]", Symbol)[[1]], nchar(Symbol) + 1) 
-      seperated = sapply(1:(length(ups)-1), function(x) substr(Symbol, ups[x], ups[x+1] - 1)) 
-      elements =  gsub("[[:digit:]]", "", seperated) 
-      elements =  gsub(" ", "", elements)
-      elements =  gsub("\\)", "", elements)
-      elements =  gsub("\\(", "", elements)
-      elements =  gsub("-", "", elements)
-      nums = gsub("[[:alpha:]]", "", seperated) 
-      nums = gsub(" ", "", nums) 
-      nums = gsub("\\(", "", nums) 
-      nums = gsub("\\)", "", nums) 
-      ans = data.frame(elements = as.character(elements), num = as.numeric(ifelse(nums == "", 1, nums)), stringsAsFactors = FALSE)
-      list<-as.list(ans$num)
-      names(list)=ans$elements
-      return(list)
-    }else{return(NULL)}
-  }
   
   #if (missing(multiplier)){
   #  multiplier[1]= as.numeric(as.character(adductslist[adductslist$Name==adductsname,"Mult"]))
@@ -1743,51 +1636,7 @@ convert_peptide_adduct_list<-function(adductsname,peptide_symbol,multiplier=c(1,
    suppressMessages(suppressWarnings(require(rcdk)))
    suppressMessages(suppressWarnings(require(OrgMassSpecR)))
 
-  merge_atoms<-function(atoms,addelements,check_merge=F,mode=c("add","ded"),multiplier=c(1,1)){
-    
-    atomsorg=atoms
-    
-    if (missing(mode)) mode="add"
-    
-    if (mode=="ded"){
-      for (x in names(addelements)){
-        addelements[[x]]=-addelements[[x]]
-      }
-    }
-    
-    for (x in names(addelements)){
-      if (is.null(atoms[[x]])){
-        atoms[[x]]=addelements[[x]]
-      }else {
-        atoms[[x]]=(atoms[[x]]*multiplier[1]) + (addelements[[x]]*multiplier[2])
-      } 
-    }
-    
-    if (check_merge==T){
-      for (x in names(atoms)){
-        if (atoms[[x]]<0){
-          stop("add atoms failed due to incorrect number of",x)
-        } 
-      }
-      
-    }
-    return(as.list(atoms))
-    
-  }
-  
-  get_atoms<-function(Symbol){
-    #form = "C5H11BrO" 
-    if (Symbol!=""){
-      ups = c(gregexpr("[[:upper:]]", Symbol)[[1]], nchar(Symbol) + 1) 
-      seperated = sapply(1:(length(ups)-1), function(x) substr(Symbol, ups[x], ups[x+1] - 1)) 
-      elements =  gsub("[[:digit:]]", "", seperated) 
-      nums = gsub("[[:alpha:]]", "", seperated) 
-      ans = data.frame(elements = as.character(elements), num = as.numeric(ifelse(nums == "", 1, nums)), stringsAsFactors = FALSE)
-      list<-as.list(ans$num)
-      names(list)=ans$elements
-      return(list)
-    }else{return(NULL)}
-  }
+
   
    if (missing(multiplier)){
      multiplier<-NULL
@@ -1874,6 +1723,9 @@ merge_atoms<-function(atoms,addelements,check_merge=F,mode=c("add","ded"),multip
   }
   
   for (x in names(addelements)){
+    if (x %in% names(atoms) == F){
+        atoms[[x]]=0
+    }
     if (is.null(atoms[[x]])){
       atoms[[x]]=addelements[[x]]
     }else {
@@ -2233,7 +2085,7 @@ Peptide_Summary_para<- function(Proteins,peplist){
 #' Peptide_modification()
 #'
 #' @export
-Peptide_modification<-function(retrive_ID=NULL,mod_position=NULL,update_unimod=F){
+Peptide_modification<-function(retrive_ID=NULL,mod_position=NULL,one_letter=NULL,update_unimod=F){
    suppressMessages(suppressWarnings(require(protViz)))
    suppressMessages(suppressWarnings(require(XML)))
   if(update_unimod){
@@ -2268,28 +2120,34 @@ Peptide_modification<-function(retrive_ID=NULL,mod_position=NULL,update_unimod=F
     
     unimod.df <- get("unimod.df",envir = globalenv())
     
-  }
-  if (missing(mod_position)) mod_position=(rep("Any",length(retrive_ID)))
-  if (!is.null(retrive_ID)){
-    retrive_mod<-data.frame(retrive_ID,mod_position,stringsAsFactors = F)
+  }   
     unimod.modification.df<-merge(unimod.df$modifications,unimod.df$specificity,by.x=c("record_id"),by.y=c("mod_key"),all.x=T)
     #unimod.modification.df=unimod.modification.df[unimod.modification.df$hidden==0,]
     unimod.df$positions_new<-unimod.df$positions
     unimod.df$positions_new$position_ext<-str_replace(unimod.df$positions_new$position,"Anywhere|Any N-term|Any C-term","Peptide")
     unimod.df$positions_new$position_ext<-str_replace(unimod.df$positions_new$position_ext,"Protein N-term|Protein C-term","Protein")
-    
     unimod.modification.df<-merge(unimod.modification.df,unimod.df$positions_new,by.x="position_key",by.y="record_id")
+  
+  if (is.null(mod_position)) mod_position=(rep("Any",length(retrive_ID)))
+  if (missing(mod_position)) mod_position=(rep("Any",length(retrive_ID)))
+  if (!is.null(retrive_ID)){
+    retrive_mod<-data.frame(retrive_ID,mod_position,one_letter,stringsAsFactors = F)
+
     return_mod.df<-suppressWarnings(lapply(1:nrow(retrive_mod),function(x,retrive_mod,unimod.modification.df){
+      return_df_temp=unimod.modification.df
     if (is.na(as.numeric(retrive_mod$retrive_ID[x]))){
       if (retrive_mod$mod_position[x]=="Any"){ pos_id_var=1:6}else{pos_id_var=retrive_mod$mod_position[x]}
-      
-      unimod.modification.df['&'(str_detect(unimod.modification.df$code_name,regex(paste0("^",as.character(retrive_mod$retrive_ID[x]),"$"),ignore_case = T)),as.numeric(unimod.modification.df$position_key) %in% as.numeric(pos_id_var)),]
+      return_df_temp$code_name<-str_replace_all(return_df_temp$code_name,"_","-")
+      return_df_temp=return_df_temp['&'(str_detect(return_df_temp$code_name,regex(paste0("^",as.character(retrive_mod$retrive_ID[x]),"$"),ignore_case = T)),as.numeric(return_df_temp$position_key) %in% as.numeric(pos_id_var)),]
     
       }else{
-      unimod.modification.df[`&`(unimod.modification.df$record_id==as.character(retrive_mod$retrive_ID[x]),unimod.modification.df$position_key %in% as.numeric(pos_id_var)),]
+      return_df_temp=return_df_temp[`&`(return_df_temp$record_id==as.character(retrive_mod$retrive_ID[x]),return_df_temp$position_key %in% as.numeric(pos_id_var)),]
     
       }
-    
+    if (!is.null(retrive_mod$one_letter[x])){
+      return_df_temp=return_df_temp[return_df_temp$one_letter==retrive_mod$one_letter[x],]  
+    }
+    return(return_df_temp)
     },retrive_mod,unimod.modification.df))
     
     return_mod.df=do.call(rbind,return_mod.df)
@@ -2733,3 +2591,25 @@ THERO_IONS_peptides<-function(peptides){
   }
   
 }
+
+
+  get_atoms_mod<-function(Symbol){
+    #form = "C5H11BrO" 
+    if (Symbol!=""){
+      ups = c(gregexpr("[[:upper:]]", Symbol)[[1]], nchar(Symbol) + 1) 
+      seperated = sapply(1:(length(ups)-1), function(x) substr(Symbol, ups[x], ups[x+1] - 1)) 
+      elements =  gsub("[[:digit:]]", "", seperated) 
+      elements =  gsub(" ", "", elements)
+      elements =  gsub("\\)", "", elements)
+      elements =  gsub("\\(", "", elements)
+      elements =  gsub("-", "", elements)
+      nums = gsub("[[:alpha:]]", "", seperated) 
+      nums = gsub(" ", "", nums) 
+      nums = gsub("\\(", "", nums) 
+      nums = gsub("\\)", "", nums) 
+      ans = data.frame(elements = as.character(elements), num = as.numeric(ifelse(nums == "", 1, nums)), stringsAsFactors = FALSE)
+      list<-as.list(ans$num)
+      names(list)=ans$elements
+      return(list)
+    }else{return(NULL)}
+  }
