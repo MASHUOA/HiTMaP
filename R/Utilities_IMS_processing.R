@@ -1661,10 +1661,11 @@ Preprocessing_segmentation<-function(datafile,
       else if (Segmentation[1]=="spatialKMeans" && segmentation_num!=1) {
         if ('&'(Segmentation_ncomp=="auto-detect",Segmentation_variance_coverage>0)){
           Segmentation_ncomp_running<-PCA_ncomp_selection(imdata_stats,variance_coverage=Segmentation_variance_coverage,outputdir=paste0(getwd(),"/"))
-        }else{Segmentation_ncomp_running<-Segmentation_ncomp}
+        }else if ((Segmentation_ncomp)>1){Segmentation_ncomp_running<-Segmentation_ncomp}
+        else{Segmentation_ncomp_running<-max(segmentation_num)}
         set.seed(1)
         imdata_stats<<-imdata_stats
-        skm <-  spatialKMeans(imdata_stats, r=Smooth_range, k=segmentation_num)
+        skm <-  spatialKMeans(imdata_stats, r=Smooth_range, k=segmentation_num, ncomp=Segmentation_ncomp_running)
         message(paste0(Segmentation[1], " finished: ",name))
         png(paste(getwd(),"/",Segmentation[1],"_image_plot_",segmentation_num,"_segs.png",sep=""),width = 1024,height = 720)
         
@@ -1723,8 +1724,9 @@ Preprocessing_segmentation<-function(datafile,
         set.seed(1)
         if ('&'(Segmentation_ncomp=="auto-detect",Segmentation_variance_coverage>0)){
           Segmentation_ncomp_running<-PCA_ncomp_selection(imdata_stats,variance_coverage=Segmentation_variance_coverage,outputdir=paste0(getwd(),"/"))
-        }else{Segmentation_ncomp_running<-Segmentation_ncomp}
-        skm <-  suppressMessages(suppressWarnings(spatialShrunkenCentroids(imdata_stats, r=Smooth_range, k=segmentation_num, weights="adaptive",s=3,BPPARAM =BPPARAM)))
+        }else if ((Segmentation_ncomp)>1){Segmentation_ncomp_running<-Segmentation_ncomp}
+        else{Segmentation_ncomp_running<-max(segmentation_num)}
+        skm <-  suppressMessages(suppressWarnings(spatialShrunkenCentroids(imdata_stats, r=Smooth_range, k=segmentation_num,, weights="adaptive",s=3,BPPARAM =BPPARAM)))
         message(paste0(Segmentation[1], " finished: ",name))
         png(paste(getwd(),"/",Segmentation[1],"_image_plot_",segmentation_num,"_segs.png",sep=""),width = 1024,height = 720)
         
