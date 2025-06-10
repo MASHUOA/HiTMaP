@@ -23,6 +23,92 @@ build_config <- function(base_config = list(), ...) {
   return(final_config)
 }
 
+#' Validate and complete preprocessing parameters
+#' 
+#' Ensures that all required preprocessing parameters are present with proper defaults
+#' to prevent errors during imaging_identification calls. Based on Cardinal 3 preprocessing methods.
+#' 
+#' @param preprocess User-provided preprocessing list (can be partial)
+#' @param ppm ppm tolerance for peakAlign (default 5)
+#' @return Complete preprocessing list with all required parameters
+#' 
+#' @details
+#' Cardinal 3 supports these preprocessing methods:
+#' \itemize{
+#'   \item smoothSignal: "disable", "gaussian", "bilateral", "adaptive", "diff", "guide", "pag", "sgolay", "ma"
+#'   \item reduceBaseline: "locmin", "hull", "snip", "median"
+#'   \item peakPick: "diff", "sd", "mad", "quantile", "filter", "cwt", "adaptive"
+#'   \item normalize: "tic", "rms", "reference"
+#' }
+#' 
+#' @export
+validate_preprocess_params <- function(preprocess = list(), ppm = 5) {
+  
+  # Define complete default preprocessing structure based on Cardinal 3
+  default_preprocess <- list(
+    force_preprocess = FALSE,
+    use_preprocessRDS = TRUE,
+    smoothSignal = list(method = "disable"),
+    reduceBaseline = list(method = "locmin"),
+    peakPick = list(method = "adaptive"),
+    peakAlign = list(tolerance = ppm/2, units = "ppm"),
+    peakFilter = list(freq.min = 0.05),
+    normalize = list(method = "rms", mz = 1)
+  )
+  
+  # Valid method options from Cardinal 3
+  valid_methods <- list(
+    smoothSignal = c("disable", "gaussian", "bilateral", "adaptive", "diff", "guide", "pag", "sgolay", "ma"),
+    reduceBaseline = c("locmin", "hull", "snip", "median"),
+    peakPick = c("diff", "sd", "mad", "quantile", "filter", "cwt", "adaptive"),
+    normalize = c("tic", "rms", "reference")
+  )
+  
+  # Merge user parameters with defaults
+  # User parameters override defaults
+  complete_preprocess <- modifyList(default_preprocess, preprocess)
+  
+  # Validate critical parameters and methods
+  if (is.null(complete_preprocess$smoothSignal$method)) {
+    complete_preprocess$smoothSignal$method <- "disable"
+  } else if (!complete_preprocess$smoothSignal$method %in% valid_methods$smoothSignal) {
+    warning("Invalid smoothSignal method. Using 'disable'. Valid options: ", 
+            paste(valid_methods$smoothSignal, collapse = ", "))
+    complete_preprocess$smoothSignal$method <- "disable"
+  }
+  
+  if (is.null(complete_preprocess$reduceBaseline$method)) {
+    complete_preprocess$reduceBaseline$method <- "locmin"
+  } else if (!complete_preprocess$reduceBaseline$method %in% valid_methods$reduceBaseline) {
+    warning("Invalid reduceBaseline method. Using 'locmin'. Valid options: ", 
+            paste(valid_methods$reduceBaseline, collapse = ", "))
+    complete_preprocess$reduceBaseline$method <- "locmin"
+  }
+  
+  if (is.null(complete_preprocess$peakPick$method)) {
+    complete_preprocess$peakPick$method <- "adaptive"
+  } else if (!complete_preprocess$peakPick$method %in% valid_methods$peakPick) {
+    warning("Invalid peakPick method. Using 'adaptive'. Valid options: ", 
+            paste(valid_methods$peakPick, collapse = ", "))
+    complete_preprocess$peakPick$method <- "adaptive"
+  }
+  
+  if (is.null(complete_preprocess$normalize$method)) {
+    complete_preprocess$normalize$method <- "rms"
+  } else if (!complete_preprocess$normalize$method %in% valid_methods$normalize) {
+    warning("Invalid normalize method. Using 'rms'. Valid options: ", 
+            paste(valid_methods$normalize, collapse = ", "))
+    complete_preprocess$normalize$method <- "rms"
+  }
+  
+  # Update peakAlign tolerance if ppm was changed
+  if (!is.null(complete_preprocess$peakAlign)) {
+    complete_preprocess$peakAlign$tolerance <- ppm/2
+  }
+  
+  return(complete_preprocess)
+}
+
 #' Apply configuration to project (Pipeline Method)
 #' 
 #' @param project hitmap_project object
