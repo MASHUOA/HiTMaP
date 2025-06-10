@@ -81,4 +81,6 @@ docker run -v G:\Documents\GitHub\HiTMaP\scripts\Docker_file\:/work/ thegang/app
 
 docker run --user root -v G:\Documents\GitHub\HiTMaP\scripts\Docker_file\:/work/ thegang/apptainer:1.2.4 build Singularity_base.sif Singularity_base.def
 
-docker run --name rstudio -e PASSWORD=rstudio -p 8787:8787 -v %userprofile%\Documents\expdata:/root/expdata -a stdin -a stdout -i -t rocker/rstudio
+docker run --name rstudio -e PASSWORD=rstudio -p 8787:8787 -v %userprofile%\Documents\expdata:/rstudio/expdata -a stdin -a stdout -i -t rocker/rstudio
+docker run --name hitmap_rstudio -e PASSWORD=rstudio -p 8787:8787 -v %userprofile%\Documents\expdata:/home/rstudio/expdata -a stdin -a stdout -i -t mashuoa/hitmap:rstudio_latest
+docker commit rstudio mashuoa/hitmap:rstudio_latest
