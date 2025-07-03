@@ -30,6 +30,7 @@ build_config <- function(base_config = list(), ...) {
 #' 
 #' @param preprocess User-provided preprocessing list (can be partial)
 #' @param ppm ppm tolerance for peakAlign (default 5)
+#' @param memory_load Logical. If TRUE, loads intensity data into memory for faster processing (default TRUE)
 #' @return Complete preprocessing list with all required parameters
 #' 
 #' @details
@@ -41,13 +42,21 @@ build_config <- function(base_config = list(), ...) {
 #'   \item normalize: "tic", "rms", "reference"
 #' }
 #' 
+#' The memory_load parameter controls Cardinal's memory usage:
+#' \itemize{
+#'   \item TRUE: Load intensity data into memory (faster processing, higher RAM usage)
+#'   \item FALSE: Keep intensity data on disk (slower processing, lower RAM usage)
+#'   \item "shared": Use shared memory (intermediate option)
+#' }
+#' 
 #' @export
-validate_preprocess_params <- function(preprocess = list(), ppm = 5) {
+validate_preprocess_params <- function(preprocess = list(), ppm = 5, memory_load = TRUE) {
   
   # Define complete default preprocessing structure based on Cardinal 3
   default_preprocess <- list(
     force_preprocess = FALSE,
     use_preprocessRDS = TRUE,
+    memory_load = memory_load,  # Add memory control parameter
     smoothSignal = list(method = "disable"),
     reduceBaseline = list(method = "locmin"),
     peakPick = list(method = "adaptive"),
@@ -107,6 +116,86 @@ validate_preprocess_params <- function(preprocess = list(), ppm = 5) {
   }
   
   return(complete_preprocess)
+}
+
+#' Load Cardinal imaging data with memory control
+#' 
+#' Enhanced Cardinal data loading function that supports the new memory parameter
+#' in Cardinal 3 for controlling whether intensity data is loaded into memory or kept on disk.
+#' 
+#' @param datafile Path to imzML file (with or without extension)
+#' @param memory Logical or character. Controls data loading strategy:
+#'   \itemize{
+#'     \item TRUE: Load intensity data into memory (faster processing, higher RAM usage)
+#'     \item FALSE: Keep intensity data on disk (slower processing, lower RAM usage) 
+#'     \item "shared": Use shared memory (intermediate option)
+#'   }
+#' @param resolution Mass resolution in ppm (default 2.5)
+#' @param BPPARAM BiocParallel parameter for parallel processing
+#' @param mzrange Mass range to load (NULL for all)
+#' @param is_centroided Logical indicating if data is centroided
+#' @param rotate Rotation angle (default 0)
+#' @param preprocessing Logical, apply basic preprocessing (default FALSE)
+#' @return Cardinal MSImagingExperiment object
+#' 
+#' @export
+load_cardinal_data <- function(datafile, memory = TRUE, resolution = 2.5, 
+                              BPPARAM = bpparam(), mzrange = NULL, 
+                              is_centroided = FALSE, rotate = 0, 
+                              preprocessing = FALSE) {
+  
+  suppressMessages(suppressWarnings(library(stringr)))
+  suppressMessages(suppressWarnings(library(BiocParallel)))
+  
+  # Process file path
+  datafile <- gsub("\\\\", "/", datafile)
+  datafiles <- str_remove(datafile, regex("\\.imzML$", ignore_case = TRUE))
+  workdir <- base::dirname(datafiles) 
+  name <- basename(datafiles)
+  folder <- base::dirname(datafiles)
+  
+  # Load data with memory parameter
+  if (rotate == 0) {
+    imdata <- suppressMessages(suppressWarnings(
+      Cardinal::readImzML(name, folder, 
+                         resolution = resolution, 
+                         units = "ppm",
+                         memory = memory,  # Cardinal 3 memory parameter
+                         BPPARAM = BPPARAM,
+                         mass.range = mzrange,
+                         as = "MSImagingExperiment")
+    ))
+  } else {
+    imdata <- suppressMessages(suppressWarnings(
+      Cardinal::readImzML(name, folder, 
+                         resolution = resolution, 
+                         units = "ppm",
+                         memory = memory,  # Cardinal 3 memory parameter
+                         BPPARAM = BPPARAM,
+                         mass.range = mzrange,
+                         as = "MSImagingExperiment")
+    ))
+    # Apply rotation if needed
+    imdata <- rotateMSI(imdata = imdata, rotation_degree = rotate)
+  }
+  
+  # Apply basic preprocessing if requested
+  if (preprocessing) {
+    imdata <- try(
+      batchProcess(imdata, 
+                  normalize = FALSE, 
+                  smoothSignal = TRUE, 
+                  reduceBaseline = list(method = "median", blocks = 500, fun = min, spar = 1),
+                  peakPick = list(SNR = 12), 
+                  peakAlign = TRUE,
+                  BPPARAM = BPPARAM)
+    )
+  }
+  
+  # Set centroided flag
+  imdata@centroided <- is_centroided
+  
+  return(imdata)
 }
 
 #' Apply configuration to project (Pipeline Method)

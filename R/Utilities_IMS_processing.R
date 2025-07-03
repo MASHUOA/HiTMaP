@@ -2569,7 +2569,9 @@ Load_IMS_decov_combine<-function(datafile,workdir,ppm=5,import_ppm=ppm/2,SPECTRU
     mzBin(deconv_peaklist_decov_plot$m.z, resolution=ppm, units="ppm")%>%
       process()
     imdata@elementMetadata@listData[["z"]]<-NULL
-    imdata@elementMetadata@resolution=c(x=1,y=1)
+    # Fixed Cardinal 3.8.3 compatibility - resolution slot no longer exists in PositionDataFrame
+    # imdata@elementMetadata@resolution=c(x=1,y=1)  # Original line causing error
+    run(imdata) <- data.frame(x=1, y=1)  # Cardinal 3.8.3 compatible replacement
 
     combinedimdata_list[[z]]<-imdata
     rm(imdata)
