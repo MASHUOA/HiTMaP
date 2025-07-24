@@ -29,7 +29,7 @@ hitmap_project <- function(data_files, project_folder = NULL, config = list()) {
 #' @return Updated hitmap_project object
 #' 
 #' @export
-init <- function(project, thread_count = 4, .validate = TRUE) {
+ims_init <- function(project, thread_count = 4, .validate = TRUE) {
   
   if (.validate && !inherits(project, "hitmap_project")) {
     stop("Input must be a hitmap_project object. Use hitmap_project() to create one.")
@@ -54,7 +54,7 @@ init <- function(project, thread_count = 4, .validate = TRUE) {
 #' @return Updated hitmap_project object
 #' 
 #' @export
-generate_candidates <- function(project,
+ims_generate_candidates <- function(project,
                                database = "uniprot-bovin.fasta",
                                digestion_site = "trypsin",
                                missed_cleavages = 0:1,
@@ -71,7 +71,7 @@ generate_candidates <- function(project,
   }
   
   if (.validate && !project$status$initialized) {
-    stop("Project must be initialized first. Use init() in pipeline.")
+    stop("Project must be initialized first. Use ims_init() in pipeline.")
   }
   
   project <- hitmap_generate_candidates(
@@ -103,7 +103,7 @@ generate_candidates <- function(project,
 #' @return Updated hitmap_project object
 #' 
 #' @export
-preprocess <- function(project,
+ims_preprocess <- function(project,
                       file_names = NULL,
                       ppm = 5,
                       import_ppm = 5,
@@ -118,7 +118,7 @@ preprocess <- function(project,
   }
   
   if (.validate && !project$status$initialized) {
-    stop("Project must be initialized first. Use init() in pipeline.")
+    stop("Project must be initialized first. Use ims_init() in pipeline.")
   }
   
   # Determine files to process
@@ -164,7 +164,7 @@ preprocess <- function(project,
 #' @return Updated hitmap_project object
 #' 
 #' @export
-segment <- function(project,
+ims_segment <- function(project,
                    file_names = NULL,
                    segment_count = 4,
                    segmentation_method = "spatialKMeans",
@@ -187,7 +187,7 @@ segment <- function(project,
   }
   
   if (.validate && length(files_to_process) == 0) {
-    stop("No preprocessed files available. Use preprocess() in pipeline first.")
+    stop("No preprocessed files available. Use ims_preprocess() in pipeline first.")
   }
   
   # Set default parameters
@@ -236,7 +236,7 @@ segment <- function(project,
 #' @return Updated hitmap_project object
 #' 
 #' @export
-search_pmf <- function(project,
+ims_search_pmf <- function(project,
                       file_names = NULL,
                       region_filter = NULL,
                       threshold = 0.001,
@@ -253,7 +253,7 @@ search_pmf <- function(project,
   }
   
   if (.validate && !project$status$candidates_generated) {
-    stop("Candidates must be generated first. Use generate_candidates() in pipeline.")
+    stop("Candidates must be generated first. Use ims_generate_candidates() in pipeline.")
   }
   
   # Determine files to process
@@ -267,7 +267,7 @@ search_pmf <- function(project,
   }
   
   if (.validate && length(files_to_process) == 0) {
-    stop("No segmented files available. Use segment() in pipeline first.")
+    stop("No segmented files available. Use ims_segment() in pipeline first.")
   }
   
   # Set default search parameters
@@ -339,19 +339,19 @@ search_pmf <- function(project,
 #' @return Updated hitmap_project object
 #' 
 #' @export
-summarize <- function(project,
-                     protein_summary = TRUE,
-                     peptide_summary = TRUE,
-                     region_summary = FALSE,
-                     .validate = TRUE,
-                     ...) {
+ims_summarize <- function(project,
+                          protein_summary = TRUE,
+                          peptide_summary = TRUE,
+                          region_summary = FALSE,
+                          .validate = TRUE,
+                          ...) {
   
   if (.validate && !inherits(project, "hitmap_project")) {
     stop("Input must be a hitmap_project object")
   }
   
   if (.validate && length(project$status$files_pmf_searched) == 0) {
-    stop("No files have been PMF searched yet. Use search_pmf() in pipeline first.")
+    stop("No files have been PMF searched yet. Use ims_search_pmf() in pipeline first.")
   }
   
   project <- hitmap_generate_summaries(

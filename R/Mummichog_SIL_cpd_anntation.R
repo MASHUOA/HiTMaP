@@ -567,7 +567,7 @@ FDR_cutoff_plot_cpd<-function(cpd_plot_list,FDR_cutoff=0.1,FDR_strip=500,plot_fd
         print(p)
         dev.off() }
       
-      mu <- cpd_plot_list_plot %>% group_by(target_decoy) %>% summarize(mean=mean(Score))
+      mu <- cpd_plot_list_plot %>% group_by(target_decoy) %>% dplyr::summarize(mean=mean(Score))
       
       png(paste0(outputdir,"/Peptide_Score_histogram_",plot_name,".png"))
       p<-ggplot(cpd_plot_list_plot, aes(x=cpd_plot_list_plot$Score, color=target_decoy, fill=target_decoy)) +

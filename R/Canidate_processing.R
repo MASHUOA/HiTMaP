@@ -647,7 +647,7 @@ Protein_feature_list_fun<-function(workdir=getwd(),
     suppressMessages(suppressWarnings(library(dplyr)))
     suppressMessages(suppressWarnings(library(egg)))
     suppressMessages(suppressWarnings(library(RColorBrewer)))
-    mz_vs_formula<-Protein_Summary %>% group_by(mz) %>% summarize(Intnsity=length(unique(formula)))
+    mz_vs_formula<-Protein_Summary %>% group_by(mz) %>% dplyr::summarize(Intnsity=length(unique(formula)))
     
     bin_mz_ppm<-function(mz_vs_peptide,ppm_test_list=c(1,2,5)){
       mz_vs_peptide_filtered<-list() 
@@ -700,7 +700,7 @@ Protein_feature_list_fun<-function(workdir=getwd(),
     
     mz_unqiue<-unique(Protein_Summary$mz)
     
-    mz_unqiue_formula<-Protein_Summary %>% group_by(mz) %>% summarize(formula=paste(unique(formula),sep="; "))
+    mz_unqiue_formula<-Protein_Summary %>% group_by(mz) %>% dplyr::summarize(formula=paste(unique(formula),sep="; "))
     
     mz_unqiue<-sort(mz_unqiue)
     
@@ -1261,7 +1261,7 @@ Protein_feature_list_table_import<-function(workdir=getwd(),
     suppressMessages(suppressWarnings(library(dplyr)))
     suppressMessages(suppressWarnings(library(egg)))
     suppressMessages(suppressWarnings(library(RColorBrewer)))
-    mz_vs_formula<-Protein_Summary %>% group_by(mz) %>% summarize(Intnsity=length(unique(formula)))
+    mz_vs_formula<-Protein_Summary %>% group_by(mz) %>% dplyr::summarize(Intnsity=length(unique(formula)))
     
     bin_mz_ppm<-function(mz_vs_peptide,ppm_test_list=c(1,2,5)){
       mz_vs_peptide_filtered<-list() 
@@ -1314,7 +1314,7 @@ Protein_feature_list_table_import<-function(workdir=getwd(),
     
     mz_unqiue<-unique(Protein_Summary$mz)
     
-    mz_unqiue_formula<-Protein_Summary %>% group_by(mz) %>% summarize(formula=paste(unique(formula),sep="; "))
+    mz_unqiue_formula<-Protein_Summary %>% group_by(mz) %>% dplyr::summarize(formula=paste(unique(formula),sep="; "))
     
     mz_unqiue<-sort(mz_unqiue)
     

@@ -33,12 +33,12 @@ print.hitmap_project <- function(x, ...) {
                else if (length(x$status$files_pmf_searched) > 0) "◐" else "○"
   summary_status <- if (length(x$status$summaries_generated) > 0) "✓" else "○"
   
-  cat("  ", init_status, " init()               - Initialize project\n")
-  cat("  ", candidates_status, " generate_candidates() - Generate candidate list\n")
-  cat("  ", preprocess_status, " preprocess()          - Preprocess data files\n")
-  cat("  ", segment_status, " segment()             - Segment into regions\n")
-  cat("  ", pmf_status, " search_pmf()          - Perform PMF search\n")
-  cat("  ", summary_status, " summarize()           - Generate summaries\n")
+  cat("  ", init_status, " ims_init()           - Initialize project\n")
+  cat("  ", candidates_status, " ims_generate_candidates() - Generate candidate list\n")
+  cat("  ", preprocess_status, " ims_preprocess()     - Preprocess data files\n")
+  cat("  ", segment_status, " ims_segment()        - Segment into regions\n")
+  cat("  ", pmf_status, " ims_search_pmf()     - Perform PMF search\n")
+  cat("  ", summary_status, " ims_summarize()      - Generate summaries\n")
   
   # Results summary
   if (x$status$candidates_generated) {
@@ -73,15 +73,15 @@ print.hitmap_project <- function(x, ...) {
   if (!x$status$initialized) {
     cat("  project %>% init(thread_count = 4)\n")
   } else if (!x$status$candidates_generated) {
-    cat("  project %>% generate_candidates(database = \"your_database.fasta\")\n")
+    cat("  project %>% ims_generate_candidates(database = \"your_database.fasta\")\n")
   } else if (length(x$status$files_preprocessed) < length(x$metadata$data_files)) {
-    cat("  project %>% preprocess()\n")
+    cat("  project %>% ims_preprocess()\n")
   } else if (length(x$status$files_segmented) < length(x$metadata$data_files)) {
-    cat("  project %>% segment(segment_count = 4)\n")
+    cat("  project %>% ims_segment(segment_count = 4)\n")
   } else if (length(x$status$files_pmf_searched) < length(x$metadata$data_files)) {
-    cat("  project %>% search_pmf()\n")
+    cat("  project %>% ims_search_pmf()\n")
   } else if (length(x$status$summaries_generated) == 0) {
-    cat("  project %>% summarize()\n")
+    cat("  project %>% ims_summarize()\n")
   } else {
     cat("  Pipeline complete! Use export_results() or checkpoint()\n")
   }

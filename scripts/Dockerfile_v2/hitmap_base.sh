@@ -41,5 +41,10 @@ apt_install \
     ghostscript \
     libharfbuzz-dev \
     libfribidi-dev \
+	libtool \
+	automake \
+	autoconf \
+	m4 \
+	perl \
 	clang
 

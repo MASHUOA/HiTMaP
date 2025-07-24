@@ -138,6 +138,10 @@ R/HiTMaP running environment. Major dependencies to note:
 install.packages("remotes")
 install.packages("devtools")
 install.packages("BiocManager")
+
+#Update all dependencies
+BiocManager::install(ask = F)
+
 #library(devtools)
 library(remotes)
 Sys.setenv("R_REMOTES_NO_ERRORS_FROM_WARNINGS" = "true")
@@ -146,8 +150,6 @@ BiocManager::install(c( "XVector", "Biostrings", "KEGGREST","cleaver"),INSTALL_o
 BiocManager::install(c("EBImage","Rdisop"))
 remotes::install_github("MASHUOA/HiTMaP",force=T,build_opts = c("--no-resave-data", "--no-manual","-Wno-error", "--no-build-vignettes"),configure.vars="CFLAGS= -O3 -Wall -mtune=native -march=native -Wno-error",ask = F)
 
-#Update all dependencies
-BiocManager::install(ask = F)
 library(HiTMaP)
 ```
 

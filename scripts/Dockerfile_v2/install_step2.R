@@ -1,3 +1,5 @@
+install.packages("devtools")
+install.packages("remotes")
 library(devtools)
 library(remotes)
 remotes::install_github("sneumann/Rdisop")
