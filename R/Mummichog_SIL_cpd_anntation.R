@@ -379,7 +379,7 @@ Cpd_spectrum_match_rescore<-function(cpd_list,peaklist,wd=getwd(),
                           Score = cpd_list_rank$Score_org,
                           fit_type = "lm")$final.Score
       cpd_list_rank$Score<-cpd_list_rank$Score_adj
-      Score_cutoff= HiTMaP:::FDR_cutoff_plot(cpd_list_rank,FDR_cutoff=FDR_cutoff,plot_fdr=T,outputdir=paste0(wd,"/",SPECTRUM_batch),adjust_score = F)
+      Score_cutoff= FDR_cutoff_plot(cpd_list_rank,FDR_cutoff=FDR_cutoff,plot_fdr=T,outputdir=paste0(wd,"/",SPECTRUM_batch),adjust_score = F)
       cpd_list_2nd=cpd_list_rank[((cpd_list_rank$Score>=Score_cutoff)&(!is.na(cpd_list_rank$Intensity))),]
       if(SIL_cpd){
         dir.create(paste0(wd,"/",SPECTRUM_batch,"/","SIL"))
@@ -393,7 +393,7 @@ Cpd_spectrum_match_rescore<-function(cpd_list,peaklist,wd=getwd(),
                                                      fit_type = "loess")$final.Score
         cpd_list_2nd_sil$Score<-cpd_list_2nd_sil$Score_adj
         #plot(cpd_list_2nd_sil$mz,cpd_list_2nd_sil$Score_adj-cpd_list_2nd_sil$Score_org)
-        Score_cutoff= HiTMaP:::FDR_cutoff_plot(cpd_list_2nd_sil,FDR_cutoff=FDR_cutoff,plot_fdr=T,outputdir=paste0(wd,"/",SPECTRUM_batch,"/","SIL"),adjust_score = F)
+        Score_cutoff= FDR_cutoff_plot(cpd_list_2nd_sil,FDR_cutoff=FDR_cutoff,plot_fdr=T,outputdir=paste0(wd,"/",SPECTRUM_batch,"/","SIL"),adjust_score = F)
         cpd_list_2nd_sil=cpd_list_2nd_sil[((cpd_list_2nd_sil$Score>=Score_cutoff)&(!is.na(cpd_list_2nd_sil$Intensity))),]
         if (nrow(cpd_list_2nd_sil)>=1){
           cpd_list_2nd<-rbind(cpd_list_2nd,cpd_list_2nd_sil)
@@ -1226,11 +1226,7 @@ SCORE_CPD<-function(formula,peaklist,isotopes=NULL,threshold=0.001,charge=1,ppm=
   suppressMessages(suppressWarnings(require(OrgMassSpecR)))
   suppressMessages(suppressWarnings(require(enviPat)))
   suppressMessages(suppressWarnings(require(data.table)))
- suppressMessages(suppressWarnings(if (!require(rJava)){
-  if (Sys.getenv("JAVA_HOME")!="")
-    Sys.setenv(JAVA_HOME="")
-  library(rJava)
-}))
+ require_rjava("Mummichog SIL compound annotation")
   suppressMessages(suppressWarnings(require(grid)))
   if (is.null(isotopes)){data("isotopes")}
   

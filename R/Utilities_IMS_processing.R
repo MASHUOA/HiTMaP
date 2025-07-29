@@ -1224,7 +1224,7 @@ PCA_ncomp_selection<-function(imdata,variance_coverage=0.80,outputdir=NULL){
   if (!is.null(outputdir)){
     png(paste(outputdir,"/","PCA_image.png",sep=""),width = 1024,height = 720)
 
-    print(image(PCA_imdata, values="scores", superpose=FALSE, layout=c(3,4),normalize.image = c("linear"),contrast.enhance = c("histogram")))
+    print(Cardinal::image(PCA_imdata, values="scores", superpose=FALSE, layout=c(3,4),normalize.image = c("linear"),contrast.enhance = c("histogram")))
 
     dev.off()
     png(paste(outputdir,"/","PCA_plot.png",sep=""),width = 1024,height = 720 ,res=150)
@@ -1337,7 +1337,7 @@ Preprocessing_segmentation<-function(datafile,
       Cardinal::cbind(imdata,imdata_r)->imdata_rimdata_new
       imdata_rimdata_new@elementMetadata@listData[["z"]]<-NULL
       png(paste0(gsub(".imzML$","",datafile[z])  ," ID/","IMG_roation.png"),width = 1600,height = 800, res=200)
-      print(image(imdata_rimdata_new,factor(run(imdata_rimdata_new)) ~ x * y ,superpose=F, key=T,
+      print(Cardinal::image(imdata_rimdata_new,factor(run(imdata_rimdata_new)) ~ x * y ,superpose=F, key=T,
                   layout=c(1,2)))
       dev.off()
       imdata_r->imdata
@@ -1380,7 +1380,7 @@ Preprocessing_segmentation<-function(datafile,
             preprocess$mz_bin_list->mz_bin_list_s
             sort(as.numeric(unlist(mz_bin_list_s)))->ref_mz
             peaklist_deco<-data.frame(mz=ref_mz,intensities=rep(1,length(ref_mz)))
-            peaklist_deco<-HiTMaP:::isopattern_ppm_filter_peaklist(peaklist_deco,ppm=ppm,threshold=0)
+            peaklist_deco<-isopattern_ppm_filter_peaklist(peaklist_deco,ppm=ppm,threshold=0)
             unlist(peaklist_deco[,1])->ref_mz
             ref_mz<-ref_mz[!is.na(ref_mz)]
             range(mz(imdata_ed))->ref_mz_range
@@ -1416,7 +1416,7 @@ Preprocessing_segmentation<-function(datafile,
             peaklist<-summarizeFeatures(imdata_ed,"sum")
             peaklist_deco<-data.frame(mz=peaklist@mz,intensities=peaklist$sum)
             peaklist_deco<-peaklist_deco[peaklist_deco$intensities>0,]
-            peaklist_deco<-HiTMaP:::isopattern_ppm_filter_peaklist(peaklist_deco,ppm=ppm,threshold=0)
+            peaklist_deco<-isopattern_ppm_filter_peaklist(peaklist_deco,ppm=ppm,threshold=0)
             write.csv(peaklist_deco,paste0(gsub(".imzML$","",datafile[z])  ," ID/Sum_spec_decov.csv"),row.names = F)
             imdata_ed<-imdata_ed %>% peakBin(peaklist_deco$mz, tolerance=ppm, units="ppm") %>% process(BPPARAM=SerialParam())
           }
@@ -1438,7 +1438,7 @@ Preprocessing_segmentation<-function(datafile,
               peaklist_deco<-data.frame(mz=peaklist@mz,intensities=peaklist$sum)
               peaklist_deco<-peaklist_deco[peaklist_deco$intensities>0,]
               write.csv(peaklist_deco,paste0(gsub(".imzML$","",datafile[z])  ," ID/Sum_spec.csv"),row.names = F)
-              peaklist_deco<-HiTMaP:::isopattern_ppm_filter_peaklist(peaklist_deco,ppm=ppm,threshold=0)
+              peaklist_deco<-isopattern_ppm_filter_peaklist(peaklist_deco,ppm=ppm,threshold=0)
               write.csv(peaklist_deco,paste0(gsub(".imzML$","",datafile[z])  ," ID/Sum_spec_decov.csv"),row.names = F)
             }else {
               message("preprocess$peakAlign$tolerance missing, use default tolerance in ppm ", ppm/2)
@@ -1447,7 +1447,7 @@ Preprocessing_segmentation<-function(datafile,
               peaklist_deco<-data.frame(mz=peaklist@mz,intensities=peaklist$sum)
               peaklist_deco<-peaklist_deco[peaklist_deco$intensities>0,]
               write.csv(peaklist_deco,paste0(gsub(".imzML$","",datafile[z])  ," ID/Sum_spec.csv"),row.names = F)
-              peaklist_deco<-HiTMaP:::isopattern_ppm_filter_peaklist(peaklist_deco,ppm=ppm,threshold=0)
+              peaklist_deco<-isopattern_ppm_filter_peaklist(peaklist_deco,ppm=ppm,threshold=0)
               write.csv(peaklist_deco,paste0(gsub(".imzML$","",datafile[z])  ," ID/Sum_spec_decov.csv"),row.names = F)
             }
           }
@@ -1463,7 +1463,7 @@ Preprocessing_segmentation<-function(datafile,
           #peaklist_deco<-data.frame(mz=peaklist@mz,intensities=peaklist$sum)
           #peaklist_deco<-peaklist_deco[peaklist_deco$intensities>0,]
           
-          #peaklist_deco<-HiTMaP:::isopattern_ppm_filter_peaklist(peaklist_deco,ppm=instrument_ppm,threshold=0)
+          #peaklist_deco<-isopattern_ppm_filter_peaklist(peaklist_deco,ppm=instrument_ppm,threshold=0)
           #imdata_ed<-imdata_ed %>% peakBin(peaklist_deco$mz, resolution=instrument_ppm, units="ppm") %>% process()
           
         } 
@@ -1490,7 +1490,7 @@ Preprocessing_segmentation<-function(datafile,
             preprocess$mz_bin_list->mz_bin_list_s
             sort(as.numeric(unlist(mz_bin_list_s)))->ref_mz
             peaklist_deco<-data.frame(mz=ref_mz,intensities=rep(1,length(ref_mz)))
-            peaklist_deco<-HiTMaP:::isopattern_ppm_filter_peaklist(peaklist_deco,ppm=ppm,threshold=0)
+            peaklist_deco<-isopattern_ppm_filter_peaklist(peaklist_deco,ppm=ppm,threshold=0)
             unlist(peaklist_deco[,1])->ref_mz
             ref_mz<-ref_mz[!is.na(ref_mz)]
             range(mz(imdata_ed))->ref_mz_range
@@ -1537,7 +1537,7 @@ Preprocessing_segmentation<-function(datafile,
               peaklist_deco<-data.frame(mz=peaklist@mz,intensities=peaklist$sum)
               peaklist_deco<-peaklist_deco[peaklist_deco$intensities>0,]
               write.csv(peaklist_deco,paste0(gsub(".imzML$","",datafile[z])  ," ID/Sum_spec.csv"),row.names = F)
-              peaklist_deco<-HiTMaP:::isopattern_ppm_filter_peaklist(peaklist_deco,ppm=ppm,threshold=0)
+              peaklist_deco<-isopattern_ppm_filter_peaklist(peaklist_deco,ppm=ppm,threshold=0)
               write.csv(peaklist_deco,paste0(gsub(".imzML$","",datafile[z])  ," ID/Sum_spec_decov.csv"),row.names = F)
             }else {
               message("preprocess$peakAlign$tolerance missing, use default tolerance in ppm ", ppm/2)
@@ -1546,7 +1546,7 @@ Preprocessing_segmentation<-function(datafile,
               peaklist_deco<-data.frame(mz=peaklist@mz,intensities=peaklist$sum)
               peaklist_deco<-peaklist_deco[peaklist_deco$intensities>0,]
               write.csv(peaklist_deco,paste0(gsub(".imzML$","",datafile[z])  ," ID/Sum_spec.csv"),row.names = F)
-              peaklist_deco<-HiTMaP:::isopattern_ppm_filter_peaklist(peaklist_deco,ppm=ppm,threshold=0)
+              peaklist_deco<-isopattern_ppm_filter_peaklist(peaklist_deco,ppm=ppm,threshold=0)
               write.csv(peaklist_deco,paste0(gsub(".imzML$","",datafile[z])  ," ID/Sum_spec_decov.csv"),row.names = F)
             }
           }
@@ -1562,7 +1562,7 @@ Preprocessing_segmentation<-function(datafile,
             preprocess$mz_bin_list->mz_bin_list_s
             sort(as.numeric(unlist(mz_bin_list_s)))->ref_mz
             peaklist_deco<-data.frame(mz=ref_mz,intensities=rep(1,length(ref_mz)))
-            peaklist_deco<-HiTMaP:::isopattern_ppm_filter_peaklist(peaklist_deco,ppm=ppm,threshold=0)
+            peaklist_deco<-isopattern_ppm_filter_peaklist(peaklist_deco,ppm=ppm,threshold=0)
             unlist(peaklist_deco[,1])->ref_mz
             ref_mz<-ref_mz[!is.na(ref_mz)]
             range(mz(imdata_ed))->ref_mz_range
@@ -2036,7 +2036,7 @@ Preprocessing_segmentation<-function(datafile,
             bty="n",pty="s",xaxt="n",
             yaxt="n",
             no.readonly = TRUE,ann=FALSE)
-        print(image(imdata, region_pattern ~ x * y,col=brewer.pal_n(length(unique(coordata$rank)),colorstyle), key=TRUE))
+        print(Cardinal::image(imdata, region_pattern ~ x * y,col=brewer.pal_n(length(unique(coordata$rank)),colorstyle), key=TRUE))
         
         dev.off()
         
@@ -2228,7 +2228,7 @@ Load_IMS_decov_combine<-function(datafile,workdir,ppm=5,import_ppm=ppm/2,SPECTRU
                                  deconv_peaklist=c("Load_exist","New","Target"),preprocessRDS_rotated=T,use_rawdata=F,target_mzlist=NULL){
   suppressMessages(suppressWarnings(library(matter)))
   suppressMessages(suppressWarnings(library(stringr)))
-  suppressMessages(suppressWarnings(library(HiTMaP)))
+  # suppressMessages(suppressWarnings(library(HiTMaP)))  # Removed: package shouldn't load itself
   suppressMessages(suppressWarnings(library(Cardinal)))
   
   datafile_base<-basename(datafile)
@@ -2238,7 +2238,7 @@ Load_IMS_decov_combine<-function(datafile,workdir,ppm=5,import_ppm=ppm/2,SPECTRU
   }
   
   datafile_imzML=paste0(datafile,".imzML")
-  rotate=HiTMaP:::Parse_rotation(datafile,rotate)
+  rotate=Parse_rotation(datafile,rotate)
   if (sum(deconv_peaklist[1]=="New",!file.exists(paste0(workdir[1],"/","ClusterIMS_deconv_Spectrum.csv")))>=1){
     for (z in 1:length(datafile)){
       name <-basename(datafile[z])
@@ -2260,9 +2260,9 @@ Load_IMS_decov_combine<-function(datafile,workdir,ppm=5,import_ppm=ppm/2,SPECTRU
         imdata<-readRDS(paste0(workdir[z],"/",datafile[z]," ID/","preprocessed_imdata.RDS"))
         if (!preprocessRDS_rotated){
           if(!is.na(rotate[datafile_imzML[z]])){
-            imdata <-HiTMaP:::rotateMSI(imdata=imdata,rotation_degree=rotate[datafile_imzML[z]])
+            imdata <-rotateMSI(imdata=imdata,rotation_degree=rotate[datafile_imzML[z]])
           }else if(!is.na(rotate[datafile[z]])){
-            imdata <-HiTMaP:::rotateMSI(imdata=imdata,rotation_degree=rotate[datafile[z]])
+            imdata <-rotateMSI(imdata=imdata,rotation_degree=rotate[datafile[z]])
           }
         }
       }else if (use_rawdata){
@@ -2273,9 +2273,9 @@ Load_IMS_decov_combine<-function(datafile,workdir,ppm=5,import_ppm=ppm/2,SPECTRU
           imdata <- Cardinal::readMSIData(paste0(workdir[z],"/",datafile_imzML[z]),resolution=import_ppm, units="ppm",BPPARAM=SerialParam(),mass.range =mzrange)
         }
         if(!is.na(rotate[datafile_imzML[z]])){
-          imdata <-HiTMaP:::rotateMSI(imdata=imdata,rotation_degree=rotate[datafile_imzML[z]])
+          imdata <-rotateMSI(imdata=imdata,rotation_degree=rotate[datafile_imzML[z]])
         }else if(!is.na(rotate[datafile[z]])){
-          imdata <-HiTMaP:::rotateMSI(imdata=imdata,rotation_degree=rotate[datafile[z]])
+          imdata <-rotateMSI(imdata=imdata,rotation_degree=rotate[datafile[z]])
         }
       }
       
@@ -2291,7 +2291,7 @@ Load_IMS_decov_combine<-function(datafile,workdir,ppm=5,import_ppm=ppm/2,SPECTRU
       message(paste("Mean spectrum generated",name,"region",SPECTRUM_batch))
       write.csv(peaklist,paste0(workdir[z],"/",datafile[z] ," ID/",SPECTRUM_batch,"_Spectrum.csv"),row.names = F)
       peaklist<-peaklist[peaklist$intensities>0,]
-      deconv_peaklist_df<-HiTMaP:::isopattern_ppm_filter_peaklist(peaklist,ppm=ppm,threshold=threshold)
+      deconv_peaklist_df<-isopattern_ppm_filter_peaklist(peaklist,ppm=ppm,threshold=threshold)
       write.csv(deconv_peaklist_df,paste0(workdir[z],"/",datafile[z] ," ID/",SPECTRUM_batch,"_deconv_Spectrum.csv"),row.names = F)
     
       }
@@ -2327,7 +2327,7 @@ Load_IMS_decov_combine<-function(datafile,workdir,ppm=5,import_ppm=ppm/2,SPECTRU
       mz.ref.list.top.quantile.spec.bind$intensities<-1
       mz.ref.list.top.quantile.spec.bind<-mz.ref.list.top.quantile.spec.bind[order(mz.ref.list.top.quantile.spec.bind$m.z),]
       rownames(mz.ref.list.top.quantile.spec.bind)<-1:nrow(mz.ref.list.top.quantile.spec.bind)
-      mz.ref.list.top.quantile.bin<-HiTMaP:::isopattern_ppm_filter_peaklist(mz.ref.list.top.quantile.spec.bind,ppm=ppm_aligment,threshold=0.00)
+      mz.ref.list.top.quantile.bin<-isopattern_ppm_filter_peaklist(mz.ref.list.top.quantile.spec.bind,ppm=ppm_aligment,threshold=0.00)
       mz.ref.list.top.quantile.final<-mz.ref.list.top.quantile.bin$m.z[mz.ref.list.top.quantile.bin$intensities>(0.55*max(mz.ref.list.top.quantile.bin$intensities))]
       #match features
       
@@ -2453,7 +2453,7 @@ Load_IMS_decov_combine<-function(datafile,workdir,ppm=5,import_ppm=ppm/2,SPECTRU
     
     rownames(deconv_peaklist_bind)<-1:nrow(deconv_peaklist_bind)
     
-    deconv_peaklist_decov<-HiTMaP:::isopattern_ppm_filter_peaklist(deconv_peaklist_bind,ppm=ppm,threshold=threshold)
+    deconv_peaklist_decov<-isopattern_ppm_filter_peaklist(deconv_peaklist_bind,ppm=ppm,threshold=threshold)
     
     write.csv(deconv_peaklist_decov,paste0(workdir[z],"/","ClusterIMS_deconv_Spectrum.csv"),row.names = F)
     }else if (mzAlign_runs=="Combined_features"){
@@ -2465,7 +2465,7 @@ Load_IMS_decov_combine<-function(datafile,workdir,ppm=5,import_ppm=ppm/2,SPECTRU
       
       rownames(deconv_peaklist_bind)<-1:nrow(deconv_peaklist_bind)
       
-      deconv_peaklist_decov<-HiTMaP:::isopattern_ppm_filter_peaklist(deconv_peaklist_bind,ppm=ppm,threshold=threshold)
+      deconv_peaklist_decov<-isopattern_ppm_filter_peaklist(deconv_peaklist_bind,ppm=ppm,threshold=threshold)
       
       write.csv(deconv_peaklist_decov,paste0(workdir[z],"/","ClusterIMS_deconv_Spectrum.csv"),row.names = F)
       
@@ -2481,12 +2481,12 @@ Load_IMS_decov_combine<-function(datafile,workdir,ppm=5,import_ppm=ppm/2,SPECTRU
     
     deconv_peaklist_decov<-read.csv(paste0(workdir[1],"/","ClusterIMS_deconv_Spectrum.csv"))
     
-    deconv_peaklist_decov<-HiTMaP:::isopattern_ppm_filter_peaklist(deconv_peaklist_decov,ppm=ppm,threshold=threshold)
+    deconv_peaklist_decov<-isopattern_ppm_filter_peaklist(deconv_peaklist_decov,ppm=ppm,threshold=threshold)
     
   }else if (sum(deconv_peaklist[1]=="Target")==1){
     if (file.exists(paste0(workdir[1],"/","ClusterIMS_deconv_Spectrum_target.csv"))){
           deconv_peaklist_decov<-read.csv(paste0(workdir[1],"/","ClusterIMS_deconv_Spectrum_target.csv"))
-          deconv_peaklist_decov<-HiTMaP:::isopattern_ppm_filter_peaklist(deconv_peaklist_decov,ppm=ppm,threshold=threshold)
+          deconv_peaklist_decov<-isopattern_ppm_filter_peaklist(deconv_peaklist_decov,ppm=ppm,threshold=threshold)
     }else{
      if (!is.null(target_mzlist)){
        deconv_peaklist_decov=data.frame(m.z=target_mzlist,intensities=1)
@@ -2515,9 +2515,9 @@ Load_IMS_decov_combine<-function(datafile,workdir,ppm=5,import_ppm=ppm/2,SPECTRU
       imdata<-readRDS(paste0(workdir[z],"/",datafile[z]," ID/","preprocessed_imdata.RDS"))
       if (!preprocessRDS_rotated){
         if(!is.na(rotate[datafile_imzML[z]])){
-          imdata <-HiTMaP:::rotateMSI(imdata=imdata,rotation_degree=rotate[datafile_imzML[z]])
+          imdata <-rotateMSI(imdata=imdata,rotation_degree=rotate[datafile_imzML[z]])
         }else if(!is.na(rotate[datafile[z]])){
-          imdata <-HiTMaP:::rotateMSI(imdata=imdata,rotation_degree=rotate[datafile[z]])
+          imdata <-rotateMSI(imdata=imdata,rotation_degree=rotate[datafile[z]])
         }
       }
           }else if (use_rawdata){
@@ -2528,9 +2528,9 @@ Load_IMS_decov_combine<-function(datafile,workdir,ppm=5,import_ppm=ppm/2,SPECTRU
         imdata <- Cardinal::readMSIData(paste0(workdir[z],"/",datafile_imzML[z]),resolution=import_ppm, units="ppm",BPPARAM=SerialParam(),mass.range =mzrange)
       }
       if(!is.na(rotate[datafile_imzML[z]])){
-        imdata <-HiTMaP:::rotateMSI(imdata=imdata,rotation_degree=rotate[datafile_imzML[z]])
+        imdata <-rotateMSI(imdata=imdata,rotation_degree=rotate[datafile_imzML[z]])
       }else if(!is.na(rotate[datafile[z]])){
-        imdata <-HiTMaP:::rotateMSI(imdata=imdata,rotation_degree=rotate[datafile[z]])
+        imdata <-rotateMSI(imdata=imdata,rotation_degree=rotate[datafile[z]])
       }
           }
     message("mzbin for ",datafile[z])
@@ -2638,7 +2638,7 @@ sort_run_msi<-function(combinedimdata,datafiles,norm_coord=T){
 load_pixel_label<-function(combinedimdata,datafile,workdir,coordata_file="coordata.csv",pixel_idx_col=base::row.names,label_col="pattern",...){
   library(Cardinal)
   library(stringr)
-  library(HiTMaP)
+  # library(HiTMaP)  # Removed: package shouldn't load itself
   datafile_base<-basename(datafile)
   datafile <- str_remove(datafile_base,"\\.imzML$")
   if(length(workdir)!=length(datafile)){

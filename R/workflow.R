@@ -158,11 +158,11 @@ imaging_identification<-function(
   if (is.null(Thread)){
   parallel=try(future::availableCores()/2)
   if (parallel<1 | is.null(parallel)){parallel=1}
-  BPPARAM=HiTMaP:::Parallel.OS(parallel)
+  BPPARAM=Parallel.OS(parallel)
   setCardinalBPPARAM(BPPARAM = BPPARAM)
   }else{
   parallel=Thread
-  BPPARAM=HiTMaP:::Parallel.OS(parallel)
+  BPPARAM=Parallel.OS(parallel)
   setCardinalBPPARAM(BPPARAM = BPPARAM)
   }
 
@@ -681,7 +681,7 @@ IMS_data_process<-function(datafile,
     write.csv(peaklist,paste0(workdir[z],"/",datafile[z] ," ID/",SPECTRUM_batch,"/Spectrum.csv"),row.names = F)
     
    #generate filtered processed peaklist to next PMF step
-    deconv_peaklist<-HiTMaP:::isopattern_ppm_filter_peaklist(peaklist,ppm=ppm,threshold=0)
+    deconv_peaklist<-isopattern_ppm_filter_peaklist(peaklist,ppm=ppm,threshold=0)
     deconv_peaklist_thres_id<-deconv_peaklist$intensities>=max(deconv_peaklist$intensities)*threshold
     deconv_peaklist_topN_id<-rank(deconv_peaklist$intensities,)>(max(rank(deconv_peaklist$intensities,))-TopNFeatures)
     deconv_peaklist_PMF_id<-`|`(deconv_peaklist_thres_id,deconv_peaklist_topN_id)
@@ -970,11 +970,11 @@ imaging_identification_target<-function(
   if (is.null(Thread)){
     parallel=try(detectCores()/2)
     if (parallel<1 | is.null(parallel)){parallel=1}
-    BPPARAM=HiTMaP:::Parallel.OS(parallel)
+    BPPARAM=Parallel.OS(parallel)
     setCardinalBPPARAM(BPPARAM = BPPARAM)
   }else{
     parallel=Thread
-    BPPARAM=HiTMaP:::Parallel.OS(parallel)
+    BPPARAM=Parallel.OS(parallel)
     setCardinalBPPARAM(BPPARAM = BPPARAM)
   }
   

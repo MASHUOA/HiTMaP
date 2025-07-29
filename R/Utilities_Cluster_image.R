@@ -41,6 +41,7 @@ cluster_image_grid<-function(clusterID,
     return(stringX)
 
   }
+  
    suppressMessages(suppressWarnings(require(magick)))
    suppressMessages(suppressWarnings(require(stringr)))
    suppressMessages(suppressWarnings(require(data.table)))
@@ -132,12 +133,12 @@ cluster_image_grid<-function(clusterID,
             bty="n",pty="s",xaxt="n",
             yaxt="n",
             no.readonly = TRUE,ann=FALSE)
-        image(imdata, mz=candidateunique,
+        Cardinal::image(imdata, mz=candidateunique,
               col=mycol,
               contrast.enhance = contrast.enhance,
               smooth.image = smooth.image ,
               superpose=TRUE,normalize.image="linear",
-              plusminus=median(ppm*candidateunique/1000000))
+              tolerance=ppm, units="ppm")
 
 
         l<-function(x,y,z,t=x+y,f=t+z){
@@ -175,23 +176,23 @@ cluster_image_grid<-function(clusterID,
 
 
 
-        image(imdata, mz=candidateunique,
+        Cardinal::image(imdata, mz=candidateunique,
               col=levels(mycol),
               contrast.enhance = contrast.enhance,
               smooth.image = smooth.image ,
               superpose=TRUE,normalize.image="linear",
-              plusminus=round(median(ppm*candidateunique/1000000),digits = 4),key=F)
+              tolerance=ppm, units="ppm",key=F)
 
         for (i in 1:length(candidateunique)){
           #image(imdata, mz=candidateunique[i], col=mycol[i], superpose=F,normalize.image="linear")
-          col.regions <- gradient.colors(100, start="black", end=levels(mycol)[i])
-          image(imdata, mz=candidateunique[i],
+          col.regions <- create_gradient_colors_robust(100, start="black", end=levels(mycol)[i])
+          Cardinal::image(imdata, mz=candidateunique[i],
                 contrast.enhance=contrast.enhance,
                 smooth.image = smooth.image ,
                 col.regions=col.regions,
 
                 normalize.image="none",
-                plusminus=ppm*candidateunique[i]/1000000)
+                tolerance=ppm, units="ppm")
           componentname=unique(candidate[[componentID_colname]][candidate$mz==as.numeric(candidateunique[i])])
           for (component in componentname){
             text(cex=30/ifelse(nchar(component)>30,nchar(component),30),labels=paste0(component),x=1,y=1+(which(componentname==component)-1)*3,adj=0,pos=4,offset=1,col = "white")
@@ -210,14 +211,15 @@ cluster_image_grid<-function(clusterID,
       else if(plot_style=="fleximaging"){
 
         ##################################
-        lightmode()
+        matter::vizi_style(style = "light", dpal = "Tableau 10", cpal = "Viridis")
         tmp_dir <- tempdir()
         temp_cluster_png=tempfile(pattern = "file", tmpdir = tempdir(), fileext = ".png")
         temp_component_png=list()
         temp_component_png.mono=list()
         if (plot_layout=="line"){
           #png(temp_cluster_png,width = 5,height = 5 * length( levels(Cardinal::run(imdata))), bg = "black",units = "in",res = 300)
-          temp_cluster_png<-image_graph(width = 750,height = 750 * length( levels(Cardinal::run(imdata))), bg = "black",res = 150)
+          temp_cluster_png<-tempfile(pattern = "file", tmpdir = tempdir(), fileext = ".png")
+          png(temp_cluster_png,width = 750,height = 750 * length( levels(Cardinal::run(imdata))), bg = "black",units = "px",res = 150)
           par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(length( levels(Cardinal::run(imdata))),1),
               bty="n",pty="s",xaxt="n",
               yaxt="n",
@@ -226,7 +228,8 @@ cluster_image_grid<-function(clusterID,
 
         }else{
           #png(temp_cluster_png,width = 5*2,height = 5*(ceiling((length(candidateunique)+1)/2)), bg = "black",units = "in",res = 300)
-          temp_cluster_png<-image_graph(width = 750*2,height = 750 * (ceiling((length(candidateunique)+1)/2)), bg = "black",res = 150)
+          temp_cluster_png<-tempfile(pattern = "file", tmpdir = tempdir(), fileext = ".png")
+          png(temp_cluster_png,width = 750*2,height = 750 * (ceiling((length(candidateunique)+1)/2)), bg = "black",units = "px",res = 150)
 
           par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(ceiling((length(candidateunique)+1)/2), 2),
               bty="n",pty="s",xaxt="n",
@@ -235,8 +238,8 @@ cluster_image_grid<-function(clusterID,
         }
 
 
-        col.regions <- gradient.colors(100, start="black", end=levels(mycol)[1])
-
+        col.regions <- create_gradient_colors_robust(100, start="black", end=levels(mycol)[1])
+        #col.regions <- cpal(palette = "Viridis")
 
 
         dev.off()
@@ -253,35 +256,38 @@ cluster_image_grid<-function(clusterID,
         componentimg.mono=list()
         for (i in 1:length(candidateunique)){
           #image(imdata, mz=candidateunique[i], col=mycol[i], superpose=F,normalize.image="linear")
-          col.regions <- gradient.colors(100, start="black", end=levels(mycol)[i])
+          col.regions <- create_gradient_colors_robust(100, start="black", end=levels(mycol)[i])
           if  (Component_plot_coloure=="mono"){
             bg = paste0("grey",29)
             col.regions.mono=intensity.colors_customize1(colset = 2)
-            col.regions=gradient.colors(100, start="black", end=levels(mycol)[i])
+            col.regions=create_gradient_colors_robust(100, start="black", end=levels(mycol)[i])
           }else if(Component_plot_coloure=="as.cluster"){
-            col.regions=gradient.colors(100, start="black", end=levels(mycol)[i])
-            #col.regions=gradient.colors(100, start="#030303", end=levels(mycol)[i])
+            col.regions=create_gradient_colors_robust(100, start="black", end=levels(mycol)[i])
+            #col.regions=create_gradient_colors_robust(100, start="#030303", end=levels(mycol)[i])
             col=levels(mycol)[i]
           }
 
           if(cluster_color_scale=="blackwhite"){
-            col.regions.mono=gradient.colors(100, start="black", end="white")
-            col.regions=gradient.colors(100, start="black", end="white")
+            col.regions.mono=create_gradient_colors_robust(100, start="black", end="white")
+            col.regions=create_gradient_colors_robust(100, start="black", end="white")
           }
           if (Component_plot_coloure=="mono"){
-            componentimg.mono[[i]]=image(imdata, mz=candidateunique[i],
+            
+            componentimg.mono[[i]]=Cardinal::image(imdata, mz=candidateunique[i],
                                     #contrast.enhance=contrast.enhance,
                                     contrast.enhance = "none",
                                     smooth.image = smooth.image,
                                     colorscale=col.regions.mono,
-                                    col=col,
                                     normalize.image="linear",
-                                    plusminus=round(ppm*candidateunique[i]/1000000*2,digits = 5),
+                                    tolerance=ppm, units="ppm",
                                     key=F,
                                     xlab=NULL,
                                     layout=c( length(levels(Cardinal::run(imdata))),1),
                                     bg = bg)
-            #temp_component_png[[i]]=tempfile(pattern = "file", tmpdir = tempdir(), fileext = ".png")
+            
+            
+            temp_component_png[[i]]=tempfile(pattern = "file", tmpdir = tempdir(), fileext = ".png")
+            
             componentimg.mono[[i]][["par"]][["ann"]]=F
             componentimg.mono[[i]][["par"]][["bty"]]="n"
             componentimg.mono[[i]][["par"]][["pty"]]="s"
@@ -290,16 +296,19 @@ cluster_image_grid<-function(clusterID,
             componentimg.mono[[i]][["par"]][["fg"]]="white"
             componentimg.mono[[i]][["par"]][["oma"]]=c(0, 0, 0, 0)
             #componentimg.mono[[i]][["par"]][["mar"]]=c(0, 0, 0, 1)
-            attr(componentimg.mono[[i]][["facets"]][[1]],"strip")$strip=F
-            #attr(componentimg.mono[[i]][["facets"]][[1]],"colorkey")$colorkey=c("0%","100%")
-            attr(componentimg.mono[[i]][["facets"]][[1]],"colorkey")$colorkey=T
+            if (!is.null(componentimg.mono[[i]][["facets"]]) && 
+                length(componentimg.mono[[i]][["facets"]]) > 0 &&
+                !is.null(componentimg.mono[[i]][["facets"]][[1]])) {
+              attr(componentimg.mono[[i]][["facets"]][[1]],"strip")$strip=F
+              attr(componentimg.mono[[i]][["facets"]][[1]],"colorkey")$colorkey=T
+            }
 
             # componentimg.mono[[i]][["facets"]][[1]][[1]][["dpage"]]="a"
             # componentimg.mono[[i]][["facets"]][[1]][[1]][["facet"]][[".feature.groups"]]="a"
             # componentimg.mono[[i]][["fids"]][[".feature.groups"]]="a"
             # componentimg.mono[[i]][["dpages"]]="a"
             #png(temp_component_png.mono[[i]],width = 5,height = 5 * length( levels(Cardinal::run(imdata))), bg = bg,units = "in",res = 300)
-            temp_component_png[[i]]<-image_graph(width = 750,height = 750 * length( levels(Cardinal::run(imdata))), bg = bg,res = 150)
+            png(temp_component_png[[i]],width = 750,height = 750 * length( levels(Cardinal::run(imdata))), bg = bg,units = "px",res = 150)
             par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(length( levels(Cardinal::run(imdata))),1),
                 #par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(1,(length(candidateunique)+1)),
                 bty="n",pty="s",xaxt="n",
@@ -309,23 +318,23 @@ cluster_image_grid<-function(clusterID,
             try(tryCatch(print(componentimg.mono[[i]])),silent = T)
             dev.off()
           }else{
-        componentimg[[i]]=image(imdata, mz=candidateunique[i],
+        componentimg[[i]]=Cardinal::image(imdata, mz=candidateunique[i],
                                       #contrast.enhance=contrast.enhance,
                                       contrast.enhance = "none",
                                       smooth.image = smooth.image,
                                       colorscale=col.regions,
-                                      col=col,
                                       normalize.image="linear",
-                                      plusminus=round(ppm*candidateunique[i]/1000000*2,digits = 5),
+                                      tolerance=ppm, units="ppm",
                                       key=F,
                                       xlab=NULL,
                                       layout=c( length(levels(Cardinal::run(imdata))),1)
                                       )
 
+
         temp_component_png[[i]]=tempfile(pattern = "file", tmpdir = tempdir(), fileext = ".png")
 
         #png(temp_component_png[[i]],width = 5,height = 5 * length( levels(Cardinal::run(imdata))), bg = bg,units = "in",res = 300)
-        temp_component_png[[i]]<-image_graph(width = 750,height = 750 * length( levels(Cardinal::run(imdata))), bg = bg,res = 150)
+        png(temp_component_png[[i]],width = 750,height = 750 * length( levels(Cardinal::run(imdata))), bg = bg,units = "px",res = 150)
         par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(length( levels(Cardinal::run(imdata))),1),
             #par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(1,(length(candidateunique)+1)),
             bty="n",pty="s",xaxt="n",
@@ -349,11 +358,13 @@ cluster_image_grid<-function(clusterID,
         temp_component_cover=tempfile(pattern = "file", tmpdir = tempdir(), fileext = ".png")
 
         #png(temp_component_cover,width = 5,height = 0.5, bg = bg,units = "in",res = 300)
-        temp_component_cover<-image_graph(width = 750,height = 750, bg = bg,res = 150)
+        temp_component_cover<-tempfile(pattern = "file", tmpdir = tempdir(), fileext = ".png")
+        png(temp_component_cover,width = 750,height = 750, bg = bg,units = "px",res = 150)
         plot.new()
         text("")
         #temp_component_cover<-image_draw(temp_component_cover)
         dev.off()
+        temp_component_cover<-image_read(temp_component_cover)
         temp_component_cover<-image_crop(temp_component_cover, "750x80+0")
         #temp_component_cover<-image_background(temp_component_cover, "hotpink")
         makeacover<-(temp_component_cover)
@@ -365,7 +376,7 @@ cluster_image_grid<-function(clusterID,
         pngcompfile_org=list()
         pngcompfile=list()
         for (i in 1:length(candidateunique)){
-          pngcompfile_org[[i]]<-((temp_component_png[[i]]))
+          pngcompfile_org[[i]]<-image_read(temp_component_png[[i]])
           pngcompfile_org[[i]]<-image_flatten(c(pngcompfile_org[[i]],makeacover))
           #if (Component_plot_coloure=="mono"){
           #pngcompfile[[i]]<-(temp_component_png.mono[[i]] )
@@ -826,6 +837,13 @@ cluster_image_grid<-function(clusterID,
 
     rm(pngcompfile)
 
+    # TEMPORARY: Save complete componentimg.mono list for debugging
+    # if (exists("componentimg.mono")) {
+    #   rds_filename <- paste0(workdir, "/componentimg_mono_", windows_filename(substr(clusterID, 1, 20)), ".rds")
+    #   saveRDS(componentimg.mono, file = rds_filename)
+    #   cat("TEMP DEBUG: Saved complete componentimg.mono list to ", rds_filename, "\n")
+    # }
+    
     message("Cluster image rendering done:", clusterID ,cluster_desc)
 
   }else{
@@ -961,12 +979,12 @@ cluster_score_grid<-function(clusterID,
             bty="n",pty="s",xaxt="n",
             yaxt="n",
             no.readonly = TRUE,ann=FALSE)
-        image(imdata, mz=candidateunique,
+        Cardinal::image(imdata, mz=candidateunique,
               col=mycol,
               contrast.enhance = contrast.enhance,
               smooth.image = smooth.image ,
               superpose=TRUE,normalize.image="linear",
-              plusminus=median(ppm*candidateunique/1000000))
+              tolerance=ppm, units="ppm")
 
 
         l<-function(x,y,z,t=x+y,f=t+z){
@@ -1004,23 +1022,23 @@ cluster_score_grid<-function(clusterID,
 
 
 
-        image(imdata, mz=candidateunique,
+        Cardinal::image(imdata, mz=candidateunique,
               col=levels(mycol),
               contrast.enhance = contrast.enhance,
               smooth.image = smooth.image ,
               superpose=TRUE,normalize.image="linear",
-              plusminus=round(median(ppm*candidateunique/1000000),digits = 4),key=F)
+              tolerance=ppm, units="ppm",key=F)
 
         for (i in 1:length(candidateunique)){
           #image(imdata, mz=candidateunique[i], col=mycol[i], superpose=F,normalize.image="linear")
-          col.regions <- gradient.colors(100, start="black", end=levels(mycol)[i])
-          image(imdata, mz=candidateunique[i],
+          col.regions <- create_gradient_colors_robust(100, start="black", end=levels(mycol)[i])
+          Cardinal::image(imdata, mz=candidateunique[i],
                 contrast.enhance=contrast.enhance,
                 smooth.image = smooth.image ,
                 col.regions=col.regions,
 
                 normalize.image="none",
-                plusminus=ppm*candidateunique[i]/1000000)
+                tolerance=ppm, units="ppm")
           componentname=unique(candidate[[componentID_colname]][candidate$mz==as.numeric(candidateunique[i])])
           for (component in componentname){
             text(cex=30/ifelse(nchar(component)>30,nchar(component),30),labels=paste0(component),x=1,y=1+(which(componentname==component)-1)*3,adj=0,pos=4,offset=1,col = "white")
@@ -1046,7 +1064,8 @@ cluster_score_grid<-function(clusterID,
         temp_component_png.mono=list()
         if (plot_layout=="line"){
           #png(temp_cluster_png,width = 5,height = 5 * length( levels(Cardinal::run(imdata))), bg = "black",units = "in",res = 300)
-          temp_cluster_png<-image_graph(width = 750,height = 750 * length( levels(Cardinal::run(imdata))), bg = "black",res = 150)
+          temp_cluster_png<-tempfile(pattern = "file", tmpdir = tempdir(), fileext = ".png")
+          png(temp_cluster_png,width = 750,height = 750 * length( levels(Cardinal::run(imdata))), bg = "black",units = "px",res = 150)
           par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(length( levels(Cardinal::run(imdata))),1),
               bty="n",pty="s",xaxt="n",
               yaxt="n",
@@ -1055,7 +1074,8 @@ cluster_score_grid<-function(clusterID,
 
         }else{
           #png(temp_cluster_png,width = 5*2,height = 5*(ceiling((length(candidateunique)+1)/2)), bg = "black",units = "in",res = 300)
-          temp_cluster_png<-image_graph(width = 750*2,height = 750 * (ceiling((length(candidateunique)+1)/2)), bg = "black",res = 150)
+          temp_cluster_png<-tempfile(pattern = "file", tmpdir = tempdir(), fileext = ".png")
+          png(temp_cluster_png,width = 750*2,height = 750 * (ceiling((length(candidateunique)+1)/2)), bg = "black",units = "px",res = 150)
 
           par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(ceiling((length(candidateunique)+1)/2), 2),
               bty="n",pty="s",xaxt="n",
@@ -1064,7 +1084,7 @@ cluster_score_grid<-function(clusterID,
         }
 
 
-        col.regions <- gradient.colors(100, start="black", end=levels(mycol)[1])
+        col.regions <- create_gradient_colors_robust(100, start="black", end=levels(mycol)[1])
 
 
 
@@ -1082,35 +1102,38 @@ cluster_score_grid<-function(clusterID,
         componentimg.mono=list()
         for (i in 1:length(candidateunique)){
           #image(imdata, mz=candidateunique[i], col=mycol[i], superpose=F,normalize.image="linear")
-          col.regions <- gradient.colors(100, start="black", end=levels(mycol)[i])
+          col.regions <- create_gradient_colors_robust(100, start="black", end=levels(mycol)[i])
           if  (Component_plot_coloure=="mono"){
             bg = paste0("grey",29)
             col.regions.mono=intensity.colors_customize1(colset = 2)
-            col.regions=gradient.colors(100, start="black", end=levels(mycol)[i])
+            col.regions=create_gradient_colors_robust(100, start="black", end=levels(mycol)[i])
           }else if(Component_plot_coloure=="as.cluster"){
-            col.regions=gradient.colors(100, start="black", end=levels(mycol)[i])
-            #col.regions=gradient.colors(100, start="#030303", end=levels(mycol)[i])
+            col.regions=create_gradient_colors_robust(100, start="black", end=levels(mycol)[i])
+            #col.regions=create_gradient_colors_robust(100, start="#030303", end=levels(mycol)[i])
             col=levels(mycol)[i]
           }
 
           if(cluster_color_scale=="blackwhite"){
-            col.regions.mono=gradient.colors(100, start="black", end="white")
-            col.regions=gradient.colors(100, start="black", end="white")
+            col.regions.mono=create_gradient_colors_robust(100, start="black", end="white")
+            col.regions=create_gradient_colors_robust(100, start="black", end="white")
           }
           if (Component_plot_coloure=="mono"){
-            componentimg.mono[[i]]=image(imdata, mz=candidateunique[i],
+            
+            componentimg.mono[[i]]=Cardinal::image(imdata, mz=candidateunique[i],
                                     #contrast.enhance=contrast.enhance,
                                     contrast.enhance = "none",
                                     smooth.image = smooth.image,
                                     colorscale=col.regions.mono,
-                                    col=col,
                                     normalize.image="linear",
-                                    plusminus=round(ppm*candidateunique[i]/1000000*2,digits = 5),
+                                    tolerance=ppm, units="ppm",
                                     key=F,
                                     xlab=NULL,
                                     layout=c( length(levels(Cardinal::run(imdata))),1),
                                     bg = bg)
-            #temp_component_png[[i]]=tempfile(pattern = "file", tmpdir = tempdir(), fileext = ".png")
+            
+            
+            temp_component_png[[i]]=tempfile(pattern = "file", tmpdir = tempdir(), fileext = ".png")
+            
             componentimg.mono[[i]][["par"]][["ann"]]=F
             componentimg.mono[[i]][["par"]][["bty"]]="n"
             componentimg.mono[[i]][["par"]][["pty"]]="s"
@@ -1119,16 +1142,19 @@ cluster_score_grid<-function(clusterID,
             componentimg.mono[[i]][["par"]][["fg"]]="white"
             componentimg.mono[[i]][["par"]][["oma"]]=c(0, 0, 0, 0)
             #componentimg.mono[[i]][["par"]][["mar"]]=c(0, 0, 0, 1)
-            attr(componentimg.mono[[i]][["facets"]][[1]],"strip")$strip=F
-            #attr(componentimg.mono[[i]][["facets"]][[1]],"colorkey")$colorkey=c("0%","100%")
-            attr(componentimg.mono[[i]][["facets"]][[1]],"colorkey")$colorkey=T
+            if (!is.null(componentimg.mono[[i]][["facets"]]) && 
+                length(componentimg.mono[[i]][["facets"]]) > 0 &&
+                !is.null(componentimg.mono[[i]][["facets"]][[1]])) {
+              attr(componentimg.mono[[i]][["facets"]][[1]],"strip")$strip=F
+              attr(componentimg.mono[[i]][["facets"]][[1]],"colorkey")$colorkey=T
+            }
 
             # componentimg.mono[[i]][["facets"]][[1]][[1]][["dpage"]]="a"
             # componentimg.mono[[i]][["facets"]][[1]][[1]][["facet"]][[".feature.groups"]]="a"
             # componentimg.mono[[i]][["fids"]][[".feature.groups"]]="a"
             # componentimg.mono[[i]][["dpages"]]="a"
             #png(temp_component_png.mono[[i]],width = 5,height = 5 * length( levels(Cardinal::run(imdata))), bg = bg,units = "in",res = 300)
-            temp_component_png[[i]]<-image_graph(width = 750,height = 750 * length( levels(Cardinal::run(imdata))), bg = bg,res = 150)
+            png(temp_component_png[[i]],width = 750,height = 750 * length( levels(Cardinal::run(imdata))), bg = bg,units = "px",res = 150)
             par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(length( levels(Cardinal::run(imdata))),1),
                 #par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(1,(length(candidateunique)+1)),
                 bty="n",pty="s",xaxt="n",
@@ -1138,23 +1164,23 @@ cluster_score_grid<-function(clusterID,
             try(tryCatch(print(componentimg.mono[[i]])),silent = T)
             dev.off()
           }else{
-        componentimg[[i]]=image(imdata, mz=candidateunique[i],
+        componentimg[[i]]=Cardinal::image(imdata, mz=candidateunique[i],
                                       #contrast.enhance=contrast.enhance,
                                       contrast.enhance = "none",
                                       smooth.image = smooth.image,
                                       colorscale=col.regions,
-                                      col=col,
                                       normalize.image="linear",
-                                      plusminus=round(ppm*candidateunique[i]/1000000*2,digits = 5),
+                                      tolerance=ppm, units="ppm",
                                       key=F,
                                       xlab=NULL,
                                       layout=c( length(levels(Cardinal::run(imdata))),1)
                                       )
 
+
         temp_component_png[[i]]=tempfile(pattern = "file", tmpdir = tempdir(), fileext = ".png")
 
         #png(temp_component_png[[i]],width = 5,height = 5 * length( levels(Cardinal::run(imdata))), bg = bg,units = "in",res = 300)
-        temp_component_png[[i]]<-image_graph(width = 750,height = 750 * length( levels(Cardinal::run(imdata))), bg = bg,res = 150)
+        png(temp_component_png[[i]],width = 750,height = 750 * length( levels(Cardinal::run(imdata))), bg = bg,units = "px",res = 150)
         par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(length( levels(Cardinal::run(imdata))),1),
             #par(oma=c(0, 0, 0, 0),tcl = NA,mar=c(0, 0, 1, 1),mfrow = c(1,(length(candidateunique)+1)),
             bty="n",pty="s",xaxt="n",
@@ -1178,11 +1204,13 @@ cluster_score_grid<-function(clusterID,
         temp_component_cover=tempfile(pattern = "file", tmpdir = tempdir(), fileext = ".png")
 
         #png(temp_component_cover,width = 5,height = 0.5, bg = bg,units = "in",res = 300)
-        temp_component_cover<-image_graph(width = 750,height = 750, bg = bg,res = 150)
+        temp_component_cover<-tempfile(pattern = "file", tmpdir = tempdir(), fileext = ".png")
+        png(temp_component_cover,width = 750,height = 750, bg = bg,units = "px",res = 150)
         plot.new()
         text("")
         #temp_component_cover<-image_draw(temp_component_cover)
         dev.off()
+        temp_component_cover<-image_read(temp_component_cover)
         temp_component_cover<-image_crop(temp_component_cover, "750x80+0")
         #temp_component_cover<-image_background(temp_component_cover, "hotpink")
         makeacover<-(temp_component_cover)
@@ -1194,7 +1222,7 @@ cluster_score_grid<-function(clusterID,
         pngcompfile_org=list()
         pngcompfile=list()
         for (i in 1:length(candidateunique)){
-          pngcompfile_org[[i]]<-((temp_component_png[[i]]))
+          pngcompfile_org[[i]]<-image_read(temp_component_png[[i]])
           pngcompfile_org[[i]]<-image_flatten(c(pngcompfile_org[[i]],makeacover))
           #if (Component_plot_coloure=="mono"){
           #pngcompfile[[i]]<-(temp_component_png.mono[[i]] )
@@ -1655,6 +1683,13 @@ cluster_score_grid<-function(clusterID,
 
     rm(pngcompfile)
 
+    # TEMPORARY: Save complete componentimg.mono list for debugging
+    # if (exists("componentimg.mono")) {
+    #   rds_filename <- paste0(workdir, "/componentimg_mono_", windows_filename(substr(clusterID, 1, 20)), ".rds")
+    #   saveRDS(componentimg.mono, file = rds_filename)
+    #   cat("TEMP DEBUG: Saved complete componentimg.mono list to ", rds_filename, "\n")
+    # }
+    
     message("Cluster image rendering done:", clusterID ,cluster_desc)
 
   }else{
@@ -1748,12 +1783,12 @@ cluster_image_cardinal_allinone<-function(clusterID,
             bty="n",pty="s",xaxt="n",
             yaxt="n",
             no.readonly = TRUE,ann=FALSE)
-        image(imdata, mz=candidateunique,
+        Cardinal::image(imdata, mz=candidateunique,
               col=mycol,
               contrast.enhance = contrast.enhance,
               smooth.image = smooth.image ,
               superpose=TRUE,normalize.image="linear",
-              plusminus=median(ppm*candidateunique/1000000))
+              tolerance=ppm, units="ppm")
 
 
         l<-function(x,y,z,t=x+y,f=t+z){
@@ -1791,23 +1826,23 @@ cluster_image_cardinal_allinone<-function(clusterID,
 
 
 
-        image(imdata, mz=candidateunique,
+        Cardinal::image(imdata, mz=candidateunique,
               col=levels(mycol),
               contrast.enhance = contrast.enhance,
               smooth.image = smooth.image ,
               superpose=TRUE,normalize.image="linear",
-              plusminus=median(ppm*candidateunique/1000000))
+              tolerance=ppm, units="ppm")
 
         for (i in 1:length(candidateunique)){
           #image(imdata, mz=candidateunique[i], col=mycol[i], superpose=F,normalize.image="linear")
-          col.regions <- gradient.colors(100, start="black", end=levels(mycol)[i])
-          image(imdata, mz=candidateunique[i],
+          col.regions <- create_gradient_colors_robust(100, start="black", end=levels(mycol)[i])
+          Cardinal::image(imdata, mz=candidateunique[i],
                 contrast.enhance=contrast.enhance,
                 smooth.image = smooth.image ,
                 col.regions=col.regions,
 
                 normalize.image="none",
-                plusminus=ppm*candidateunique[i]/1000000)
+                tolerance=ppm, units="ppm")
           componentname=unique(candidate[[componentID_colname]][candidate$mz==as.numeric(candidateunique[i])])
           for (component in componentname){
             text(cex=30/ifelse(nchar(component)>30,nchar(component),30),labels=paste0(component),x=1,y=1+(which(componentname==component)-1)*3,adj=0,pos=4,offset=1,col = "white")
@@ -1846,23 +1881,23 @@ cluster_image_cardinal_allinone<-function(clusterID,
 
 
 
-        image(imdata, mz=candidateunique,
+        Cardinal::image(imdata, mz=candidateunique,
               col=levels(mycol),
               contrast.enhance = contrast.enhance,
               smooth.image = smooth.image ,
               superpose=TRUE,normalize.image="linear",
-              plusminus=median(ppm*candidateunique/1000000))
+              tolerance=ppm, units="ppm")
 
 
         for (i in 1:length(candidateunique)){
           #image(imdata, mz=candidateunique[i], col=mycol[i], superpose=F,normalize.image="linear")
-          col.regions <- gradient.colors(100, start="black", end=levels(mycol)[i])
-          image(imdata, mz=candidateunique[i],
+          col.regions <- create_gradient_colors_robust(100, start="black", end=levels(mycol)[i])
+          Cardinal::image(imdata, mz=candidateunique[i],
                 contrast.enhance=contrast.enhance,
                 smooth.image = smooth.image,#smooth.image ,
                 col.regions=intensity.colors_customize1(),
                 normalize.image="none",
-                plusminus=ppm*candidateunique[i]/1000000,
+                tolerance=ppm, units="ppm",
                 key=F,
                 xlab=NULL,
                 ylab=NULL,
@@ -2316,7 +2351,7 @@ Plot_Ion_image_Png_Cardinal<- function(WKdir, imagefile, png_filename, mz,adduct
       yaxt="n",
       no.readonly = TRUE,ann=FALSE)
   try(Cardinal::image(imagefile ,mz=mz ,
-                      plusminus=Tolerance,
+                      tolerance=Tolerance, units="mz",
                       contrast.enhance = contrast.enhance,
                       smooth.image = smooth.image ,
                       col.regions=intensity.colors_customize(),
@@ -2580,11 +2615,3 @@ plotly_for_region_with_ClusterID_barchart<-function(moleculeNames,data){
   windows_filename(paste0(moleculeNames,".html"))
 }
 
-gradient.colors<-function (n = 100, start = "#000000", end = "#00AAFF", alpha = 1) 
-{
-  alpha <- round(alpha * 255)
-  f <- colorRamp(c(start, end))
-  cols <- sapply(seq(from = 0, to = 1, length.out = n), function(i) do.call("rgb", 
-    c(as.list(f(i)), maxColorValue = 255, alpha = alpha)))
-  cols
-}

@@ -199,11 +199,7 @@ SCORE_PMF<-function(formula,peaklist,isotopes=NULL,threshold=1,charge=1,ppm=5,pr
   suppressMessages(suppressWarnings(require(OrgMassSpecR)))
   suppressMessages(suppressWarnings(require(enviPat)))
   suppressMessages(suppressWarnings(require(data.table)))
- suppressMessages(suppressWarnings(if (!require(rJava)){
-  if (Sys.getenv("JAVA_HOME")!="")
-    Sys.setenv(JAVA_HOME="")
-  library(rJava)
-}))
+ require_rjava("Proteomics annotation utilities")
   suppressMessages(suppressWarnings(require(grid)))
   if (is.null(isotopes)){data("isotopes")}
 
@@ -714,7 +710,7 @@ FDR_cutoff_plot<-function(Peptide_plot_list,FDR_cutoff=0.1,FDR_strip=500,plot_fd
   suppressMessages(suppressWarnings(require(dplyr)))
   suppressMessages(suppressWarnings(require(zoo)))
   #suppressMessages(suppressWarnings(require(FTICRMS)))
-  Peptide_plot_list=HiTMaP:::data_test_rename(c("isdecoy","Score"),Peptide_plot_list)
+  Peptide_plot_list=data_test_rename(c("isdecoy","Score"),Peptide_plot_list)
 
   Peptide_plot_list$isdecoy<-factor(Peptide_plot_list$isdecoy)
 
@@ -1444,11 +1440,11 @@ export_pixel_level_data<-function(projectfolder=NULL,Protein_peptide_file,
   if (is.null(Thread)){
     parallel=try(detectCores()/2)
     if (parallel<1 | is.null(parallel)){parallel=1}
-    BPPARAM=HiTMaP:::Parallel.OS(parallel)
+    BPPARAM=Parallel.OS(parallel)
     setCardinalBPPARAM(BPPARAM = BPPARAM)
   }else{
     parallel=Thread
-    BPPARAM=HiTMaP:::Parallel.OS(parallel)
+    BPPARAM=Parallel.OS(parallel)
     setCardinalBPPARAM(BPPARAM = BPPARAM)
   }
   

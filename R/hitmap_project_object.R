@@ -97,7 +97,7 @@ hitmap_init <- function(project, thread_count = 4) {
     parallel_threads <- thread_count
   }
   
-  bpparam <- HiTMaP:::Parallel.OS(parallel_threads)
+  bpparam <- Parallel.OS(parallel_threads)
   setCardinalBPPARAM(BPPARAM = bpparam)
   
   # Update project object

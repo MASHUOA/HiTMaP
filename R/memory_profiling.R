@@ -5,7 +5,7 @@ memory_profile<-function(){
   #devtools::install_github("hadley/lineprof")
   #install.packages("tictoc")
   library(Cardinal)
-  library(HiTMaP)
+  # library(HiTMaP)  # Removed: package shouldn't load itself
   library(pryr)
   library(stringr)
   library(tictoc)
@@ -30,7 +30,7 @@ memory_profile<-function(){
   parallel=4
  
   
-  BPPARAM=HiTMaP:::Parallel.OS(parallel,bpexportglobals=F,bpforceGC=T, bpprogressbar_t=TRUE)
+  BPPARAM=Parallel.OS(parallel,bpexportglobals=F,bpforceGC=T, bpprogressbar_t=TRUE)
   
   setCardinalBPPARAM(BPPARAM = BPPARAM)
   
@@ -76,7 +76,7 @@ memory_profile<-function(){
   for (resolution in c(10, 200,400,800)){
   resolution(imdata) <- c(ppm=resolution)
   tic(resolution)
-  image(imdata)
+  Cardinal::image(imdata)
   toc(log=TRUE,quiet=TRUE) 
   }
   log.txt<-c(log.txt,tic.log(format=TRUE)) 
@@ -285,7 +285,7 @@ memory_profile<-function(){
     peaklist_deco<-peaklist_deco[peaklist_deco$intensities>0,]
     write.csv(peaklist_deco,paste0(gsub(".imzML$","",datafile[z])  ," ID/Sum_spec.csv"),row.names = F)
     
-    #peaklist_deco<-HiTMaP:::isopattern_ppm_filter_peaklist(peaklist_deco,ppm=ppm,threshold=0)
+    #peaklist_deco<-isopattern_ppm_filter_peaklist(peaklist_deco,ppm=ppm,threshold=0)
     #write.csv(peaklist_deco,paste0(gsub(".imzML$","",datafile[z])  ," ID/Sum_spec_decov.csv"),row.names = F)
 
     
@@ -297,7 +297,7 @@ memory_profile<-function(){
       preprocess$mz_bin_list->mz_bin_list_s
       sort(as.numeric(unlist(mz_bin_list_s)))->ref_mz
       peaklist_deco<-data.frame(mz=ref_mz,intensities=rep(1,length(ref_mz)))
-      peaklist_deco<-HiTMaP:::isopattern_ppm_filter_peaklist(peaklist_deco,ppm=ppm,threshold=0)
+      peaklist_deco<-isopattern_ppm_filter_peaklist(peaklist_deco,ppm=ppm,threshold=0)
       unlist(peaklist_deco[,1])->ref_mz
       ref_mz<-ref_mz[!is.na(ref_mz)]
       range(mz(imdata_ed))->ref_mz_range
@@ -333,7 +333,7 @@ memory_profile<-function(){
         peaklist<-summarizeFeatures(imdata_ed,"sum")
         peaklist_deco<-data.frame(mz=peaklist@mz,intensities=peaklist$sum)
         peaklist_deco<-peaklist_deco[peaklist_deco$intensities>0,]
-        peaklist_deco<-HiTMaP:::isopattern_ppm_filter_peaklist(peaklist_deco,ppm=ppm,threshold=0)
+        peaklist_deco<-isopattern_ppm_filter_peaklist(peaklist_deco,ppm=ppm,threshold=0)
         write.csv(peaklist_deco,paste0(gsub(".imzML$","",datafile[z])  ," ID/Sum_spec_decov.csv"),row.names = F)
         imdata_ed<-imdata_ed %>% peakBin(peaklist_deco$mz, tolerance=ppm, units="ppm") %>% process()
       }
@@ -353,7 +353,7 @@ memory_profile<-function(){
         peaklist_deco<-data.frame(mz=peaklist@mz,intensities=peaklist$sum)
         peaklist_deco<-peaklist_deco[peaklist_deco$intensities>0,]
         write.csv(peaklist_deco,paste0(gsub(".imzML$","",datafile[z])  ," ID/Sum_spec.csv"),row.names = F)
-        peaklist_deco<-HiTMaP:::isopattern_ppm_filter_peaklist(peaklist_deco,ppm=ppm,threshold=0)
+        peaklist_deco<-isopattern_ppm_filter_peaklist(peaklist_deco,ppm=ppm,threshold=0)
         write.csv(peaklist_deco,paste0(gsub(".imzML$","",datafile[z])  ," ID/Sum_spec_decov.csv"),row.names = F)
       }else {
         message("preprocess$peakAlign$tolerance missing, use default tolerance in ppm ", ppm/2)
@@ -362,7 +362,7 @@ memory_profile<-function(){
         peaklist_deco<-data.frame(mz=peaklist@mz,intensities=peaklist$sum)
         peaklist_deco<-peaklist_deco[peaklist_deco$intensities>0,]
         write.csv(peaklist_deco,paste0(gsub(".imzML$","",datafile[z])  ," ID/Sum_spec.csv"),row.names = F)
-        peaklist_deco<-HiTMaP:::isopattern_ppm_filter_peaklist(peaklist_deco,ppm=ppm,threshold=0)
+        peaklist_deco<-isopattern_ppm_filter_peaklist(peaklist_deco,ppm=ppm,threshold=0)
         write.csv(peaklist_deco,paste0(gsub(".imzML$","",datafile[z])  ," ID/Sum_spec_decov.csv"),row.names = F)
       }
     }

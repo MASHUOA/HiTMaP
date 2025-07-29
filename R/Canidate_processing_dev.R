@@ -209,11 +209,7 @@ Protein_feature_list_table_import<-function(workdir=getwd(),
   suppressMessages(suppressWarnings(require(rcdk)))
   suppressMessages(suppressWarnings(require(BiocParallel)))
   suppressMessages(suppressWarnings(require(OrgMassSpecR)))
- suppressMessages(suppressWarnings(if (!require(rJava)){
-  if (Sys.getenv("JAVA_HOME")!="")
-    Sys.setenv(JAVA_HOME="")
-  library(rJava)
-}))
+ require_rjava("Candidate processing (dev)")
   suppressMessages(suppressWarnings(require(rcdklibs)))
   suppressMessages(suppressWarnings(require(grid)))
   suppressMessages(suppressWarnings(require(stringr)))

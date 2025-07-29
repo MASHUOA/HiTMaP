@@ -135,8 +135,8 @@ export_protein_pixel_data <- function(datafile = NULL,
       
       # Get peptide intensity at this m/z value for each pixel
       peptide_image <- try(
-        image(imdata, mz = mz_value,
-              plusminus = ppm * mz_value / 1000000,
+        Cardinal::image(imdata, mz = mz_value,
+              tolerance = ppm, units = "ppm",
               contrast.enhance = "none", # No enhancement for raw data
               smooth.image = "none",     # No smoothing for raw data
               normalize.image = "none",  # No normalization for raw data
@@ -172,7 +172,7 @@ export_protein_pixel_data <- function(datafile = NULL,
     # Normalize protein image if requested
     if (pixelwise_normalization == "sum") {
       # Normalize to total ion current
-      total_intensity <- image(imdata, 
+      total_intensity <- Cardinal::image(imdata, 
                                contrast.enhance = "none",
                                smooth.image = "none",
                                normalize.image = "none",
@@ -208,7 +208,7 @@ export_protein_pixel_data <- function(datafile = NULL,
         width = 1200, height = 1000, res = 150)
     
     # Display visualization
-    image(imdata, protein_image,
+    Cardinal::image(imdata, protein_image,
           contrast.enhance = contrast.enhance,
           smooth.image = smooth.image,
           normalize.image = "linear",
@@ -336,8 +336,8 @@ calculate_protein_pixel_scores <- function(imdata, protein_data, protein_id, ppm
     
     # Get peptide intensity at this m/z value for each pixel
     peptide_image <- try(
-      image(imdata, mz = mz_value,
-            plusminus = ppm * mz_value / 1000000,
+      Cardinal::image(imdata, mz = mz_value,
+            tolerance = ppm, units = "ppm",
             contrast.enhance = "none",
             smooth.image = "none",
             normalize.image = "none",

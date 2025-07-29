@@ -391,7 +391,7 @@ cluster_image_cardinal<-function(clusterID,imdata,SMPLIST,clustername,ppm=20){
   mycol <- RColorBrewer::brewer.pal(length(candidateunique),"Set1")
   png(outputpng,width = 720,height = 720, bg = "transparent")
   
-  image(imdata, mz=candidateunique, 
+  Cardinal::image(imdata, mz=candidateunique, 
         col=mycol,
         #contrast.enhance = contrast.enhance,
         smooth.image = smooth.image ,
@@ -414,8 +414,8 @@ cluster_image_cardinal<-function(clusterID,imdata,SMPLIST,clustername,ppm=20){
         yaxt="n",
         no.readonly = TRUE,ann=FALSE)
     #image(imdata, mz=candidateunique[i], col=mycol[i], superpose=F,normalize.image="linear")
-    col.regions <- gradient.colors(100, start="transparent", end=mycol[i])
-    image(imdata, mz=candidateunique[i], 
+    col.regions <- create_gradient_colors_robust(100, start="transparent", end=mycol[i])
+    Cardinal::image(imdata, mz=candidateunique[i], 
           contrast.enhance=contrast.enhance,
           smooth.image = smooth.image ,
           col.regions=col.regions,normalize.image="linear")
@@ -926,11 +926,11 @@ Cardinal_cluster_classification<-function(){
   set.seed(1)
   skm <- spatialKMeans(imdata, r=2, k=4, method="adaptive")
   plot(skm, col=c("pink", "blue", "red","orange","navyblue"), type=c('p','h'), key=FALSE)
-  image(skm, col=c("pink", "blue", "red","orange","navyblue"), key=FALSE)
+  Cardinal::image(skm, col=c("pink", "blue", "red","orange","navyblue"), key=FALSE)
   set.seed(1)
   ssc <- spatialShrunkenCentroids(imdata, r=2, k=5, s=3, method="gaussian")
   plot(ssc, col=c("pink", "blue", "red","orange","navyblue"), type=c('p','h'), key=FALSE)
-  image(ssc, col=c("pink", "blue", "red","orange","navyblue"), key=FALSE)
+  Cardinal::image(ssc, col=c("pink", "blue", "red","orange","navyblue"), key=FALSE)
   
   
   

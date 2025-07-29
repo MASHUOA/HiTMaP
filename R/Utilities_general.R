@@ -426,4 +426,83 @@ Imzml_temp_fix<-function(folder=getwd(),name,
   percent<-function(x, digits = 2, format = "f", ...) {
     paste0(formatC(100 * x, format = format, digits = digits, ...), "%")
   }
+
+# rJava loading utilities
+load_rjava_safely <- function(verbose = FALSE) {
+  if (verbose) cat("Attempting to load rJava...\n")
+  
+  # First attempt: normal loading
+  rjava_loaded <- suppressMessages(suppressWarnings({
+    tryCatch({
+      library(rJava, quietly = TRUE)
+      TRUE
+    }, error = function(e) {
+      if (verbose) cat("Initial rJava loading failed:", e$message, "\n")
+      FALSE
+    })
+  }))
+  
+  if (rjava_loaded) {
+    if (verbose) cat("rJava loaded successfully!\n")
+    return(TRUE)
+  }
+  
+  if (verbose) cat("Attempting rJava fixes...\n")
+  
+  # Strategy 1: Clear JAVA_HOME and try again
+  original_java_home <- Sys.getenv("JAVA_HOME")
+  if (original_java_home != "") {
+    Sys.setenv(JAVA_HOME = "")
+    rjava_loaded <- suppressMessages(suppressWarnings({
+      tryCatch({
+        library(rJava, quietly = TRUE)
+        TRUE
+      }, error = function(e) FALSE)
+    }))
+    
+    if (rjava_loaded) {
+      if (verbose) cat("rJava loaded successfully after clearing JAVA_HOME!\n")
+      return(TRUE)
+    } else {
+      # Restore original JAVA_HOME
+      Sys.setenv(JAVA_HOME = original_java_home)
+    }
+  }
+  
+  # Strategy 2: Try without any JAVA_HOME (let system find Java)
+  Sys.unsetenv("JAVA_HOME")
+  rjava_loaded <- suppressMessages(suppressWarnings({
+    tryCatch({
+      library(rJava, quietly = TRUE)
+      TRUE
+    }, error = function(e) FALSE)
+  }))
+  
+  if (rjava_loaded) {
+    if (verbose) cat("rJava loaded successfully with system default Java!\n")
+    return(TRUE)
+  }
+  
+  return(FALSE)
+}
+
+require_rjava <- function(feature_name = "This feature") {
+  if (!load_rjava_safely(verbose = FALSE)) {
+    message("Warning: ", feature_name, " requires rJava package which could not be loaded.")
+    message("Please install Java JDK/JRE and restart R, then try again.")
+    return(FALSE)
+  }
+  return(TRUE)
+}
+
+# Gradient color utilities (replacement for deprecated gradient.colors function)
+create_gradient_colors_robust <- function(n, start = "black", end = "white") {
+  # Use grDevices::colorRampPalette which is always available
+  if (!requireNamespace("grDevices", quietly = TRUE)) {
+    stop("grDevices package is required")
+  }
+  
+  color_func <- grDevices::colorRampPalette(c(start, end))
+  return(color_func(n))
+}
   
