@@ -289,14 +289,23 @@ find_modification_matches <- function(mod_name, mod_pos, unimod_data) {
   ]
   matches <- rbind(matches, full_matches)
   
-  # Strategy 4: Partial match by full_name or code_name
-  partial_matches <- unimod_data[
-    grepl(tolower(mod_name), tolower(unimod_data$full_name)) |
-    grepl(tolower(mod_name), tolower(unimod_data$code_name)), 
+  # Strategy 4: Partial match by code_name first (more specific)
+  partial_code_matches <- unimod_data[
+    grepl(paste0("^", tolower(mod_name)), tolower(unimod_data$code_name)) |
+    grepl(paste0("\\b", tolower(mod_name), "\\b"), tolower(unimod_data$code_name)), 
   ]
-  matches <- rbind(matches, partial_matches)
+  matches <- rbind(matches, partial_code_matches)
   
-  # Strategy 5: Common abbreviations and synonyms
+  # Strategy 5: Broader partial match by full_name (only if no matches yet)
+  if (nrow(matches) == 0) {
+    partial_full_matches <- unimod_data[
+      grepl(paste0("^", tolower(mod_name)), tolower(unimod_data$full_name)) |
+      grepl(paste0("\\b", tolower(mod_name), "\\b"), tolower(unimod_data$full_name)), 
+    ]
+    matches <- rbind(matches, partial_full_matches)
+  }
+  
+  # Strategy 6: Common abbreviations and synonyms
   synonym_matches <- find_synonym_matches(mod_name, unimod_data)
   matches <- rbind(matches, synonym_matches)
   
@@ -316,6 +325,9 @@ find_modification_matches <- function(mod_name, mod_pos, unimod_data) {
     if (any(matches$hidden == 0)) {
       matches <- matches[matches$hidden == 0, ]
     }
+    
+    # Rank matches by quality and prefer better ones
+    matches <- rank_modification_matches(matches, mod_name)
   }
   
   return(matches)
@@ -360,6 +372,41 @@ find_synonym_matches <- function(mod_name, unimod_data) {
       matches <- rbind(matches, canonical_matches)
     }
   }
+  
+  return(matches)
+}
+
+#' Rank Modification Matches
+#'
+#' Internal function to rank matches by quality/relevance
+#'
+#' @param matches Data frame of matched modifications  
+#' @param mod_name Original search term
+#' @return Ranked matches with best matches first
+rank_modification_matches <- function(matches, mod_name) {
+  
+  if (nrow(matches) == 0) return(matches)
+  
+  # Create quality score for each match
+  matches$quality_score <- 0
+  mod_name_lower <- tolower(mod_name)
+  
+  # Exact matches get highest score
+  matches$quality_score[tolower(matches$code_name) == mod_name_lower] <- 100
+  matches$quality_score[tolower(matches$full_name) == mod_name_lower] <- 90
+  
+  # Matches that start with the search term
+  matches$quality_score[grepl(paste0("^", mod_name_lower), tolower(matches$code_name))] <- 
+    matches$quality_score[grepl(paste0("^", mod_name_lower), tolower(matches$code_name))] + 50
+  
+  # Shorter names are better (less verbose)
+  matches$quality_score <- matches$quality_score + (100 - pmin(nchar(matches$code_name), 100))
+  
+  # Non-hidden modifications are better
+  matches$quality_score[matches$hidden == 0] <- matches$quality_score[matches$hidden == 0] + 20
+  
+  # Sort by quality score (highest first)
+  matches <- matches[order(matches$quality_score, decreasing = TRUE), ]
   
   return(matches)
 }
@@ -432,7 +479,9 @@ format_for_hitmap_workflow <- function(match_results, mod_type = "variable") {
   }
   
   # Extract modification names and positions
-  mod_names <- match_results$matched$full_name
+  # Use code_name for shorter, cleaner names
+  mod_names <- match_results$matched$code_name
+  
   mod_positions <- ifelse(
     is.na(match_results$matched$one_letter) | match_results$matched$one_letter == "",
     "any",
