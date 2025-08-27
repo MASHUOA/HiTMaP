@@ -168,6 +168,10 @@ R/HiTMaP running environment. Major dependencies to note:
 install.packages("remotes")
 install.packages("devtools")
 install.packages("BiocManager")
+
+#Update all dependencies
+BiocManager::install(ask = F)
+
 #library(devtools)
 library(remotes)
 Sys.setenv("R_REMOTES_NO_ERRORS_FROM_WARNINGS" = "true")
@@ -176,8 +180,6 @@ BiocManager::install(c( "XVector", "Biostrings", "KEGGREST","cleaver"),INSTALL_o
 BiocManager::install(c("EBImage","Rdisop"))
 remotes::install_github("MASHUOA/HiTMaP",force=T,build_opts = c("--no-resave-data", "--no-manual","-Wno-error", "--no-build-vignettes"),configure.vars="CFLAGS= -O3 -Wall -mtune=native -march=native -Wno-error",ask = F)
 
-#Update all dependencies
-BiocManager::install(ask = F)
 library(HiTMaP)
 ```
 
@@ -786,43 +788,187 @@ Myelin basic protein
 
 ## Modification
 
-You can choose one or a list of modifications from the unimod
-modification list. *Peptide_modification* function is used to
-load/rebuild the modification database into the global enviornment of R.
-It will be called automatically in the identification work flow. you can
-use the *code_name* or *record_id* to refer the modification (see
-example data “peptide calibrants” to find more details). The pipeline
-will select the *non-hidden* modifications.
+### Enhanced UniMod Modification Helper (New!)
+
+HiTMaP now includes enhanced functions for easy modification handling
+with improved ambiguity resolution and user-friendly input parsing. The
+new `format_unimod_modifications()` function provides a modern interface
+to the UniMod database.
+
+**Key Benefits:** - ✅ **Handles ambiguous modification names** with
+multiple matching strategies - ✅ **Supports common abbreviations** (Ox,
+Phos, CAM, Ace, etc.) - ✅ **Position-specific filtering** (single AA,
+multiple AA, terminal positions) - ✅ **Interactive and non-interactive
+modes** for different workflows - ✅ **Error-resistant** with clear
+feedback on matches/failures - ✅ **Fully compatible** with existing
+HiTMaP workflow functions - ✅ **MALDI imaging optimized** - defaults
+appropriate for direct tissue analysis - ✅ **Quick preset scenarios**
+for common MALDI imaging setups
+
+> **Note:** Unlike LC-MS/MS proteomics, MALDI imaging typically does not
+> use fixed cysteine modifications (Carbamidomethyl) since samples are
+> analyzed directly from tissue without reduction/alkylation steps. The
+> presets reflect this difference.
+
+#### Basic Usage
 
 ``` r
+# Load HiTMaP package (functions are automatically available)
+library(HiTMaP)
+
+# Simple variable modifications for MALDI imaging
+mods <- format_unimod_modifications(
+  modifications = c("Oxidation", "Acetyl"),
+  positions = c("M", "N-term"),
+  mod_type = "variable",
+  interactive = FALSE
+)
+
+# Use in imaging_identification
+imaging_identification(
+  datafile = "your_data.imzML",
+  Fastadatabase = "database.fasta",
+  Modifications = mods$modifications,  # Properly formatted for HiTMaP
+  ppm = 5,
+  threshold = 0.001
+  # ... other parameters
+)
+```
+
+#### Quick Setup Presets
+
+``` r
+# Standard MALDI imaging setup (Oxidation + Acetylation - no fixed Cys)
+standard_mods <- quick_modification_setup("standard")
+
+# Comprehensive PTM discovery for MALDI imaging
+comprehensive_mods <- quick_modification_setup("comprehensive")
+
+# No modifications
+minimal_mods <- quick_modification_setup("minimal")
+
+# Custom modifications
+custom_mods <- quick_modification_setup("custom", 
+  custom_mods = c("Phospho", "Methyl"), 
+  custom_positions = c("STY", "K")
+)
+
+# Use any preset in your workflow
+imaging_identification(
+  datafile = "sample.imzML",
+  Modifications = standard_mods$modifications,
+  # ... other parameters
+)
+```
+
+#### Advanced Features
+
+**Ambiguity Handling**: The function automatically handles ambiguous
+modification names and provides clear feedback:
+
+``` r
+# Handles common synonyms and abbreviations
+mods <- format_unimod_modifications(
+  modifications = c("Ox", "Phos", "CAM", "Ace"),  # Common abbreviations
+  mod_type = "variable",
+  interactive = FALSE  # Auto-select best matches
+)
+
+# Check what was matched
+print_modification_summary(mods)
+```
+
+**Position-Specific Modifications**:
+
+``` r
+# Specific amino acid targets
+mods <- format_unimod_modifications(
+  modifications = c("Phospho", "Methylation", "Citrullination"),
+  positions = c("STY", "KR", "R"),  # Multi-character positions supported
+  mod_type = "variable"
+)
+
+# Terminal modifications  
+terminal_mods <- format_unimod_modifications(
+  modifications = c("Acetyl", "Formyl"),
+  positions = c("N-term", "N-term"),
+  mod_type = "variable"
+)
+```
+
+**Mixed Fixed and Variable Modifications** (if needed for specific
+applications):
+
+``` r
+# Fixed modifications (only if alkylation was performed before MALDI)
+fixed_mods <- format_unimod_modifications(
+  modifications = "Carbamidomethyl",
+  positions = "C", 
+  mod_type = "fixed"
+)
+
+# Variable modifications for MALDI imaging
+var_mods <- format_unimod_modifications(
+  modifications = c("Oxidation", "Deamidation", "Sodium adduct"),
+  positions = c("M", "NQ", "any"),
+  mod_type = "variable"
+)
+
+# Combine for workflow (uncommon for MALDI imaging)
+combined_mods <- list(
+  fixed = fixed_mods$modifications$fixed,
+  fixmod_position = fixed_mods$modifications$fixmod_position,
+  variable = var_mods$modifications$variable,
+  varmod_position = var_mods$modifications$varmod_position
+)
+
+# For LC-MS/MS style workflows with alkylation, use:
+# lcms_style <- quick_modification_setup("custom",
+#   custom_mods = c("Carbamidomethyl", "Oxidation"),  
+#   custom_positions = c("C", "M")
+# )
+```
+
+### Traditional Modification Specification
+
+You can still choose one or a list of modifications from the unimod
+modification list using the traditional approach. *Peptide_modification*
+function is used to load/rebuild the modification database into the
+global enviornment of R. It will be called automatically in the
+identification work flow. you can use the *code_name* or *record_id* to
+refer the modification (see example data “peptide calibrants” to find
+more details). The pipeline will select the *non-hidden* modifications.
+
+``` r
+library(stringr)
 HiTMaP:::Peptide_modification(retrive_ID=NULL,update_unimod=F)
 modification_list<-merge(unimod.df$modifications,unimod.df$specificity,by.x=c("record_id"),by.y=c("mod_key"),all.x=T)
 head(modification_list['&'(modification_list$code_name=="Phospho",modification_list$hidden!=1),c("code_name","record_id","composition","mono_mass","position_key","one_letter")])
 ```
 
     ##      code_name record_id composition mono_mass position_key one_letter
-    ## 1615   Phospho        21    H O(3) P 79.966331            2          Y
-    ## 1618   Phospho        21    H O(3) P 79.966331            2          T
-    ## 1620   Phospho        21    H O(3) P 79.966331            2          S
+    ## 1706   Phospho        21    H O(3) P 79.966331            2          T
+    ## 1707   Phospho        21    H O(3) P 79.966331            2          S
+    ## 1709   Phospho        21    H O(3) P 79.966331            2          Y
 
 ``` r
 head(modification_list['&'(modification_list$code_name=="Amide",modification_list$hidden!=1),c("code_name","record_id","composition","mono_mass","position_key","one_letter")])
 ```
 
     ##      code_name record_id composition mono_mass position_key one_letter
-    ## 1552     Amide         2   H N O(-1) -0.984016            6     C-term
-    ## 1553     Amide         2   H N O(-1) -0.984016            4     C-term
+    ## 1574     Amide         2   H N O(-1) -0.984016            4     C-term
+    ## 1575     Amide         2   H N O(-1) -0.984016            6     C-term
 
 ``` r
 head(modification_list['&'(stringr::str_detect(modification_list$code_name,"Ca"),modification_list$hidden!=1),c("code_name","record_id","composition","mono_mass","position_key","one_letter")])
 ```
 
     ##            code_name record_id    composition mono_mass position_key one_letter
-    ## 1946 Carbamidomethyl         4  H(3) C(2) N O 57.021464            2          C
-    ## 1949 Carbamidomethyl         4  H(3) C(2) N O 57.021464            3     N-term
-    ## 2119        Carbamyl         5        H C N O 43.005814            3     N-term
-    ## 2121        Carbamyl         5        H C N O 43.005814            2          K
-    ## 2271   Carboxymethyl         6 H(2) C(2) O(2) 58.005479            2          C
+    ## 2059 Carbamidomethyl         4  H(3) C(2) N O 57.021464            2          C
+    ## 2063 Carbamidomethyl         4  H(3) C(2) N O 57.021464            3     N-term
+    ## 2227        Carbamyl         5        H C N O 43.005814            2          K
+    ## 2232        Carbamyl         5        H C N O 43.005814            3     N-term
+    ## 2383   Carboxymethyl         6 H(2) C(2) O(2) 58.005479            2          C
 
 If a modification occurs on a particular site, you will also need to
 specify the position of a modifications.
@@ -835,13 +981,13 @@ specify the position of a modifications.
 unimod.df[["positions"]]
 ```
 
-    ##         position record_id
-    ## 1              -         1
-    ## 2       Anywhere         2
-    ## 3     Any N-term         3
-    ## 4     Any C-term         4
-    ## 5 Protein N-term         5
-    ## 6 Protein C-term         6
+    ##   record_id       position
+    ## 1         1              -
+    ## 2         2       Anywhere
+    ## 3         3     Any N-term
+    ## 4         4     Any C-term
+    ## 5         5 Protein N-term
+    ## 6         6 Protein C-term
 
 ## Amino acid substitution
 
@@ -869,7 +1015,7 @@ library(gridExtra)
 grid.ftable(Cleavage_df, gp = gpar(fontsize=9,fill = rep(c("grey90", "grey95"))))
 ```
 
-![](README_files/figure-gfm/unnamed-chunk-22-1.png)<!-- -->
+![](README_files/figure-gfm/unnamed-chunk-27-1.png)<!-- -->
 
 ## Imaging-MS data preprocessing
 

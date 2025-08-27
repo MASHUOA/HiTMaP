@@ -792,7 +792,7 @@ example data "peptide calibrants" to find more details). The pipeline
 will select the *non-hidden* modifications.
 
 ```{r warning=FALSE}
-
+library(stringr)
 HiTMaP:::Peptide_modification(retrive_ID=NULL,update_unimod=F)
 modification_list<-merge(unimod.df$modifications,unimod.df$specificity,by.x=c("record_id"),by.y=c("mod_key"),all.x=T)
 head(modification_list['&'(modification_list$code_name=="Phospho",modification_list$hidden!=1),c("code_name","record_id","composition","mono_mass","position_key","one_letter")])
