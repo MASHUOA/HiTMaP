@@ -642,9 +642,8 @@ cluster_image_grid<-function(clusterID,
 
 
     ) %>% layout(
-      title = paste0("<b>",clusterID,"</b>"),
-      autosize = F,
-      margin=0,
+      title = list(text = paste0("<b>",clusterID,"</b>")),
+      margin = list(t=0,b=0,l=0,r=0),
       font = list(family = "Arial",  color = "black",align = "bottom")
     )
 
@@ -1488,9 +1487,8 @@ cluster_score_grid<-function(clusterID,
 
 
     ) %>% layout(
-      title = paste0("<b>",clusterID,"</b>"),
-      autosize = F,
-      margin=0,
+      title = list(text = paste0("<b>",clusterID,"</b>")),
+      margin = list(t=0,b=0,l=0,r=0),
       font = list(family = "Arial",  color = "black",align = "bottom")
     )
 
@@ -1959,9 +1957,8 @@ cluster_image_cardinal_allinone<-function(clusterID,
 
 
     ) %>% layout(
-      title = paste0("<b>",clusterID,"</b>"),
-      autosize = T,
-      margin=0,
+      title = list(text = paste0("<b>",clusterID,"</b>")),
+      margin = list(t=0,b=0,l=0,r=0),
       font = list(family = "Arial", size = 20, color = "black",align = "bottom")
     )
 
@@ -2590,9 +2587,9 @@ plotly_for_region_with_ClusterID_barchart<-function(moleculeNames,data){
   p <- plot_ly(data = plot_data, x = ~region, y = ~mean, type = 'bar', name = moleculeNames,
                error_y = ~list(array = se,
                                color = '#000000')) %>%
-    layout(title = paste(plot_data$mz[1]),
+    layout(title = list(text = paste(plot_data$mz[1])),
            xaxis = list(title = "Region"),
-           yaxis = list (title = "Relative Conc.",ticksuffix = "%"),
+           yaxis = list(title = "Relative Conc.",ticksuffix = "%"),
            showlegend = F)
   #%>%
   #  add_trace(data = data[which(data$supp == 'VC'),], name = 'VC')

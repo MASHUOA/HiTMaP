@@ -648,8 +648,143 @@ export_pixel_level_data(Protein_peptide_file=,
 
 ## Modification
 
-You can choose one or a list of modifications from the unimod
-modification list. *Peptide_modification* function is used to
+### Enhanced UniMod Modification Helper (New!)
+
+HiTMaP now includes enhanced functions for easy modification handling with improved ambiguity resolution and user-friendly input parsing. The new `format_unimod_modifications()` function provides a modern interface to the UniMod database.
+
+**Key Benefits:**
+- ✅ **Handles ambiguous modification names** with multiple matching strategies
+- ✅ **Supports common abbreviations** (Ox, Phos, CAM, Ace, etc.)
+- ✅ **Position-specific filtering** (single AA, multiple AA, terminal positions)
+- ✅ **Interactive and non-interactive modes** for different workflows
+- ✅ **Error-resistant** with clear feedback on matches/failures
+- ✅ **Fully compatible** with existing HiTMaP workflow functions
+- ✅ **MALDI imaging optimized** - defaults appropriate for direct tissue analysis
+- ✅ **Quick preset scenarios** for common MALDI imaging setups
+
+> **Note:** Unlike LC-MS/MS proteomics, MALDI imaging typically does not use fixed cysteine modifications (Carbamidomethyl) since samples are analyzed directly from tissue without reduction/alkylation steps. The presets reflect this difference.
+
+#### Basic Usage
+
+```{r eval=FALSE}
+# Load HiTMaP package (functions are automatically available)
+library(HiTMaP)
+
+# Simple variable modifications for MALDI imaging
+mods <- format_unimod_modifications(
+  modifications = c("Oxidation", "Acetyl"),
+  positions = c("M", "N-term"),
+  mod_type = "variable",
+  interactive = FALSE
+)
+
+# Use in imaging_identification
+imaging_identification(
+  datafile = "your_data.imzML",
+  Fastadatabase = "database.fasta",
+  Modifications = mods$modifications,  # Properly formatted for HiTMaP
+  ppm = 5,
+  threshold = 0.001
+  # ... other parameters
+)
+```
+
+#### Quick Setup Presets
+
+```{r eval=FALSE}
+# Standard MALDI imaging setup (Oxidation + Acetylation - no fixed Cys)
+standard_mods <- quick_modification_setup("standard")
+
+# Comprehensive PTM discovery for MALDI imaging
+comprehensive_mods <- quick_modification_setup("comprehensive")
+
+# No modifications
+minimal_mods <- quick_modification_setup("minimal")
+
+# Custom modifications
+custom_mods <- quick_modification_setup("custom", 
+  custom_mods = c("Phospho", "Methyl"), 
+  custom_positions = c("STY", "K")
+)
+
+# Use any preset in your workflow
+imaging_identification(
+  datafile = "sample.imzML",
+  Modifications = standard_mods$modifications,
+  # ... other parameters
+)
+```
+
+#### Advanced Features
+
+**Ambiguity Handling**: The function automatically handles ambiguous modification names and provides clear feedback:
+
+```{r eval=FALSE}
+# Handles common synonyms and abbreviations
+mods <- format_unimod_modifications(
+  modifications = c("Ox", "Phos", "CAM", "Ace"),  # Common abbreviations
+  mod_type = "variable",
+  interactive = FALSE  # Auto-select best matches
+)
+
+# Check what was matched
+print_modification_summary(mods)
+```
+
+**Position-Specific Modifications**:
+
+```{r eval=FALSE}
+# Specific amino acid targets
+mods <- format_unimod_modifications(
+  modifications = c("Phospho", "Methylation", "Citrullination"),
+  positions = c("STY", "KR", "R"),  # Multi-character positions supported
+  mod_type = "variable"
+)
+
+# Terminal modifications  
+terminal_mods <- format_unimod_modifications(
+  modifications = c("Acetyl", "Formyl"),
+  positions = c("N-term", "N-term"),
+  mod_type = "variable"
+)
+```
+
+**Mixed Fixed and Variable Modifications** (if needed for specific applications):
+
+```{r eval=FALSE}
+# Fixed modifications (only if alkylation was performed before MALDI)
+fixed_mods <- format_unimod_modifications(
+  modifications = "Carbamidomethyl",
+  positions = "C", 
+  mod_type = "fixed"
+)
+
+# Variable modifications for MALDI imaging
+var_mods <- format_unimod_modifications(
+  modifications = c("Oxidation", "Deamidation", "Sodium adduct"),
+  positions = c("M", "NQ", "any"),
+  mod_type = "variable"
+)
+
+# Combine for workflow (uncommon for MALDI imaging)
+combined_mods <- list(
+  fixed = fixed_mods$modifications$fixed,
+  fixmod_position = fixed_mods$modifications$fixmod_position,
+  variable = var_mods$modifications$variable,
+  varmod_position = var_mods$modifications$varmod_position
+)
+
+# For LC-MS/MS style workflows with alkylation, use:
+# lcms_style <- quick_modification_setup("custom",
+#   custom_mods = c("Carbamidomethyl", "Oxidation"),  
+#   custom_positions = c("C", "M")
+# )
+```
+
+### Traditional Modification Specification
+
+You can still choose one or a list of modifications from the unimod
+modification list using the traditional approach. *Peptide_modification* function is used to
 load/rebuild the modification database into the global enviornment of R.
 It will be called automatically in the identification work flow. you can
 use the *code_name* or *record_id* to refer the modification (see

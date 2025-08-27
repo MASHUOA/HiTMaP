@@ -371,15 +371,15 @@ imaging_Spatial_Quant<-function(
         add_lines(x=unique(fitx),y=unique(fitdata$lwr), name = 'Poly Fit lwr', mode = 'lines',inherit=FALSE, line = list(color="grey", dash = 'dash')) %>%
         add_lines(x=unique(fitx),y=unique(fitdata$upr), name = 'Poly Fit upr', mode = 'lines',inherit=FALSE, line = list(color="grey", dash = 'dash')) %>%
 
-        layout(title = moleculeNames[i],
+        layout(title = list(text = moleculeNames[i]),
                xaxis = list(title = "Age"),
-               yaxis = list (title = "Conc."),
+               yaxis = list(title = "Conc."),
                showlegend = TRUE)
 
       p <- plot_ly(data=data, x =as.numeric(data$Class[which(data$Class!="")]) , y = data[which(data$Class!=""),moleculeNames[i]], name = data["moleculeNames",moleculeNames[i]], type = 'scatter', mode = 'markers') %>%
         add_trace(y =lowess(as.numeric(data$Class[which(data$Class!="")]),as.numeric(as.character(data[[moleculeNames[i]]][which(data$Class!="")])),iter=3)$y, name = 'Moving average', mode = 'lines') %>%
 
-        layout(title = paste(data["moleculeNames",data["moleculeNames",moleculeNames[i]]], data["adducts",moleculeNames[i]]," in ",data["RegionName",moleculeNames[i]]),
+        layout(title = list(text = paste(data["moleculeNames",data["moleculeNames",moleculeNames[i]]], data["adducts",moleculeNames[i]]," in ",data["RegionName",moleculeNames[i]])),
                xaxis = list(title = "Cases"),
                yaxis = list (title = "Relative Conc."),
                showlegend = FALSE)
@@ -436,7 +436,7 @@ imaging_Spatial_Quant<-function(
         add_lines(x=unique(fitx),y=unique(fitdata$fit), name = 'Poly Fit', mode = 'lines',inherit=FALSE) %>%
         add_lines(x=unique(fitx),y=unique(fitdata$lwr), name = 'Poly Fit lwr', mode = 'lines',inherit=FALSE, line = list(color="grey", dash = 'dash')) %>%
         add_lines(x=unique(fitx),y=unique(fitdata$upr), name = 'Poly Fit upr', mode = 'lines',inherit=FALSE, line = list(color="grey", dash = 'dash')) %>%
-        layout(title = moleculeNames[i],
+        layout(title = list(text = moleculeNames[i]),
                xaxis = list(title = "Age"),
                yaxis = list (title = "Conc."),
                showlegend = TRUE)
@@ -444,7 +444,7 @@ imaging_Spatial_Quant<-function(
       p <- plot_ly(data=data, x =as.numeric(data$Class[which(data$Class!="")]) , y = data[which(data$Class!=""),moleculeNames[i]], name = data["moleculeNames",moleculeNames[i]], type = 'scatter', mode = 'markers') %>%
         add_trace(y =lowess(as.numeric(data$Class[which(data$Class!="")]),as.numeric(as.character(data[[moleculeNames[i]]][which(data$Class!="")])),iter=3)$y, name = 'Moving average', mode = 'lines') %>%
 
-        layout(title = paste(data["moleculeNames",data["moleculeNames",moleculeNames[i]]], data["adducts",moleculeNames[i]]," in ",data["RegionName",moleculeNames[i]]),
+        layout(title = list(text = paste(data["moleculeNames",data["moleculeNames",moleculeNames[i]]], data["adducts",moleculeNames[i]]," in ",data["RegionName",moleculeNames[i]])),
                xaxis = list(title = "Cases"),
                yaxis = list (title = "Relative Conc."),
                showlegend = FALSE)
@@ -515,7 +515,7 @@ imaging_Spatial_Quant<-function(
         add_lines(x=unique(fitx),y=unique(fitdata$fit), name = 'Poly Fit', mode = 'lines',inherit=FALSE) %>%
         add_lines(x=unique(fitx),y=unique(fitdata$lwr), name = 'Poly Fit lwr', mode = 'lines',inherit=FALSE, line = list(color="grey", dash = 'dash')) %>%
         add_lines(x=unique(fitx),y=unique(fitdata$upr), name = 'Poly Fit upr', mode = 'lines',inherit=FALSE, line = list(color="grey", dash = 'dash')) %>%
-        layout(title = moleculeNames[i],
+        layout(title = list(text = moleculeNames[i]),
                xaxis = list(title = "Age"),
                yaxis = list (title = "Conc."),
                showlegend = TRUE)
@@ -590,7 +590,7 @@ imaging_Spatial_Quant<-function(
           return(stringX)}
         p <- plot_ly(data=Spectrum_summary_norm_sum, x = ~ID, y = Spectrum_summary_norm_sum[[colnames_case[i]]], name = colnames_case[i], type = 'scatter', mode = 'markers') %>%
           add_trace(y =lowess(Spectrum_summary_norm_sum$ID,Spectrum_summary_norm_sum[[colnames_case[i]]],iter=6)$y, name = 'Moving average', mode = 'lines') %>%
-          layout(title = paste(case_info[i,"ID"], case_info[i,"adducts"],"in",case_info[i,"Name"]),
+          layout(title = list(text = paste(case_info[i,"ID"], case_info[i,"adducts"],"in",case_info[i,"Name"])),
                  xaxis = list(title = "Age"),
                  yaxis = list (title = "Relative Conc."),
                  showlegend = FALSE)
@@ -2184,7 +2184,7 @@ Load_IMS_combine<-function(datafile,rotate=NULL,ppm=5,...){
       rotate=Rotate_IMG[Rotate_IMG$filenames==basename(datafile[i]),"rotation"]
       rotate=as.numeric(rotate)
       if (length(rotate)==0){rotate=0}
-      imdata[[i]]=Load_Cardinal_imaging(datafile[i],preprocessing = F,resolution = ppm,rotate = rotate, as,mzrange=mzrange)
+      imdata[[i]]=Load_Cardinal_imaging(datafile[i],preprocessing = F,resolution = ppm,rotate = rotate,mzrange=mzrange)
       if (i==1) {
         testrange=c(min(imdata[[i]]@featureData@listData[["mz"]]),max(imdata[[i]]@featureData@listData[["mz"]]))
       }else{
@@ -3068,7 +3068,7 @@ IMS_data_process_quant<-function (datafile, Peptide_Summary_searchlist, segmenta
       message(paste0("spatialShrunkenCentroids Clustering for ",
                      name))
       skm <- spatialShrunkenCentroids(imdata, r = Smooth_range, k = segmentation_num,
-                                      method = "adaptive",...)
+                                      method = "adaptive")
       message(paste0("spatialShrunkenCentroids finished for ",
                      name))
       png(paste(getwd(), "/", "spatialShrunkenCentroids_image_plot",
@@ -3257,7 +3257,7 @@ IMS_data_process_quant<-function (datafile, Peptide_Summary_searchlist, segmenta
     }
     if (PMFsearch) {
       imdata <- Load_Cardinal_imaging(datafile[z], preprocessing = F,
-                                      resolution = ppm, rotate = rotate[z], as = "MSImageSet")
+                                      resolution = ppm, rotate = rotate[z])
       if (dir.exists(paste0(datafile[z], " ID")) ==
           FALSE) {
         dir.create(paste0(datafile[z], " ID"))
@@ -3392,43 +3392,18 @@ preprocess_validation<-function(preprocess){
     message("Invalid preprocess option, please choose from: none, normalize, smooth, reduceBaseline, peakPick, peakAlign")
     preprocess = FALSE
   }
-  ## S4 method for signature 'MSImagingExperiment'  
-  peakAlign(object, ref, spectra = "intensity", index = "mz", tolerance = NA, units = c("ppm", "mz"), ...) 
-  ## S4 method for signature 'MSImagingArrays' 
-  peakAlign(object, ref, spectra = "intensity", index = "mz", tolerance = NA, units = c("ppm", "mz"), ...) 
-  ## S4 method for signature 'SpectralImagingExperiment' 
-  peakAlign(object, ref, spectra = "intensity", index = NULL, tolerance = NA, units = c("relative", "absolute"), nchunks = getCardinalNChunks(), verbose = getCardinalVerbose(), BPPARAM = getCardinalBPPARAM(), ...) 
-  ## S4 method for signature 'SpectralImagingArrays' 
-  peakAlign(object, ref, spectra = "intensity", index = NULL, tolerance = NA, units = c("relative", "absolute"), nchunks = getCardinalNChunks(), verbose = getCardinalVerbose(), BPPARAM = getCardinalBPPARAM(), ...)
-  ## S4 method for signature 'MSImagingExperiment' 
-  peakPick(object, ref, method = c("diff", "sd", "mad", "quantile", "filter", "cwt"), 
-    SNR = 2, type = c("height", "area"), tolerance = NA, units = c("ppm", "mz"), ...) 
-  ## S4 method for signature 'MSImagingArrays' 
-  peakPick(object, ref, method = c("diff", "sd", "mad", "quantile", "filter", "cwt"), 
-    SNR = 2, type = c("height", "area"), tolerance = NA, units = c("ppm", "mz"), ...) 
-  ## S4 method for signature 'SpectralImagingData' 
-  peakPick(object, ref, method = c("diff", "sd", "mad", "quantile", "filter", "cwt"), 
-    SNR = 2, type = c("height", "area"), tolerance = NA, units = c("relative", "absolute"), ...)
-  ## S4 method for signature 'SpectralImagingData' 
-  normalize(object, method = c("tic", "rms", "reference"), ...)
+  # S4 method signatures for Cardinal functions:
+  # peakAlign(object, ref, spectra = "intensity", index = "mz", tolerance = NA, units = c("ppm", "mz"), ...)
+  # peakPick(object, ref, method = c("diff", "sd", "mad", "quantile", "filter", "cwt"), SNR = 2, type = c("height", "area"), tolerance = NA, units = c("ppm", "mz"), ...)
+  # normalize(object, method = c("tic", "rms", "reference"), ...)
+  # recalibrate(object, ref, method = c("locmax", "dtw", "cow"), tolerance = NA, units = c("ppm", "mz"), ...)
+  # reduceBaseline(object, method = c("locmin", "hull", "snip", "median"), ...)
+  # smooth(x, method = c("gaussian", "bilateral", "adaptive", "diff", "guide", "pag", "sgolay", "ma"), ...)
   
-  ## S4 method for signature 'MSImagingExperiment_OR_Arrays'
-  peakProcess(object, ref, spectra = "intensity", index = "mz", 
-    method = c("diff", "sd", "mad", "quantile", "filter", "cwt"), 
-    SNR = 2, type = c("height", "area"), tolerance = NA, units = c("ppm", "mz"), 
-    sampleSize = NA, filterFreq = TRUE, outfile = NULL, 
-    nchunks = getCardinalNChunks(), verbose = getCardinalVerbose(), BPPARAM = getCardinalBPPARAM(), ...)
+  # S4 method signature for MSImagingExperiment_OR_Arrays:
+  # peakProcess(object, ref, spectra = "intensity", index = "mz", method = c("diff", "sd", "mad", "quantile", "filter", "cwt"), 
+  #   SNR = 2, type = c("height", "area"), tolerance = NA, units = c("ppm", "mz"), 
+  #   sampleSize = NA, filterFreq = TRUE, outfile = NULL, nchunks = getCardinalNChunks(), verbose = getCardinalVerbose(), BPPARAM = getCardinalBPPARAM(), ...)
   
-  ## S4 method for signature 'MSImagingExperiment_OR_Arrays' 
-  recalibrate(object, ref, method = c("locmax", "dtw", "cow"), 
-    tolerance = NA, units = c("ppm", "mz"), ...) 
-  ## S4 method for signature 'SpectralImagingData' 
-  recalibrate(object, ref, method = c("locmax", "dtw", "cow"), 
-    tolerance = NA, units = c("relative", "absolute"), ...)
-  ## S4 method for signature 'SpectralImagingData'
-  reduceBaseline(object, method = c("locmin", "hull", "snip", "median"), ...)
-  
-  ## S4 method for signature 'SpectralImagingData' 
-  smooth(x, method = c("gaussian", "bilateral", "adaptive", "diff", "guide", "pag", "sgolay", "ma"), ...)
   
 }

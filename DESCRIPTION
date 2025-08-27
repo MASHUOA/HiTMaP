@@ -38,7 +38,7 @@ Suggests:
     plotly,
     UniProt.ws,
     bitops
-RoxygenNote: 7.1.1
+RoxygenNote: 7.3.2
 biocViews: Software, Infrastructure, Proteomics, Lipidomics,
         MassSpectrometry, ImagingMassSpectrometry, ImmunoOncology,
         Normalization, Clustering, Classification, Regression
