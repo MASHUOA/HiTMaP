@@ -2122,7 +2122,22 @@ Peptide_modification<-function(retrive_ID=NULL,mod_position=NULL,one_letter=NULL
   
   if (is.null(mod_position)) mod_position=(rep("Any",length(retrive_ID)))
   if (missing(mod_position)) mod_position=(rep("Any",length(retrive_ID)))
+  
+  # Fix input format issues
   if (!is.null(retrive_ID)){
+    # Handle list format in mod_position (e.g., list(c("M")) -> c("M"))
+    if (is.list(mod_position)) {
+      mod_position <- unlist(mod_position)
+    }
+    
+    # Ensure one_letter has same length as retrive_ID
+    if (is.null(one_letter)) {
+      one_letter <- mod_position  # Use mod_position as fallback
+    }
+    if (length(one_letter) != length(retrive_ID)) {
+      one_letter <- rep(one_letter[1], length(retrive_ID))  # Recycle first element
+    }
+    
     retrive_mod<-data.frame(retrive_ID,mod_position,one_letter,stringsAsFactors = F)
 
     return_mod.df<-suppressWarnings(lapply(1:nrow(retrive_mod),function(x,retrive_mod,unimod.modification.df){
