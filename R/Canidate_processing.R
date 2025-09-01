@@ -377,6 +377,15 @@ Protein_feature_list_fun<-function(workdir=getwd(),
   mod.df_fix<-Peptide_modification(retrive_ID = Modifications$fixed,mod_position=Modifications$fixmod_position,one_letter = Modifications$fixmod_one_letter)
   mod.df_var<-Peptide_modification(retrive_ID = Modifications$variable,mod_position=Modifications$varmod_position,one_letter = Modifications$varmod_one_letter)
   mod.df<-rbind(mod.df_fix,mod.df_var)
+  
+  # Check for failed modification matches
+  if (!is.null(mod.df) && any(mod.df$code_name == "FAILED_MATCH")) {
+    failed_mods <- mod.df[mod.df$code_name == "FAILED_MATCH", ]
+    stop("Modification matching failed for: ", 
+         paste(paste0("'", failed_mods$ex_code_name, "' at position '", failed_mods$one_letter, "'"), collapse = ", "),
+         "\nPlease check your modification names and positions, or use print_modification_summary() for suggestions.")
+  }
+  
   if (is.null(mod.df)){
     min_mod_massdiff<-100
     max_mod_massdiff<-500

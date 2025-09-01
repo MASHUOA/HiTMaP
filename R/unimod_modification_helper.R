@@ -54,8 +54,8 @@ format_unimod_modifications <- function(modifications = NULL,
   # Input validation
   if (is.null(modifications)) {
     return(list(
-      modifications = list(fixed = NULL, fixmod_position = NULL, 
-                          variable = NULL, varmod_position = NULL),
+      modifications = list(fixed = NULL, fixmod_position = NULL, fixmod_one_letter = NULL,
+                          variable = NULL, varmod_position = NULL, varmod_one_letter = NULL),
       summary = "No modifications specified",
       ambiguous = list(),
       not_found = character(0)
@@ -79,16 +79,74 @@ format_unimod_modifications <- function(modifications = NULL,
     stop("Length of positions must match length of modifications or be 1")
   }
   
-  # Match modifications
-  match_results <- match_modifications_with_unimod(
-    modifications, positions, unimod_data, 
-    interactive = interactive, show_matches = show_matches
-  )
+  # Direct matching with immediate position filtering
+  matched_mods <- data.frame()
+  failed_mods <- character()
   
-  # Format for HiTMaP workflow
-  formatted_mods <- format_for_hitmap_workflow(match_results, mod_type)
+  for (i in seq_along(modifications)) {
+    mod_name <- modifications[i]
+    mod_pos <- positions[i]
+    
+    if (show_matches) {
+      message("Searching for: ", mod_name, " at position: ", mod_pos)
+    }
+    
+    # Use the rewritten search function
+    match_result <- find_modification_matches(mod_name, mod_pos, unimod_data)
+    
+    if (nrow(match_result) == 1 && match_result$code_name[1] == "FAILED_MATCH") {
+      failed_mods <- c(failed_mods, mod_name)
+    } else {
+      matched_mods <- rbind(matched_mods, match_result[1, ])
+      if (show_matches) {
+        message("Matched: ", mod_name, " -> ", match_result$full_name[1])
+      }
+    }
+  }
   
-  return(formatted_mods)
+  # Format results
+  if (nrow(matched_mods) == 0) {
+    return(list(
+      modifications = list(fixed = NULL, fixmod_position = NULL, fixmod_one_letter = NULL,
+                          variable = NULL, varmod_position = NULL, varmod_one_letter = NULL),
+      summary = "No modifications matched",
+      not_found = failed_mods
+    ))
+  }
+  
+  # Create modification list
+  mod_names <- matched_mods$code_name
+  mod_positions <- matched_mods$one_letter
+  mod_positions_type <- matched_mods$position_key
+  
+  if (mod_type == "fixed") {
+    modifications_list <- list(
+      fixed = mod_names,
+      fixmod_position = mod_positions_type,
+      fixmod_one_letter = mod_positions,
+      variable = NULL,
+      varmod_position = NULL,
+      varmod_one_letter = NULL
+    )
+  } else {
+    modifications_list <- list(
+      fixed = NULL,
+      fixmod_position = NULL,
+      fixmod_one_letter = NULL,
+      variable = mod_names,
+      varmod_position = mod_positions_type,
+      varmod_one_letter = mod_positions
+    )
+  }
+  
+  summary_text <- paste("Matched", length(mod_names), mod_type, "modifications:", 
+                       paste(mod_names, collapse = ", "))
+  
+  return(list(
+    modifications = modifications_list,
+    summary = summary_text,
+    not_found = failed_mods
+  ))
 }
 
 #' Load UniMod Database
@@ -266,71 +324,70 @@ match_modifications_with_unimod <- function(modifications, positions, unimod_dat
 #' @return Data frame with matches
 find_modification_matches <- function(mod_name, mod_pos, unimod_data) {
   
-  matches <- data.frame()
-  
-  # Strategy 1: Exact match by record_id (numeric)
-  if (!is.na(suppressWarnings(as.numeric(mod_name)))) {
-    exact_matches <- unimod_data[unimod_data$record_id == as.numeric(mod_name), ]
-    if (nrow(exact_matches) > 0) {
-      matches <- rbind(matches, exact_matches)
-    }
-  }
-  
-  # Strategy 2: Exact match by code_name (case-insensitive)
-  code_matches <- unimod_data[
-    tolower(stringr::str_replace_all(unimod_data$code_name, "_", "-")) == 
-    tolower(stringr::str_replace_all(mod_name, "_", "-")), 
-  ]
-  matches <- rbind(matches, code_matches)
-  
-  # Strategy 3: Exact match by full_name (case-insensitive)
-  full_matches <- unimod_data[
-    tolower(unimod_data$full_name) == tolower(mod_name), 
-  ]
-  matches <- rbind(matches, full_matches)
-  
-  # Strategy 4: Partial match by code_name first (more specific)
-  partial_code_matches <- unimod_data[
-    grepl(paste0("^", tolower(mod_name)), tolower(unimod_data$code_name)) |
-    grepl(paste0("\\b", tolower(mod_name), "\\b"), tolower(unimod_data$code_name)), 
-  ]
-  matches <- rbind(matches, partial_code_matches)
-  
-  # Strategy 5: Broader partial match by full_name (only if no matches yet)
-  if (nrow(matches) == 0) {
-    partial_full_matches <- unimod_data[
-      grepl(paste0("^", tolower(mod_name)), tolower(unimod_data$full_name)) |
-      grepl(paste0("\\b", tolower(mod_name), "\\b"), tolower(unimod_data$full_name)), 
+  # Priority 1: ex_code_name + position match
+  if ("ex_code_name" %in% colnames(unimod_data) && tolower(mod_pos) != "any") {
+    ex_pos_matches <- unimod_data[
+      tolower(stringr::str_replace_all(unimod_data$ex_code_name, "_", "-")) == 
+      tolower(stringr::str_replace_all(mod_name, "_", "-")), 
     ]
-    matches <- rbind(matches, partial_full_matches)
-  }
-  
-  # Strategy 6: Common abbreviations and synonyms
-  synonym_matches <- find_synonym_matches(mod_name, unimod_data)
-  matches <- rbind(matches, synonym_matches)
-  
-  # Remove duplicates
-  if (nrow(matches) > 0) {
-    matches <- matches[!duplicated(matches$record_id), ]
-    
-    # Filter by position if specified and not "any"
-    if (tolower(mod_pos) != "any") {
-      position_filtered <- filter_by_position(matches, mod_pos)
-      if (nrow(position_filtered) > 0) {
-        matches <- position_filtered
+    if (nrow(ex_pos_matches) > 0) {
+      filtered <- filter_by_position(ex_pos_matches, mod_pos)
+      if (nrow(filtered) > 0 && any(filtered$hidden == 0)) {
+        best_match <- filtered[filtered$hidden == 0, ][1, , drop = FALSE]
+        return(best_match)
       }
     }
-    
-    # Prefer non-hidden modifications
-    if (any(matches$hidden == 0)) {
-      matches <- matches[matches$hidden == 0, ]
-    }
-    
-    # Rank matches by quality and prefer better ones
-    matches <- rank_modification_matches(matches, mod_name)
   }
   
-  return(matches)
+  # Priority 2: code_name + position match  
+  if (tolower(mod_pos) != "any") {
+    code_pos_matches <- unimod_data[
+      tolower(stringr::str_replace_all(unimod_data$code_name, "_", "-")) == 
+      tolower(stringr::str_replace_all(mod_name, "_", "-")), 
+    ]
+    if (nrow(code_pos_matches) > 0) {
+      filtered <- filter_by_position(code_pos_matches, mod_pos)
+      if (nrow(filtered) > 0 && any(filtered$hidden == 0)) {
+        best_match <- filtered[filtered$hidden == 0, ][1, , drop = FALSE]
+        return(best_match)
+      }
+    }
+  }
+  
+  # Priority 3: full_name + position match
+  if (tolower(mod_pos) != "any") {
+    full_pos_matches <- unimod_data[
+      tolower(unimod_data$full_name) == tolower(mod_name), 
+    ]
+    if (nrow(full_pos_matches) > 0) {
+      filtered <- filter_by_position(full_pos_matches, mod_pos)
+      if (nrow(filtered) > 0 && any(filtered$hidden == 0)) {
+        best_match <- filtered[filtered$hidden == 0, ][1, , drop = FALSE]
+        return(best_match)
+      }
+    }
+  }
+  
+  # Priority 4: Suggest partial matches and return failure signal
+  partial_matches <- unimod_data[
+    grepl(tolower(mod_name), tolower(unimod_data$code_name)) |
+    grepl(tolower(mod_name), tolower(unimod_data$full_name)) |
+    (("ex_code_name" %in% colnames(unimod_data)) && 
+     grepl(tolower(mod_name), tolower(unimod_data$ex_code_name))), 
+  ]
+  
+  if (nrow(partial_matches) > 0) {
+    message("No exact match for '", mod_name, "' at position '", mod_pos, "'")
+    message("Suggested alternatives:")
+    suggestions <- partial_matches[1:min(5, nrow(partial_matches)), 
+                                  c("record_id", "code_name", "ex_code_name", "one_letter")]
+    print(suggestions)
+  }
+  
+  # Return failure signal
+  return(data.frame(record_id = 1, code_name = "FAILED_MATCH", 
+                    ex_code_name = mod_name, one_letter = mod_pos,
+                    hidden = 0, stringsAsFactors = FALSE))
 }
 
 #' Find Synonym Matches
@@ -383,7 +440,7 @@ find_synonym_matches <- function(mod_name, unimod_data) {
 #' @param matches Data frame of matched modifications  
 #' @param mod_name Original search term
 #' @return Ranked matches with best matches first
-rank_modification_matches <- function(matches, mod_name) {
+rank_modification_matches <- function(matches, mod_name, mod_pos = NULL) {
   
   if (nrow(matches) == 0) return(matches)
   
@@ -391,19 +448,40 @@ rank_modification_matches <- function(matches, mod_name) {
   matches$quality_score <- 0
   mod_name_lower <- tolower(mod_name)
   
-  # Exact matches get highest score
-  matches$quality_score[tolower(matches$code_name) == mod_name_lower] <- 100
-  matches$quality_score[tolower(matches$full_name) == mod_name_lower] <- 90
+  # HEAVILY penalize complex/labeled modifications
+  matches$quality_score[grepl("label:|\\+|->|loss", tolower(matches$code_name))] <- -1000
+  
+  # Highest priority: exact name + position match
+  if ("ex_code_name" %in% colnames(matches)) {
+    matches$quality_score[tolower(matches$ex_code_name) == mod_name_lower] <- 2000
+  }
+  
+  # HUGE boost for position match
+  if (!is.null(mod_pos) && tolower(mod_pos) != "any") {
+    if (nchar(mod_pos) == 1 && grepl("^[A-Z]$", toupper(mod_pos))) {
+      # Single amino acid match
+      matches$quality_score[matches$one_letter == toupper(mod_pos)] <- 
+        matches$quality_score[matches$one_letter == toupper(mod_pos)] + 5000
+    } else if (grepl("term", tolower(mod_pos))) {
+      # Terminal position match
+      matches$quality_score[grepl(mod_pos, matches$one_letter, ignore.case = TRUE)] <- 
+        matches$quality_score[grepl(mod_pos, matches$one_letter, ignore.case = TRUE)] + 5000
+    }
+  }
+  
+  # Exact matches get high score
+  matches$quality_score[tolower(matches$code_name) == mod_name_lower] <- 1500
+  matches$quality_score[tolower(matches$full_name) == mod_name_lower] <- 1000
+  
+  # Prefer visible (non-hidden) modifications
+  matches$quality_score[matches$hidden == 0] <- matches$quality_score[matches$hidden == 0] + 500
   
   # Matches that start with the search term
   matches$quality_score[grepl(paste0("^", mod_name_lower), tolower(matches$code_name))] <- 
-    matches$quality_score[grepl(paste0("^", mod_name_lower), tolower(matches$code_name))] + 50
+    matches$quality_score[grepl(paste0("^", mod_name_lower), tolower(matches$code_name))] + 100
   
   # Shorter names are better (less verbose)
-  matches$quality_score <- matches$quality_score + (100 - pmin(nchar(matches$code_name), 100))
-  
-  # Non-hidden modifications are better
-  matches$quality_score[matches$hidden == 0] <- matches$quality_score[matches$hidden == 0] + 20
+  matches$quality_score <- matches$quality_score + (50 - pmin(nchar(matches$code_name), 50))
   
   # Sort by quality score (highest first)
   matches <- matches[order(matches$quality_score, decreasing = TRUE), ]
@@ -428,8 +506,8 @@ filter_by_position <- function(matches, position) {
   # Single amino acid (e.g., "C", "M", "K")
   if (nchar(position) == 1 && grepl("^[A-Z]$", toupper(position))) {
     filtered <- matches[
-      grepl(toupper(position), matches$one_letter, fixed = TRUE) |
-      tolower(matches$site) == pos_lower, 
+      `|`(matches$one_letter == toupper(position),
+      tolower(matches$position_key) == pos_lower), 
     ]
     if (nrow(filtered) > 0) return(filtered)
   }
@@ -493,15 +571,19 @@ format_for_hitmap_workflow <- function(match_results, mod_type = "variable") {
     modifications <- list(
       fixed = mod_names,
       fixmod_position = mod_positions,
+      fixmod_one_letter = mod_positions,
       variable = NULL,
-      varmod_position = NULL
+      varmod_position = NULL,
+      varmod_one_letter = NULL
     )
   } else {
     modifications <- list(
       fixed = NULL,
       fixmod_position = NULL,
+      fixmod_one_letter = NULL,
       variable = mod_names,
-      varmod_position = mod_positions
+      varmod_position = mod_positions,
+      varmod_one_letter = mod_positions
     )
   }
   
