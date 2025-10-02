@@ -259,15 +259,20 @@ imaging_identification<-function(
 
   }
   Peptide_Summary_file<-fread("Peptide_region_file.csv")
-  Peptide_Summary_file$Source<-datafilename
   if(nrow(Peptide_Summary_file)!=0){
-  Protein_peptide_Summary_file<-rbind(Protein_peptide_Summary_file,Peptide_Summary_file)
+    Peptide_Summary_file$Source<-datafilename
+    Protein_peptide_Summary_file<-rbind(Protein_peptide_Summary_file,Peptide_Summary_file)
   }
   }
     message("Protein feature summary...Done.")
     if (dir.exists(paste(workdir,"/Summary folder",sep=""))==FALSE){dir.create(paste(workdir,"/Summary folder",sep=""))}
 
     write.csv(protein_feature_all,paste(workdir,"/Summary folder/Protein_Summary.csv",sep=""),row.names = F)
+    
+    # Ensure Protein_peptide_Summary_file has proper structure even when empty
+    if (is.null(Protein_peptide_Summary_file)) {
+      Protein_peptide_Summary_file <- data.frame(Source = character(0), stringsAsFactors = FALSE)
+    }
     write.csv(Protein_peptide_Summary_file,paste(workdir,"/Summary folder/Protein_peptide_Summary.csv",sep=""),row.names = F)
   }
   
@@ -284,9 +289,9 @@ imaging_identification<-function(
       setwd(paste(currentdir,sep=""))
 
       Peptide_Summary_file<-fread("Peptide_region_file.csv")
-      Peptide_Summary_file$Source<-gsub(".imzML", "", datafile[i])
       if(nrow(Peptide_Summary_file)!=0){
-      Peptide_Summary_file_a<-rbind(Peptide_Summary_file_a,Peptide_Summary_file)
+        Peptide_Summary_file$Source<-gsub(".imzML", "", datafile[i])
+        Peptide_Summary_file_a<-rbind(Peptide_Summary_file_a,Peptide_Summary_file)
       }
       }
     Peptide_Summary_file_a<-unique(Peptide_Summary_file_a)
@@ -1073,8 +1078,8 @@ imaging_identification_target<-function(
         
       }
       Peptide_Summary_file<-fread("Peptide_region_file.csv")
-      Peptide_Summary_file$Source<-datafilename
       if(nrow(Peptide_Summary_file)!=0){
+        Peptide_Summary_file$Source<-datafilename
         Protein_peptide_Summary_file<-rbind(Protein_peptide_Summary_file,Peptide_Summary_file)
       }
     }
@@ -1082,6 +1087,11 @@ imaging_identification_target<-function(
     if (dir.exists(paste(workdir,"/Summary folder",sep=""))==FALSE){dir.create(paste(workdir,"/Summary folder",sep=""))}
     
     write.csv(protein_feature_all,paste(workdir,"/Summary folder/Protein_Summary.csv",sep=""),row.names = F)
+    
+    # Ensure Protein_peptide_Summary_file has proper structure even when empty
+    if (is.null(Protein_peptide_Summary_file)) {
+      Protein_peptide_Summary_file <- data.frame(Source = character(0), stringsAsFactors = FALSE)
+    }
     write.csv(Protein_peptide_Summary_file,paste(workdir,"/Summary folder/Protein_peptide_Summary.csv",sep=""),row.names = F)
   }
   
@@ -1098,8 +1108,8 @@ imaging_identification_target<-function(
       setwd(paste(currentdir,sep=""))
       
       Peptide_Summary_file<-fread("Peptide_region_file.csv")
-      Peptide_Summary_file$Source<-gsub(".imzML", "", datafile[i])
       if(nrow(Peptide_Summary_file)!=0){
+        Peptide_Summary_file$Source<-gsub(".imzML", "", datafile[i])
         Peptide_Summary_file_a<-rbind(Peptide_Summary_file_a,Peptide_Summary_file)
       }
     }
