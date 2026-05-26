@@ -988,7 +988,7 @@ plot_cpd_matching_score<-function(Peptide_plot_list,peaklist,charge,ppm,outputdi
   if (dir.exists(outputdir)==FALSE){dir.create(outputdir)}
   #Peptide_plot_list1=Peptide_plot_list
   Peptide_plot_list=Peptide_plot_list[!is.na(Peptide_plot_list$Intensity),]
-  Peptide_plot_list=Peptide_plot_list %>% group_by(.dots = unique(c("formula","isdecoy","adduct",filename_col,anno_col))) %>% summarise(Metabolite.Name=paste(Metabolite.Name,collapse = "_"))
+  Peptide_plot_list=Peptide_plot_list %>% dplyr::group_by_at(unique(c("formula","isdecoy","adduct",filename_col,anno_col))) %>% summarise(Metabolite.Name=paste(Metabolite.Name,collapse = "_"))
   
   if(nrow(Peptide_plot_list)!=0){
     Peptide_plot_list_score<-NULL
@@ -1056,7 +1056,7 @@ plot_matching_score<-function(Peptide_plot_list,peaklist,charge,ppm,outputdir=ge
   if (dir.exists(outputdir)==FALSE){dir.create(outputdir)}
   #Peptide_plot_list1=Peptide_plot_list
   Peptide_plot_list=Peptide_plot_list[!is.na(Peptide_plot_list$Intensity),]
-  Peptide_plot_list=Peptide_plot_list %>% group_by(.dots = unique(c("formula","isdecoy","adduct",filename_col,anno_col))) %>% summarise(Peptide=paste(Peptide,collapse = "_"))
+  Peptide_plot_list=Peptide_plot_list %>% dplyr::group_by_at(unique(c("formula","isdecoy","adduct",filename_col,anno_col))) %>% summarise(Peptide=paste(Peptide,collapse = "_"))
   
   if(nrow(Peptide_plot_list)!=0){
     Peptide_plot_list_score<-NULL
@@ -1129,7 +1129,7 @@ protein_scoring<-function(Protein_feature_list,
   sum_pro_pep_count_fun<-function(Protein_feature_list_rank){
     suppressMessages(suppressWarnings(require(data.table)))
     suppressMessages(suppressWarnings(require(dplyr)))
-    sum_pro_pep_count<- Protein_feature_list_rank %>% group_by(.dots=c("Protein","isdecoy")) %>% summarise(peptide_count=length(unique(Peptide)))
+    sum_pro_pep_count<- Protein_feature_list_rank %>% dplyr::group_by_at(c("Protein","isdecoy")) %>% summarise(peptide_count=length(unique(Peptide)))
     return(sum_pro_pep_count)
   }
 
@@ -1139,27 +1139,27 @@ protein_scoring<-function(Protein_feature_list,
     e <- environment()
     p <- parent.env(e)
 
-    sum_pro_pep_count<- Protein_feature_list_rank %>% group_by(.dots=c("Protein","isdecoy")) %>% summarise(peptide_count=length(unique(Peptide)))
+    sum_pro_pep_count<- Protein_feature_list_rank %>% dplyr::group_by_at(c("Protein","isdecoy")) %>% summarise(peptide_count=length(unique(Peptide)))
 
 
 
     if (scoretype=="sum_wi_int_norm"){
 
-      sum_pro_int<-Protein_feature_list_rank %>% group_by(.dots=c("Protein","isdecoy")) %>% dplyr::summarize(Intensity=mean(Intensity))
+      sum_pro_int<-Protein_feature_list_rank %>% dplyr::group_by_at(c("Protein","isdecoy")) %>% dplyr::summarize(Intensity=mean(Intensity))
 
-      sum_pro_score<-Protein_feature_list_rank %>% group_by(.dots=c("Protein","isdecoy")) %>% dplyr::summarize(Score=sum(Score*(Intensity))/sum((Intensity)))
+      sum_pro_score<-Protein_feature_list_rank %>% dplyr::group_by_at(c("Protein","isdecoy")) %>% dplyr::summarize(Score=sum(Score*(Intensity))/sum((Intensity)))
 
     }else if(scoretype=="mean_wi_int_norm"){
 
-      sum_pro_int<-Protein_feature_list_rank %>% group_by(.dots=c("Protein","isdecoy")) %>% dplyr::summarize(Intensity=mean(Intensity))
+      sum_pro_int<-Protein_feature_list_rank %>% dplyr::group_by_at(c("Protein","isdecoy")) %>% dplyr::summarize(Intensity=mean(Intensity))
 
-      sum_pro_score<-Protein_feature_list_rank %>% group_by(.dots=c("Protein","isdecoy")) %>% dplyr::summarize(Score=mean(Score*(Intensity),na.rm=T)/mean((Intensity),na.rm=T))
+      sum_pro_score<-Protein_feature_list_rank %>% dplyr::group_by_at(c("Protein","isdecoy")) %>% dplyr::summarize(Score=mean(Score*(Intensity),na.rm=T)/mean((Intensity),na.rm=T))
 
     }else if(scoretype=="mean"){
 
-      sum_pro_int<-Protein_feature_list_rank %>% group_by(.dots=c("Protein","isdecoy")) %>% dplyr::summarize(Intensity=mean(Intensity))
+      sum_pro_int<-Protein_feature_list_rank %>% dplyr::group_by_at(c("Protein","isdecoy")) %>% dplyr::summarize(Intensity=mean(Intensity))
 
-      sum_pro_score<-Protein_feature_list_rank %>% group_by(.dots=c("Protein","isdecoy")) %>% dplyr::summarize(Score=mean(Score*rank(Intensity),na.rm=T)/mean(rank(Intensity)))
+      sum_pro_score<-Protein_feature_list_rank %>% dplyr::group_by_at(c("Protein","isdecoy")) %>% dplyr::summarize(Score=mean(Score*rank(Intensity),na.rm=T)/mean(rank(Intensity)))
 
     }
     assign((("sum_pro_int")), sum_pro_int, env = p)
@@ -1252,11 +1252,11 @@ protein_scoring<-function(Protein_feature_list,
 
       protein_ids=unique(Protein_feature_list_rank$Protein)
 
-      peptide_links<-Protein_feature_list_rank  %>% group_by(.dots=c("Peptide")) %>% dplyr::summarize(Protein=paste(unique(Protein),collapse = ","))
+      peptide_links<-Protein_feature_list_rank  %>% dplyr::group_by_at(c("Peptide")) %>% dplyr::summarize(Protein=paste(unique(Protein),collapse = ","))
 
       nr_pro_pep<-unique(Protein_feature_list_rank[,c("Protein","Peptide")])
 
-      protein_links<-nr_pro_pep %>% group_by(.dots=c("Protein")) %>% dplyr::summarize(Peptide=list(Peptide))
+      protein_links<-nr_pro_pep %>% dplyr::group_by_at(c("Protein")) %>% dplyr::summarize(Peptide=list(Peptide))
 
       matched_proteins<-lapply(protein_ids,function(x,Protein_feature_list_rank,peptide_links){
 
@@ -1349,7 +1349,7 @@ protein_scoring<-function(Protein_feature_list,
   Protein_feature_list_rank=merge(Protein_feature_list_rank,Index_of_protein_sequence[,c("recno","desc")],by.x="Protein",by.y="recno",all.x=T)
     # mask the mz featuers while decoy ID get higher scores, not recommended while no On-tissue MS/MS fragmentation is acquired.
   if(compete_decoy==T){
-    protein_decoy_select<-Protein_feature_result %>% group_by(.dots=c("Protein")) %>% dplyr::summarize(Proscore=max(Proscore))
+    protein_decoy_select<-Protein_feature_result %>% dplyr::group_by_at(c("Protein")) %>% dplyr::summarize(Proscore=max(Proscore))
     Protein_feature_result_decoy_compete<-merge(protein_decoy_select,Protein_feature_result,by=c("Protein","Proscore"))
     Protein_feature_result<-Protein_feature_result_decoy_compete
   }

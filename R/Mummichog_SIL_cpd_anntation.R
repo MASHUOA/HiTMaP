@@ -821,7 +821,7 @@ plot_matching_score_cpd<-function(cpd_plot_list,peaklist,charge,ppm,outputdir=ge
   if (dir.exists(outputdir)==FALSE){dir.create(outputdir)}
   #cpd_plot_list1=cpd_plot_list
   cpd_plot_list=cpd_plot_list[!is.na(cpd_plot_list$Intensity),]
-  cpd_plot_list=cpd_plot_list %>% group_by(.dots = unique(c("formula","isdecoy","adduct",filename_col,anno_col))) %>% summarise(Peptide=paste(Peptide,collapse = "_"))
+  cpd_plot_list=cpd_plot_list %>% dplyr::group_by_at(unique(c("formula","isdecoy","adduct",filename_col,anno_col))) %>% summarise(Peptide=paste(Peptide,collapse = "_"))
   
   if(nrow(cpd_plot_list)!=0){
     cpd_plot_list_score<-NULL
