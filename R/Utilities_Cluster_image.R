@@ -2,6 +2,30 @@
 
 
 
+# Internal replacement for colortools::setColors(), vendored from
+# https://github.com/gastonstat/colortools/blob/master/R/setColors.R
+# because colortools is archived and HiT-MaP used it only for generating
+# evenly spaced hues around a seed color.
+hitmap_set_colors <- function(color, num) {
+  rgb_col <- grDevices::col2rgb(color)
+  hsv_col <- grDevices::rgb2hsv(rgb_col)[, 1]
+
+  hue <- hsv_col[1]
+  sat <- hsv_col[2]
+  val <- hsv_col[3]
+  cols <- seq(hue, hue + 1, by = 1 / num)
+  cols <- cols[1:num]
+  cols[cols > 1] <- cols[cols > 1] - 1
+
+  colors <- grDevices::hsv(cols, sat, val)
+  if (substr(color, 1, 1) == "#" && nchar(color) == 9) {
+    alpha <- substr(color, 8, 9)
+    colors <- paste(colors, alpha, sep = "")
+  }
+
+  colors
+}
+
 #' cluster_image_grid
 #'
 #' This function renders the clustered images for maldi imaging data set
@@ -49,10 +73,6 @@ cluster_image_grid<-function(clusterID,
    suppressMessages(suppressWarnings(require(grid)))
    suppressMessages(suppressWarnings(require(plotly)))
    suppressMessages(suppressWarnings(require(dplyr)))
-   suppressMessages(suppressWarnings(if(!require(colortools)) {
-     library(devtools)
-     install_github('gastonstat/colortools')
-   }))
    suppressMessages(suppressWarnings(require(data.table)))
    suppressMessages(suppressWarnings(require(Cardinal)))
   #rotate the image
@@ -89,7 +109,7 @@ cluster_image_grid<-function(clusterID,
   }
   if (length(candidateunique)>4){
  
-    mycol=setColors("red", length(candidateunique))#wheel("red", num = length(candidateunique),bg = "white")
+    mycol=hitmap_set_colors("red", length(candidateunique))#wheel("red", num = length(candidateunique),bg = "white")
   } else if (length(candidateunique)==4){
     #tmp_cols = setColors("red", 12)
     #tetrad_colors <- tmp_cols[c(1, 3, 7, 9)]
@@ -894,10 +914,6 @@ cluster_score_grid<-function(clusterID,
    suppressMessages(suppressWarnings(require(grid)))
    suppressMessages(suppressWarnings(require(plotly)))
    suppressMessages(suppressWarnings(require(dplyr)))
-   suppressMessages(suppressWarnings(if(!require(colortools)) {
-     library(devtools)
-     install_github('gastonstat/colortools')
-   }))
    suppressMessages(suppressWarnings(require(data.table)))
    suppressMessages(suppressWarnings(require(Cardinal)))
   #rotate the image
@@ -934,7 +950,7 @@ cluster_score_grid<-function(clusterID,
   }
   if (length(candidateunique)>4){
  
-    mycol=setColors("red", length(candidateunique))#wheel("red", num = length(candidateunique),bg = "white")
+    mycol=hitmap_set_colors("red", length(candidateunique))#wheel("red", num = length(candidateunique),bg = "white")
   } else if (length(candidateunique)==4){
     #tmp_cols = setColors("red", 12)
     #tetrad_colors <- tmp_cols[c(1, 3, 7, 9)]
