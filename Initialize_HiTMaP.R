@@ -8,7 +8,6 @@ library(remotes)
 Sys.setenv("R_REMOTES_NO_ERRORS_FROM_WARNINGS" = "true")
 remotes::install_github(
   "MASHUOA/HiTMaP",
-  auth_token ="cf6d877f8b6ada1865987b13f9e9996c1883014a", # TODO: hide token
   force=TRUE,
   upgrade="always" # suppresses prompt
 )
