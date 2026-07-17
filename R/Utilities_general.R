@@ -31,7 +31,6 @@ Load_Cardinal_imaging<-function(datafile=tk_choose.files(filter = Filters,
   imdata
   
 }
-
 windows_filename<- function(stringX){
   stringX<-str_remove_all(stringX,"[><*?:\\/\\\\|]")
   stringX<-gsub("\"", "", stringX)
@@ -45,10 +44,7 @@ windows_filename2<- function(stringX){
 }
 
 Advanced_building<-function(){
-  install.packages("ggplot2")
-  install.packages("pryr")
-  install.packages("devtools")
-  devtools::install_github("hadley/lineprof")
+  .hitmap_load_packages(packages = c("ggplot2", "pryr", "lineprof"))
   library(pryr)
   object_size(1:10)
   object_size(mean)
@@ -103,26 +99,17 @@ string_slice <- function(string, size) {
 }
 
 initialization<-function(){
-  #.libPaths("~/R/win-library/peptidegidest353")
-  library("pacman")
-  #p_unlock()
-  p_unload("all",negate = T)
-  library("pacman")
-  library("devtools")
-  
-  #devtools::install_github("tidyverse")
-  
-  if (!requireNamespace("BiocManager")) install.packages("BiocManager")
-  BiocManager::install(c("purrr","RColorBrewer","RCurl","bitops","magick","ggplot2",
-                         "reticulate","dplyr","stringr","data.table","iterators","foreach",
-                         "protViz","cleaver","MALDIquant","Biostrings","XVector","IRanges","Cardinal","ProtGenerics",
-                         "S4Vectors","EBImage","BiocParallel","BiocGenerics",
-                         "Rdisop","Rcpp"))
-  p_load(purrr,fs,processx,RColorBrewer,RCurl,bitops,magick,ggplot2,Rdisop,Rcpp)
-  p_load(reticulate,dplyr,stringr,tcltk,data.table,doParallel,iterators,foreach)
-  p_load(protViz,cleaver,MALDIquant,Biostrings,XVector,IRanges,Cardinal,ProtGenerics)
-  p_load(S4Vectors,stats4,EBImage,BiocParallel,BiocGenerics,parallel,stats,graphics)
-  p_load(grDevices,utils,datasets,methods)
+  required <- c(
+    "purrr", "fs", "processx", "RColorBrewer", "RCurl",
+    "magick", "ggplot2", "Rdisop", "reticulate", "dplyr",
+    "stringr", "tcltk", "data.table", "doParallel", "iterators",
+    "foreach", "protViz", "cleaver", "MALDIquant", "Biostrings",
+    "XVector", "IRanges", "Cardinal", "ProtGenerics", "S4Vectors",
+    "stats4", "EBImage", "BiocParallel", "BiocGenerics", "parallel",
+    "stats", "graphics", "grDevices", "utils", "datasets", "methods"
+  )
+  .hitmap_load_packages(packages = required)
+  invisible(required)
 }
 
 
@@ -333,7 +320,6 @@ resolve_multi_modes<-function(mm,adjust=0.25){
   
   
   library(dplyr)
-  library(tidyr)
   get.modes2 <- function(x,adjust,signifi,from,to) {
     den <- density(x, kernel=c("gaussian"),adjust=adjust,from=from,to=to)
     den.s <- smooth.spline(den$x, den$y, all.knots=TRUE, spar=0.1)
@@ -350,11 +336,14 @@ resolve_multi_modes<-function(mm,adjust=0.25){
     df2$sig<-signif(df2$density,signifi)
     df2<-df2[with(df2, order(-sig)), ]
     #print(df2)
-    df<-as.data.frame(df2 %>%
-                        mutate(m = min_rank(desc(sig)) ) %>% #, count = sum(n)) %>%
-                        group_by(m) %>%
-                        summarize(a = paste(format(round(modes,2),nsmall=2), collapse = ',')) %>%
-                        spread(m, a, sep = ''))
+    df2$m <- rank(-df2$sig, ties.method = "min")
+    mode_values <- tapply(
+      format(round(df2$modes, 2), nsmall = 2),
+      df2$m,
+      paste,
+      collapse = ","
+    )
+    df <- as.data.frame(as.list(mode_values), stringsAsFactors = FALSE)
     colnames(df)<-paste0("m",1:length(colnames(df)))
     return(df)
   }
@@ -505,4 +494,3 @@ create_gradient_colors_robust <- function(n, start = "black", end = "white") {
   color_func <- grDevices::colorRampPalette(c(start, end))
   return(color_func(n))
 }
-  

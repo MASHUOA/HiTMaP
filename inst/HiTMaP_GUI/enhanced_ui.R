@@ -7,11 +7,11 @@ source("pipeline_ui.R")
 
 # Enhanced UI with pipeline integration
 enhanced_ui <- function(request) {
-  if (!require(shiny)) install.packages("shiny")
+  if (!requireNamespace("shiny", quietly = TRUE)) stop("Missing GUI dependency: shiny")
   library(shiny)
-  if (!require(shinyjs)) install.packages("shinyjs")
+  if (!requireNamespace("shinyjs", quietly = TRUE)) stop("Missing GUI dependency: shinyjs")
   library(shinyjs)
-  if (!require(shinydashboard)) install.packages("shinydashboard")
+  if (!requireNamespace("shinydashboard", quietly = TRUE)) stop("Missing GUI dependency: shinydashboard")
   library(shinydashboard)
   
   dashboardPage(

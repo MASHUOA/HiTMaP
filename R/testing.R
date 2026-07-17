@@ -895,9 +895,9 @@ intensity.colors_customize <- function(n = 100, alpha = 1) {
 
 
 Pathway_overview_graphite<-function(){
-  p_load(graphite,graph )
-  p_load(org.Hs.eg.db)
-  p_load(Rgraphviz)
+  .hitmap_load_packages(graphite,graph )
+  .hitmap_load_packages(org.Hs.eg.db)
+  .hitmap_load_packages(Rgraphviz)
   humanReactome <- graphite::pathways("hsapiens", "reactome")
   humanmeatbolome <- graphite::pathways("hsapiens", "smpdb")
   metab_url <-

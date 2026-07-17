@@ -2506,7 +2506,7 @@ intensity.colors_customize <- function(n = 100, alpha = 1) {
 }
 
 Pathway_overview_graphite<-function(){
-  p_load(graphite,graph )
+  .hitmap_load_packages(graphite,graph )
   humanReactome <- graphite::pathways("hsapiens", "reactome")
   humanmeatbolome <- graphite::pathways("hsapiens", "smpdb")
   metab_url <-
@@ -2576,7 +2576,7 @@ plotly_for_region_with_ClusterID_barchart<-function(moleculeNames,data){
   library(plotly)
   library(stringr)
   library(ggplot2)
-  if (!require("processx")) install.packages("processx")
+  .hitmap_load_packages(processx)
 
   plot_data=data[data$moleculeNames==moleculeNames,data["Class",]!=""]
   colnames(plot_data)=as.character(t(data["Class",data["Class",]!=""]))

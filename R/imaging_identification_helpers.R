@@ -24,9 +24,9 @@ hitmap_create_preprocess_params <- function(method_profile = "standard",
   
   if (method_profile == "minimal") {
     params <- list(
-      smoothSignal = list(method = "disable"),
-      reduceBaseline = list(method = "disable"),
-      peakPick = list(method = "adaptive"),
+      smoothSignal = list(method = "Disable"),
+      reduceBaseline = list(method = "Disable"),
+      peakPick = list(method = "mad"),
       peakAlign = list(tolerance = ppm/2, units = "ppm"),
       peakFilter = list(freq.min = 0.01),
       normalize = list(method = "rms", mz = 1)
@@ -35,16 +35,16 @@ hitmap_create_preprocess_params <- function(method_profile = "standard",
     params <- list(
       smoothSignal = list(method = "gaussian", sd = 1),
       reduceBaseline = list(method = "locmin", blocks = 100),
-      peakPick = list(method = "adaptive", SNR = 3),
+      peakPick = list(method = "mad", SNR = 3),
       peakAlign = list(tolerance = ppm/2, units = "ppm"),
       peakFilter = list(freq.min = 0.1),
       normalize = list(method = "tic", mz = 1)
     )
   } else { # standard
     params <- list(
-      smoothSignal = list(method = "disable"),
+      smoothSignal = list(method = "Disable"),
       reduceBaseline = list(method = "locmin"),
-      peakPick = list(method = "adaptive"),
+      peakPick = list(method = "mad"),
       peakAlign = list(tolerance = ppm/2, units = "ppm"),
       peakFilter = list(freq.min = 0.05),
       normalize = list(method = "rms", mz = 1)

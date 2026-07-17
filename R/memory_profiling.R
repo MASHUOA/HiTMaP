@@ -48,7 +48,7 @@ memory_profile<-function(){
                   use_preprocessRDS=TRUE,
                   smoothSignal=list(method="Disable"),
                   reduceBaseline=list(method="Disable"),
-                  peakPick=list(method="adaptive"),
+                  peakPick=list(method="mad"),
                   peakAlign=list(tolerance=5, units="ppm"),
                   normalize=list(method=c("rms","tic","reference")[1],mz=1))
   
@@ -87,7 +87,7 @@ memory_profile<-function(){
                   use_preprocessRDS=TRUE,
                   smoothSignal=list(method="gaussian"),
                   reduceBaseline=list(method="median"),
-                  peakPick=list(method="adaptive"),
+                  peakPick=list(method="mad"),
                   peakAlign=list(tolerance=5, units="ppm"),
                   normalize=list(method=c("rms","tic","reference")[1],mz=1))
   imdata_ed<-imdata
@@ -133,7 +133,7 @@ memory_profile<-function(){
                   use_preprocessRDS=TRUE,
                   smoothSignal=list(method="Disable"),
                   reduceBaseline=list(method="Disable"),
-                  peakPick=list(method="adaptive"),
+                  peakPick=list(method="mad"),
                   peakAlign=list(tolerance=5, units="ppm"),
                   normalize=list(method=c("rms","tic","reference")[1],mz=1))
 
@@ -190,7 +190,7 @@ memory_profile<-function(){
                   use_preprocessRDS=TRUE,
                   smoothSignal=list(method="gaussian"),
                   reduceBaseline=list(method="locmin"),
-                  peakPick=list(method="adaptive"),
+                  peakPick=list(method="mad"),
                   peakAlign=list(tolerance=5, units="ppm"),
                   normalize=list(method=c("rms","tic","reference")[1],mz=1))
   imdata_ed<-imdata_org
@@ -231,7 +231,7 @@ memory_profile<-function(){
                   use_preprocessRDS=TRUE,
                   smoothSignal=list(method="Disable"),
                   reduceBaseline=list(method="Disable"),
-                  peakPick=list(method="adaptive"),
+                  peakPick=list(method="mad"),
                   peakAlign=list(tolerance=5, units="ppm"),
                   normalize=list(method=c("rms","tic","reference")[1],mz=1))
   imdata_ed<-imdata_org
@@ -324,11 +324,12 @@ memory_profile<-function(){
         imdata_ed<- imdata_ed %>% reduceBaseline(method="locmin")
       }
       
+      preprocess <- .hitmap_normalize_preprocess_methods(preprocess)
       if (preprocess$peakPick$method=="Disable") {
-      }else if (preprocess$peakPick$method %in% c("adaptive","mad","simple")){
+      }else if (preprocess$peakPick$method %in% .hitmap_cardinal_peak_pick_methods()){
         if (is.null(preprocess$peakPick$SNR)) preprocess$peakPick$SNR=6
         imdata_ed<- imdata_ed %>% peakPick(method=preprocess$peakPick$method, SNR=preprocess$peakPick$SNR) %>% process()
-      }else if (preprocess$peakPick$method == "Default|default"){
+      }else if (preprocess$peakPick$method %in% c("Default", "default")){
         #add an peak picking function other than the Cardinal options.
         peaklist<-summarizeFeatures(imdata_ed,"sum")
         peaklist_deco<-data.frame(mz=peaklist@mz,intensities=peaklist$sum)

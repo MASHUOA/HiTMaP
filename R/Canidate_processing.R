@@ -24,7 +24,6 @@ Meta_feature_list_fun<-function(database,
                                 bypass=FALSE,
                                 BPPARAM=bpparam(),
                                 atom_isotope_sub=NULL){
-  suppressMessages(suppressWarnings(require("Rcpp")))
   suppressMessages(suppressWarnings(require(dplyr)))
   suppressMessages(suppressWarnings(require(Rdisop)))
   suppressMessages(suppressWarnings(require(Biostrings)))
@@ -197,11 +196,8 @@ Protein_feature_list_fun<-function(workdir=getwd(),
    suppressMessages(suppressWarnings(require(Biostrings)))
    suppressMessages(suppressWarnings(require(cleaver)))
    suppressMessages(suppressWarnings(require(protViz)))
-   suppressMessages(suppressWarnings(require(rcdk)))
    suppressMessages(suppressWarnings(require(BiocParallel)))
    suppressMessages(suppressWarnings(require(OrgMassSpecR)))
-  require_rjava("Candidate processing")
-   suppressMessages(suppressWarnings(require(rcdklibs)))
    suppressMessages(suppressWarnings(require(grid)))
    suppressMessages(suppressWarnings(require(stringr)))
    setwd(workdir)
@@ -401,11 +397,11 @@ Protein_feature_list_fun<-function(workdir=getwd(),
     Substitute_AA_df<-data.frame(Substitute_AA[c("AA","AA_new_formula","Formula_with_water")],stringsAsFactors = F)
     for (AA_row in 1:nrow(Substitute_AA_df)){
       if(is.null(Substitute_AA_df$Formula_with_water[AA_row])){
-        AA[Substitute_AA_df$AA[AA_row]]=rcdk::get.formula((Substitute_AA_df$AA_new_formula[AA_row]),charge = 0)@mass
+        AA[Substitute_AA_df$AA[AA_row]]=.hitmap_formula_mass(Substitute_AA_df$AA_new_formula[AA_row], charge = 0)
       }else{
        if(Substitute_AA_df$Formula_with_water[AA_row]){
-         AA[Substitute_AA_df$AA[AA_row]]=rcdk::get.formula(get_formula_from_atom(merge_atoms(get_atoms(Substitute_AA_df$AA_new_formula[AA_row]),get_atoms("H2O"),mode = "ded")),charge = charge)@mass
-       }else { AA[Substitute_AA_df$AA[AA_row]]=rcdk::get.formula((Substitute_AA_df$AA_new_formula[AA_row]),charge = 0)@mass} 
+         AA[Substitute_AA_df$AA[AA_row]]=.hitmap_formula_mass(get_formula_from_atom(merge_atoms(get_atoms(Substitute_AA_df$AA_new_formula[AA_row]),get_atoms("H2O"),mode = "ded")), charge = 0)
+       }else { AA[Substitute_AA_df$AA[AA_row]]=.hitmap_formula_mass(Substitute_AA_df$AA_new_formula[AA_row], charge = 0)}
       }
      Substitute_AA$aavector[[AA_row]]<-unlist(get_atoms(Substitute_AA$AA_new_formula[AA_row])) 
     }
@@ -570,14 +566,12 @@ Protein_feature_list_fun<-function(workdir=getwd(),
     
     message(paste("Generating peptide formula with Decoy elemental composition."))
      suppressMessages(suppressWarnings(require(enviPat)))
-     suppressMessages(suppressWarnings(require(rcdk)))
     total_target_mols<-unique(Protein_Summary$formula)
 
     target_mz=unique(round(as.numeric(Protein_Summary$mz),digits = 3))
     select_mol_num=ceiling(length(total_target_mols)/length(target_mz))
     
     decoymol<-lapply(target_mz,function(x,ppm,select_mol_num){
-      require(rcdk,quietly = T)
      mit <- generate.formula.iter(x, window = x*ppm/(1000000),
                           elements = list(
                             C=c(0,100),
@@ -650,7 +644,6 @@ Protein_feature_list_fun<-function(workdir=getwd(),
   if(Database_stats){
     
     suppressMessages(suppressWarnings(library(dplyr)))
-    suppressMessages(suppressWarnings(library(egg)))
     suppressMessages(suppressWarnings(library(RColorBrewer)))
     mz_vs_formula<-Protein_Summary %>% group_by(mz) %>% dplyr::summarize(Intnsity=length(unique(formula)))
     
@@ -682,7 +675,7 @@ Protein_feature_list_fun<-function(workdir=getwd(),
       # }
 
       #sp <-sp + scale_color_manual(name="m/z bin size") 
-      sp <- sp + theme_article() + 
+      sp <- sp + .hitmap_theme_article() +
             
             theme(legend.position = "top",axis.text=element_text(size=12),
                   axis.title=element_text(size=14,face="bold"),
@@ -711,7 +704,7 @@ Protein_feature_list_fun<-function(workdir=getwd(),
     
     mz_unqiue_diff<-diff(mz_unqiue)
     
-    mz_unqiue_center<-zoo::rollapply(mz_unqiue, 2, mean, by = 1, align = "left", partial = FALSE)
+    mz_unqiue_center<-.hitmap_rolling_mean(mz_unqiue, 2)
     
     dif_kmeans=kmeans(1/(mz_vs_resolution$mz_unqiue_diff),centers = 200,iter.max = 500)
     
@@ -724,7 +717,7 @@ Protein_feature_list_fun<-function(workdir=getwd(),
 
     sp<-ggplot2::ggplot() 
     sp <-sp + geom_point(data=mz_vs_resolution,mapping = aes(x=mz, y=Resolution),size=0.3,alpha=0.4)+
-    theme_article() + 
+    .hitmap_theme_article() +
       
       theme(legend.position = "top",axis.text=element_text(size=12),
             axis.title=element_text(size=14,face="bold"),
@@ -824,11 +817,8 @@ Protein_feature_list_table_import<-function(workdir=getwd(),
   suppressMessages(suppressWarnings(require(Biostrings)))
   suppressMessages(suppressWarnings(require(cleaver)))
   suppressMessages(suppressWarnings(require(protViz)))
-  suppressMessages(suppressWarnings(require(rcdk)))
   suppressMessages(suppressWarnings(require(BiocParallel)))
   suppressMessages(suppressWarnings(require(OrgMassSpecR)))
- require_rjava("Candidate processing")
-  suppressMessages(suppressWarnings(require(rcdklibs)))
   suppressMessages(suppressWarnings(require(grid)))
   suppressMessages(suppressWarnings(require(stringr)))
   setwd(workdir)
@@ -1019,11 +1009,11 @@ Protein_feature_list_table_import<-function(workdir=getwd(),
       Substitute_AA_df<-data.frame(Substitute_AA[c("AA","AA_new_formula","Formula_with_water")],stringsAsFactors = F)
       for (AA_row in 1:nrow(Substitute_AA_df)){
         if(is.null(Substitute_AA_df$Formula_with_water[AA_row])){
-          AA[Substitute_AA_df$AA[AA_row]]=rcdk::get.formula((Substitute_AA_df$AA_new_formula[AA_row]),charge = 0)@mass
+          AA[Substitute_AA_df$AA[AA_row]]=.hitmap_formula_mass(Substitute_AA_df$AA_new_formula[AA_row], charge = 0)
         }else{
           if(Substitute_AA_df$Formula_with_water[AA_row]){
-            AA[Substitute_AA_df$AA[AA_row]]=rcdk::get.formula(get_formula_from_atom(merge_atoms(get_atoms(Substitute_AA_df$AA_new_formula[AA_row]),get_atoms("H2O"),mode = "ded")),charge = charge)@mass
-          }else { AA[Substitute_AA_df$AA[AA_row]]=rcdk::get.formula((Substitute_AA_df$AA_new_formula[AA_row]),charge = 0)@mass} 
+            AA[Substitute_AA_df$AA[AA_row]]=.hitmap_formula_mass(get_formula_from_atom(merge_atoms(get_atoms(Substitute_AA_df$AA_new_formula[AA_row]),get_atoms("H2O"),mode = "ded")), charge = 0)
+          }else { AA[Substitute_AA_df$AA[AA_row]]=.hitmap_formula_mass(Substitute_AA_df$AA_new_formula[AA_row], charge = 0)}
         }
         Substitute_AA$aavector[[AA_row]]<-unlist(get_atoms(Substitute_AA$AA_new_formula[AA_row])) 
       }
@@ -1180,14 +1170,12 @@ Protein_feature_list_table_import<-function(workdir=getwd(),
       
       message(paste("Generating peptide formula with Decoy elemental composition."))
       suppressMessages(suppressWarnings(require(enviPat)))
-      suppressMessages(suppressWarnings(require(rcdk)))
       total_target_mols<-unique(Protein_Summary$formula)
       
       target_mz=unique(round(as.numeric(Protein_Summary$mz),digits = 3))
       select_mol_num=ceiling(length(total_target_mols)/length(target_mz))
       
       decoymol<-lapply(target_mz,function(x,ppm,select_mol_num){
-        require(rcdk,quietly = T)
         mit <- generate.formula.iter(x, window = x*ppm/(1000000),
                                      elements = list(
                                        C=c(0,100),
@@ -1260,7 +1248,6 @@ Protein_feature_list_table_import<-function(workdir=getwd(),
   if(Database_stats){
     
     suppressMessages(suppressWarnings(library(dplyr)))
-    suppressMessages(suppressWarnings(library(egg)))
     suppressMessages(suppressWarnings(library(RColorBrewer)))
     mz_vs_formula<-Protein_Summary %>% group_by(mz) %>% dplyr::summarize(Intnsity=length(unique(formula)))
     
@@ -1292,7 +1279,7 @@ Protein_feature_list_table_import<-function(workdir=getwd(),
       # }
       
       #sp <-sp + scale_color_manual(name="m/z bin size") 
-      sp <- sp + theme_article() + 
+      sp <- sp + .hitmap_theme_article() +
         
         theme(legend.position = "top",axis.text=element_text(size=12),
               axis.title=element_text(size=14,face="bold"),
@@ -1321,7 +1308,7 @@ Protein_feature_list_table_import<-function(workdir=getwd(),
     
     mz_unqiue_diff<-diff(mz_unqiue)
     
-    mz_unqiue_center<-zoo::rollapply(mz_unqiue, 2, mean, by = 1, align = "left", partial = FALSE)
+    mz_unqiue_center<-.hitmap_rolling_mean(mz_unqiue, 2)
     
     dif_kmeans=kmeans(1/(mz_vs_resolution$mz_unqiue_diff),centers = 200,iter.max = 500)
     
@@ -1334,7 +1321,7 @@ Protein_feature_list_table_import<-function(workdir=getwd(),
     
     sp<-ggplot2::ggplot() 
     sp <-sp + geom_point(data=mz_vs_resolution,mapping = aes(x=mz, y=Resolution),size=0.3,alpha=0.4)+
-      theme_article() + 
+    .hitmap_theme_article() +
       
       theme(legend.position = "top",axis.text=element_text(size=12),
             axis.title=element_text(size=14,face="bold"),
@@ -1449,7 +1436,6 @@ fastafile_utils<-function(){
    suppressMessages(suppressWarnings(require(Biostrings)))
    suppressMessages(suppressWarnings(require(cleaver)))
    suppressMessages(suppressWarnings(require(protViz)))
-   suppressMessages(suppressWarnings(require(rcdk)))
   
   list_of_protein_sequence<-readAAStringSet(database,
                                             format="fasta",
@@ -1511,14 +1497,13 @@ fastafile_utils<-function(){
 }
 
 convert_peptide_adduct<-function(peptide_formula,adductsname,multiplier=c(1,1),adductslist=Build_adduct_list()){
-   suppressMessages(suppressWarnings(require(rcdk)))
    suppressMessages(suppressWarnings(require(OrgMassSpecR)))
 
   
   adductsformula_add= as.character(adductslist[adductslist$Name==adductsname,"formula_add"])
   adductsformula_ded= as.character(adductslist[adductslist$Name==adductsname,"formula_ded"])
   
-  null_if_false<-function(x){if (x==FALSE){""} else{rcdk::get.formula(x)@string}}
+  null_if_false<-function(x){if (x==FALSE){""} else{.hitmap_formula_string(x)}}
   
   adductsformula_add<-null_if_false(adductsformula_add)
   adductsformula_ded<-null_if_false(adductsformula_ded)
@@ -1542,7 +1527,6 @@ convert_peptide_adduct<-function(peptide_formula,adductsname,multiplier=c(1,1),a
 convert_peptide_fixmod<-function(mod.df,peptide_symbol,peptide_info,BPPARAM=BPPARAM){
   
   
-   suppressMessages(suppressWarnings(require(rcdk)))
    suppressMessages(suppressWarnings(require(OrgMassSpecR)))
    suppressMessages(suppressWarnings(require(stringr)))
    suppressMessages(suppressWarnings(require(Biostrings)))
@@ -1634,7 +1618,6 @@ convert_peptide_fixmod<-function(mod.df,peptide_symbol,peptide_info,BPPARAM=BPPA
 }
 
 convert_peptide_adduct_list<-function(adductsname,peptide_symbol,multiplier=c(1,1),adductslist=Build_adduct_list()){
-   suppressMessages(suppressWarnings(require(rcdk)))
    suppressMessages(suppressWarnings(require(OrgMassSpecR)))
 
 
@@ -1647,7 +1630,7 @@ convert_peptide_adduct_list<-function(adductsname,peptide_symbol,multiplier=c(1,
   adductsformula_add= as.character(adductslist[adductslist$Name==adductsname,"formula_add"])
   adductsformula_ded= as.character(adductslist[adductslist$Name==adductsname,"formula_ded"])
   
-  null_if_false<-function(x){if (x==FALSE){""} else{get.formula(x)@string}}
+  null_if_false<-function(x){if (x==FALSE){""} else{.hitmap_formula_string(x)}}
   
   adductsformula_add<-null_if_false(adductsformula_add)
   adductsformula_ded<-null_if_false(adductsformula_ded)

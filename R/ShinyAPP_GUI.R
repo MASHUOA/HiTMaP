@@ -16,7 +16,9 @@
 #'
 HiTMaP_GUI <- function(wd="~/", port = 3838) {
   
-  if(!(require(shiny))) install.packages("shiny")
+  if (!requireNamespace("shiny", quietly = TRUE)) {
+    stop("The HiTMaP GUI requires the 'shiny' package. Install it before starting the GUI.", call. = FALSE)
+  }
   appDir <- system.file("HiTMaP_GUI", package = "HiTMaP")
   if (appDir == "") {
     stop("Could not find GUI directory. Try re-install `HiTMaP`.",
@@ -27,5 +29,5 @@ HiTMaP_GUI <- function(wd="~/", port = 3838) {
   
   WorkingDir_global<<-wd
   message(WorkingDir_global)
-  runApp(appDir,port = port)
+  shiny::runApp(appDir, port = port)
 }

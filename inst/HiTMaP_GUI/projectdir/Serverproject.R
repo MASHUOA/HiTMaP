@@ -5,6 +5,12 @@ library(future)
 plan(multisession)
 options(shiny.maxRequestSize = 3000*1024^2)
 
+hitmap_cart2pol <- function(x, y, degrees = FALSE) {
+    theta <- atan2(y, x)
+    if (isTRUE(degrees)) theta <- theta * 180 / pi
+    data.frame(r = sqrt(x^2 + y^2), theta = theta)
+}
+
 list.dirs.depth.n <- function(p, n) {
     res <- list.dirs(p, recursive = FALSE)
     if (n > 1) {
@@ -93,7 +99,7 @@ Preprocessing_segmentation<-function(datafile,
                                      BPPARAM=bpparam(),
                                      preprocess=list(force_preprocess=FALSE,use_preprocessRDS=TRUE,smoothSignal=list(method="gaussian"),
                                                      reduceBaseline=list(method="locmin"),
-                                                     peakPick=list(method="adaptive"),
+                                                     peakPick=list(method="mad"),
                                                      peakAlign=list(tolerance=ppm, units="ppm")),
                                      ...){
     
@@ -102,6 +108,9 @@ Preprocessing_segmentation<-function(datafile,
     suppressMessages(suppressWarnings(require(RColorBrewer)))
     suppressMessages(suppressWarnings(require(stringr)))
     setCardinalBPPARAM(BPPARAM)
+    if (!is.null(preprocess$peakPick$method) && tolower(preprocess$peakPick$method) %in% c("adaptive", "simple")) {
+        preprocess$peakPick$method <- "mad"
+    }
     if ((!is.null(rotate_file))){
         message("Found rotation info")
         #rotatedegrees=rotate[rotate$filenames==datafile,"rotation"]
@@ -522,11 +531,10 @@ Preprocessing_segmentation<-function(datafile,
                     if (unique(radius_rank$Core)=="central"){
                         shape_center=coordata[coordistmatrix$sum==min(coordistmatrix$sum),]
                         center_dist=t(coordistmatrix[which.min(coordistmatrix$sum),1:nrow(coordata)])
-                        library(useful)
                         From <- shape_center[rep(seq_len(nrow(shape_center)), each=nrow(coordata)),1:2]
                         To <- coordata[,1:2]
                         df=To-From
-                        center_edge_angle=cbind(coordata[,1:2],cart2pol(df$x, df$y, degrees = F),edge=coordata[,"edge"])
+                        center_edge_angle=cbind(coordata[,1:2],hitmap_cart2pol(df$x, df$y, degrees = F),edge=coordata[,"edge"])
                         center_edge_angle_sdge=center_edge_angle[center_edge_angle$edge==TRUE,]
                         coordata$rank=0 
                         coordata$pattern=""       
@@ -539,7 +547,7 @@ Preprocessing_segmentation<-function(datafile,
                             
                             if (coordata$edge[i]!=TRUE){      
                                 df=coordata[i,1:2]-shape_center[,1:2]
-                                point_center_angle=cbind(coordata[i,1:2],cart2pol(df$x, df$y, degrees = F))
+                                point_center_angle=cbind(coordata[i,1:2],hitmap_cart2pol(df$x, df$y, degrees = F))
                                 pointedge=center_edge_angle_sdge[which(abs(center_edge_angle_sdge$theta-point_center_angle$theta)==min(abs(center_edge_angle_sdge$theta-point_center_angle$theta))),]
                                 #message(pointedge)
                                 
@@ -591,13 +599,12 @@ Preprocessing_segmentation<-function(datafile,
                             
                         }
                         
-                        library(useful)
                         coordata$rank=0 
                         coordata$pattern=""       
                         From <- shape_center[rep(seq_len(nrow(shape_center)), each=nrow(coordata)),1:2]
                         To <- coordata[,1:2]
                         df=To-From
-                        center_edge_angle=cbind(coordata[,1:2],cart2pol(df$x, df$y, degrees = F),edge=coordata[,"edge"])
+                        center_edge_angle=cbind(coordata[,1:2],hitmap_cart2pol(df$x, df$y, degrees = F),edge=coordata[,"edge"])
                         center_edge_angle_sdge=center_edge_angle[center_edge_angle$edge==TRUE,]
                         coordata$rank=0 
                         coordata$pattern=""      
@@ -608,7 +615,7 @@ Preprocessing_segmentation<-function(datafile,
                             #To <- coordata[coordata$edge==TRUE,][,1:2]
                             
                             df=coordata[i,1:2]-shape_center[,1:2]
-                            point_center_angle=cbind(coordata[i,1:2],cart2pol(df$x, df$y, degrees = F))
+                            point_center_angle=cbind(coordata[i,1:2],hitmap_cart2pol(df$x, df$y, degrees = F))
                             pointedge=center_edge_angle_sdge[which(abs(center_edge_angle_sdge$theta-point_center_angle$theta)==min(abs(center_edge_angle_sdge$theta-point_center_angle$theta))),]
                             #message(pointedge)
                             

@@ -94,9 +94,9 @@ imaging_identification<-function(
                Segmentation_def="Segmentation_def.csv",
                Segmentation_ncomp=spectra_segments_per_file,
                Segmentation_variance_coverage=0.8,
-               preprocess=list(force_preprocess=FALSE,use_preprocessRDS=TRUE,smoothSignal=list(method="disable"),
+               preprocess=list(force_preprocess=FALSE,use_preprocessRDS=TRUE,smoothSignal=list(method="Disable"),
                                reduceBaseline=list(method="locmin"),
-                               peakPick=list(method="adaptive"),
+                               peakPick=list(method="mad"),
                                peakAlign=list(tolerance=ppm/2, units="ppm"),
                                peakFilter=list(freq.min=0.05),
                                normalize=list(method=c("rms","tic","reference")[1],mz=1)),
@@ -138,8 +138,8 @@ imaging_identification<-function(
                mzAlign_runs="TopNfeature_mean",
                ...
                ){
-  suppressMessages(suppressWarnings(library("pacman")))
-  suppressMessages(suppressWarnings(p_load(stringr,BiocParallel,data.table,Cardinal,parallel)))
+  suppressMessages(suppressWarnings(.hitmap_load_packages(stringr,BiocParallel,data.table,Cardinal,parallel)))
+  preprocess <- .hitmap_normalize_preprocess_methods(preprocess)
 
   if (missing(datafile)) stop("Missing data file, Choose single or multiple imzml file(s) for analysis")
   
@@ -200,7 +200,7 @@ imaging_identification<-function(
 
   if(IMS_analysis){
     
-  message(paste(Fastadatabase,"was selected as database","\nSpectrum intensity threshold:",percent(threshold),"\nmz tolerance:",ppm,"ppm","Segmentation method:",Segmentation[1],
+  message(paste(Fastadatabase,"was selected as database","\nSpectrum intensity threshold:",.hitmap_percent(threshold),"\nmz tolerance:",ppm,"ppm","Segmentation method:",Segmentation[1],
                 "\nManual segmentation def file:",ifelse(is.null(Virtual_segmentation_rankfile),"None",Virtual_segmentation_rankfile),"\nBypass spectrum generation:",Bypass_generate_spectrum))
   
   #select candidate list for IMS annotation 
@@ -554,7 +554,7 @@ IMS_data_process<-function(datafile,
                                     use_top_rank=NULL,
                                     preprocess=list(force_preprocess=FALSE,use_preprocessRDS=TRUE,smoothSignal=list(method="gaussian"),
                                                     reduceBaseline=list(method="locmin"),
-                                                    peakPick=list(method="adaptive"),
+                                                    peakPick=list(method="mad"),
                                                     peakAlign=list(tolerance=5, units="ppm"),
                                                     normalize=list(method=c("rms","tic","reference")[1],mz=1)),
                                     ...){
@@ -562,6 +562,7 @@ IMS_data_process<-function(datafile,
    suppressMessages(suppressWarnings(require(Cardinal)))
    suppressMessages(suppressWarnings(require(RColorBrewer)))
    suppressMessages(suppressWarnings(require(stringr)))
+   preprocess <- .hitmap_normalize_preprocess_methods(preprocess)
    getPalette = colorRampPalette(brewer.pal_n(9, colorstyle))
    setCardinalBPPARAM(BPPARAM)
 
@@ -656,7 +657,7 @@ IMS_data_process<-function(datafile,
     imdata_sb <- imdata[,unlist(segmentation_label[[SPECTRUM_batch]])]
     imdata_ed <- imdata_sb
     
-    if (preprocess$peakAlign$method!="Disable") {
+    if (!identical(preprocess$peakAlign$method, "Disable")) {
     if (is.null(preprocess$peakAlign$level)) preprocess$peakAlign$level<-"local"
     if (preprocess$peakAlign$level=="local"){
       if (preprocess$peakAlign$tolerance==0 ) {
@@ -911,9 +912,9 @@ imaging_identification_target<-function(
   Segmentation_def="Segmentation_def.csv",
   Segmentation_ncomp="auto-detect",
   Segmentation_variance_coverage=0.8,
-  preprocess=list(force_preprocess=FALSE,use_preprocessRDS=TRUE,smoothSignal=list(method="disable"),
+  preprocess=list(force_preprocess=FALSE,use_preprocessRDS=TRUE,smoothSignal=list(method="Disable"),
                   reduceBaseline=list(method="locmin"),
-                  peakPick=list(method="adaptive"),
+                  peakPick=list(method="mad"),
                   peakAlign=list(tolerance=ppm/2, units="ppm"),
                   peakFilter=list(freq.min=0.05),
                   normalize=list(method=c("rms","tic","reference")[1],mz=1)),
@@ -955,8 +956,8 @@ imaging_identification_target<-function(
   mzAlign_runs="TopNfeature_mean",
   ...
 ){
-  suppressMessages(suppressWarnings(library("pacman")))
-  suppressMessages(suppressWarnings(p_load(stringr,BiocParallel,data.table,Cardinal,parallel)))
+  suppressMessages(suppressWarnings(.hitmap_load_packages(stringr,BiocParallel,data.table,Cardinal,parallel)))
+  preprocess <- .hitmap_normalize_preprocess_methods(preprocess)
   
   if (missing(datafile)) stop("Missing data file, Choose single or multiple imzml file(s) for analysis")
   
@@ -1019,7 +1020,7 @@ imaging_identification_target<-function(
   
   if(IMS_analysis){
     
-    message(paste(Fastadatabase,"was selected as database","\nSpectrum intensity threshold:",percent(threshold),"\nmz tolerance:",ppm,"ppm","Segmentation method:",Segmentation[1],
+    message(paste(Fastadatabase,"was selected as database","\nSpectrum intensity threshold:",.hitmap_percent(threshold),"\nmz tolerance:",ppm,"ppm","Segmentation method:",Segmentation[1],
                   "\nManual segmentation def file:",ifelse(is.null(Virtual_segmentation_rankfile),"None",Virtual_segmentation_rankfile),"\nBypass spectrum generation:",Bypass_generate_spectrum))
     
     #select candidate list for IMS annotation 

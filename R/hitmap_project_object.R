@@ -83,8 +83,7 @@ hitmap_init <- function(project, thread_count = 4) {
     stop("Object must be of class 'hitmap_project'")
   }
   
-  suppressMessages(suppressWarnings(library("pacman")))
-  suppressMessages(suppressWarnings(p_load(stringr, BiocParallel, data.table, Cardinal, parallel)))
+  suppressMessages(suppressWarnings(.hitmap_load_packages(stringr, BiocParallel, data.table, Cardinal, parallel)))
   
   # Set working directory
   setwd(project$metadata$project_folder)
@@ -214,9 +213,9 @@ hitmap_preprocess_file <- function(project,
                                  preprocess_params = list(
                                    force_preprocess = FALSE,
                                    use_preprocessrds = TRUE,
-                                   smooth_signal = list(method = "disable"),
+                                   smooth_signal = list(method = "Disable"),
                                    reduce_baseline = list(method = "locmin"),
-                                   peak_pick = list(method = "adaptive"),
+                                   peak_pick = list(method = "mad"),
                                    peak_align = list(tolerance = ppm/2, units = "ppm"),
                                    peak_filter = list(freq.min = 0.05),
                                    normalize = list(method = "rms", mz = 1)

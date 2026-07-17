@@ -131,13 +131,11 @@ recheck_peptide_score<-function(formula="AGLQFPVGR",peaklist=read.csv(paste0(get
   peaklist
 }
 remove_pep_score_outlier<-function(SMPLIST,IQR_LB=0.75,outputdir=getwd(),abs_cutoff=-2){
-  #if (!require(OneR)) install.packages("OneR")
-  suppressMessages(suppressWarnings(library(OneR)))
   suppressMessages(suppressWarnings(library(dplyr)))
   suppressMessages(suppressWarnings(library(ggplot2)))
   nbins = floor(length(SMPLIST$mz)/500)
   if(nbins>=2){
-    SMPLIST$mzbin<-(bin(SMPLIST$mz, nbins = floor(length(SMPLIST$mz)/500),method = "content"))
+    SMPLIST$mzbin<-(.hitmap_content_bin(SMPLIST$mz, nbins = floor(length(SMPLIST$mz)/500),method = "content"))
   }else{
     message("Insufficient mz features to find the outlier")
     SMPLIST<-SMPLIST[SMPLIST$Score>=abs_cutoff,]
@@ -562,7 +560,6 @@ FDR_cutoff_plot_protein<-function(Protein_feature_result,FDR_cutoff=0.1,plot_fdr
   suppressMessages(suppressWarnings(require(ggplot2)))
   suppressMessages(suppressWarnings(require(data.table)))
   suppressMessages(suppressWarnings(require(dplyr)))
-  suppressMessages(suppressWarnings(require(zoo)))
   Protein_feature_result=data_test_rename(c("isdecoy","Proscore"),Protein_feature_result)
 
 
@@ -708,7 +705,6 @@ FDR_cutoff_plot<-function(Peptide_plot_list,FDR_cutoff=0.1,FDR_strip=500,plot_fd
   suppressMessages(suppressWarnings(require(ggplot2)))
   suppressMessages(suppressWarnings(require(data.table)))
   suppressMessages(suppressWarnings(require(dplyr)))
-  suppressMessages(suppressWarnings(require(zoo)))
   #suppressMessages(suppressWarnings(require(FTICRMS)))
   Peptide_plot_list=data_test_rename(c("isdecoy","Score"),Peptide_plot_list)
 
@@ -1420,8 +1416,7 @@ export_pixel_level_data<-function(projectfolder=NULL,Protein_peptide_file,
                                   Thread=4,
                                   ...
 ){
-  suppressMessages(suppressWarnings(library("pacman")))
-  suppressMessages(suppressWarnings(p_load(stringr,BiocParallel,data.table,Cardinal,parallel)))
+  suppressMessages(suppressWarnings(.hitmap_load_packages(stringr,BiocParallel,data.table,Cardinal,parallel)))
   
   if (missing(datafile)) stop("Missing data file, Choose single or multiple imzml file(s) for analysis")
   

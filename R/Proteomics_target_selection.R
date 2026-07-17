@@ -30,7 +30,6 @@ PRM_target_slt<-function(GroupID,ID_data,TopN_Feat=5,wd=getwd(),
   library(readxl)
   library(stringr)
   library(magick)
-  library(scales)
   if (!dir.exists(wd)) dir.create(wd,recursive = T)
   setwd(wd)
   final_res<-NULL

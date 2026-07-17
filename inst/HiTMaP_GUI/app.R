@@ -1,25 +1,25 @@
 
-if (!require(shiny)) install.packages("shiny")
+if (!requireNamespace("shiny", quietly = TRUE)) stop("Missing GUI dependency: shiny")
 library(shiny)
 
-if (!require(future)) install.packages("future")
+if (!requireNamespace("future", quietly = TRUE)) stop("Missing GUI dependency: future")
 library(future)
 
-if (!require(DT)) devtools::install_github("rstudio/DT")
+if (!requireNamespace("DT", quietly = TRUE)) stop("Missing GUI dependency: DT")
 library(DT)
 
 library(HiTMaP)
 
-if (!require(data.table)) install.packages("data.table")
+if (!requireNamespace("data.table", quietly = TRUE)) stop("Missing GUI dependency: data.table")
 library(data.table)
 
-if (!require(shinyFiles)) install.packages("shinyFiles")
+if (!requireNamespace("shinyFiles", quietly = TRUE)) stop("Missing GUI dependency: shinyFiles")
 library(shinyFiles)
 
-if (!require(plotly)) devtools::install_github("ropensci/plotly@async")
+if (!requireNamespace("plotly", quietly = TRUE)) stop("Missing GUI dependency: plotly")
 library(plotly)
 
-if (!require(htmlwidgets)) devtools::install_github("ramnathv/htmlwidgets")
+if (!requireNamespace("htmlwidgets", quietly = TRUE)) stop("Missing GUI dependency: htmlwidgets")
 library(htmlwidgets)
 
 

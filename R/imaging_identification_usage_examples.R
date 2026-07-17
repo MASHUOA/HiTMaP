@@ -226,7 +226,7 @@ run_example_manual_control <- function() {
     use_preprocessRDS = FALSE,
     smoothSignal = list(method = "gaussian", sd = 0.5),
     reduceBaseline = list(method = "locmin", blocks = 200),
-    peakPick = list(method = "adaptive", SNR = 2),
+    peakPick = list(method = "mad", SNR = 2),
     peakAlign = list(tolerance = 2, units = "ppm"),
     peakFilter = list(freq.min = 0.1),
     normalize = list(method = "tic", mz = 1)

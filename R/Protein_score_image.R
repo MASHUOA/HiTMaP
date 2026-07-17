@@ -56,9 +56,8 @@ Generate_proscore_image <- function(projectfolder = NULL,
   mzAlign_runs = "TopNfeature_mean") {
   # Load the required packages
   
-  suppressMessages(suppressWarnings(library("pacman")))
   suppressMessages(suppressWarnings(
-    p_load(stringr, BiocParallel, data.table, Cardinal, parallel)
+    .hitmap_load_packages(stringr, BiocParallel, data.table, Cardinal, parallel)
   ))
   
     message("cluster image rendering...")

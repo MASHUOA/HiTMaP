@@ -82,7 +82,6 @@ Cpd_spectrum_match_rescore<-function(cpd_list,peaklist,wd=getwd(),
   suppressMessages(suppressWarnings(require(enviPat)))
   suppressMessages(suppressWarnings(require(ggplot2)))
   suppressMessages(suppressWarnings(require(stringr)))
-  suppressMessages(suppressWarnings(require("Rcpp")))
   suppressMessages(suppressWarnings(require(dplyr)))
   suppressMessages(suppressWarnings(require(Rdisop)))
   suppressMessages(suppressWarnings(require(Biostrings)))
@@ -474,13 +473,11 @@ Plot_cpd_spectrum_match<-function(pimresultindex,spectrumlist,peplist,pimlist,pi
 }
 
 remove_cpd_score_outlier<-function(SMPLIST,IQR_LB=0.75,outputdir=getwd(),abs_cutoff=-2){
-  #if (!require(OneR)) install.packages("OneR")
-  suppressMessages(suppressWarnings(library(OneR)))
   suppressMessages(suppressWarnings(library(dplyr)))
   suppressMessages(suppressWarnings(library(ggplot2)))
   nbins = floor(length(SMPLIST$mz)/500)
   if(nbins>=2){
-    SMPLIST$mzbin<-(bin(SMPLIST$mz, nbins = floor(length(SMPLIST$mz)/500),method = "content"))
+    SMPLIST$mzbin<-(.hitmap_content_bin(SMPLIST$mz, nbins = floor(length(SMPLIST$mz)/500),method = "content"))
   }else{
     message("Insufficient mz features to find the outlier")
     SMPLIST<-SMPLIST[SMPLIST$Score>=abs_cutoff,]
@@ -541,7 +538,6 @@ FDR_cutoff_plot_cpd<-function(cpd_plot_list,FDR_cutoff=0.1,FDR_strip=500,plot_fd
   suppressMessages(suppressWarnings(require(ggplot2)))
   suppressMessages(suppressWarnings(require(data.table)))
   suppressMessages(suppressWarnings(require(dplyr)))
-  suppressMessages(suppressWarnings(require(zoo)))
   #suppressMessages(suppressWarnings(require(FTICRMS)))
   cpd_plot_list=data_test_rename(c("isdecoy","Score"),cpd_plot_list)
   

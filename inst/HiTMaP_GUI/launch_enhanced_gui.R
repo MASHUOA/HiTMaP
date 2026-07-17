@@ -43,8 +43,12 @@ launch_enhanced_hitmap_gui <- function(port = 3838,
   missing_packages <- required_packages[!sapply(required_packages, requireNamespace, quietly = TRUE)]
   
   if (length(missing_packages) > 0) {
-    message("Installing missing packages:", paste(missing_packages, collapse = ", "))
-    install.packages(missing_packages)
+    stop(
+      "Missing GUI dependencies: ",
+      paste(missing_packages, collapse = ", "),
+      ". Install them before launching the GUI.",
+      call. = FALSE
+    )
   }
   
   # Set the working directory and launch

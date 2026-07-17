@@ -221,9 +221,9 @@ create_real_pipeline_server <- function(input, output, session) {
       preprocess_params <- list(
         force_preprocess = input$pipeline_force_preprocess,
         use_preprocessRDS = input$pipeline_use_rds,
-        smoothSignal = list(method = "disable"),
+        smoothSignal = list(method = "Disable"),
         reduceBaseline = list(method = "locmin"),
-        peakPick = list(method = "adaptive"),
+        peakPick = list(method = "mad"),
         peakAlign = list(tolerance = input$pipeline_ppm/2, units = "ppm"),
         peakFilter = list(freq.min = 0.05),
         normalize = list(method = "rms", mz = 1)
@@ -237,7 +237,7 @@ create_real_pipeline_server <- function(input, output, session) {
       } else if (input$pipeline_preprocess_profile == "comprehensive") {
         preprocess_params$smoothSignal <- list(method = "gaussian", sd = 1)
         preprocess_params$reduceBaseline <- list(method = "locmin", blocks = 100)
-        preprocess_params$peakPick <- list(method = "adaptive", SNR = 3)
+        preprocess_params$peakPick <- list(method = "mad", SNR = 3)
         preprocess_params$normalize <- list(method = "tic", mz = 1)
       }
       

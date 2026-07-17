@@ -38,7 +38,6 @@ Protein_feature_list_table_import<-function(workdir=getwd(),
   library(readxl)
   library(stringr)
   library(magick)
-  library(scales)
   if (!dir.exists(workdir)) dir.create(workdir,recursive = T)
   setwd(workdir)
   final_res<-NULL
@@ -392,7 +391,6 @@ Protein_feature_list_table_import<-function(workdir=getwd(),
   if(Database_stats){
     
     suppressMessages(suppressWarnings(library(dplyr)))
-    suppressMessages(suppressWarnings(library(egg)))
     suppressMessages(suppressWarnings(library(RColorBrewer)))
     mz_vs_formula<-Protein_Summary %>% group_by(mz) %>% dplyr::summarize(Intnsity=length(unique(formula)))
     
@@ -416,7 +414,7 @@ Protein_feature_list_table_import<-function(workdir=getwd(),
       sp <-sp + geom_segment(data=mz_vs_peptide_filtered[[2]],mapping = aes(x=mz, y=unique_formula,xend=mz,yend=rep(0,length(unique_formula)),col=names(mycol)[2]),size=0.1)
       sp <-sp + geom_segment(data=mz_vs_peptide_filtered[[3]],mapping = aes(x=mz, y=unique_formula,xend=mz,yend=rep(0,length(unique_formula)),col=names(mycol)[3]),size=0.1)
 
-      sp <- sp + theme_article() + 
+      sp <- sp + .hitmap_theme_article() +
         
         theme(legend.position = "top",axis.text=element_text(size=12),
               axis.title=element_text(size=14,face="bold"),
@@ -446,7 +444,7 @@ Protein_feature_list_table_import<-function(workdir=getwd(),
     
     mz_unqiue_diff<-diff(mz_unqiue)
     
-    mz_unqiue_center<-zoo::rollapply(mz_unqiue, 2, mean, by = 1, align = "left", partial = FALSE)
+    mz_unqiue_center<-.hitmap_rolling_mean(mz_unqiue, 2)
     
     #dif_kmeans=kmeans(1/(mz_vs_resolution$mz_unqiue_diff),centers = 200,iter.max = 500)
     
@@ -459,7 +457,7 @@ Protein_feature_list_table_import<-function(workdir=getwd(),
     
     sp<-ggplot2::ggplot() 
     sp <-sp + geom_point(data=mz_vs_resolution,mapping = aes(x=mz, y=Resolution),size=0.3,alpha=0.4)+
-      theme_article() + 
+    .hitmap_theme_article() +
       
       theme(legend.position = "top",axis.text=element_text(size=12),
             axis.title=element_text(size=14,face="bold"),

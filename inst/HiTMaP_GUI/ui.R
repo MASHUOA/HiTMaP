@@ -7,22 +7,22 @@
 #    http://shiny.rstudio.com/
 #
 ui <- function(request) {
-if (!require(shiny)) install.packages("shiny")
+if (!requireNamespace("shiny", quietly = TRUE)) stop("Missing GUI dependency: shiny")
 library(shiny)
-if (!require(shinyjs)) install.packages("shinyjs")
+if (!requireNamespace("shinyjs", quietly = TRUE)) stop("Missing GUI dependency: shinyjs")
 library(shinyjs)
-if (!require(future)) install.packages("future")
+if (!requireNamespace("future", quietly = TRUE)) stop("Missing GUI dependency: future")
 library(future)
 library(shinythemes)
 library(HiTMaP)
 
-if (!require(data.table)) install.packages("data.table")
+if (!requireNamespace("data.table", quietly = TRUE)) stop("Missing GUI dependency: data.table")
 library(data.table)
 library(magrittr)
 library(shinyFiles)
 #source("projectdir/UIproject.R")
 #source("Pre-processing/UIPre-processing.R")
-if (!require(DT)) install.packages("DT")
+if (!requireNamespace("DT", quietly = TRUE)) stop("Missing GUI dependency: DT")
 library(DT)
 library(stringr)
 
@@ -166,8 +166,8 @@ fluidPage(
                             choices = list("Gaussian" = "gaussian", "Moving average" = "ma", "Savitzky-Golay" = "sgolay", "Disable"="Disable"),
                             selected = "Disable"),
                 selectInput("peakpick_pre", label = ("Peak picking method"),
-                            choices = list("Median absolute deviation" = "mad", "Simple" = "simple", "Adaptive" = "adaptive", "Disable"="Disable"),
-                            selected = "adaptive"),
+                            choices = list("Median absolute deviation" = "mad", "Derivative" = "diff", "Standard deviation" = "sd", "Quantile" = "quantile", "Filter" = "filter", "CWT" = "cwt", "Disable"="Disable"),
+                            selected = "mad"),
                 selectInput("reduceBaseline_pre", label = ("Reduce Baseline method"),
                             choices = list("Local minimum" = "locmin", "Median" = "median", "Disable"="Disable"),
                             selected = "Disable"),
@@ -332,8 +332,8 @@ fluidPage(
                                  choices = list("Gaussian" = "gaussian", "Moving average" = "ma", "Savitzky-Golay" = "sgolay"),
                                  selected = "sgolay"),
                      selectInput("peakpick", label = ("Peak picking method"),
-                                 choices = list("Median absolute deviation" = "mad", "Simple" = "simple", "Adaptive" = "adaptive"),
-                                 selected = "adaptive"),
+                                 choices = list("Median absolute deviation" = "mad", "Derivative" = "diff", "Standard deviation" = "sd", "Quantile" = "quantile", "Filter" = "filter", "CWT" = "cwt"),
+                                 selected = "mad"),
                      selectInput("reduceBaseline", label = ("Reduce Baseline method"),
                                  choices = list("Local minimum" = "locmin", "Median" = "median"),
                                  selected = "locmin"),

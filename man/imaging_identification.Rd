@@ -40,8 +40,8 @@ imaging_identification(
   Segmentation_ncomp = "auto-detect",
   Segmentation_variance_coverage = 0.8,
   preprocess = list(force_preprocess = FALSE, use_preprocessRDS = TRUE, smoothSignal =
-    list(method = "disable"), reduceBaseline = list(method = "locmin"), peakPick =
-    list(method = "adaptive"), peakAlign = list(tolerance = ppm/2, units = "ppm"),
+    list(method = "Disable"), reduceBaseline = list(method = "locmin"), peakPick =
+    list(method = "mad"), peakAlign = list(tolerance = ppm/2, units = "ppm"),
     peakFilter = list(freq.min = 0.05), normalize = list(method = c("rms", "tic",
     "reference")[1], mz = 1)),
   Smooth_range = 1,

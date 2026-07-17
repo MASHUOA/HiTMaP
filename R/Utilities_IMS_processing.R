@@ -77,8 +77,7 @@ imaging_Spatial_Quant<-function(
   Rotate_IMG=NULL,
   ...
 ){
-  library(pacman)
-  suppressMessages(suppressWarnings(p_load(RColorBrewer,RCurl,bitops,magick,ggplot2,reticulate,dplyr,stringr,tcltk,data.table,doParallel,
+  suppressMessages(suppressWarnings(.hitmap_load_packages(RColorBrewer,RCurl,magick,ggplot2,reticulate,dplyr,stringr,tcltk,data.table,doParallel,
                                            iterators,foreach,protViz,cleaver,MALDIquant,Biostrings,XVector,IRanges,Cardinal,Rdisop,
                                            ProtGenerics,S4Vectors,stats4,EBImage,
                                            BiocParallel,BiocGenerics,parallel,stats,graphics,grDevices,utils,datasets,methods)))
@@ -339,16 +338,11 @@ imaging_Spatial_Quant<-function(
     data=Spectrum_summary_tran[which(rownames(Spectrum_summary_tran)=="ID"):nrow(Spectrum_summary_tran),]
     data=Spectrum_summary_tran
 
-    base::Sys.setenv("plotly_api_key"="FQ8kYs3JqmKLqKd0wGRv")
-    base::Sys.setenv("plotly_username"="guoguodigital")
-    base::Sys.setenv('MAPBOX_TOKEN' = 'pk.eyJ1IjoiZ3VvZ3VvZGlnaXQiLCJhIjoiY2p1aHhheHM5MTBuYjQ0bnZzMzg0Mjd3aSJ9.XyqEayJi68xfGloNQQ28KA')
-
-
     plotly_for_region_with_ID<-function(i,data,moleculeNames,output_statice=T){
       library(dplyr)
       library(plotly)
       library(stringr)
-      if (!require("processx")) install.packages("processx")
+      .hitmap_load_packages(processx)
       windows_filename<- function(stringX){
         stringX<-stringr::str_remove_all(stringX,"[><*?:\\/\\\\]")
         stringX<-gsub("\"", "", stringX)
@@ -408,7 +402,7 @@ imaging_Spatial_Quant<-function(
       library(dplyr)
       library(plotly)
       library(stringr)
-      if (!require("processx")) install.packages("processx")
+      .hitmap_load_packages(processx)
       windows_filename<- function(stringX){
         stringX<-stringr::str_remove_all(stringX,"[><*?:\\/\\\\]")
         stringX<-gsub("\"", "", stringX)
@@ -496,7 +490,7 @@ imaging_Spatial_Quant<-function(
       library(plotly)
       library(stringr)
 
-      if (!require("processx")) install.packages("processx")
+      .hitmap_load_packages(processx)
       windows_filename<- function(stringX){
         stringX<-stringr::str_remove_all(stringX,"[><*?:\\/\\\\]")
         stringX<-gsub("\"", "", stringX)
@@ -565,9 +559,6 @@ imaging_Spatial_Quant<-function(
       Spectrum_summary_norm_sum$ID=as.numeric(rownames(Spectrum_summary_norm_sum))
       Spectrum_summary_norm_sum[,2:ncol(Spectrum_summary_norm_sum)]=round(Spectrum_summary_norm_sum[,2:ncol(Spectrum_summary_norm_sum)],digits = 3)
 
-      base::Sys.setenv("plotly_api_key"="FQ8kYs3JqmKLqKd0wGRv")
-      base::Sys.setenv("plotly_username"="guoguodigital")
-      base::Sys.setenv('MAPBOX_TOKEN' = 'pk.eyJ1IjoiZ3VvZ3VvZGlnaXQiLCJhIjoiY2p1aHhheHM5MTBuYjQ0bnZzMzg0Mjd3aSJ9.XyqEayJi68xfGloNQQ28KA')
       library(plotly)
       case_info=str_split(colnames_case,"@")[2:length(colnames_case)]
       case_info=as.data.frame(case_info)
@@ -986,11 +977,10 @@ virtual_segmentation<-function(imdata,Virtual_segmentation_rankfile="~/GitHub/Hi
     rank_pixel<-function(coordata,coordistmatrix){
       shape_center=coordata[coordistmatrix$sum==min(coordistmatrix$sum),]
       center_dist=t(coordistmatrix[which.min(coordistmatrix$sum),1:nrow(coordata)])
-      library(useful)
       From <- shape_center[rep(seq_len(nrow(shape_center)), each=nrow(coordata)),1:2]
       To <- coordata[,1:2]
       df=To-From
-      center_edge_angle<-cbind(coordata[,1:2],cart2pol(df$x, df$y, degrees = F),edge=coordata[,"edge"])
+      center_edge_angle<-cbind(coordata[,1:2],.hitmap_cart2pol(df$x, df$y, degrees = F),edge=coordata[,"edge"])
       center_edge_angle_sdge=center_edge_angle[center_edge_angle$edge==TRUE,]
       coordata$rank=0
       coordata$pattern=""
@@ -999,7 +989,7 @@ virtual_segmentation<-function(imdata,Virtual_segmentation_rankfile="~/GitHub/Hi
 
         if (coordata$edge[i]!=TRUE){
           df=coordata[i,1:2]-shape_center[,1:2]
-          point_center_angle<-cbind(coordata[i,1:2],cart2pol(df$x, df$y, degrees = F))
+          point_center_angle<-cbind(coordata[i,1:2],.hitmap_cart2pol(df$x, df$y, degrees = F))
           pointedge=center_edge_angle_sdge[which(abs(center_edge_angle_sdge$theta-point_center_angle$theta)==min(abs(center_edge_angle_sdge$theta-point_center_angle$theta))),]
 
           pointedge=pointedge[which.min(pointedge$r),]
@@ -1192,7 +1182,6 @@ PCA_ncomp_selection<-function(imdata,variance_coverage=0.80,outputdir=NULL){
   suppressMessages(suppressWarnings(library(Cardinal)))
   suppressMessages(suppressWarnings(library(ggplot2)))
   suppressMessages(suppressWarnings(library(gtable)))
-  suppressMessages(suppressWarnings(library(egg)))
 
 
   PCA_imdata<-Cardinal::PCA(imdata,ncomp=12)
@@ -1203,7 +1192,7 @@ PCA_ncomp_selection<-function(imdata,variance_coverage=0.80,outputdir=NULL){
   PCA_imdata_df<-data.frame(Component=1:length(PCA_imdata@model[["sdev"]]) , Standard.deviation=PCA_imdata@model[["sdev"]])
   PCA_imdata_df$Standard.deviation<-PCA_imdata_df$Standard.deviation/sum(PCA_imdata_df$Standard.deviation)
   PCA_imdata_df$Component<-as.factor(PCA_imdata_df$Component)
-  PCA_imdata_df$Percentage<-percent(PCA_imdata_df$Standard.deviation,digits =1)
+  PCA_imdata_df$Percentage<-.hitmap_percent(PCA_imdata_df$Standard.deviation,digits =1)
   PCA_imdata_df$Percent<-PCA_imdata_df$Standard.deviation/sum(PCA_imdata_df$Standard.deviation)
   PCA_imdata_df <- within(PCA_imdata_df, cumulate <- cumsum(Percent))
   for (PC_cum in PCA_imdata_df$cumulate){
@@ -1220,7 +1209,7 @@ PCA_ncomp_selection<-function(imdata,variance_coverage=0.80,outputdir=NULL){
 
   ncomp<-max(which(PCA_imdata_df$Include=="Yes"))
   PCA_imdata_df$Include<-factor(PCA_imdata_df$Include,levels = c("Yes","No"))
-  actual_coverage<-percent(PCA_imdata_df$cumulate[ncomp])
+  actual_coverage<-.hitmap_percent(PCA_imdata_df$cumulate[ncomp])
   if (!is.null(outputdir)){
     png(paste(outputdir,"/","PCA_image.png",sep=""),width = 1024,height = 720)
 
@@ -1235,8 +1224,8 @@ PCA_ncomp_selection<-function(imdata,variance_coverage=0.80,outputdir=NULL){
               colour = "Black",
               position = position_stack(vjust = 0.5),
               angle = 90,show.legend = FALSE)+
-            scale_y_continuous(labels = scales::percent)+
-            theme_article()+ theme(legend.position = c(0.85, 0.8))+ ggtitle(paste("Principle components variance Actual coverage:",actual_coverage))
+            scale_y_continuous(labels = percent)+
+            .hitmap_theme_article()+ theme(legend.position = c(0.85, 0.8))+ ggtitle(paste("Principle components variance Actual coverage:",actual_coverage))
     )
     dev.off()
 
@@ -1275,6 +1264,7 @@ Preprocessing_segmentation<-function(datafile,
   suppressMessages(suppressWarnings(require(RColorBrewer)))
   suppressMessages(suppressWarnings(require(stringr)))
   setCardinalBPPARAM(BPPARAM)
+  preprocess <- .hitmap_normalize_preprocess_methods(preprocess)
   
   datafile <- paste0(workdir,"/",datafile)
   workdir <- dirname(datafile)
@@ -1408,10 +1398,10 @@ Preprocessing_segmentation<-function(datafile,
           }
           
           if (preprocess$peakPick$method=="Disable") {
-          }else if (preprocess$peakPick$method %in% c("adaptive","mad","simple")){
+          }else if (preprocess$peakPick$method %in% .hitmap_cardinal_peak_pick_methods()){
             if (is.null(preprocess$peakPick$SNR)) preprocess$peakPick$SNR=6
             imdata_ed<- imdata_ed %>% peakPick(method=preprocess$peakPick$method, SNR=preprocess$peakPick$SNR) %>% process(BPPARAM=SerialParam())
-          }else if (preprocess$peakPick$method == "Default|default"){
+          }else if (preprocess$peakPick$method %in% c("Default", "default")){
             #add an peak picking function other than the Cardinal options.
             peaklist<-summarizeFeatures(imdata_ed,"sum")
             peaklist_deco<-data.frame(mz=peaklist@mz,intensities=peaklist$sum)
@@ -1426,7 +1416,7 @@ Preprocessing_segmentation<-function(datafile,
           saveRDS(imdata_ed,paste0(gsub(".imzML$","",datafile[z])  ," ID/preprocessed_peakpicked_imdata.RDS"))
           
           if (!is.null(preprocess$peakAlign)){
-          if (preprocess$peakAlign$method!="Disable") {
+          if (!identical(preprocess$peakAlign$method, "Disable")) {
           if (is.null(preprocess$peakAlign$level)) preprocess$peakAlign$level<-"local"
           if (preprocess$peakAlign$level=="global"){
             if (preprocess$peakAlign$tolerance==0 ) {
@@ -1517,15 +1507,15 @@ Preprocessing_segmentation<-function(datafile,
           }
           
           if (preprocess$peakPick$method=="Disable") {
-          }else if (preprocess$peakPick$method %in% c("adaptive","mad","simple")){
+          }else if (preprocess$peakPick$method %in% .hitmap_cardinal_peak_pick_methods()){
             imdata_ed<- imdata_ed %>% peakPick(method=preprocess$peakPick$method) %>% process(BPPARAM=SerialParam())
-          }else if (preprocess$peakPick$method == "Default|default"){
+          }else if (preprocess$peakPick$method %in% c("Default", "default")){
             #add an peak picking function other than the Cardinal options.
             imdata_ed<-imdata_ed %>% peakBin(peaklist_deco$mz, tolerance=ppm, units="ppm") %>% process()
           }
           
           if (!is.null(preprocess$peakAlign)){
-          if (preprocess$peakAlign$method!="Disable") {
+          if (!identical(preprocess$peakAlign$method, "Disable")) {
           if (is.null(preprocess$peakAlign$level)) preprocess$peakAlign$level<-"local"
           if (preprocess$peakAlign$level=="global"){
             if (preprocess$peakAlign$tolerance==0 ) {
@@ -1633,7 +1623,7 @@ Preprocessing_segmentation<-function(datafile,
       #Prepare imdata for segmentation
       if (Segmentation[1] %in% c("PCA","spatialKMeans","spatialShrunkenCentroids")){
         message("Performing forced peak alignment before segmentation...")
-        if (!is.null("preprocess$peakAlign")){
+        if (!is.null(preprocess$peakAlign) && !identical(preprocess$peakAlign$method, "Disable")){
           if (preprocess$peakAlign$tolerance==0 ) {
             imdata_stats <- imdata 
             message("preprocess$peakAlign$tolerance set as zero, peak alignment step bypassed")
@@ -1646,10 +1636,23 @@ Preprocessing_segmentation<-function(datafile,
           imdata_stats <- imdata %>% peakAlign(tolerance=ppm/2, units="ppm")
         }
         }
-        if (is.null(preprocess$peakFilter$freq.min)){
-          imdata_stats<-imdata_stats %>% peakFilter(freq.min=0.05) %>% process()
-        }else{
-          imdata_stats<-imdata_stats %>% peakFilter(freq.min=preprocess$peakFilter$freq.min) %>% process()
+        peak_filter_method <- .hitmap_normalize_disable_method(preprocess$peakFilter$method)
+        if (is.null(preprocess$peakFilter) || !identical(peak_filter_method, "Disable")){
+          freq_min <- if (is.null(preprocess$peakFilter)) NULL else preprocess$peakFilter$freq.min
+          if (is.null(freq_min)) freq_min <- 0.05
+          imdata_stats <- tryCatch(
+            imdata_stats %>% peakFilter(freq.min=freq_min) %>% process(),
+            error = function(e) {
+              message("Skipping peakFilter before segmentation: ", conditionMessage(e))
+              tryCatch(
+                imdata_stats %>% process(),
+                error = function(e2) {
+                  message("Skipping pre-segmentation processing: ", conditionMessage(e2))
+                  imdata_stats
+                }
+              )
+            }
+          )
         }
       }
       
@@ -1929,11 +1932,10 @@ Preprocessing_segmentation<-function(datafile,
           if (unique(radius_rank$Core)=="central"){
             shape_center=coordata[coordistmatrix$sum==min(coordistmatrix$sum),]
             center_dist=t(coordistmatrix[which.min(coordistmatrix$sum),1:nrow(coordata)])
-            library(useful)
             From <- shape_center[rep(seq_len(nrow(shape_center)), each=nrow(coordata)),1:2]
             To <- coordata[,1:2]
             df=To-From
-            center_edge_angle<-cbind(coordata[,1:2],cart2pol(df$x, df$y, degrees = F),edge=coordata[,"edge"])
+            center_edge_angle<-cbind(coordata[,1:2],.hitmap_cart2pol(df$x, df$y, degrees = F),edge=coordata[,"edge"])
             center_edge_angle_sdge=center_edge_angle[center_edge_angle$edge==TRUE,]
             coordata$rank=0
             coordata$pattern=""
@@ -1945,7 +1947,7 @@ Preprocessing_segmentation<-function(datafile,
               
               if (coordata$edge[i]!=TRUE){
                 df=coordata[i,1:2]-shape_center[,1:2]
-                point_center_angle<-cbind(coordata[i,1:2],cart2pol(df$x, df$y, degrees = F))
+                point_center_angle<-cbind(coordata[i,1:2],.hitmap_cart2pol(df$x, df$y, degrees = F))
                 pointedge=center_edge_angle_sdge[which(abs(center_edge_angle_sdge$theta-point_center_angle$theta)==min(abs(center_edge_angle_sdge$theta-point_center_angle$theta))),]
                 pointedge=pointedge[which.min(pointedge$r),]
                 to_edge=coordistmatrix[[i]]['&'(coordata$x==pointedge$x,coordata$y==pointedge$y)]
@@ -1986,13 +1988,12 @@ Preprocessing_segmentation<-function(datafile,
               
             }
             
-            library(useful)
             coordata$rank=0
             coordata$pattern=""
             From <- shape_center[rep(seq_len(nrow(shape_center)), each=nrow(coordata)),1:2]
             To <- coordata[,1:2]
             df=To-From
-            center_edge_angle<-cbind(coordata[,1:2],cart2pol(df$x, df$y, degrees = F),edge=coordata[,"edge"])
+            center_edge_angle<-cbind(coordata[,1:2],.hitmap_cart2pol(df$x, df$y, degrees = F),edge=coordata[,"edge"])
             center_edge_angle_sdge=center_edge_angle[center_edge_angle$edge==TRUE,]
             coordata$rank=0
             coordata$pattern=""
@@ -2002,7 +2003,7 @@ Preprocessing_segmentation<-function(datafile,
             for (i in 1: (nrow(coordata))){
               
               df=coordata[i,1:2]-shape_center[,1:2]
-              point_center_angle<-cbind(coordata[i,1:2],cart2pol(df$x, df$y, degrees = F))
+              point_center_angle<-cbind(coordata[i,1:2],.hitmap_cart2pol(df$x, df$y, degrees = F))
               pointedge=center_edge_angle_sdge[which(abs(center_edge_angle_sdge$theta-point_center_angle$theta)==min(abs(center_edge_angle_sdge$theta-point_center_angle$theta))),]
               pointedge=pointedge[which.min(pointedge$r),]
               to_edge=coordistmatrix[[i]]['&'(coordata$x==pointedge$x,coordata$y==pointedge$y)]
@@ -2416,18 +2417,17 @@ Load_IMS_decov_combine<-function(datafile,workdir,ppm=5,import_ppm=ppm/2,SPECTRU
       mz.ref.list.top.quantile.spec.crossvalid$Original<-mz.ref.list.top.quantile.spec.org_df$mz
       
       png(paste0(workdir[1],"/","ClusterIMS_mz_correction.png"),width = 2160, height = 1080, res = 300)
-      suppressMessages(suppressWarnings(library(egg)))
       getPalette = colorRampPalette(RColorBrewer::brewer.pal(9, "Spectral"))
       g<-ggplot(deconv_peaklist_ref_match_df,aes(x=mz,y=dmz/mz* 1e6,group=file,colour=Batch)) + 
         geom_line() + 
         geom_point(data=deconv_peaklist_ref_match_df_ref,mapping=aes(x=mz,y=dmz/mz * 1e6,group=file,colour=Batch),size=.5) +
         scale_fill_manual(values = getPalette(length(unique(deconv_peaklist_ref_match_df$Batch))))+
-        egg::theme_article()+
+        .hitmap_theme_article()+
         labs(title ="",x = "m/z",y = "mass error (in ppm)") 
       g2<-ggplot(mz.ref.list.top.quantile.spec.crossvalid,aes(x=Original,y=Corrected,group=file,colour=file)) + 
         geom_line() + 
         scale_fill_manual(values = getPalette(length(unique(deconv_peaklist_ref_match_df$file))))+
-        egg::theme_article()+
+        .hitmap_theme_article()+
         labs(title ="",x = "m/z",y = "mass error (in ppm)") +
         guides(colour = "none") 
       print(g)
@@ -2916,8 +2916,6 @@ isopattern_ppm_filter_peaklist<-function(pattern,ppm,threshold=0.001,verbose=F){
 
 isopattern_ppm_filter_peaklist_par<-function(pattern,ppm,threshold=0.001,verbose=F,BPPARAM=bpparam()){
   library(BiocParallel)
-  if (!require(OneR)) install.packages("OneR")
-  library(OneR)
   org_feature=nrow(pattern)
 
   pattern<-as.data.frame(pattern)
@@ -2937,7 +2935,7 @@ isopattern_ppm_filter_peaklist_par<-function(pattern,ppm,threshold=0.001,verbose
 
   n_worker<-bpworkers(BPPARAM)
 
-  pattern$mzbin<-(bin(pattern$mz, nbins = n_worker, method = "content"))
+  pattern$mzbin<-(.hitmap_content_bin(pattern$mz, nbins = n_worker, method = "content"))
 
   for (mzbin in unique(pattern$mzbin)){
 
@@ -3165,12 +3163,11 @@ IMS_data_process_quant<-function (datafile, Peptide_Summary_searchlist, segmenta
                                   min(coordistmatrix$sum), ]
         center_dist = t(coordistmatrix[which.min(coordistmatrix$sum),
                                        1:nrow(coordata)])
-        p_load(useful)
         From <- shape_center[rep(seq_len(nrow(shape_center)),
                                  each = nrow(coordata)), 1:2]
         To <- coordata[, 1:2]
         df = To - From
-        center_edge_angle = cbind(coordata[, 1:2], cart2pol(df$x,
+        center_edge_angle = cbind(coordata[, 1:2], .hitmap_cart2pol(df$x,
                                                             df$y, degrees = F), edge = coordata[, "edge"])
         center_edge_angle_sdge = center_edge_angle[center_edge_angle$edge ==
                                                      TRUE, ]
@@ -3180,7 +3177,7 @@ IMS_data_process_quant<-function (datafile, Peptide_Summary_searchlist, segmenta
           if (coordata$edge[i] != TRUE) {
             df = coordata[i, 1:2] - shape_center[, 1:2]
             point_center_angle = cbind(coordata[i, 1:2],
-                                       cart2pol(df$x, df$y, degrees = F))
+                                       .hitmap_cart2pol(df$x, df$y, degrees = F))
             pointedge = center_edge_angle_sdge[which(abs(center_edge_angle_sdge$theta -
                                                            point_center_angle$theta) == min(abs(center_edge_angle_sdge$theta -
                                                                                                   point_center_angle$theta))), ]

@@ -3,40 +3,40 @@
 #' Main application file that launches the enhanced GUI with pipeline functionality
 
 # Load required packages
-if (!require(shiny)) install.packages("shiny")
+if (!requireNamespace("shiny", quietly = TRUE)) stop("Missing GUI dependency: shiny")
 library(shiny)
 
-if (!require(shinydashboard)) install.packages("shinydashboard")
+if (!requireNamespace("shinydashboard", quietly = TRUE)) stop("Missing GUI dependency: shinydashboard")
 library(shinydashboard)
 
-if (!require(shinyjs)) install.packages("shinyjs")
+if (!requireNamespace("shinyjs", quietly = TRUE)) stop("Missing GUI dependency: shinyjs")
 library(shinyjs)
 
-if (!require(DT)) install.packages("DT")
+if (!requireNamespace("DT", quietly = TRUE)) stop("Missing GUI dependency: DT")
 library(DT)
 
-if (!require(plotly)) install.packages("plotly")
+if (!requireNamespace("plotly", quietly = TRUE)) stop("Missing GUI dependency: plotly")
 library(plotly)
 
-if (!require(ggplot2)) install.packages("ggplot2")
+if (!requireNamespace("ggplot2", quietly = TRUE)) stop("Missing GUI dependency: ggplot2")
 library(ggplot2)
 
-if (!require(future)) install.packages("future")
+if (!requireNamespace("future", quietly = TRUE)) stop("Missing GUI dependency: future")
 library(future)
 
-if (!require(data.table)) install.packages("data.table")
+if (!requireNamespace("data.table", quietly = TRUE)) stop("Missing GUI dependency: data.table")
 library(data.table)
 
-if (!require(magrittr)) install.packages("magrittr")
+if (!requireNamespace("magrittr", quietly = TRUE)) stop("Missing GUI dependency: magrittr")
 library(magrittr)
 
-if (!require(shinyFiles)) install.packages("shinyFiles")
+if (!requireNamespace("shinyFiles", quietly = TRUE)) stop("Missing GUI dependency: shinyFiles")
 library(shinyFiles)
 
-if (!require(jsonlite)) install.packages("jsonlite")
+if (!requireNamespace("jsonlite", quietly = TRUE)) stop("Missing GUI dependency: jsonlite")
 library(jsonlite)
 
-if (!require(zip)) install.packages("zip")
+if (!requireNamespace("zip", quietly = TRUE)) stop("Missing GUI dependency: zip")
 library(zip)
 
 # Load HiTMaP package

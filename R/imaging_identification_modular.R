@@ -12,8 +12,7 @@
 #' 
 #' @export
 hitmap_init_project <- function(datafile, projectfolder = NULL, Thread = 4) {
-  suppressMessages(suppressWarnings(library("pacman")))
-  suppressMessages(suppressWarnings(p_load(stringr, BiocParallel, data.table, Cardinal, parallel)))
+  suppressMessages(suppressWarnings(.hitmap_load_packages(stringr, BiocParallel, data.table, Cardinal, parallel)))
   
   if (missing(datafile)) stop("Missing data file, Choose single or multiple imzml file(s) for analysis")
   
@@ -152,9 +151,9 @@ hitmap_preprocess_segment <- function(datafile,
                                     preprocess = list(
                                       force_preprocess = FALSE,
                                       use_preprocessRDS = TRUE,
-                                      smoothSignal = list(method = "disable"),
+                                      smoothSignal = list(method = "Disable"),
                                       reduceBaseline = list(method = "locmin"),
-                                      peakPick = list(method = "adaptive"),
+                                      peakPick = list(method = "mad"),
                                       peakAlign = list(tolerance = ppm/2, units = "ppm"),
                                       peakFilter = list(freq.min = 0.05),
                                       normalize = list(method = c("rms", "tic", "reference")[1], mz = 1)
@@ -166,6 +165,7 @@ hitmap_preprocess_segment <- function(datafile,
   suppressMessages(suppressWarnings(require(stringr)))
   
   setCardinalBPPARAM(BPPARAM)
+  preprocess <- .hitmap_normalize_preprocess_methods(preprocess)
   
   # Resolve the filename and rotation info
   rotate <- Parse_rotation(datafile, rotate)
@@ -264,7 +264,8 @@ hitmap_pmf_search_region <- function(segmented_data,
   imdata_ed <- imdata_sb
   
   # Apply peak alignment if specified
-  if (preprocess$peakAlign$method != "Disable" && !is.null(preprocess$peakAlign$tolerance) && preprocess$peakAlign$tolerance > 0) {
+  preprocess <- .hitmap_normalize_preprocess_methods(preprocess)
+  if (!identical(preprocess$peakAlign$method, "Disable") && !is.null(preprocess$peakAlign$tolerance) && preprocess$peakAlign$tolerance > 0) {
     message("Applying peak alignment with tolerance:", preprocess$peakAlign$tolerance, preprocess$peakAlign$units)
     imdata_ed <- imdata_ed %>% peakAlign(tolerance = preprocess$peakAlign$tolerance, units = preprocess$peakAlign$units)
     imdata_ed <- imdata_ed %>% process()
@@ -689,9 +690,9 @@ hitmap_modular_workflow <- function(datafile,
                                   preprocess = list(
                                     force_preprocess = FALSE,
                                     use_preprocessRDS = TRUE,
-                                    smoothSignal = list(method = "disable"),
+                                    smoothSignal = list(method = "Disable"),
                                     reduceBaseline = list(method = "locmin"),
-                                    peakPick = list(method = "adaptive"),
+                                    peakPick = list(method = "mad"),
                                     peakAlign = list(tolerance = ppm/2, units = "ppm"),
                                     peakFilter = list(freq.min = 0.05),
                                     normalize = list(method = "rms", mz = 1)

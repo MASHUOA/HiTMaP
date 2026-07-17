@@ -1,7 +1,7 @@
 Package: HiTMaP
 Type: Package
 Title: A collection of tools for imaging MS data processing
-Version: 1.0.0
+Version: 1.0.1
 Date:
 Depends: R (>= 4.0.2)
 Authors@R: c(person("George", "GUO", email = "George.GUO@auckland.ac.nz", role = "aut"))
@@ -15,29 +15,44 @@ Encoding: UTF-8
 Packaged:
 BugReports:
 Imports:
-    pryr,pacman,purrr,lattice,pls,
+    purrr,lattice,pls,
     RColorBrewer,magick,ggplot2,reticulate,
     dplyr,stringr,data.table,doParallel,
     iterators,foreach,protViz,cleaver,
     Biostrings,XVector,IRanges,Cardinal,
-    ProtGenerics,S4Vectors,stats4,egg,
+    ProtGenerics,S4Vectors,stats4,
     EBImage,BiocParallel,BiocGenerics,parallel,
     stats,graphics,grDevices,utils,
-    datasets,methods,Rdisop,Rcpp,
-    pacman,fs,processx,S4Vectors,
-    spdep,zoo,KEGGREST,OrgMassSpecR,
+    datasets,methods,Rdisop,
+    fs,processx,S4Vectors,
+    spdep,KEGGREST,OrgMassSpecR,
     enviPat,rgl,multtest,XML,
-    BiocManager,reshape2,readr,readxl,
-    rcdk,colorspace,OneR,future,
-    gridExtra,grid,gtable,ChemmineR
+    reshape2,readr,readxl,
+    colorspace,future,
+    gridExtra,grid,gtable,ChemmineR,CardinalIO,
+    magrittr,matter,itertools,RCurl,MALDIquant
 VignetteBuilder: knitr
 Suggests:
+    pryr,
+    shiny,
+    shinydashboard,
+    shinyjs,
+    shinyFiles,
+    DT,
+    promises,
+    jsonlite,
+    zip,
+    shinythemes,
+    openxlsx,
     knitr,
     rmarkdown,
     devtools,
     plotly,
+    htmlwidgets,
     UniProt.ws,
-    bitops
+    rcdk,
+    rJava,
+    rcdklibs
 RoxygenNote: 7.3.2
 biocViews: Software, Infrastructure, Proteomics, Lipidomics,
         MassSpectrometry, ImagingMassSpectrometry, ImmunoOncology,
