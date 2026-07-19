@@ -261,7 +261,7 @@ FT-ICR mass spectromety. With the following code, you can download these
 raw data set into a local folder.
 
 You can download the example data manually through this link:
-“<https://github.com/MASHUOA/HiTMaP/releases/download/1.0.1/Data.tar.gz>”
+“<https://github.com/MASHUOA/HiTMaP/releases/download/1.1.0/Data.tar.gz>”
 
 Or download the files in a R console:
 
@@ -274,7 +274,7 @@ wd="~/expdata/"
 dir.create(wd)
 setwd(wd)
 
-pb_download("HiTMaP-master.zip", repo = "MASHUOA/HiTMaP", dest = ".",show_progress = F, tag="1.0.1")
+pb_download("HiTMaP-master.zip", repo = "MASHUOA/HiTMaP", dest = ".",show_progress = F, tag="1.1.0")
 
 pb_download("Data.tar.gz", repo = "MASHUOA/HiTMaP", dest = ".")
 
@@ -1260,7 +1260,7 @@ sessionInfo()
     ##
     ## other attached packages:
     ## [1] gridExtra_2.3.1 XML_3.99-0.23   protViz_0.7.9   stringr_1.6.0
-    ## [5] dplyr_1.2.1     magick_2.9.1    HiTMaP_1.0.1
+    ## [5] dplyr_1.2.1     magick_2.9.1    HiTMaP_1.1.0
     ##
     ## loaded via a namespace (and not attached):
     ##  [1] vctrs_0.7.3      cli_3.6.6        knitr_1.51       rlang_1.3.0
