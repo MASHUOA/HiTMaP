@@ -1,0 +1,66 @@
+<?xml version='1.0' encoding='utf-8'?>
+<msms_pipeline_analysis xmlns="http://regis-web.systemsbiology.net/pepXML">
+  <analysis_summary analysis="peptideprophet">
+    <peptideprophet_summary>
+      <roc_error_data charge="all">
+        <roc_data_point min_prob="0.9500" sensitivity="0.2347" error="0.0090" num_corr="174" num_incorr="2" />
+        <roc_data_point min_prob="0.9000" sensitivity="0.2870" error="0.0217" num_corr="213" num_incorr="5" />
+      </roc_error_data>
+    </peptideprophet_summary>
+  </analysis_summary>
+  <msms_run_summary>
+    <search_summary>
+      <aminoacid_modification aminoacid="M" massdiff="15.994900" mass="147.035385" variable="Y" symbol="*" />
+      <aminoacid_modification aminoacid="Q" massdiff="0.998000" mass="129.056578" variable="Y" symbol="#" />
+      <aminoacid_modification aminoacid="N" massdiff="0.998000" mass="115.040927" variable="Y" symbol="#" />
+      <aminoacid_modification aminoacid="C" massdiff="57.021464" mass="160.030649" variable="N" />
+      <parameter name="decoy_prefix" value="DECOY_" />
+    </search_summary>
+    <search_hit hit_rank="1" peptide="VLGVYEILPK" peptide_prev_aa="K" peptide_next_aa="L" protein="gi|183233755|ref|XP_649611.2|" num_tot_proteins="4" num_matched_ions="12" tot_num_ions="18" calc_neutral_pep_mass="1129.674697" massdiff="-0.009250" num_tol_term="2" num_missed_cleavages="0" num_matched_peptides="67944" protein_descr="NAD(FAD)-dependent dehydrogenase [Entamoeba histolytica HM-1:IMSS]">
+      <alternative_protein protein="gi|169801418|gb|EAL44225.2|" protein_descr="NAD(FAD)-dependent dehydrogenase, putative [Entamoeba histolytica HM-1:IMSS]" num_tol_term="2" peptide_prev_aa="K" peptide_next_aa="L" />
+      <alternative_protein protein="gi|472460628|gb|EMS14190.1|" protein_descr="glycerol-3-phosphate dehydrogenase [Entamoeba histolytica HM-3:IMSS]" num_tol_term="2" peptide_prev_aa="K" peptide_next_aa="L" />
+      <alternative_protein protein="gi|449708564|gb|EMD48002.1|" protein_descr="glycerol3-phosphate dehydrogenase, putative [Entamoeba histolytica KU27]" num_tol_term="2" peptide_prev_aa="K" peptide_next_aa="L" />
+      <search_score name="xcorr" value="1.759" />
+      <search_score name="deltacn" value="0.212" />
+      <search_score name="deltacnstar" value="0.000" />
+      <search_score name="spscore" value="546.3" />
+      <search_score name="sprank" value="1" />
+      <search_score name="expect" value="6.87E-01" />
+      <analysis_result analysis="peptideprophet">
+        <peptideprophet_result probability="1.0000" all_ntt_prob="(0.0000,0.0000,1.0000)">
+          <search_score_summary>
+            <parameter name="fval" value="2.1803" />
+            <parameter name="ntt" value="2" />
+            <parameter name="nmc" value="0" />
+            <parameter name="massd" value="-0.009" />
+          </search_score_summary>
+        </peptideprophet_result>
+      </analysis_result>
+    </search_hit>
+    <search_hit hit_rank="1" peptide="ATSTTQYPAFNAIVYNEKK" peptide_prev_aa="K" peptide_next_aa="A" protein="gi|183231832|ref|XP_654725.2|" num_tot_proteins="4" num_matched_ions="32" tot_num_ions="108" calc_neutral_pep_mass="2147.070235" massdiff="-0.071264" num_tol_term="2" num_missed_cleavages="0" num_matched_peptides="90765" protein_descr="snoRNP protein gar1 [Entamoeba histolytica HM-1:IMSS]">
+      <alternative_protein protein="gi|169802298|gb|EAL49334.2|" protein_descr="snoRNP protein gar1, putative [Entamoeba histolytica HM-1:IMSS]" num_tol_term="2" peptide_prev_aa="K" peptide_next_aa="A" />
+      <alternative_protein protein="gi|472462776|gb|EMS15900.1|" protein_descr="Gar1 protein RNA binding region protein [Entamoeba histolytica HM-3:IMSS]" num_tol_term="2" peptide_prev_aa="K" peptide_next_aa="A" />
+      <alternative_protein protein="gi|449706464|gb|EMD46303.1|" protein_descr="Gar1 RNA binding protein, putative [Entamoeba histolytica KU27]" num_tol_term="2" peptide_prev_aa="K" peptide_next_aa="A" />
+      <modification_info modified_peptide="ATSTTQYPAFN[115]AIVYN[115]EKK">
+        <mod_aminoacid_mass position="11" mass="115.040927" />
+        <mod_aminoacid_mass position="16" mass="115.040927" />
+      </modification_info>
+      <search_score name="xcorr" value="2.231" />
+      <search_score name="deltacn" value="0.205" />
+      <search_score name="deltacnstar" value="0.000" />
+      <search_score name="spscore" value="532.9" />
+      <search_score name="sprank" value="1" />
+      <search_score name="expect" value="1.77E+00" />
+      <analysis_result analysis="peptideprophet">
+        <peptideprophet_result probability="1.0000" all_ntt_prob="(0.0000,0.0000,1.0000)">
+          <search_score_summary>
+            <parameter name="fval" value="1.2620" />
+            <parameter name="ntt" value="2" />
+            <parameter name="nmc" value="0" />
+            <parameter name="massd" value="-0.071" />
+          </search_score_summary>
+        </peptideprophet_result>
+      </analysis_result>
+    </search_hit>
+  </msms_run_summary>
+</msms_pipeline_analysis>

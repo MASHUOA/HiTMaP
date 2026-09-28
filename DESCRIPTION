@@ -1,7 +1,7 @@
 Package: HiTMaP
 Type: Package
 Title: A collection of tools for imaging MS data processing
-Version: 1.1.0
+Version: 1.2.0
 Date:
 Depends: R (>= 4.0.2)
 Authors@R: c(person("George", "GUO", email = "George.GUO@auckland.ac.nz", role = "aut"))
@@ -52,7 +52,9 @@ Suggests:
     UniProt.ws,
     rcdk,
     rJava,
-    rcdklibs
+    rcdklibs,
+    arrow,
+    testthat
 RoxygenNote: 7.3.2
 biocViews: Software, Infrastructure, Proteomics, Lipidomics,
         MassSpectrometry, ImagingMassSpectrometry, ImmunoOncology,

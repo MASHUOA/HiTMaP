@@ -1,0 +1,42 @@
+<?xml version='1.0' encoding='utf-8'?>
+<protein_summary xmlns="http://regis-web.systemsbiology.net/protXML">
+  <protein_summary_data_filter min_probability="0.95" sensitivity="0.276" false_positive_error_rate="0.007" predicted_num_correct="84" predicted_num_incorrect="1" />
+  <protein_group group_number="1" probability="1.0000">
+    <protein protein_name="gi|169801418|gb|EAL44225.2|" n_indistinguishable_proteins="4" probability="1.0000" percent_coverage="2.2" unique_stripped_peptides="VLGVYEILPK+YGEELTGPEYAYR" group_sibling_id="a" total_number_peptides="2" pct_spectrum_ids="0.29" confidence="0.02">
+      <parameter name="prot_length" value="1066" />
+      <annotation protein_description="NAD(FAD)-dependent dehydrogenase, putative [Entamoeba histolytica HM-1:IMSS]" />
+      <indistinguishable_protein protein_name="gi|183233755|ref|XP_649611.2|">
+        <annotation protein_description="NAD(FAD)-dependent dehydrogenase [Entamoeba histolytica HM-1:IMSS]" />
+      </indistinguishable_protein>
+      <indistinguishable_protein protein_name="gi|449708564|gb|EMD48002.1|">
+        <annotation protein_description="glycerol3-phosphate dehydrogenase, putative [Entamoeba histolytica KU27]" />
+      </indistinguishable_protein>
+      <indistinguishable_protein protein_name="gi|472460628|gb|EMS14190.1|">
+        <annotation protein_description="glycerol-3-phosphate dehydrogenase [Entamoeba histolytica HM-3:IMSS]" />
+      </indistinguishable_protein>
+      <peptide peptide_sequence="VLGVYEILPK" charge="2" initial_probability="0.9990" nsp_adjusted_probability="0.9997" fpkm_adjusted_probability="0.9997" weight="1.00" group_weight="1.00" is_nondegenerate_evidence="Y" n_enzymatic_termini="2" n_sibling_peptides="1.00" n_sibling_peptides_bin="3" max_fpkm="0.00" fpkm_bin="0" n_instances="1" exp_tot_instances="1.00" is_contributing_evidence="Y" calc_neutral_pep_mass="1129.6747">
+         </peptide>
+    </protein>
+  </protein_group>
+  <protein_group group_number="44" probability="0.9987">
+    <protein protein_name="gi|169802298|gb|EAL49334.2|" n_indistinguishable_proteins="4" probability="0.9987" percent_coverage="10.5" unique_stripped_peptides="ATSTTQYPAFNAIVYNEKK" group_sibling_id="a" total_number_peptides="1" pct_spectrum_ids="0.15" confidence="0.00">
+      <parameter name="prot_length" value="181" />
+      <annotation protein_description="snoRNP protein gar1, putative [Entamoeba histolytica HM-1:IMSS]" />
+      <indistinguishable_protein protein_name="gi|183231832|ref|XP_654725.2|">
+        <annotation protein_description="snoRNP protein gar1 [Entamoeba histolytica HM-1:IMSS]" />
+      </indistinguishable_protein>
+      <indistinguishable_protein protein_name="gi|449706464|gb|EMD46303.1|">
+        <annotation protein_description="Gar1 RNA binding protein, putative [Entamoeba histolytica KU27]" />
+      </indistinguishable_protein>
+      <indistinguishable_protein protein_name="gi|472462776|gb|EMS15900.1|">
+        <annotation protein_description="Gar1 protein RNA binding region protein [Entamoeba histolytica HM-3:IMSS]" />
+      </indistinguishable_protein>
+      <peptide peptide_sequence="ATSTTQYPAFNAIVYNEKK" charge="4" initial_probability="0.9990" nsp_adjusted_probability="0.9987" fpkm_adjusted_probability="0.9987" weight="1.00" group_weight="1.00" is_nondegenerate_evidence="Y" n_enzymatic_termini="2" n_sibling_peptides="0.00" n_sibling_peptides_bin="0" max_fpkm="0.00" fpkm_bin="0" n_instances="1" exp_tot_instances="1.00" is_contributing_evidence="Y" calc_neutral_pep_mass="2147.0702">
+        <modification_info modified_peptide="ATSTTQYPAFN[115]AIVYN[115]EKK">
+          <mod_aminoacid_mass position="11" mass="115.040927" />
+          <mod_aminoacid_mass position="16" mass="115.040927" />
+        </modification_info>
+      </peptide>
+    </protein>
+  </protein_group>
+</protein_summary>

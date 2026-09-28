@@ -1106,6 +1106,7 @@ protein_scoring<-function(Protein_feature_list,
                           peptide_ID_filter=2,
                           use_top_rank=NULL){
 
+  scoretype <- match.arg(scoretype)
   message("Start protein scoring...")
   suppressMessages(suppressWarnings(require(dplyr)))
   suppressMessages(suppressWarnings(require(data.table)))
@@ -1139,7 +1140,19 @@ protein_scoring<-function(Protein_feature_list,
 
 
 
-    if (scoretype=="sum_wi_int_norm"){
+    if (scoretype=="median"){
+
+      sum_pro_int<-Protein_feature_list_rank %>% dplyr::group_by_at(c("Protein","isdecoy")) %>% dplyr::summarize(Intensity=median(Intensity))
+
+      sum_pro_score<-Protein_feature_list_rank %>% dplyr::group_by_at(c("Protein","isdecoy")) %>% dplyr::summarize(Score=median(Score))
+
+    }else if (scoretype=="sum"){
+
+      sum_pro_int<-Protein_feature_list_rank %>% dplyr::group_by_at(c("Protein","isdecoy")) %>% dplyr::summarize(Intensity=sum(Intensity))
+
+      sum_pro_score<-Protein_feature_list_rank %>% dplyr::group_by_at(c("Protein","isdecoy")) %>% dplyr::summarize(Score=sum(Score))
+
+    }else if (scoretype=="sum_wi_int_norm"){
 
       sum_pro_int<-Protein_feature_list_rank %>% dplyr::group_by_at(c("Protein","isdecoy")) %>% dplyr::summarize(Intensity=mean(Intensity))
 
